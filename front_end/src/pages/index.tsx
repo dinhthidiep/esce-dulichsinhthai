@@ -1,8 +1,0 @@
-export { default as DashBoard } from "~/components/dashboard"
-export { default as Users } from "~/components/users"
-export { default as Posts } from "~/components/posts"
-export { default as Chat } from "~/components/chat"
-export { default as News } from "~/components/news"
-export { default as Supports } from "~/components/supports"
-export { default as Profile } from "~/components/profile"
-export { default as RoleUpgrade } from "~/components/roleUpgrade"

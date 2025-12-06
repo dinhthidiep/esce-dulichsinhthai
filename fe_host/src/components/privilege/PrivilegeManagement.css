@@ -1,0 +1,152 @@
+/* Privilege Management Styles */
+
+.privilege-management {
+  width: 100%;
+}
+
+/* Filter Container - reuse coupon filter styles */
+.privilege-management .coupon-filter-container {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Table Container */
+.privilege-management .coupons-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.privilege-management .coupons-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.privilege-management .coupons-table thead {
+  background: #f8fafc;
+}
+
+.privilege-management .coupons-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.privilege-management .coupons-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.privilege-management .coupons-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.privilege-management .coupons-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Promotion specific cells */
+.privilege-management .promotion-service-name-cell {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.privilege-management .promotion-rank-cell {
+  text-align: center;
+}
+
+.privilege-management .promotion-user-type-cell {
+  text-align: center;
+}
+
+.privilege-management .promotion-actions-cell {
+  text-align: right;
+}
+
+/* Rank Badge */
+.privilege-management .rank-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.privilege-management .rank-badge.rank-đồng {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.privilege-management .rank-badge.rank-bạc {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.privilege-management .rank-badge.rank-vàng {
+  background: #fde68a;
+  color: #78350f;
+}
+
+
+/* Actions */
+.privilege-management .coupon-table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Pagination - reuse standard pagination styles */
+.privilege-management .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Empty State */
+.privilege-management .empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.privilege-management .empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: #94a3b8;
+  margin: 0 auto 1rem;
+}
+
+.privilege-management .empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.privilege-management .empty-state p {
+  font-size: 0.875rem;
+  color: #64748b;
+}
