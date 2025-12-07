@@ -1,11 +1,9 @@
-﻿using ESCE_SYSTEM.DTOs;
-using ESCE_SYSTEM.DTOs.Notifications;
+﻿using ESCE_SYSTEM.DTOs.Notifications;
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 using ESCE_SYSTEM.Services.UserService;
 using Microsoft.AspNetCore.SignalR;
 using ESCE_SYSTEM.SignalR;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 using ESCE_SYSTEM.Services.NotificationService;
@@ -21,7 +19,6 @@ namespace ESCE_SYSTEM.Services
         private readonly IUserService _userService;
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub> _hubNotificationContext;
-        private readonly ESCEContext _context;
 
         public PostReactionService(
             IPostReactionRepository postReactionRepository,
@@ -29,8 +26,7 @@ namespace ESCE_SYSTEM.Services
             IUserContextService userContextService,
             IUserService userService,
             INotificationService notificationService,
-            IHubContext<NotificationHub> hubNotificationContext,
-            ESCEContext context)
+            IHubContext<NotificationHub> hubNotificationContext)
         {
             _postReactionRepository = postReactionRepository;
             _postRepository = postRepository;
@@ -38,168 +34,86 @@ namespace ESCE_SYSTEM.Services
             _userService = userService;
             _notificationService = notificationService;
             _hubNotificationContext = hubNotificationContext;
-            _context = context;
         }
 
-        public async Task<PostToggleLikeResponseDto> ToggleLikePost(int postId)
+        public async Task ReactToPost(int postId, byte reactionTypeId)
         {
             var currentUserId = _userContextService.GetCurrentUserId();
+
+            // Kiểm tra reactionTypeId có hợp lệ (từ 1 đến 6)
+            if (reactionTypeId <= 0 || reactionTypeId > 6)
+            {
+                throw new Exception("Loại cảm xúc không hợp lệ. Vui lòng chọn ID từ 1 đến 6.");
+            }
+
             var existingReaction = await _postReactionRepository.GetByUserAndPostAsync(currentUserId, postId);
 
-            // Nếu đã thích rồi, thì bỏ thích (toggle)
             if (existingReaction != null)
             {
-                await UnlikePost(existingReaction.Id);
-                return new PostToggleLikeResponseDto
+                // Nếu người dùng đã phản ứng với bài viết
+                if (existingReaction.ReactionTypeId == reactionTypeId)
                 {
-                    IsLiked = false,
-                    Reaction = null,
-                    PostId = postId
-                };
+                    // Nếu reaction CÙNG loại, coi như đã thực hiện rồi
+                    throw new Exception($"Bạn đã bày tỏ cảm xúc '{GetReactionName(reactionTypeId)}' cho bài viết này rồi.");
+                }
+
+                // Nếu reaction KHÁC loại, thực hiện UPDATE (thay thế) reaction cũ
+                await _postReactionRepository.DeleteAsync(existingReaction.Id);
+
+                // Cập nhật lại ReactionsCount của bài viết
+                var postToUpdateCount = await _postRepository.GetByIdAsync(postId);
+                if (postToUpdateCount != null && postToUpdateCount.ReactionsCount > 0)
+                {
+                    // Giảm 1 cho reaction cũ
+                    postToUpdateCount.ReactionsCount--;
+                    await _postRepository.UpdateAsync(postToUpdateCount);
+                }
             }
 
-            // Nếu chưa thích, thì thích
-            var likeResponse = await LikePostInternal(postId);
-            return new PostToggleLikeResponseDto
-            {
-                IsLiked = true,
-                Reaction = likeResponse,
-                PostId = postId
-            };
-        }
-
-        public async Task<PostLikeResponseDto> LikePost(int postId)
-        {
-            var currentUserId = _userContextService.GetCurrentUserId();
-            var existingReaction = await _postReactionRepository.GetByUserAndPostAsync(currentUserId, postId);
-
-            if (existingReaction != null)
-            {
-                throw new Exception("Bạn đã thích bài viết này rồi");
-            }
-
-            return await LikePostInternal(postId);
-        }
-
-        private async Task<PostLikeResponseDto> LikePostInternal(int postId)
-        {
-            var currentUserId = _userContextService.GetCurrentUserId();
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
             {
                 throw new Exception("Không tìm thấy bài viết");
             }
 
-            // Lấy hoặc tạo ReactionType "Like"
-            var reactionType = await GetOrCreateReactionType("Like");
-            if (reactionType == null)
-            {
-                throw new Exception("Không thể lấy hoặc tạo loại reaction. Vui lòng thử lại sau.");
-            }
-
-            // Đảm bảo ReactionType tồn tại trong database bằng cách reload
-            // Điều này đảm bảo foreign key constraint sẽ được thỏa mãn
-            var reactionTypeId = reactionType.Id;
-            var verifiedReactionType = await _context.ReactionTypes
-                .AsNoTracking()
-                .FirstOrDefaultAsync(rt => rt.Id == reactionTypeId);
-            
-            if (verifiedReactionType == null)
-            {
-                throw new Exception($"ReactionType với Id {reactionTypeId} không tồn tại trong database. Vui lòng thử lại sau.");
-            }
-
-            // Sử dụng trực tiếp _context để đảm bảo cùng context với ReactionType đã tạo
+            // Thêm Reaction mới
             var postReaction = new Postreaction
             {
                 UserId = currentUserId,
                 PostId = postId,
-                ReactionTypeId = verifiedReactionType.Id,
+                ReactionTypeId = (byte)reactionTypeId, // Ép kiểu rõ ràng sang byte
                 CreatedAt = DateTime.Now
             };
 
-            Postreaction createdReaction;
-            try
-            {
-                // Thêm trực tiếp vào context để đảm bảo cùng context với ReactionType
-                _context.Postreactions.Add(postReaction);
-                await _context.SaveChangesAsync();
-                createdReaction = postReaction;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // Xử lý lỗi database cụ thể
-                if (dbEx.InnerException != null)
-                {
-                    var innerMsg = dbEx.InnerException.Message.ToLower();
-                    if (innerMsg.Contains("foreign key") || innerMsg.Contains("fk__"))
-                    {
-                        // Thử reload lại ReactionType và Post để đảm bảo chúng tồn tại
-                        var retryReactionType = await _context.ReactionTypes
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(rt => rt.Id == reactionTypeId);
-                        var retryPost = await _context.Posts
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(p => p.Id == postId);
-                        
-                        if (retryReactionType == null)
-                        {
-                            throw new Exception($"ReactionType với Id {reactionTypeId} không tồn tại. Vui lòng liên hệ quản trị viên.");
-                        }
-                        if (retryPost == null)
-                        {
-                            throw new Exception($"Bài viết với Id {postId} không tồn tại.");
-                        }
-                        
-                        throw new Exception("Lỗi: Dữ liệu không hợp lệ. Vui lòng kiểm tra ReactionTypeId hoặc thông tin bài viết.");
-                    }
-                    if (innerMsg.Contains("unique") || innerMsg.Contains("duplicate") || innerMsg.Contains("uq__"))
-                    {
-                        throw new Exception("Bạn đã thích bài viết này rồi.");
-                    }
-                }
-                throw new Exception($"Không thể lưu lượt thích: {dbEx.Message}. Chi tiết: {dbEx.InnerException?.Message ?? "Không có thông tin chi tiết"}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi khi thích bài viết: {ex.Message}");
-            }
+            await _postReactionRepository.AddAsync(postReaction);
 
-            // Update reaction count in post
+            // Cập nhật reaction count trong post
             post.ReactionsCount++;
             await _postRepository.UpdateAsync(post);
 
-            var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
+            string reactionName = GetReactionName(reactionTypeId);
 
-            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người like)
-            if (post.AuthorId != currentUserId && currentUser != null)
+            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người reaction)
+            if (post.AuthorId != currentUserId)
             {
-                await GuiThongBaoReaction(post.AuthorId, "Có người thích bài viết của bạn",
-                    $"{currentUser.Name} đã thích bài viết: {post.Title}");
+                var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
+                await GuiThongBaoReaction(post.AuthorId, $"Bài viết có cảm xúc mới: {reactionName}",
+                    $"{currentUser.Name} đã bày tỏ cảm xúc '{reactionName}' cho bài viết: {post.Title}");
             }
-
-            return new PostLikeResponseDto
-            {
-                PostLikeId = createdReaction.Id.ToString(),
-                AccountId = currentUserId.ToString(),
-                FullName = currentUser?.Name ?? string.Empty,
-                CreatedDate = createdReaction.CreatedAt ?? DateTime.Now,
-                ReactionType = "like"
-            };
         }
 
-        public async Task<int> UnlikePost(int postReactionId)
+        public async Task UnlikePost(int postReactionId)
         {
             var postReaction = await _postReactionRepository.GetByIdAsync(postReactionId);
             if (postReaction == null)
             {
-                throw new Exception("Không tìm thấy lượt thích");
+                throw new Exception("Không tìm thấy lượt cảm xúc");
             }
 
             var currentUserId = _userContextService.GetCurrentUserId();
             if (postReaction.UserId != currentUserId)
             {
-                throw new UnauthorizedAccessException("Bạn không có quyền bỏ lượt thích này");
+                throw new UnauthorizedAccessException("Bạn không có quyền bỏ lượt cảm xúc này");
             }
 
             await _postReactionRepository.DeleteAsync(postReactionId);
@@ -211,12 +125,12 @@ namespace ESCE_SYSTEM.Services
                 post.ReactionsCount--;
                 await _postRepository.UpdateAsync(post);
             }
-
-            return postReaction.PostId;
         }
 
         public async Task<int> GetLikeCount(int postId)
         {
+            // Chức năng này sẽ đếm TỔNG số lượng reaction, không chỉ Like (ID=1)
+            // Nếu muốn chỉ đếm Like (ID=1) bạn cần sửa Repository
             return await _postReactionRepository.GetCountByPostIdAsync(postId);
         }
 
@@ -237,109 +151,18 @@ namespace ESCE_SYSTEM.Services
                 .SendAsync("ReceiveNotification", notificationDto);
         }
 
-        private async Task<ReactionType?> GetOrCreateReactionType(string name)
+        // Phương thức hỗ trợ để ánh xạ ReactionTypeId sang tên
+        private string GetReactionName(int typeId)
         {
-            // Ưu tiên tìm ReactionType với Id = 1 (cho "Like")
-            if (name.ToLower() == "like")
+            switch (typeId)
             {
-                var reactionTypeById = await _context.ReactionTypes
-                    .FirstOrDefaultAsync(rt => rt.Id == 1);
-                
-                if (reactionTypeById != null)
-                {
-                    // Nếu Id = 1 tồn tại nhưng tên khác, cập nhật tên
-                    if (reactionTypeById.Name.ToLower() != "like")
-                    {
-                        reactionTypeById.Name = "Like";
-                        await _context.SaveChangesAsync();
-                    }
-                    return reactionTypeById;
-                }
-            }
-
-            // Tìm ReactionType theo tên
-            var reactionType = await _context.ReactionTypes
-                .FirstOrDefaultAsync(rt => rt.Name.ToLower() == name.ToLower());
-
-            if (reactionType != null)
-            {
-                return reactionType;
-            }
-
-            // Nếu không tìm thấy, tạo mới
-            // Nếu là "Like", sử dụng Id = 1, nếu không thì tìm ID lớn nhất
-            byte newId;
-            if (name.ToLower() == "like")
-            {
-                newId = 1;
-            }
-            else
-            {
-                var maxId = await _context.ReactionTypes
-                    .Select(rt => (int?)rt.Id)
-                    .DefaultIfEmpty(0)
-                    .MaxAsync();
-                newId = (byte)(maxId + 1);
-            }
-
-            var newReactionType = new ReactionType
-            {
-                Id = newId,
-                Name = name
-            };
-
-            try
-            {
-                _context.ReactionTypes.Add(newReactionType);
-                await _context.SaveChangesAsync();
-                
-                // Reload từ database để đảm bảo entity tồn tại và có thể được sử dụng
-                // Detach entity hiện tại để tránh tracking conflicts
-                _context.Entry(newReactionType).State = EntityState.Detached;
-                
-                // Reload với tracking để có thể sử dụng trong foreign key
-                var savedReactionType = await _context.ReactionTypes
-                    .FirstOrDefaultAsync(rt => rt.Id == newId);
-                
-                if (savedReactionType == null)
-                {
-                    // Nếu không tìm thấy, thử reload lại với AsNoTracking
-                    savedReactionType = await _context.ReactionTypes
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(rt => rt.Id == newId);
-                }
-                
-                return savedReactionType ?? newReactionType;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // Nếu có lỗi duplicate (ID hoặc name), thử lấy lại từ database
-                var existing = await _context.ReactionTypes
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(rt => rt.Id == newId || rt.Name.ToLower() == name.ToLower());
-                
-                if (existing != null)
-                {
-                    return existing;
-                }
-                
-                // Log chi tiết lỗi để debug
-                var errorDetails = dbEx.InnerException?.Message ?? dbEx.Message;
-                throw new Exception($"Không thể tạo ReactionType '{name}' (Id: {newId}): {errorDetails}");
-            }
-            catch (Exception ex)
-            {
-                // Nếu có lỗi khác, thử lấy lại từ database
-                var existing = await _context.ReactionTypes
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(rt => rt.Id == newId || rt.Name.ToLower() == name.ToLower());
-                
-                if (existing != null)
-                {
-                    return existing;
-                }
-                
-                throw new Exception($"Không thể tạo ReactionType '{name}': {ex.Message}");
+                case 1: return "Like";
+                case 2: return "Love";
+                case 3: return "Haha";
+                case 4: return "Wow";
+                case 5: return "Sad";
+                case 6: return "Angry";
+                default: return "Cảm xúc";
             }
         }
     }

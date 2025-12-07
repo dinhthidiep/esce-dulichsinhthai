@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace ESCE_SYSTEM.Models
 {
@@ -15,7 +14,6 @@ namespace ESCE_SYSTEM.Models
         public string? Description { get; set; }
         public int Id { get; set; }
 
-        [JsonIgnore]
         public virtual ICollection<Account> Accounts { get; set; }
     }
 }

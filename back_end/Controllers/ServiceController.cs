@@ -1,270 +1,180 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ESCE_SYSTEM.Services;
+﻿// File: ServiceController.cs (Hoàn chỉnh)
+using ESCE_SYSTEM.DTOs.Service;
 using ESCE_SYSTEM.Models;
-using Microsoft.VisualBasic;
-using System.Data.Common;
+using ESCE_SYSTEM.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+
+
+// Đảm bảo có using này để tìm thấy các DTOs
+using ESCE_SYSTEM.DTOs.Service;
 
 namespace ESCE_SYSTEM.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-
+    [Route("api/service")] // Thay đổi để nhất quán với convention /user
     public class ServiceController : ControllerBase
     {
         private readonly IServiceService _service;
+
         public ServiceController(IServiceService service)
         {
             _service = service;
         }
 
+        // Endpoint cho tất cả user (Host, Customer, Admin)
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string status = null)
         {
-            var result = await _service.GetAllAsync();
-            return Ok(result);
+            try
+            {
+                // CS1501 Fix: Truyền tham số status (đã có tham số mặc định trong Interface)
+                var result = await _service.GetAllAsync(status);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetById(int id)
         {
-            var result = await _service.GetByIdAsync(id);
-            if (result == null) return NotFound();
-
-            return Ok(result);
+            try
+            {
+                var result = await _service.GetByIdAsync(id);
+                if (result == null) return NotFound("Service not found.");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Service service)
+        [Authorize(Roles = "Host")]
+        // Thay đổi kiểu trả về Action sang ServiceResponseDto
+        public async Task<IActionResult> Create([FromBody] CreateServiceDto serviceDto)
         {
-            var result = await _service.CreateAsync(service);
-            return Ok(result);
+            try
+            {
+                // Nhận ServiceResponseDto từ Service
+                var result = await _service.CreateAsync(serviceDto);
 
+                // Cần đảm bảo route có thể nhận ID từ result.Id
+                return CreatedAtAction(nameof(GetById), new { id = result.Id },
+                    new { message = "Service created successfully and is awaiting admin approval.", service = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update (int id, Service service)
+        [Authorize(Roles = "Host")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateServiceDto serviceDto)
         {
-            var result = await _service.UpdateAsync(id, service);
-            if (result == null ) return NotFound();
-            return Ok(result);
+            try
+            {
+                var result = await _service.UpdateAsync(id, serviceDto);
+                if (result == null) return NotFound("Service not found.");
+                return Ok(new { message = "Service updated successfully.", service = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Host,Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return Ok("Deleted");
+            try
+            {
+                var deleted = await _service.DeleteAsync(id);
+                if (!deleted) return NotFound("Service not found.");
+                return Ok("Deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-        
 
+        // --- ENDPOINTS QUẢN LÝ TRẠNG THÁI (CHO ADMIN) ---
 
+        [HttpPut("approve/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApproveService(int id)
+        {
+            try
+            {
+                await _service.ApproveServiceAsync(id);
+                return Ok("Service has been approved successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("reject/{id}")]
+        [Authorize(Roles = "Admin")]
+        // CS0246 Fix: Đảm bảo RejectServiceDto đã được định nghĩa và using
+        public async Task<IActionResult> RejectService(int id, [FromBody] RejectServiceDto dto)
+        {
+            try
+            {
+                if (dto == null || string.IsNullOrWhiteSpace(dto.Comment))
+                {
+                    return BadRequest("Reject reason (Comment) is required.");
+                }
+                await _service.RejectServiceAsync(id, dto.Comment);
+                return Ok("Service has been rejected.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("review/{id}")]
+        [Authorize(Roles = "Admin")]
+        // CS0246 Fix: Đảm bảo ReviewServiceDto đã được định nghĩa và using
+        public async Task<IActionResult> ReviewService(int id, [FromBody] ReviewServiceDto dto)
+        {
+            try
+            {
+                if (dto == null || string.IsNullOrWhiteSpace(dto.Comment))
+                {
+                    return BadRequest("Review comment is required.");
+                }
+                await _service.ReviewServiceAsync(id, dto.Comment);
+                return Ok("Additional information request has been sent to Host.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
-
 }
-
-
-
-//    [ApiController]
-//    [Route("api/[controller]")]
-//    public class ServiceController : ControllerBase
-//    {
-//        private readonly ApplicationDbContext _context;
-//        public ServiceController(ApplicationDbContext context)
-//        {
-//            _context = context;
-//        }
-
-//        [HttpGet]
-//        public IEnumerable<Service> GetAll()
-//        {
-//            return _context.Services;
-
-//        }
-
-//        [HttpGet("{id}")]
-//        public IActionResult GetById(int id)
-//        {
-//            var service = _context.Services.Find(id);
-//            if (service == null)
-//                return NotFound();
-//            return Ok(service);
-
-//        }
-
-//        [HttpPost]
-//        public IActionResult Create(Service service)
-//        {
-//            _context.Services.Add(service);
-//            _context.SaveChanges();
-//            return CreatedAtAction(nameof(GetById), new { id = service.Id }, service);
-
-//        }
-
-//        [HttpPut("{id}")]
-//        public IActionResult Update(int id, Service updatedService)
-//        {
-//            var service = _context.Services.Find(id);
-//            if (service == null)
-//                return NotFound();
-//            service.Name = updatedService.Name;
-//            service.Description = updatedService.Description;
-//            service.Price = updatedService.Price;
-//            service.Updated_At = updatedService.Updated_At;
-//            _context.SaveChanges();
-//            return Ok(service);
-//        }
-
-//        [HttpDelete("{id}")]
-
-//        public IActionResult Delete(int id)
-//        {
-//            var service = _context.Services.Find(id);
-//            if (service == null)
-//                return NotFound();
-//            _context.Remove(service);
-//            _context.SaveChanges();
-//            return NoContent();
-//        }
-
-//    }
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-namespace Learnasp.Controllers
-{
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ServiceController : ControllerBase
-    {
-        private static List<Service> services = new List<Service>()
-        {
-            new Service { Id = 1, Name="Cà phê sáng", Description ="Bạn có thể oder bất kỳ loại cà phê nào có trong menu của chúng tôi",
-                Price = 25000 },
-            new Service {Id = 2, Name ="Lẩu gà cho 2 người", Description ="Lẩu gà bạn có thể chọn vị và báo trước cho mình nhé (Lá é, lá giang, tây bắc", Price =300000}
-
-        };
-
-        [HttpGet]
-        public IEnumerable<Service> GetAll()
-        {
-            return services;
-        }
-
-        [HttpGet("{id}")]
-        public ActionResult<Service> GetById(int id)
-        {
-            var service = services.FirstOrDefault(s => s.Id == id);
-            if (service == null)
-                return NotFound();
-            return service;
-        }
-
-        [HttpPost]
-        public ActionResult<Service> Create(Service service)
-
-        {
-            service.Id = services.Count + 1;
-            services.Add(service);
-            return CreatedAtAction(nameof(GetAll), new { id = service.Id }, service);
-        }
-
-
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, Service updatedService)
-        {
-            var service = services.FirstOrDefault(s => s.Id == id);
-            if (service == null)
-                return NotFound(new { message = "Không tìm thấy sản phẩm " });
-            service.Name = updatedService.Name;
-            service.Description = updatedService.Description;
-            service.Price = updatedService.Price;
-            service.Updated_At = updatedService.Updated_At;
-            return Ok(service);
-
-
-        }
-
-        [HttpDelete("{id}") ]
-        public IActionResult Delete(int id)
-        {
-            var service = services.FirstOrDefault(s => s.Id == id);
-            if (service == null)
-                return NotFound(new { message = "Không tìm thấy dịch vụ" });
-           services.Remove(service);
-            //return Ok(new {message ="Bạn đã xóa dịch vụ thành công "});
-            return NoContent();
-
-        }
-
-    }
-
-
-
-}
-*/

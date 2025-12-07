@@ -1,6 +1,4 @@
-﻿using System;
-using ESCE_SYSTEM.DTOs.Message;
-using ESCE_SYSTEM.Services.MessageService;
+﻿using ESCE_SYSTEM.Services.MessageService;
 using ESCE_SYSTEM.Services.UserContextService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,48 +62,6 @@ namespace ESCE_SYSTEM.Controllers
             catch (Exception)
             {
                 return BadRequest("Lỗi khi lấy lịch sử chat.");
-            }
-        }
-
-        [HttpPost("messages")]
-        public async Task<ActionResult> CreateMessage([FromBody] CreateChatMessageDto request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var senderId = _userContextService.UserId;
-            if (string.IsNullOrWhiteSpace(senderId))
-            {
-                return Unauthorized();
-            }
-
-            if (request.ReceiverId == senderId)
-            {
-                return BadRequest("Không thể tạo đoạn chat với chính bạn.");
-            }
-
-            try
-            {
-                var message = await _messageService.AddNewChatMessage(senderId, request.ReceiverId, request.Content);
-                return Ok(new
-                {
-                    message.Id,
-                    message.SenderId,
-                    message.ReceiverId,
-                    message.Content,
-                    createdAt = message.CreatedAt?.ToString("o"),
-                    message.IsRead
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, "Không thể tạo đoạn chat mới. Vui lòng thử lại sau.");
             }
         }
     }

@@ -61,11 +61,24 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("GENDER");
 
+                    b.Property<bool>("IS_BANNED")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasColumnName("IS_BANNED")
+                        .HasDefaultValueSql("((0))");
+
                     b.Property<bool?>("IsActive")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasColumnName("IS_ACTIVE")
                         .HasDefaultValueSql("((1))");
+
+                    b.Property<int>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("LEVEL")
+                        .HasDefaultValueSql("((0))");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -73,18 +86,18 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("NAME");
 
+                    b.Property<string>("Password")
+                        .HasMaxLength(32)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(32)")
+                        .HasColumnName("PASSWORD");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(32)
+                        .HasMaxLength(500)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(32)")
+                        .HasColumnType("varchar(500)")
                         .HasColumnName("PASSWORD_HASH");
-
-                    b.Property<string>("PasswordSalt")
-                        .HasMaxLength(32)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(32)")
-                        .HasColumnName("PASSWORD_SALT");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(10)
@@ -95,6 +108,12 @@ namespace ESCE_SYSTEM.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("int")
                         .HasColumnName("ROLE_ID");
+
+                    b.Property<decimal>("TotalSpent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("TotalSpent")
+                        .HasDefaultValueSql("((0.00))");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -116,12 +135,14 @@ namespace ESCE_SYSTEM.Migrations
                 {
                     b.Property<int>("AgencyId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("AGENCY_ID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AgencyId"), 1L, 1);
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ACCOUNT_ID");
 
                     b.Property<string>("Companyname")
                         .IsRequired()
@@ -132,51 +153,54 @@ namespace ESCE_SYSTEM.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
+                        .HasColumnName("CREATED_AT")
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("EMAIL");
 
                     b.Property<string>("LicenseFile")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("LICENSE_FILE");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("PHONE");
 
                     b.Property<string>("RejectComment")
-                        .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REJECT_COMMENT");
 
                     b.Property<string>("ReviewComments")
-                        .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REVIEW_COMMENTS");
 
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
+                        .HasColumnName("STATUS")
                         .HasDefaultValueSql("('pending')");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
+                        .HasColumnName("UPDATED_AT")
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Website")
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("WEBSITE");
 
                     b.HasKey("AgencyId")
                         .HasName("PK__AGENCIE___95C546DB5FDFFD15");
@@ -195,34 +219,58 @@ namespace ESCE_SYSTEM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<DateTime?>("BookingDate")
+                    b.Property<DateTime>("BookingDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("BOOKING_DATE")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int>("ComboId")
-                        .HasColumnType("int")
-                        .HasColumnName("COMBO_ID");
+                    b.Property<string>("BookingNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("BOOKING_NUMBER");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("date")
-                        .HasColumnName("END_DATE");
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("COMPLETED_DATE");
+
+                    b.Property<DateTime?>("ConfirmedDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("CONFIRMED_DATE");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("CREATED_AT")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ITEM_TYPE");
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
                         .HasColumnName("NOTES");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int")
                         .HasColumnName("QUANTITY");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("date")
-                        .HasColumnName("START_DATE");
+                    b.Property<int?>("ServiceComboId")
+                        .HasColumnType("int")
+                        .HasColumnName("COMBO_ID");
+
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("int")
+                        .HasColumnName("SERVICE_ID");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
@@ -233,13 +281,25 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("TOTAL_AMOUNT");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("UNIT_PRICE");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("UPDATED_AT")
+                        .HasDefaultValueSql("(getdate())");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("USER_ID");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ComboId");
+                    b.HasIndex("ServiceComboId");
+
+                    b.HasIndex("ServiceId");
 
                     b.HasIndex("UserId");
 
@@ -304,9 +364,14 @@ namespace ESCE_SYSTEM.Migrations
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Image")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("IMAGE");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasColumnName("IS_DELETED")
+                        .HasDefaultValueSql("((0))");
 
                     b.Property<int?>("ParentCommentId")
                         .HasColumnType("int")
@@ -316,13 +381,59 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("int")
                         .HasColumnName("POST_ID");
 
+                    b.Property<int>("ReactionsCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("REACTIONS_COUNT")
+                        .HasDefaultValueSql("((0))");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("UPDATED_AT")
+                        .HasDefaultValueSql("(getdate())");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
+                    b.HasIndex(new[] { "AuthorId" }, "IX_Comments_AuthorID");
 
-                    b.HasIndex("PostId");
+                    b.HasIndex(new[] { "PostId" }, "IX_Comments_PostID");
 
                     b.ToTable("COMMENTS", (string)null);
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Commentreaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<byte>("ReactionTypeId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReactionTypeId");
+
+                    b.HasIndex(new[] { "CommentId" }, "IX_CommentReactions_CommentID");
+
+                    b.HasIndex(new[] { "UserId", "CommentId" }, "UQ__COMMENTR__ABB381B18C8E7178")
+                        .IsUnique();
+
+                    b.ToTable("COMMENTREACTIONS", (string)null);
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Coupon", b =>
@@ -359,6 +470,10 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("decimal(5,2)")
                         .HasColumnName("DISCOUNT_PERCENT");
 
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("EXPIRY_DATE");
+
                     b.Property<int>("HostId")
                         .HasColumnType("int")
                         .HasColumnName("HOST_ID");
@@ -369,7 +484,13 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnName("IS_ACTIVE")
                         .HasDefaultValueSql("((1))");
 
-                    b.Property<int>("ServicecomboId")
+                    b.Property<int>("RequiredLevel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("REQUIRED_LEVEL")
+                        .HasDefaultValueSql("((0))");
+
+                    b.Property<int?>("ServiceComboId")
                         .HasColumnType("int")
                         .HasColumnName("SERVICECOMBO_ID");
 
@@ -393,7 +514,7 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.HasIndex("HostId");
 
-                    b.HasIndex("ServicecomboId");
+                    b.HasIndex("ServiceComboId");
 
                     b.HasIndex(new[] { "Code" }, "UQ__COUPONS__AA1D4379B4900E43")
                         .IsUnique();
@@ -412,54 +533,58 @@ namespace ESCE_SYSTEM.Migrations
                     b.Property<string>("BusinessLicenseFile")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("BUSINESS_LICENSE_FILE");
 
                     b.Property<string>("BusinessName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("BUSINESS_NAME");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
+                        .HasColumnName("CREATED_AT")
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("EMAIL");
 
                     b.Property<int>("HostId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("int")
+                        .HasColumnName("HOST_ID");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("PHONE");
 
                     b.Property<string>("RejectComment")
-                        .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REJECT_COMMENT");
 
                     b.Property<string>("ReviewComments")
-                        .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REVIEW_COMMENTS");
 
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
+                        .HasColumnName("STATUS")
                         .HasDefaultValueSql("('pending')");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
+                        .HasColumnName("UPDATED_AT")
                         .HasDefaultValueSql("(getdate())");
 
                     b.HasKey("CertificateId")
@@ -507,6 +632,8 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ReceiverId");
+
                     b.HasIndex("SenderId");
 
                     b.ToTable("MESSAGES", (string)null);
@@ -516,30 +643,35 @@ namespace ESCE_SYSTEM.Migrations
                 {
                     b.Property<int>("NewsId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("NEWS_ID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NewsId"), 1L, 1);
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ACCOUNT_ID");
 
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
+                        .HasColumnName("CREATED_DATE")
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Image")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("IMAGE");
 
                     b.Property<string>("NewsTitle")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("NEWS_TITLE");
 
                     b.Property<string>("SocialMediaLink")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("SOCIAL_MEDIA_LINK");
 
                     b.HasKey("NewsId");
 
@@ -575,7 +707,9 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnName("MESSAGE");
 
                     b.Property<string>("Title")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("TITLE");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
@@ -625,7 +759,6 @@ namespace ESCE_SYSTEM.Migrations
                         .HasDefaultValueSql("((0))");
 
                     b.Property<int?>("UserId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("USER_ID");
 
@@ -649,7 +782,7 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("AMOUNT");
 
-                    b.Property<int>("BookingId")
+                    b.Property<int?>("BookingId")
                         .HasColumnType("int")
                         .HasColumnName("BOOKING_ID");
 
@@ -664,6 +797,10 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnName("PAYMENT_DATE")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PAYMENT_TYPE");
+
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
@@ -671,9 +808,28 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnName("STATUS")
                         .HasDefaultValueSql("('pending')");
 
+                    b.Property<string>("TransactionId")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("TRANSACTION_ID");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpgradeType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("UPGRADE_TYPE");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("USER_ID");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("PAYMENTS", (string)null);
                 });
@@ -691,6 +847,12 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("int")
                         .HasColumnName("AUTHOR_ID");
 
+                    b.Property<int>("CommentsCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("COMMENTS_COUNT")
+                        .HasDefaultValueSql("((0))");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -703,9 +865,44 @@ namespace ESCE_SYSTEM.Migrations
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("Image")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("IMAGE");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasColumnName("IS_DELETED")
+                        .HasDefaultValueSql("((0))");
+
+                    b.Property<int>("ReactionsCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("REACTIONS_COUNT")
+                        .HasDefaultValueSql("((0))");
+
+                    b.Property<string>("RejectComment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REJECT_COMMENT");
+
+                    b.Property<string>("ReviewComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("REVIEW_COMMENTS");
+
+                    b.Property<int>("SavesCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("SAVES_COUNT")
+                        .HasDefaultValueSql("((0))");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("STATUS")
+                        .HasDefaultValueSql("('Pending')");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -721,9 +918,72 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
+                    b.HasIndex(new[] { "AuthorId" }, "IX_Posts_AuthorID");
 
                     b.ToTable("POSTS", (string)null);
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Postreaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("ReactionTypeId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReactionTypeId");
+
+                    b.HasIndex(new[] { "PostId" }, "IX_PostReactions_PostID");
+
+                    b.HasIndex(new[] { "UserId", "PostId" }, "UQ__POSTREAC__8D29EA4C21AF919E")
+                        .IsUnique();
+
+                    b.ToTable("POSTREACTIONS", (string)null);
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Postsave", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SavedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex(new[] { "AccountId", "PostId" }, "UQ_PostSave_UserPost")
+                        .IsUnique();
+
+                    b.ToTable("POSTSAVES", (string)null);
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Reaction", b =>
@@ -766,6 +1026,25 @@ namespace ESCE_SYSTEM.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("REACTIONS", (string)null);
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ReactionType", b =>
+                {
+                    b.Property<byte>("Id")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("ID");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "Name" }, "UQ__REACTION__737584F61492C36B")
+                        .IsUnique();
+
+                    b.ToTable("REACTION_TYPES", (string)null);
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.RequestSupport", b =>
@@ -839,38 +1118,42 @@ namespace ESCE_SYSTEM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("AuthorId")
+                    b.Property<int>("BookingId")
                         .HasColumnType("int")
-                        .HasColumnName("AUTHOR_ID");
+                        .HasColumnName("BOOKING_ID");
 
-                    b.Property<int>("ComboId")
-                        .HasColumnType("int")
-                        .HasColumnName("COMBO_ID");
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("COMMENT");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("CONTENT");
-
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
-                        .HasColumnName("CREATED_AT")
+                        .HasColumnName("CREATED_DATE")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int?>("ParentReviewId")
-                        .HasColumnType("int")
-                        .HasColumnName("PARENT_REVIEW_ID");
-
-                    b.Property<int?>("Rating")
+                    b.Property<int>("Rating")
                         .HasColumnType("int")
                         .HasColumnName("RATING");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("STATUS")
+                        .HasDefaultValueSql("('pending')");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("USER_ID");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
+                    b.HasIndex("BookingId");
 
-                    b.HasIndex("ComboId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("REVIEWS", (string)null);
                 });
@@ -927,6 +1210,9 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("int")
                         .HasColumnName("HOST_ID");
 
+                    b.Property<string>("Images")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -936,6 +1222,15 @@ namespace ESCE_SYSTEM.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("PRICE");
+
+                    b.Property<string>("RejectComment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReviewComments")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -950,7 +1245,7 @@ namespace ESCE_SYSTEM.Migrations
                     b.ToTable("SERVICE", (string)null);
                 });
 
-            modelBuilder.Entity("ESCE_SYSTEM.Models.Servicecombo", b =>
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ServiceCombo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -974,7 +1269,7 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnType("nvarchar(1000)")
                         .HasColumnName("CANCELLATION_POLICY");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("CREATED_AT")
@@ -1005,13 +1300,14 @@ namespace ESCE_SYSTEM.Migrations
                         .HasColumnName("PRICE");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("STATUS")
                         .HasDefaultValueSql("('open')");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("UPDATED_AT")
@@ -1024,7 +1320,7 @@ namespace ESCE_SYSTEM.Migrations
                     b.ToTable("SERVICECOMBO", (string)null);
                 });
 
-            modelBuilder.Entity("ESCE_SYSTEM.Models.ServicecomboDetail", b =>
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ServiceComboDetail", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1033,25 +1329,25 @@ namespace ESCE_SYSTEM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int?>("Quantity")
+                    b.Property<int>("Quantity")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("QUANTITY")
                         .HasDefaultValueSql("((1))");
 
+                    b.Property<int>("ServiceComboId")
+                        .HasColumnType("int")
+                        .HasColumnName("SERVICECOMBO_ID");
+
                     b.Property<int>("ServiceId")
                         .HasColumnType("int")
                         .HasColumnName("SERVICE_ID");
 
-                    b.Property<int>("ServicecomboId")
-                        .HasColumnType("int")
-                        .HasColumnName("SERVICECOMBO_ID");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ServiceId");
+                    b.HasIndex("ServiceComboId");
 
-                    b.HasIndex("ServicecomboId");
+                    b.HasIndex("ServiceId");
 
                     b.ToTable("SERVICECOMBO_DETAIL", (string)null);
                 });
@@ -1099,13 +1395,57 @@ namespace ESCE_SYSTEM.Migrations
                     b.ToTable("SUPPORT_RESPONSES", (string)null);
                 });
 
+            modelBuilder.Entity("ESCE_SYSTEM.Models.SystemLog", b =>
+                {
+                    b.Property<int>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("LOG_ID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogId"), 1L, 1);
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("CREATED_AT")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("LogLevel")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("LOG_LEVEL");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("MESSAGE");
+
+                    b.Property<string>("Module")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("MODULE");
+
+                    b.Property<string>("StackTrace")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("STACK_TRACE");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("USER_ID");
+
+                    b.HasKey("LogId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SYSTEM_LOGS", (string)null);
+                });
+
             modelBuilder.Entity("ESCE_SYSTEM.Models.Account", b =>
                 {
                     b.HasOne("ESCE_SYSTEM.Models.Role", "Role")
                         .WithMany("Accounts")
                         .HasForeignKey("RoleId")
                         .IsRequired()
-                        .HasConstraintName("FK__ACCOUNTS__ROLE_I__2B3F6F97");
+                        .HasConstraintName("FK_ACCOUNTS_ROLES");
 
                     b.Navigation("Role");
                 });
@@ -1123,11 +1463,15 @@ namespace ESCE_SYSTEM.Migrations
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Booking", b =>
                 {
-                    b.HasOne("ESCE_SYSTEM.Models.Servicecombo", "Combo")
+                    b.HasOne("ESCE_SYSTEM.Models.ServiceCombo", "ServiceCombo")
                         .WithMany("Bookings")
-                        .HasForeignKey("ComboId")
-                        .IsRequired()
+                        .HasForeignKey("ServiceComboId")
                         .HasConstraintName("FK__BOOKINGS__COMBO___59FA5E80");
+
+                    b.HasOne("ESCE_SYSTEM.Models.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .HasConstraintName("FK__BOOKINGS__SERVIC__59FA5E81");
 
                     b.HasOne("ESCE_SYSTEM.Models.Account", "User")
                         .WithMany("Bookings")
@@ -1135,7 +1479,9 @@ namespace ESCE_SYSTEM.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__BOOKINGS__USER_I__59063A47");
 
-                    b.Navigation("Combo");
+                    b.Navigation("Service");
+
+                    b.Navigation("ServiceCombo");
 
                     b.Navigation("User");
                 });
@@ -1178,6 +1524,34 @@ namespace ESCE_SYSTEM.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Commentreaction", b =>
+                {
+                    b.HasOne("ESCE_SYSTEM.Models.Comment", "Comment")
+                        .WithMany("Commentreactions")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK__COMMENTRE__Comme__74794A92");
+
+                    b.HasOne("ESCE_SYSTEM.Models.ReactionType", "ReactionType")
+                        .WithMany("Commentreactions")
+                        .HasForeignKey("ReactionTypeId")
+                        .IsRequired()
+                        .HasConstraintName("FK__COMMENTRE__React__756D6ECB");
+
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "User")
+                        .WithMany("Commentreactions")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK__COMMENTRE__UserI__73852659");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("ReactionType");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ESCE_SYSTEM.Models.Coupon", b =>
                 {
                     b.HasOne("ESCE_SYSTEM.Models.Account", "Host")
@@ -1186,15 +1560,14 @@ namespace ESCE_SYSTEM.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__COUPONS__HOST_ID__52593CB8");
 
-                    b.HasOne("ESCE_SYSTEM.Models.Servicecombo", "Servicecombo")
+                    b.HasOne("ESCE_SYSTEM.Models.ServiceCombo", "ServiceCombo")
                         .WithMany("Coupons")
-                        .HasForeignKey("ServicecomboId")
-                        .IsRequired()
+                        .HasForeignKey("ServiceComboId")
                         .HasConstraintName("FK__COUPONS__SERVICE__534D60F1");
 
                     b.Navigation("Host");
 
-                    b.Navigation("Servicecombo");
+                    b.Navigation("ServiceCombo");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.HostCertificate", b =>
@@ -1210,11 +1583,19 @@ namespace ESCE_SYSTEM.Migrations
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Message", b =>
                 {
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "Receiver")
+                        .WithMany("MessagesReceived")
+                        .HasForeignKey("ReceiverId")
+                        .IsRequired()
+                        .HasConstraintName("FK__MESSAGES__RECEIV__02084FDB");
+
                     b.HasOne("ESCE_SYSTEM.Models.Account", "Sender")
                         .WithMany("Messages")
                         .HasForeignKey("SenderId")
                         .IsRequired()
                         .HasConstraintName("FK__MESSAGES__SENDER__02084FDA");
+
+                    b.Navigation("Receiver");
 
                     b.Navigation("Sender");
                 });
@@ -1246,7 +1627,6 @@ namespace ESCE_SYSTEM.Migrations
                     b.HasOne("ESCE_SYSTEM.Models.Account", "User")
                         .WithMany("Otps")
                         .HasForeignKey("UserId")
-                        .IsRequired()
                         .HasConstraintName("FK__OTP__USER_ID__300424B4");
 
                     b.Navigation("User");
@@ -1257,10 +1637,16 @@ namespace ESCE_SYSTEM.Migrations
                     b.HasOne("ESCE_SYSTEM.Models.Booking", "Booking")
                         .WithMany("Payments")
                         .HasForeignKey("BookingId")
-                        .IsRequired()
                         .HasConstraintName("FK__PAYMENTS__BOOKIN__6477ECF3");
 
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "User")
+                        .WithMany("Payments")
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("FK_PAYMENTS_ACCOUNTS_UserId");
+
                     b.Navigation("Booking");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Post", b =>
@@ -1272,6 +1658,54 @@ namespace ESCE_SYSTEM.Migrations
                         .HasConstraintName("FK__POSTS__AUTHOR_ID__73BA3083");
 
                     b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Postreaction", b =>
+                {
+                    b.HasOne("ESCE_SYSTEM.Models.Post", "Post")
+                        .WithMany("Postreactions")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK__POSTREACT__PostI__6DCC4D03");
+
+                    b.HasOne("ESCE_SYSTEM.Models.ReactionType", "ReactionType")
+                        .WithMany("Postreactions")
+                        .HasForeignKey("ReactionTypeId")
+                        .IsRequired()
+                        .HasConstraintName("FK__POSTREACT__React__6EC0713C");
+
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "User")
+                        .WithMany("Postreactions")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK__POSTREACT__UserI__6CD828CA");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("ReactionType");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Postsave", b =>
+                {
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "Account")
+                        .WithMany("Postsaves")
+                        .HasForeignKey("AccountId")
+                        .IsRequired()
+                        .HasConstraintName("FK__POSTSAVES__Accou__671F4F74");
+
+                    b.HasOne("ESCE_SYSTEM.Models.Post", "Post")
+                        .WithMany("Postsaves")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK__POSTSAVES__PostI__681373AD");
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Reaction", b =>
@@ -1287,7 +1721,7 @@ namespace ESCE_SYSTEM.Migrations
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.RequestSupport", b =>
                 {
-                    b.HasOne("ESCE_SYSTEM.Models.Servicecombo", "Combo")
+                    b.HasOne("ESCE_SYSTEM.Models.ServiceCombo", "ServiceCombo")
                         .WithMany("RequestSupports")
                         .HasForeignKey("ComboId")
                         .HasConstraintName("FK__REQUEST_S__COMBO__09A971A2");
@@ -1298,28 +1732,28 @@ namespace ESCE_SYSTEM.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__REQUEST_S__USER___08B54D69");
 
-                    b.Navigation("Combo");
+                    b.Navigation("ServiceCombo");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Review", b =>
                 {
-                    b.HasOne("ESCE_SYSTEM.Models.Account", "Author")
+                    b.HasOne("ESCE_SYSTEM.Models.Booking", "Booking")
                         .WithMany("Reviews")
-                        .HasForeignKey("AuthorId")
+                        .HasForeignKey("BookingId")
                         .IsRequired()
-                        .HasConstraintName("FK__REVIEWS__AUTHOR___693CA210");
+                        .HasConstraintName("FK__REVIEWS__BOOKING_I__68487DD7");
 
-                    b.HasOne("ESCE_SYSTEM.Models.Servicecombo", "Combo")
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "User")
                         .WithMany("Reviews")
-                        .HasForeignKey("ComboId")
+                        .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__REVIEWS__COMBO_I__68487DD7");
+                        .HasConstraintName("FK__REVIEWS__USER_ID__693CA210");
 
-                    b.Navigation("Author");
+                    b.Navigation("Booking");
 
-                    b.Navigation("Combo");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Service", b =>
@@ -1333,10 +1767,10 @@ namespace ESCE_SYSTEM.Migrations
                     b.Navigation("Host");
                 });
 
-            modelBuilder.Entity("ESCE_SYSTEM.Models.Servicecombo", b =>
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ServiceCombo", b =>
                 {
                     b.HasOne("ESCE_SYSTEM.Models.Account", "Host")
-                        .WithMany("Servicecombos")
+                        .WithMany("ServiceCombos")
                         .HasForeignKey("HostId")
                         .IsRequired()
                         .HasConstraintName("FK__SERVICECO__HOST___45F365D3");
@@ -1344,23 +1778,23 @@ namespace ESCE_SYSTEM.Migrations
                     b.Navigation("Host");
                 });
 
-            modelBuilder.Entity("ESCE_SYSTEM.Models.ServicecomboDetail", b =>
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ServiceComboDetail", b =>
                 {
+                    b.HasOne("ESCE_SYSTEM.Models.ServiceCombo", "ServiceCombo")
+                        .WithMany("ServiceComboDetails")
+                        .HasForeignKey("ServiceComboId")
+                        .IsRequired()
+                        .HasConstraintName("FK__SERVICECO__SERVI__49C3F6B7");
+
                     b.HasOne("ESCE_SYSTEM.Models.Service", "Service")
-                        .WithMany("ServicecomboDetails")
+                        .WithMany("ServiceComboDetails")
                         .HasForeignKey("ServiceId")
                         .IsRequired()
                         .HasConstraintName("FK__SERVICECO__SERVI__4AB81AF0");
 
-                    b.HasOne("ESCE_SYSTEM.Models.Servicecombo", "Servicecombo")
-                        .WithMany("ServicecomboDetails")
-                        .HasForeignKey("ServicecomboId")
-                        .IsRequired()
-                        .HasConstraintName("FK__SERVICECO__SERVI__49C3F6B7");
-
                     b.Navigation("Service");
 
-                    b.Navigation("Servicecombo");
+                    b.Navigation("ServiceCombo");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.SupportResponse", b =>
@@ -1382,11 +1816,23 @@ namespace ESCE_SYSTEM.Migrations
                     b.Navigation("Support");
                 });
 
+            modelBuilder.Entity("ESCE_SYSTEM.Models.SystemLog", b =>
+                {
+                    b.HasOne("ESCE_SYSTEM.Models.Account", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("FK_SYSTEM_LOGS_ACCOUNTS");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ESCE_SYSTEM.Models.Account", b =>
                 {
                     b.Navigation("AgencieCertificates");
 
                     b.Navigation("Bookings");
+
+                    b.Navigation("Commentreactions");
 
                     b.Navigation("Comments");
 
@@ -1396,13 +1842,21 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.Navigation("Messages");
 
+                    b.Navigation("MessagesReceived");
+
                     b.Navigation("News");
 
                     b.Navigation("Notifications");
 
                     b.Navigation("Otps");
 
+                    b.Navigation("Payments");
+
+                    b.Navigation("Postreactions");
+
                     b.Navigation("Posts");
+
+                    b.Navigation("Postsaves");
 
                     b.Navigation("Reactions");
 
@@ -1410,7 +1864,7 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.Navigation("Reviews");
 
-                    b.Navigation("Servicecombos");
+                    b.Navigation("ServiceCombos");
 
                     b.Navigation("Services");
 
@@ -1422,6 +1876,13 @@ namespace ESCE_SYSTEM.Migrations
                     b.Navigation("BookingCoupons");
 
                     b.Navigation("Payments");
+
+                    b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.Comment", b =>
+                {
+                    b.Navigation("Commentreactions");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Coupon", b =>
@@ -1432,6 +1893,17 @@ namespace ESCE_SYSTEM.Migrations
             modelBuilder.Entity("ESCE_SYSTEM.Models.Post", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Postreactions");
+
+                    b.Navigation("Postsaves");
+                });
+
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ReactionType", b =>
+                {
+                    b.Navigation("Commentreactions");
+
+                    b.Navigation("Postreactions");
                 });
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.RequestSupport", b =>
@@ -1446,10 +1918,10 @@ namespace ESCE_SYSTEM.Migrations
 
             modelBuilder.Entity("ESCE_SYSTEM.Models.Service", b =>
                 {
-                    b.Navigation("ServicecomboDetails");
+                    b.Navigation("ServiceComboDetails");
                 });
 
-            modelBuilder.Entity("ESCE_SYSTEM.Models.Servicecombo", b =>
+            modelBuilder.Entity("ESCE_SYSTEM.Models.ServiceCombo", b =>
                 {
                     b.Navigation("Bookings");
 
@@ -1457,9 +1929,7 @@ namespace ESCE_SYSTEM.Migrations
 
                     b.Navigation("RequestSupports");
 
-                    b.Navigation("Reviews");
-
-                    b.Navigation("ServicecomboDetails");
+                    b.Navigation("ServiceComboDetails");
                 });
 #pragma warning restore 612, 618
         }

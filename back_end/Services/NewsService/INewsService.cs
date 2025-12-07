@@ -1,4 +1,4 @@
-using ESCE_SYSTEM.DTOs.News;
+﻿using ESCE_SYSTEM.DTOs.News;
 
 namespace ESCE_SYSTEM.Services.NewsService
 {
@@ -12,4 +12,3 @@ namespace ESCE_SYSTEM.Services.NewsService
         Task<(bool liked, int likesCount)> ToggleLikeAsync(int newsId, int userId);
     }
 }
-

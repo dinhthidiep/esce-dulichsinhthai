@@ -1,6 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using ESCE_SYSTEM.Services;
+﻿// File: ESCE_SYSTEM.Controllers/ServiceComboDetailController.cs
+
+using ESCE_SYSTEM.DTOs.ServiceComboDetail;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Services;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -46,16 +50,19 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ServiceComboDetail serviceComboDetail)
+        public async Task<IActionResult> Create(CreateServiceComboDetailDto detailDto)
         {
-            var result = await _service.CreateAsync(serviceComboDetail);
+            // Sửa lỗi: Controller truyền DTO vào Service
+            var result = await _service.CreateAsync(detailDto);
+            // Có thể dùng CreatedAtAction nếu bạn muốn trả về mã 201 Created
             return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ServiceComboDetail serviceComboDetail)
+        public async Task<IActionResult> Update(int id, UpdateServiceComboDetailDto detailDto)
         {
-            var result = await _service.UpdateAsync(id, serviceComboDetail);
+            // Sửa lỗi: Controller truyền ID và DTO vào Service
+            var result = await _service.UpdateAsync(id, detailDto);
             if (result == null) return NotFound();
             return Ok(result);
         }
@@ -77,6 +84,3 @@ namespace ESCE_SYSTEM.Controllers
         }
     }
 }
-
-
-

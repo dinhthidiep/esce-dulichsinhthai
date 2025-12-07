@@ -19,7 +19,6 @@
         public string? Address { get; set; }
 
         public int RoleId { get; set; }
-        public string RoleName { get; set; } = null!;
 
         public bool? IsActive { get; set; }
 

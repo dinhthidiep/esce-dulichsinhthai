@@ -17,49 +17,29 @@ namespace ESCE_SYSTEM.Controllers
             _postReactionService = postReactionService;
         }
 
-        [HttpPost("like/{postId}")]
+        [HttpPost("{postId}/{reactionTypeId}")]
         [Authorize(Roles = "Admin,Host,Agency,Customer")]
-        public async Task<IActionResult> LikePost(int postId)
+        public async Task<IActionResult> ReactToPost(int postId, byte reactionTypeId)
         {
             try
             {
-                // Sử dụng ToggleLikePost để tự động like/unlike
-                var toggleResult = await _postReactionService.ToggleLikePost(postId);
-                
-                return Ok(new
-                {
-                    isLiked = toggleResult.IsLiked,
-                    reaction = toggleResult.IsLiked ? toggleResult.Reaction : null
-                });
+                await _postReactionService.ReactToPost(postId, reactionTypeId);
+
+                // Trả về thông báo cụ thể dựa trên loại reaction (Giả định mapping ID)
+                string reactionName = GetReactionName(reactionTypeId);
+                return Ok(new { message = $"Đã bày tỏ cảm xúc '{reactionName}' cho bài viết" });
             }
             catch (Exception ex)
             {
-                // Log chi tiết lỗi để debug
-                var errorMessage = ex.Message;
-                if (ex.InnerException != null)
-                {
-                    errorMessage += $" | Chi tiết: {ex.InnerException.Message}";
-                }
-                
-                // Kiểm tra các lỗi database phổ biến
-                if (ex.Message.Contains("foreign key") || ex.Message.Contains("FOREIGN KEY"))
-                {
-                    errorMessage = "Lỗi: Dữ liệu không hợp lệ. Vui lòng thử lại sau.";
-                }
-                else if (ex.Message.Contains("unique") || ex.Message.Contains("UNIQUE") || ex.Message.Contains("duplicate"))
-                {
-                    errorMessage = "Bạn đã thích bài viết này rồi.";
-                }
-                else if (ex.Message.Contains("saving the entity changes"))
-                {
-                    errorMessage = "Không thể lưu thay đổi. Vui lòng kiểm tra dữ liệu và thử lại.";
-                    if (ex.InnerException != null)
-                    {
-                        errorMessage += $" Chi tiết: {ex.InnerException.Message}";
-                    }
-                }
-                
-                return BadRequest(new { message = errorMessage });
+                // Thay đổi để lấy Inner Exception
+                var innerExceptionMessage = ex.InnerException != null
+                                           ? ex.InnerException.Message
+                                           : ex.Message;
+
+                // Log lỗi chi tiết trên server
+                Console.WriteLine($"Lỗi khi ReactToPost: {innerExceptionMessage}");
+
+                return BadRequest(new { message = innerExceptionMessage });
             }
         }
 
@@ -69,8 +49,8 @@ namespace ESCE_SYSTEM.Controllers
         {
             try
             {
-                var postId = await _postReactionService.UnlikePost(postReactionId);
-                return Ok(new { postReactionId, postId });
+                await _postReactionService.UnlikePost(postReactionId);
+                return Ok(new { message = "Đã bỏ cảm xúc khỏi bài viết" });
             }
             catch (UnauthorizedAccessException)
             {
@@ -94,6 +74,21 @@ namespace ESCE_SYSTEM.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Phương thức hỗ trợ để ánh xạ ReactionTypeId sang tên
+        private string GetReactionName(int typeId)
+        {
+            switch (typeId)
+            {
+                case 1: return "Like";
+                case 2: return "Love";
+                case 3: return "Haha";
+                case 4: return "Wow";
+                case 5: return "Sad";
+                case 6: return "Angry";
+                default: return "Cảm xúc không xác định";
             }
         }
     }

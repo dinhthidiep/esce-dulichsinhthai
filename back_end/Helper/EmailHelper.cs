@@ -1,9 +1,13 @@
-﻿using ESCE_SYSTEM.Options;
+﻿// File: EmailHelper.cs (Đã dọn dẹp và hoàn chỉnh)
+
+using ESCE_SYSTEM.Options;
 using Microsoft.Extensions.Options;
 using MailKit.Net.Smtp;
 using MimeKit;
-using ESCE_SYSTEM.Options;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ESCE_SYSTEM.Helper;
 

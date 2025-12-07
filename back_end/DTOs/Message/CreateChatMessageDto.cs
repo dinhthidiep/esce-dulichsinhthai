@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ESCE_SYSTEM.DTOs.Message
 {
@@ -12,4 +12,3 @@ namespace ESCE_SYSTEM.DTOs.Message
         public string Content { get; set; } = null!;
     }
 }
-

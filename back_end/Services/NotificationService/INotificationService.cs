@@ -16,8 +16,5 @@ namespace ESCE_SYSTEM.Services.NotificationService
 
         // Nhận int notificationId (sử dụng logic IsRead/Delete trong Service)
         Task Delete(int notificationId);
-
-        // Gửi notification đến user (Admin only)
-        Task SendNotificationToUserAsync(SendNotificationDto sendDto);
     }
 }

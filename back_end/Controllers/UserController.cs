@@ -1,10 +1,13 @@
-﻿using ESCE_SYSTEM.DTOs.BanUnbanUser;
+﻿// File: UserController.cs (Đã sửa hoàn chỉnh)
+using ESCE_SYSTEM.DTOs.BanUnbanUser;
 using ESCE_SYSTEM.DTOs.Certificates;
 using ESCE_SYSTEM.Services.UserService;
 using ESCE_SYSTEM.DTOs.Users;
 using ESCE_SYSTEM.Services.UserContextService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using System;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -140,37 +143,9 @@ namespace ESCE_SYSTEM.Controllers
         }
         #endregion
 
-        [HttpGet("my-agency-request")]
-        [Authorize]
-        public async Task<IActionResult> GetMyAgencyRequest()
-        {
-            var userIdString = _userContextService.UserId;
-            if (!int.TryParse(userIdString, out int userId))
-            {
-                return Unauthorized("Invalid user information");
-            }
-
-            var certificate = await _userService.GetMyAgencyCertificateAsync(userId);
-            return Ok(certificate);
-        }
-
-        [HttpGet("my-host-request")]
-        [Authorize]
-        public async Task<IActionResult> GetMyHostRequest()
-        {
-            var userIdString = _userContextService.UserId;
-            if (!int.TryParse(userIdString, out int userId))
-            {
-                return Unauthorized("Invalid user information");
-            }
-
-            var certificate = await _userService.GetMyHostCertificateAsync(userId);
-            return Ok(certificate);
-        }
-
         #region User Management Endpoints
         [HttpGet("users")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -184,71 +159,15 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}")] // Đổi lại thành {id} chuẩn RESTful. Route cũ [HttpGet("{getuserbyid}")] không chuẩn.
         [Authorize]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
-                var user = await _userService.GetAccountByIdAsync(id);
+                // Gọi phương thức DTO để tránh lỗi chu kỳ
+                var user = await _userService.GetUserDtoByIdAsync(id);
                 return Ok(user);
-            }
-            catch (Exception exception)
-            {
-                return BadRequest(exception.Message);
-            }
-        }
-
-        [HttpPost("create")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserAdminDto dto)
-        {
-            try
-            {
-                var user = await _userService.CreateUserByAdminAsync(dto);
-                return Ok(new { message = "User created successfully", user });
-            }
-            catch (Exception exception)
-            {
-                return BadRequest(exception.Message);
-            }
-        }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateUserByAdmin(int id, [FromBody] UpdateUserAdminDto dto)
-        {
-            try
-            {
-                if (dto == null)
-                {
-                    return BadRequest("Payload is required.");
-                }
-
-                dto.AccountId = id;
-                var updatedUser = await _userService.UpdateUserByAdminAsync(dto);
-                return Ok(new { message = "User updated successfully", user = updatedUser });
-            }
-            catch (Exception exception)
-            {
-                return BadRequest(exception.Message);
-            }
-        }
-
-        [HttpGet("profile")]
-        [Authorize]
-        public async Task<IActionResult> GetProfile()
-        {
-            try
-            {
-                var userIdString = _userContextService.UserId;
-                if (!int.TryParse(userIdString, out int userId))
-                {
-                    return Unauthorized("Invalid user information");
-                }
-
-                var profile = await _userService.GetProfileAsync(userId);
-                return Ok(profile);
             }
             catch (Exception exception)
             {
@@ -300,21 +219,6 @@ namespace ESCE_SYSTEM.Controllers
             {
                 await _userService.UnbanAccount(unbanAccountDto.AccountId);
                 return Ok("Account has been unbanned.");
-            }
-            catch (Exception exception)
-            {
-                return BadRequest(exception.Message);
-            }
-        }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            try
-            {
-                await _userService.DeleteAccount(id.ToString());
-                return Ok("Account has been deleted successfully.");
             }
             catch (Exception exception)
             {
@@ -395,5 +299,32 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
         #endregion
+
+
+        [HttpPut("update-spent/{userId}")]
+        [Authorize(Roles = "Admin")] // Giả định chỉ Admin hoặc System có thể gọi trực tiếp
+        public async Task<IActionResult> UpdateTotalSpent(int userId, [FromQuery] decimal amountSpent)
+        {
+            try
+            {
+                if (amountSpent <= 0)
+                {
+                    return BadRequest(new { message = "Amount spent must be greater than zero." });
+                }
+
+                // Gọi Service để thực hiện logic cập nhật
+                await _userService.UpdateTotalSpentAndLevelAsync(userId, amountSpent);
+
+                return Ok($"Total spent and level for user {userId} updated successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, new { message = "Error updating user spent data", error = exception.Message });
+            }
+        }
     }
 }

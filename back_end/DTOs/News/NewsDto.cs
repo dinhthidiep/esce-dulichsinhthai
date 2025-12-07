@@ -1,4 +1,4 @@
-namespace ESCE_SYSTEM.DTOs.News
+﻿namespace ESCE_SYSTEM.DTOs.News
 {
     public class NewsDto
     {
@@ -17,4 +17,3 @@ namespace ESCE_SYSTEM.DTOs.News
         public bool IsLiked { get; set; }
     }
 }
-

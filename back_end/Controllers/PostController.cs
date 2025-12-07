@@ -1,7 +1,6 @@
 ﻿using ESCE_SYSTEM.DTOs;
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Services;
-using ESCE_SYSTEM.Services.UserContextService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -15,22 +14,10 @@ namespace ESCE_SYSTEM.Controllers
     public class PostController : ControllerBase
     {
         private readonly IPostService _postService;
-        private readonly IUserContextService _userContextService;
 
-        public PostController(IPostService postService, IUserContextService userContextService)
+        public PostController(IPostService postService)
         {
             _postService = postService;
-            _userContextService = userContextService;
-        }
-        
-        private int? TryGetCurrentUserId()
-        {
-            var userIdString = _userContextService.UserId;
-            if (int.TryParse(userIdString, out var userId))
-            {
-                return userId;
-            }
-            return null;
         }
 
         [HttpPost("CreatePost")]
@@ -54,8 +41,7 @@ namespace ESCE_SYSTEM.Controllers
         {
             try
             {
-                var currentUserId = TryGetCurrentUserId();
-                var posts = await _postService.GetAllPosts(currentUserId);
+                var posts = await _postService.GetAllPosts();
                 return Ok(posts);
             }
             catch (Exception ex)

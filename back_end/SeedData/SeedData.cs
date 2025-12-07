@@ -24,7 +24,7 @@ namespace ESCE_SYSTEM.SeedData
             {
                 await roleRepository.AddAsync(new Role
                 {
-                    Id = 1,
+                    /*Id = 1,*/
                     Name = "Admin",
                     Description = "Quản trị viên hệ thống"
                 });
@@ -36,7 +36,7 @@ namespace ESCE_SYSTEM.SeedData
             {
                 await roleRepository.AddAsync(new Role
                 {
-                    Id = 2,
+                   /* Id = 2,*/
                     Name = "Host",
                     Description = "Chủ farm/Người tổ chức tour" // Role 2
                 });
@@ -48,7 +48,7 @@ namespace ESCE_SYSTEM.SeedData
             {
                 await roleRepository.AddAsync(new Role
                 {
-                    Id = 3,
+                    /*Id = 3,*/
                     Name = "Agency", // Role 3
                     Description = "Người dùng đặt tour cho nhiều người/Công ty"
                 });
@@ -60,7 +60,7 @@ namespace ESCE_SYSTEM.SeedData
             {
                 await roleRepository.AddAsync(new Role
                 {
-                    Id = 4,
+                   /* Id = 4,*/
                     Name = "Customer",
                     Description = "Người dùng tham gia tour cá nhân"
                 });
@@ -74,7 +74,7 @@ namespace ESCE_SYSTEM.SeedData
                 var newAdmin = new RegisterUserDto
                 {
                     UserEmail = "admin@gmail.com",
-                    Password = "123",
+                    Password = "123456",
                     FullName = "System Admin",
                     Phone = "123456789"
 

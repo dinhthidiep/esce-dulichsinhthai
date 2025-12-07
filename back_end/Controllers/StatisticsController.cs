@@ -1,4 +1,4 @@
-using ESCE_SYSTEM.DTOs.Statistics;
+﻿using ESCE_SYSTEM.DTOs.Statistics;
 using ESCE_SYSTEM.Services.StatisticsService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -221,4 +221,3 @@ namespace ESCE_SYSTEM.Controllers
         }
     }
 }
-

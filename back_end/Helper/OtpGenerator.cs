@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿// File: OTPGenerator.cs (Hoàn chỉnh)
+
+using System.Security.Cryptography;
 
 namespace ESCE_SYSTEM.Helper;
 
@@ -20,4 +22,3 @@ public class OTPGenerator
         return new string(otp);
     }
 }
-

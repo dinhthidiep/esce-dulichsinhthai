@@ -28,8 +28,8 @@ namespace ESCE_SYSTEM.Repositories.RoleRepository
         {
             Console.WriteLine("Dữ liệu của role: " + role);
 
-            //_dbContext.Roles.Add(role);//
-            //await _dbContext.SaveChangesAsync();//
+            _dbContext.Roles.Add(role);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

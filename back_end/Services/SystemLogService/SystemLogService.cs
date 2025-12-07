@@ -1,4 +1,4 @@
-using ESCE_SYSTEM.Models;
+﻿using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 
 namespace ESCE_SYSTEM.Services
@@ -66,6 +66,3 @@ namespace ESCE_SYSTEM.Services
         }
     }
 }
-
-
-

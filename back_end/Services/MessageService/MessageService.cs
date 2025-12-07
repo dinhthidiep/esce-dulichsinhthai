@@ -1,6 +1,4 @@
-﻿// Đặt file này tại ESCE_SYSTEM.Services.MessageService/MessageService.cs
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,18 +6,15 @@ using ESCE_SYSTEM.DTOs.Message;
 using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
+namespace ESCE_SYSTEM.Services.MessageService
 {
     public class MessageService : IMessageService
     {
         private readonly ESCEContext _dbContext;
 
-        // ⚠️ Nếu bạn cần thêm dependencies khác như IUserRepository hay IRoleService, 
-        // hãy thêm vào constructor và khởi tạo chúng ở đây.
-        public MessageService(ESCEContext dbContext /*, ...*/)
+        public MessageService(ESCEContext dbContext)
         {
             _dbContext = dbContext;
-            // ...
         }
 
         // 🟢 HÀM HỖ TRỢ CHUYỂN ĐỔI STRING -> INT
@@ -30,39 +25,20 @@ namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
             throw new ArgumentException($"ID người dùng '{userId}' không hợp lệ.");
         }
 
-        public async Task<Message> AddNewChatMessage(string senderId, string receiverId, string content)
+        public async Task AddNewChatMessage(string senderId, string receiverId, string content)
         {
             var senderIntId = ParseUserId(senderId);
             var receiverIntId = ParseUserId(receiverId);
 
-            if (senderIntId == receiverIntId)
-            {
-                throw new ArgumentException("Không thể gửi tin nhắn cho chính mình.");
-            }
-
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                throw new ArgumentException("Nội dung tin nhắn không được để trống.");
-            }
-
-            var receiverExists = await _dbContext.Accounts.AnyAsync(a => a.Id == receiverIntId);
-            if (!receiverExists)
-            {
-                throw new ArgumentException("Người nhận không tồn tại.");
-            }
-
-            var message = new Message
+            await _dbContext.Messages.AddAsync(new Message
             {
                 SenderId = senderIntId,
                 ReceiverId = receiverIntId,
                 Content = content,
-                CreatedAt = DateTime.UtcNow.AddHours(7),
+                CreatedAt = DateTime.UtcNow,
                 IsRead = false
-            };
-
-            await _dbContext.Messages.AddAsync(message);
+            });
             await _dbContext.SaveChangesAsync();
-            return message;
         }
 
         public async Task<IEnumerable<Message>> GetChatHistory(string userAId, string userBId)
@@ -77,52 +53,59 @@ namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
                 .ToListAsync();
         }
 
+        // 🎯 PHƯƠNG THỨC ĐƯỢC TỐI ƯU HÓA:
+        // 1. Khắc phục lỗi NRE bằng cách Include(a => a.Role).
+        // 2. Sử dụng Projection (Select) để chỉ lấy dữ liệu cần thiết từ DB (tối ưu).
         public async Task<IEnumerable<ChatUserDto>> GetAllUserForChat(string userId)
         {
             var currentUserId = ParseUserId(userId);
 
             // Lấy tất cả user (trừ Admin và chính mình) và join với Role
             // RoleId = 1 là Admin (từ SeedData cũ)
-            var users = await _dbContext.Accounts
-                .Where(a => a.Id != currentUserId && a.RoleId != 1)
+            return await _dbContext.Accounts
+                // 💡 BỔ SUNG .Include() để đảm bảo Role được tải
                 .Include(a => a.Role)
+                .Where(a => a.Id != currentUserId && a.RoleId != 1)
+                // 🟢 Sử dụng Projection để ánh xạ trực tiếp sang DTO (Tối ưu nhất)
+                .Select(u => new ChatUserDto
+                {
+                    UserId = u.Id.ToString(),
+                    FullName = u.Name,
+                    Role = u.Role.Name, // ✅ Đã khắc phục lỗi NullReferenceException
+                    RoleId = u.RoleId,
+                    Email = u.Email
+                })
                 .ToListAsync();
-
-            return users.Select(u => new ChatUserDto
-            {
-                UserId = u.Id.ToString(), // Vẫn trả về string ID cho frontend
-                FullName = u.Name,
-                Role = u.Role.Name, // Lấy tên Role từ navigation property
-                RoleId = u.RoleId,
-                Email = u.Email
-            });
         }
 
+        // 🎯 PHƯƠNG THỨC ĐƯỢC TỐI ƯU HÓA:
+        // 1. Khắc phục lỗi NRE bằng cách Include(a => a.Role).
+        // 2. Sử dụng Projection (Select) để chỉ lấy dữ liệu cần thiết từ DB (tối ưu).
         public async Task<IEnumerable<ChatUserDto>> GetChattedUsers(string userId)
         {
             var currentUserId = ParseUserId(userId);
 
-            // 1. Tìm tất cả các ID đã chat với user hiện tại
-            var chattedIds = await _dbContext.Messages
+            // 1. Tìm tất cả các ID đã chat với user hiện tại (Sử dụng subquery để tránh ToList() sớm)
+            var chattedIds = _dbContext.Messages
                 .Where(m => m.SenderId == currentUserId || m.ReceiverId == currentUserId)
                 .Select(m => m.SenderId == currentUserId ? m.ReceiverId : m.SenderId)
-                .Distinct()
-                .ToListAsync();
+                .Distinct();
 
-            // 2. Lấy thông tin Account và Role
-            var users = await _dbContext.Accounts
+            // 2. Lấy thông tin Account, Role và ánh xạ sang DTO
+            return await _dbContext.Accounts
                 .Where(a => chattedIds.Contains(a.Id))
+                // 💡 BỔ SUNG .Include() để đảm bảo Role được tải
                 .Include(a => a.Role)
+                // 🟢 Sử dụng Projection để ánh xạ trực tiếp sang DTO (Tối ưu nhất)
+                .Select(u => new ChatUserDto
+                {
+                    UserId = u.Id.ToString(),
+                    FullName = u.Name,
+                    Role = u.Role.Name, // ✅ Đã khắc phục lỗi NullReferenceException
+                    RoleId = u.RoleId,
+                    Email = u.Email
+                })
                 .ToListAsync();
-
-            return users.Select(u => new ChatUserDto
-            {
-                UserId = u.Id.ToString(),
-                FullName = u.Name,
-                Role = u.Role.Name,
-                RoleId = u.RoleId,
-                Email = u.Email
-            });
         }
     }
 }

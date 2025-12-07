@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 
@@ -86,6 +86,3 @@ namespace ESCE_SYSTEM.Controllers
         public int DaysToKeep { get; set; } = 30;
     }
 }
-
-
-

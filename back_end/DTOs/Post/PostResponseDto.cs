@@ -21,7 +21,6 @@ namespace ESCE_SYSTEM.DTOs
         public List<PostLikeResponseDto> Likes { get; set; } = new List<PostLikeResponseDto>();
         public List<PostCommentResponseDto> Comments { get; set; } = new List<PostCommentResponseDto>();
         public List<string> Hashtags { get; set; } = new List<string>();
-        public bool IsLiked { get; set; } = false;
     }
 
     public class PostLikeResponseDto
@@ -30,7 +29,9 @@ namespace ESCE_SYSTEM.DTOs
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public DateTime CreatedDate { get; set; }
-        public string ReactionType { get; set; } = "like";
+
+        // MỚI: loại cảm xúc (Like/Love/Haha/Wow/Sad/Angry)
+        public string ReactionType { get; set; } = null!;
     }
 
     public class PostCommentResponseDto
@@ -61,12 +62,5 @@ namespace ESCE_SYSTEM.DTOs
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public DateTime CreatedDate { get; set; }
-    }
-
-    public class PostToggleLikeResponseDto
-    {
-        public bool IsLiked { get; set; }
-        public PostLikeResponseDto? Reaction { get; set; }
-        public int PostId { get; set; }
     }
 }

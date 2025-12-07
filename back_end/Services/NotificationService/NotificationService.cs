@@ -3,8 +3,6 @@ using ESCE_SYSTEM.Models;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using Microsoft.AspNetCore.SignalR;
-using ESCE_SYSTEM.SignalR;
 
 namespace ESCE_SYSTEM.Services.NotificationService
 {
@@ -12,12 +10,10 @@ namespace ESCE_SYSTEM.Services.NotificationService
     {
         // Thay thế INotificationRepository bằng ESCEContext
         private readonly ESCEContext _dbContext;
-        private readonly IHubContext<NotificationHub> _hubNotificationContext;
 
-        public NotificationService(ESCEContext dbContext, IHubContext<NotificationHub> hubNotificationContext)
+        public NotificationService(ESCEContext dbContext)
         {
             _dbContext = dbContext;
-            _hubNotificationContext = hubNotificationContext;
         }
 
         // 🟢 HÀM HỖ TRỢ CHUYỂN ĐỔI STRING ID -> INT ID
@@ -89,45 +85,6 @@ namespace ESCE_SYSTEM.Services.NotificationService
 
             notification.IsRead = true;
             await _dbContext.SaveChangesAsync();
-        }
-
-        public async Task SendNotificationToUserAsync(SendNotificationDto sendDto)
-        {
-            var userId = ParseUserId(sendDto.UserId);
-            
-            // Check if user exists
-            var user = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == userId);
-            if (user == null)
-            {
-                throw new Exception($"User with ID {sendDto.UserId} not found");
-            }
-
-            // Create notification
-            var notification = new Notification
-            {
-                UserId = userId,
-                Message = sendDto.Message,
-                Title = sendDto.Title ?? "Thông báo từ quản trị viên",
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _dbContext.Notifications.Add(notification);
-            await _dbContext.SaveChangesAsync();
-
-            // Send SignalR notification
-            var notificationDto = new NotificationDto
-            {
-                Id = notification.Id,
-                UserId = notification.UserId,
-                Message = notification.Message,
-                Title = notification.Title,
-                IsRead = notification.IsRead,
-                CreatedAt = notification.CreatedAt
-            };
-
-            await _hubNotificationContext.Clients.User(userId.ToString())
-                .SendAsync("ReceiveNotification", notificationDto);
         }
     }
 }

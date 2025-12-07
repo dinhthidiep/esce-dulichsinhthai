@@ -70,7 +70,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 // Kiểm tra trạng thái tài khoản - QUAN TRỌNG
-                if (user.IsBanned)
+                if (user.IS_BANNED)
                 {
                     return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên." });
                 }
@@ -134,7 +134,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 //  QUAN TRỌNG: THÊM KIỂM TRA TRẠNG THÁI TÀI KHOẢN CHO GOOGLE LOGIN
-                if (user.IsBanned)
+                if (user.IS_BANNED)
                 {
                     return Unauthorized("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                 }
@@ -151,20 +151,9 @@ namespace ESCE_SYSTEM.Controllers
 
                 return Ok(new LoginResponseDto { Token = token, UserInfo = user.Adapt<UserProfileDto>() });
             }
-            catch (InvalidOperationException ex)
-            {
-                // Google token validation failed or user creation failed
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
             catch (Exception ex)
             {
-                // Log the full exception for debugging
-                Console.WriteLine($"Google login error: {ex}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi trong quá trình đăng nhập với Google.", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 

@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.DTOs;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -53,18 +54,38 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Booking booking)
+        public async Task<IActionResult> Create([FromBody] CreateBookingDto bookingDto) // Nhận DTO
         {
-            var result = await _service.CreateAsync(booking);
+            // Lỗi "The booking field is required" cũng được giải quyết vì .NET tự động ánh xạ JSON body vào tham số duy nhất này.
+            var result = await _service.CreateAsync(bookingDto);
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Booking booking)
+        [HttpPut("{id}")] // Dùng HTTP PUT/PATCH và truyền ID qua URL
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBookingDto bookingDto)
         {
-            var result = await _service.UpdateAsync(id, booking);
-            if (result == null) return NotFound();
-            return Ok(result);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var updatedBooking = await _service.UpdateAsync(id, bookingDto);
+
+                // Trả về 200 OK với đối tượng Booking đã cập nhật
+                return Ok(updatedBooking);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Booking không tồn tại
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Lỗi không mong muốn khác
+                return StatusCode(500, new { message = "An error occurred while updating the booking.", details = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -87,11 +108,11 @@ namespace ESCE_SYSTEM.Controllers
         public async Task<IActionResult> CalculateTotalAmount([FromBody] CalculateAmountRequest request)
         {
             var totalAmount = await _service.CalculateTotalAmountAsync(
-                request.ServiceComboId, 
-                request.ServiceId, 
-                request.Quantity, 
+                request.ServiceComboId,
+                request.ServiceId,
+                request.Quantity,
                 request.ItemType);
-            
+
             return Ok(new { TotalAmount = totalAmount });
         }
 

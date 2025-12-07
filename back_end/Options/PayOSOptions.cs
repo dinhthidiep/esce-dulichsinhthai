@@ -1,4 +1,4 @@
-namespace ESCE_SYSTEM.Options
+﻿namespace ESCE_SYSTEM.Options
 {
     public class PayOSOptions
     {
@@ -10,6 +10,3 @@ namespace ESCE_SYSTEM.Options
         public string WebhookUrl { get; set; } = string.Empty;
     }
 }
-
-
-

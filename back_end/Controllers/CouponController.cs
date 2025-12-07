@@ -1,4 +1,5 @@
-﻿using ESCE_SYSTEM.Models;
+﻿using ESCE_SYSTEM.DTOs.Coupon;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,16 +63,15 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Coupon coupon)
+        public async Task<IActionResult> Create(CreateCouponDto couponDto)
         {
-            var result = await _service.CreateAsync(coupon);
+            var result = await _service.CreateAsync(couponDto);
             return Ok(result);
         }
-
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Coupon coupon)
+        public async Task<IActionResult> Update(int id, UpdateCouponDto couponDto)
         {
-            var result = await _service.UpdateAsync(id, coupon);
+            var result = await _service.UpdateAsync(id, couponDto);
             if (result == null) return NotFound();
             return Ok(result);
         }
@@ -139,5 +139,3 @@ namespace ESCE_SYSTEM.Controllers
         public string CouponCode { get; set; } = string.Empty;
     }
 }
-
-

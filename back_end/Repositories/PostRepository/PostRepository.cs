@@ -25,6 +25,8 @@ namespace ESCE_SYSTEM.Repositories
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
+                .Include(p => p.Postreactions)
+                .ThenInclude(pr => pr.ReactionType)
                 .Include(p => p.Postsaves)
                 .ThenInclude(ps => ps.Account)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
@@ -40,6 +42,8 @@ namespace ESCE_SYSTEM.Repositories
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
+                .Include(p => p.Postreactions)
+                .ThenInclude(pr => pr.ReactionType)
                 .Include(p => p.Postsaves)
                 .ThenInclude(ps => ps.Account)
                 .OrderByDescending(p => p.CreatedAt)
@@ -74,7 +78,7 @@ namespace ESCE_SYSTEM.Repositories
                 .ThenInclude(pr => pr.User)
                 .Include(p => p.Postsaves)
                 .ThenInclude(ps => ps.Account)
-                .OrderByDescending(p => p.CreatedAt)
+.OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
 
@@ -125,26 +129,10 @@ namespace ESCE_SYSTEM.Repositories
             var post = await _context.Posts.FindAsync(id);
             if (post == null) return false;
 
-            // Check if already deleted
-            if (post.IsDeleted)
-            {
-                return true; // Already deleted, return success
-            }
-
             post.IsDeleted = true;
             post.UpdatedAt = DateTime.Now;
-            
-            var result = await _context.SaveChangesAsync();
-            
-            // Verify the change was saved
-            if (result > 0)
-            {
-                // Reload from database to confirm
-                await _context.Entry(post).ReloadAsync();
-                return post.IsDeleted; // Should be true if saved correctly
-            }
-            
-            return false;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<int> GetCommentsCountAsync(int postId)

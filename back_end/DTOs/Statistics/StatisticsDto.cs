@@ -1,4 +1,4 @@
-namespace ESCE_SYSTEM.DTOs.Statistics
+﻿namespace ESCE_SYSTEM.DTOs.Statistics
 {
     // DTO cho thống kê tổng quan
     public class DashboardStatisticsDto
@@ -8,7 +8,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public int TotalPosts { get; set; }
         public decimal TotalRevenue { get; set; }
         public int TotalBookings { get; set; }
-        
+
         // So sánh với kỳ trước
         public double UsersGrowthPercent { get; set; }
         public double ServiceCombosGrowthPercent { get; set; }
@@ -106,4 +106,3 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public int? HostId { get; set; } // Lọc theo Host (nếu cần)
     }
 }
-

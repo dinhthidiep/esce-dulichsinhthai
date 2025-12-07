@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ESCE_SYSTEM.DTOs.Users
 {
@@ -29,4 +29,3 @@ namespace ESCE_SYSTEM.DTOs.Users
         public bool IsBanned { get; set; } = false;
     }
 }
-

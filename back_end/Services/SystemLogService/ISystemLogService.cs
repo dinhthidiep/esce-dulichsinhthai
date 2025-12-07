@@ -1,4 +1,4 @@
-using ESCE_SYSTEM.Models;
+﻿using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Services
 {
@@ -13,6 +13,3 @@ namespace ESCE_SYSTEM.Services
         Task CleanOldLogsAsync(int daysToKeep = 30);
     }
 }
-
-
-

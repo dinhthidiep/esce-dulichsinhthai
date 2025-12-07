@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.IO;
 using ESCE_SYSTEM.Services.NotificationService;
 using ESCE_SYSTEM.Services.UserContextService;
-
+using Microsoft.AspNetCore.Hosting;
 namespace ESCE_SYSTEM.Services
 {
     public class PostService : IPostService
@@ -71,7 +71,7 @@ namespace ESCE_SYSTEM.Services
                 Title = postDto.ArticleTitle ?? "Không có tiêu đề",
                 Content = postDto.PostContent,
                 AuthorId = currentUserId,
-                Image = SerializeImages(postDto.Images),
+                Image = postDto.Images != null && postDto.Images.Any() ? string.Join(",", postDto.Images) : null,
                 CreatedAt = DateTime.Now,
                 Status = "Pending",
                 IsDeleted = false,
@@ -90,7 +90,6 @@ namespace ESCE_SYSTEM.Services
 
         public async Task Delete(int id)
         {
-            // GetByIdAsync filters out soft-deleted posts, so if we find it, it's not deleted yet
             var post = await _postRepository.GetByIdAsync(id);
             if (post == null)
             {
@@ -103,75 +102,25 @@ namespace ESCE_SYSTEM.Services
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa bài viết này");
             }
 
-            // Perform soft delete - this should set IsDeleted = true and save to database
-            var result = await _postRepository.SoftDeleteAsync(id);
-            if (!result)
-            {
-                throw new Exception("Không thể xóa bài viết. Vui lòng thử lại.");
-            }
+            await _postRepository.SoftDeleteAsync(id);
 
             // Gửi thông báo cho tác giả
             await GuiThongBaoChoNguoiDung(post.AuthorId, "Bài viết đã bị xóa",
                 $"Bài viết '{post.Title}' của bạn đã bị xóa");
         }
 
-        public async Task<List<PostResponseDto>> GetAllPosts(int? currentUserId = null)
+        public async Task<List<PostResponseDto>> GetAllPosts()
         {
-            // Use provided currentUserId or try to get from context (may return 0 if not authenticated)
-            int? userId = currentUserId;
-            if (!userId.HasValue || userId.Value == 0)
-            {
-                try
-                {
-                    var contextUserId = _userContextService.GetCurrentUserId();
-                    userId = contextUserId > 0 ? contextUserId : null;
-                }
-                catch
-                {
-                    userId = null;
-                }
-            }
-            
             var posts = await _postRepository.GetAllAsync();
             var postDtos = new List<PostResponseDto>();
 
-            // Get all post IDs for batch checking likes
-            var postIds = posts.Select(p => p.Id).ToList();
-            
-            // Get all likes for these posts in one query
-            var allReactions = new List<(int PostId, int UserId, int ReactionId, DateTime? CreatedAt, string? UserName)>();
-            foreach (var postId in postIds)
-            {
-                var reactions = await _postReactionRepository.GetByPostIdAsync(postId);
-                foreach (var reaction in reactions)
-                {
-                    allReactions.Add((postId, reaction.UserId, reaction.Id, reaction.CreatedAt, reaction.User?.Name));
-                }
-            }
-            
-            // Group reactions by post ID
-            var reactionsByPost = allReactions.GroupBy(r => r.PostId).ToDictionary(g => g.Key, g => g.ToList());
-            
-            // Get liked post IDs for current user (if authenticated)
-            var likedPostIds = new HashSet<int>();
-            if (userId.HasValue && userId.Value > 0)
-            {
-                likedPostIds = allReactions
-                    .Where(r => r.UserId == userId.Value)
-                    .Select(r => r.PostId)
-                    .Distinct()
-                    .ToHashSet();
-            }
-
             foreach (var post in posts)
             {
-                var postReactions = reactionsByPost.GetValueOrDefault(post.Id, new List<(int, int, int, DateTime?, string?)>());
-                
                 var postDto = new PostResponseDto
                 {
                     PostId = post.Id.ToString(),
                     PostContent = post.Content,
-                    Images = DeserializeImages(post.Image),
+                    Images = post.Image?.Split(',').ToList() ?? new List<string>(),
                     PosterId = post.AuthorId.ToString(),
                     PosterRole = post.Author?.Role?.Name ?? string.Empty,
                     PosterName = post.Author?.Name ?? string.Empty,
@@ -183,19 +132,20 @@ namespace ESCE_SYSTEM.Services
                     ArticleTitle = post.Title,
                     Hashtags = new List<string>(),
                     Likes = new List<PostLikeResponseDto>(),
-                    Comments = new List<PostCommentResponseDto>(),
-                    IsLiked = likedPostIds.Contains(post.Id)
+                    Comments = new List<PostCommentResponseDto>()
                 };
 
-                // Add reactions to postDto
-                foreach (var reaction in postReactions)
+                // Lấy reactions (likes) cho post
+                var reactions = await _postReactionRepository.GetByPostIdAsync(post.Id);
+                foreach (var reaction in reactions)
                 {
                     postDto.Likes.Add(new PostLikeResponseDto
                     {
-                        PostLikeId = reaction.Item3.ToString(),
-                        AccountId = reaction.Item2.ToString(),
-                        FullName = reaction.Item5 ?? string.Empty,
-                        CreatedDate = reaction.Item4 ?? DateTime.Now
+                        PostLikeId = reaction.Id.ToString(),
+                        AccountId = reaction.UserId.ToString(),
+                        FullName = reaction.User?.Name ?? string.Empty,
+                        CreatedDate = reaction.CreatedAt ?? DateTime.Now,
+                        ReactionType = reaction.ReactionType?.Name ?? "Like"
                     });
                 }
 
@@ -258,7 +208,6 @@ namespace ESCE_SYSTEM.Services
             {
                 return null;
             }
-
             var comments = await _commentRepository.GetByPostIdAsync(postId);
             var reactions = await _postReactionRepository.GetByPostIdAsync(postId);
 
@@ -311,44 +260,13 @@ namespace ESCE_SYSTEM.Services
 
             post.Title = postDto.ArticleTitle ?? post.Title;
             post.Content = postDto.PostContent;
-            post.Image = postDto.Images != null && postDto.Images.Any() ? SerializeImages(postDto.Images) : post.Image;
+            post.Image = postDto.Images != null && postDto.Images.Any() ? string.Join(",", postDto.Images) : post.Image;
             post.UpdatedAt = DateTime.Now;
 
             await _postRepository.UpdateAsync(post);
 
             // Gửi thông báo cho admin khi post được cập nhật
             await GuiThongBaoChoAdmin(post, "được cập nhật");
-        }
-
-        private static string SerializeImages(IEnumerable<string>? images)
-        {
-            if (images == null || !images.Any())
-            {
-                return string.Empty;
-            }
-
-            var sanitized = images
-                .Where(img => !string.IsNullOrWhiteSpace(img))
-                .Select(img => img.Trim());
-
-            // Use a delimiter that won't appear in base64 strings: "|||IMAGE_SEPARATOR|||"
-            // This ensures data URLs like "data:image/jpeg;base64,xxx" won't be broken
-            return string.Join("|||IMAGE_SEPARATOR|||", sanitized);
-        }
-
-        private static List<string> DeserializeImages(string? serializedImages)
-        {
-            if (string.IsNullOrWhiteSpace(serializedImages))
-            {
-                return new List<string>();
-            }
-
-            // Split by the safe delimiter
-            return serializedImages
-                .Split(new[] { "|||IMAGE_SEPARATOR|||" }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(img => img.Trim())
-                .Where(img => !string.IsNullOrWhiteSpace(img))
-                .ToList();
         }
 
         public async Task Approve(ApprovePostDto approvePostDto)
@@ -454,7 +372,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoPheDuyetBaiViet(Post post)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -479,7 +397,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoTuChoiBaiViet(Post post, string lyDoTuChoi)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -504,7 +422,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoYeuCauChinhSua(Post post, string noiDungYeuCau)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto

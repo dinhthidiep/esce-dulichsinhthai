@@ -7,7 +7,7 @@ namespace ESCE_SYSTEM.Services
 {
     public interface IPostService
     {
-        Task<List<PostResponseDto>> GetAllPosts(int? currentUserId = null);
+        Task<List<PostResponseDto>> GetAllPosts();
         Task<List<Post>> GetAllPostsApproved();
         Task<List<Post>> GetAllPostsPending();
         Task<Post> GetById(int id);

@@ -26,12 +26,15 @@ namespace ESCE_SYSTEM.Controllers
         {
             try
             {
+                // DTO đã thay đổi, không cần thay đổi gì thêm ở đây
                 await _commentService.Create(commentDto);
                 return Ok(new { message = "Tạo bình luận thành công" });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                // Trả về Inner Exception để gỡ lỗi sâu hơn nếu cần
+                var innerExceptionMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return BadRequest(new { message = innerExceptionMessage });
             }
         }
 

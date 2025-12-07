@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ESCE_SYSTEM.DTOs.News
 {
@@ -14,4 +14,3 @@ namespace ESCE_SYSTEM.DTOs.News
         public IEnumerable<string>? Images { get; set; }
     }
 }
-

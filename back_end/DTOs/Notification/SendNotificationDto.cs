@@ -1,4 +1,4 @@
-namespace ESCE_SYSTEM.DTOs.Notifications
+﻿namespace ESCE_SYSTEM.DTOs.Notifications
 {
     public class SendNotificationDto
     {
@@ -7,6 +7,3 @@ namespace ESCE_SYSTEM.DTOs.Notifications
         public string? Title { get; set; }
     }
 }
-
-
-

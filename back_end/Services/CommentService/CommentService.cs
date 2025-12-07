@@ -41,7 +41,8 @@ namespace ESCE_SYSTEM.Services
 
         public async Task Create(PostCommentDto commentDto)
         {
-            var post = await _postRepository.GetByIdAsync(int.Parse(commentDto.PostId));
+            // Đã thay đổi: KHÔNG dùng int.Parse(commentDto.PostId)
+            var post = await _postRepository.GetByIdAsync(commentDto.PostId);
             if (post == null)
             {
                 throw new Exception("Không tìm thấy bài viết");
@@ -52,7 +53,8 @@ namespace ESCE_SYSTEM.Services
 
             var comment = new Comment
             {
-                PostId = int.Parse(commentDto.PostId),
+                // Đã thay đổi: KHÔNG dùng int.Parse(commentDto.PostId)
+                PostId = commentDto.PostId,
                 AuthorId = currentUserId,
                 Content = commentDto.Content ?? string.Empty,
                 Image = commentDto.Images != null && commentDto.Images.Any() ? string.Join(",", commentDto.Images) : null,
@@ -61,12 +63,13 @@ namespace ESCE_SYSTEM.Services
                 ReactionsCount = 0
             };
 
-            if (!string.IsNullOrEmpty(commentDto.PostCommentId))
+            // Đã thay đổi: Sử dụng ParentCommentId kiểu int?
+            if (commentDto.ParentCommentId.HasValue)
             {
-                comment.ParentCommentId = int.Parse(commentDto.PostCommentId);
+                comment.ParentCommentId = commentDto.ParentCommentId.Value;
 
                 // Gửi thông báo cho tác giả của comment gốc (reply)
-                var parentComment = await _commentRepository.GetByIdAsync(int.Parse(commentDto.PostCommentId));
+                var parentComment = await _commentRepository.GetByIdAsync(commentDto.ParentCommentId.Value);
                 if (parentComment != null && parentComment.AuthorId != currentUserId)
                 {
                     await GuiThongBaoBinhLuan(parentComment.AuthorId, "Có phản hồi mới cho bình luận của bạn",
