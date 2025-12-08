@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.DTOs;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -15,58 +16,74 @@ namespace ESCE_SYSTEM.Controllers
             _service = service;
         }
 
+        // Lấy tất cả booking
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _service.GetAllAsync();
+            var bookings = await _service.GetAllAsync();
+            var result = bookings.Select(b => MapToDto(b));
             return Ok(result);
         }
 
+        // Lấy booking theo id
         [HttpGet("{id}")]
-        public async Task<ActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var result = await _service.GetByIdAsync(id);
-            if (result == null) return NotFound();
-
-            return Ok(result);
+            var booking = await _service.GetByIdAsync(id);
+            if (booking == null) return NotFound();
+            return Ok(MapToDto(booking));
         }
 
+        // Lấy booking theo userId
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
-            var result = await _service.GetByUserIdAsync(userId);
-            return Ok(result);
+            var bookings = await _service.GetByUserIdAsync(userId);
+            if (bookings == null || !bookings.Any()) return NotFound();
+            return Ok(bookings.Select(b => MapToDto(b)));
         }
 
+        // Lấy booking theo serviceComboId
         [HttpGet("combo/{serviceComboId}")]
         public async Task<IActionResult> GetByServiceComboId(int serviceComboId)
         {
-            var result = await _service.GetByServiceComboIdAsync(serviceComboId);
-            return Ok(result);
+            var bookings = await _service.GetByServiceComboIdAsync(serviceComboId);
+            if (bookings == null || !bookings.Any()) return NotFound();
+            return Ok(bookings.Select(b => MapToDto(b)));
         }
 
+        // Lấy booking theo serviceId
         [HttpGet("service/{serviceId}")]
         public async Task<IActionResult> GetByServiceId(int serviceId)
         {
-            var result = await _service.GetByServiceIdAsync(serviceId);
-            return Ok(result);
+            var bookings = await _service.GetByServiceIdAsync(serviceId);
+            if (bookings == null || !bookings.Any()) return NotFound();
+            return Ok(bookings.Select(b => MapToDto(b)));
         }
 
+        // Tạo booking mới
         [HttpPost]
-        public async Task<IActionResult> Create(Booking booking)
+        public async Task<IActionResult> Create([FromBody] Booking booking)
         {
-            var result = await _service.CreateAsync(booking);
-            return Ok(result);
+            if (booking == null || booking.UserId <= 0 || string.IsNullOrEmpty(booking.Status))
+                return BadRequest("Invalid booking data.");
+
+            var created = await _service.CreateAsync(booking);
+            return Ok(MapToDto(created));
         }
 
+        // Cập nhật booking
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Booking booking)
+        public async Task<IActionResult> Update(int id, [FromBody] Booking booking)
         {
-            var result = await _service.UpdateAsync(id, booking);
-            if (result == null) return NotFound();
-            return Ok(result);
+            if (booking == null) return BadRequest("Invalid booking data.");
+
+            var updated = await _service.UpdateAsync(id, booking);
+            if (updated == null) return NotFound();
+            return Ok(MapToDto(updated));
         }
 
+        // Xóa booking
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -75,34 +92,56 @@ namespace ESCE_SYSTEM.Controllers
             return Ok("Deleted");
         }
 
+        // Cập nhật status
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
         {
+            if (string.IsNullOrEmpty(status)) return BadRequest("Status cannot be empty.");
+
             var updated = await _service.UpdateStatusAsync(id, status);
             if (!updated) return NotFound();
             return Ok($"Status updated to {status}");
         }
 
+        // Tính tổng tiền
         [HttpPost("calculate")]
         public async Task<IActionResult> CalculateTotalAmount([FromBody] CalculateAmountRequest request)
         {
-            var totalAmount = await _service.CalculateTotalAmountAsync(
+            var total = await _service.CalculateTotalAmountAsync(
                 request.ServiceComboId,
                 request.ServiceId,
                 request.Quantity,
-                request.ItemType);
-
-            return Ok(new { TotalAmount = totalAmount });
+                request.ItemType
+            );
+            return Ok(new { TotalAmount = total });
         }
 
+        // Tính tổng tiền với coupon
         [HttpGet("{id}/total-with-coupons")]
         public async Task<IActionResult> CalculateTotalAmountWithCoupons(int id)
         {
-            var totalAmount = await _service.CalculateTotalAmountWithCouponsAsync(id);
-            return Ok(new { TotalAmount = totalAmount });
+            var total = await _service.CalculateTotalAmountWithCouponsAsync(id);
+            return Ok(new { TotalAmount = total });
+        }
+
+        // ----------------- Helper -----------------
+        private BookingDto MapToDto(Booking b)
+        {
+            return new BookingDto
+            {
+                Id = b.Id,
+                BookingNumber = b.BookingNumber,
+                UserId = b.UserId,
+                ServiceComboId = b.ServiceComboId,
+                ServiceId = b.ServiceId,
+                TotalAmount = b.TotalAmount,
+                Status = b.Status,
+                BookingDate = b.BookingDate
+            };
         }
     }
 
+    // Request cho tính tổng
     public class CalculateAmountRequest
     {
         public int ServiceComboId { get; set; }

@@ -1,10 +1,14 @@
 ﻿using ESCE_SYSTEM.DTOs.BanUnbanUser;
 using ESCE_SYSTEM.DTOs.Certificates;
-using ESCE_SYSTEM.Services.UserService; // Lỗi CS0246: Kiểm tra lại IUserService
-using ESCE_SYSTEM.DTOs.Users; // Lỗi CS0246: Kiểm tra lại UpdateProfileDto
+using ESCE_SYSTEM.Services.UserService;
+using ESCE_SYSTEM.DTOs.Users;
 using ESCE_SYSTEM.Services.UserContextService;
+using ESCE_SYSTEM.Services.PaymentService;
+using ESCE_SYSTEM.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using System;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -14,11 +18,13 @@ namespace ESCE_SYSTEM.Controllers
     {
         private readonly IUserService _userService;
         private readonly IUserContextService _userContextService;
+        private readonly IPaymentService _paymentService;
 
-        public UserController(IUserService userService, IUserContextService userContextService)
+        public UserController(IUserService userService, IUserContextService userContextService, IPaymentService paymentService)
         {
             _userService = userService;
             _userContextService = userContextService;
+            _paymentService = paymentService;
         }
 
         #region Certificate Endpoints
@@ -64,8 +70,23 @@ namespace ESCE_SYSTEM.Controllers
                     return Unauthorized("Invalid user information");
                 }
 
+                // Tạo certificate request
                 await _userService.RequestUpgradeToAgencyAsync(userId, requestDto);
-                return Ok("Agency upgrade request has been submitted successfully. Please wait for admin approval.");
+
+                // Agency upgrade cần thanh toán 1,000,000 VND
+                const decimal agencyUpgradeFee = 1000000m;
+                var paymentResponse = await _paymentService.CreateUpgradePaymentAsync(
+                    userId,
+                    "Agency",
+                    agencyUpgradeFee,
+                    $"Thanh toán phí nâng cấp tài khoản lên Agency - {requestDto.CompanyName}"
+                );
+
+                return Ok(new
+                {
+                    message = "Agency upgrade request has been submitted. Please complete the payment to proceed.",
+                    payment = paymentResponse
+                });
             }
             catch (Exception exception)
             {
@@ -142,7 +163,7 @@ namespace ESCE_SYSTEM.Controllers
 
         #region User Management Endpoints
         [HttpGet("users")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -156,13 +177,14 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}")] // Đổi lại thành {id} chuẩn RESTful. Route cũ [HttpGet("{getuserbyid}")] không chuẩn.
         [Authorize]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
-                var user = await _userService.GetAccountByIdAsync(id);
+                // Gọi phương thức DTO để tránh lỗi chu kỳ
+                var user = await _userService.GetUserDtoByIdAsync(id);
                 return Ok(user);
             }
             catch (Exception exception)
@@ -295,5 +317,33 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
         #endregion
+
+
+        [HttpPut("update-spent/{userId}")]
+        [Authorize(Roles = "Admin")] // Giả định chỉ Admin hoặc System có thể gọi trực tiếp
+        public async Task<IActionResult> UpdateTotalSpent(int userId, [FromQuery] decimal amountSpent)
+        {
+            try
+            {
+                if (amountSpent <= 0)
+                {
+                    return BadRequest(new { message = "Amount spent must be greater than zero." });
+                }
+
+                // Gọi Service để thực hiện logic cập nhật
+                await _userService.UpdateTotalSpentAndLevelAsync(userId, amountSpent);
+
+                return Ok($"Total spent and level for user {userId} updated successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, new { message = "Error updating user spent data", error = exception.Message });
+            }
+        }
     }
 }
+

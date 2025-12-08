@@ -1,6 +1,6 @@
 ﻿namespace ESCE_SYSTEM.Options
 {
-    public class PayOSOptions
+    public class PayOSOption
     {
         public string ClientId { get; set; } = string.Empty;
         public string ApiKey { get; set; } = string.Empty;

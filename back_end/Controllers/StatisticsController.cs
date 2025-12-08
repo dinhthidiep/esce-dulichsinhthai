@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.DTOs.Statistics;
+using ESCE_SYSTEM.DTOs.Statistics;
 using ESCE_SYSTEM.Services.StatisticsService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,11 +18,11 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         /// <summary>
-        /// Lấy thống kê tổng quan cho dashboard
+        /// L?y th?ng k� t?ng quan cho dashboard
         /// </summary>
-        /// <param name="period">Kỳ thống kê: day, week, month, year</param>
-        /// <param name="startDate">Ngày bắt đầu (optional)</param>
-        /// <param name="endDate">Ngày kết thúc (optional)</param>
+        /// <param name="period">K? th?ng k�: day, week, month, year</param>
+        /// <param name="startDate">Ng�y b?t d?u (optional)</param>
+        /// <param name="endDate">Ng�y k?t th�c (optional)</param>
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardStatisticsDto>> GetDashboardStatistics(
             [FromQuery] string period = "day",
@@ -42,16 +42,16 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê dashboard", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� dashboard", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy thống kê theo thời gian (dữ liệu cho biểu đồ)
+        /// L?y th?ng k� theo th?i gian (d? li?u cho bi?u d?)
         /// </summary>
-        /// <param name="period">Kỳ thống kê: day (theo giờ), week (theo ngày), month (theo ngày), year (theo tháng)</param>
-        /// <param name="startDate">Ngày bắt đầu (optional)</param>
-        /// <param name="endDate">Ngày kết thúc (optional)</param>
+        /// <param name="period">K? th?ng k�: day (theo gi?), week (theo ng�y), month (theo ng�y), year (theo th�ng)</param>
+        /// <param name="startDate">Ng�y b?t d?u (optional)</param>
+        /// <param name="endDate">Ng�y k?t th�c (optional)</param>
         [HttpGet("time-series")]
         public async Task<ActionResult<TimeSeriesStatisticsDto>> GetTimeSeriesStatistics(
             [FromQuery] string period = "day",
@@ -71,12 +71,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê time series", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� time series", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy thống kê chi tiết người dùng
+        /// L?y th?ng k� chi ti?t ngu?i d�ng
         /// </summary>
         [HttpGet("users")]
         public async Task<ActionResult<UserStatisticsDto>> GetUserStatistics(
@@ -97,12 +97,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê người dùng", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� ngu?i d�ng", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy thống kê doanh thu
+        /// L?y th?ng k� doanh thu
         /// </summary>
         [HttpGet("revenue")]
         public async Task<ActionResult<RevenueStatisticsDto>> GetRevenueStatistics(
@@ -123,12 +123,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê doanh thu", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� doanh thu", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy thống kê ServiceCombo
+        /// L?y th?ng k� Servicecombo
         /// </summary>
         [HttpGet("service-combos")]
         public async Task<ActionResult<ServiceComboStatisticsDto>> GetServiceComboStatistics(
@@ -149,12 +149,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê service combo", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� service combo", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy thống kê bài viết
+        /// L?y th?ng k� b�i vi?t
         /// </summary>
         [HttpGet("posts")]
         public async Task<ActionResult<PostStatisticsDto>> GetPostStatistics(
@@ -175,12 +175,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy thống kê bài viết", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k� b�i vi?t", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Lấy tất cả thống kê cùng lúc
+        /// L?y t?t c? th?ng k� c�ng l�c
         /// </summary>
         [HttpGet("all")]
         public async Task<IActionResult> GetAllStatistics(
@@ -201,7 +201,7 @@ namespace ESCE_SYSTEM.Controllers
                 var timeSeries = await _statisticsService.GetTimeSeriesStatisticsAsync(filter);
                 var users = await _statisticsService.GetUserStatisticsAsync(filter);
                 var revenue = await _statisticsService.GetRevenueStatisticsAsync(filter);
-                var serviceCombos = await _statisticsService.GetServiceComboStatisticsAsync(filter);
+                var ServiceCombos = await _statisticsService.GetServiceComboStatisticsAsync(filter);
                 var posts = await _statisticsService.GetPostStatisticsAsync(filter);
 
                 return Ok(new
@@ -210,13 +210,13 @@ namespace ESCE_SYSTEM.Controllers
                     TimeSeries = timeSeries,
                     Users = users,
                     Revenue = revenue,
-                    ServiceCombos = serviceCombos,
+                    ServiceCombos = ServiceCombos,
                     Posts = posts
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi lấy tất cả thống kê", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y t?t c? th?ng k�", error = ex.Message });
             }
         }
     }

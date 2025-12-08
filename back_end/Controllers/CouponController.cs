@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -54,10 +54,10 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
-        [HttpGet("combo/{serviceComboId}")]
-        public async Task<IActionResult> GetByServiceComboId(int serviceComboId)
+        [HttpGet("combo/{ServicecomboId}")]
+        public async Task<IActionResult> GetByServiceComboId(int ServicecomboId)
         {
-            var result = await _service.GetByServiceComboIdAsync(serviceComboId);
+            var result = await _service.GetByServiceComboIdAsync(ServicecomboId);
             return Ok(result);
         }
 
@@ -87,7 +87,7 @@ namespace ESCE_SYSTEM.Controllers
         [HttpPost("validate")]
         public async Task<IActionResult> ValidateCoupon([FromBody] ValidateCouponRequest request)
         {
-            var isValid = await _service.ValidateCouponAsync(request.Code, request.ServiceComboId);
+            var isValid = await _service.ValidateCouponAsync(request.Code, request.ServicecomboId);
             return Ok(new { IsValid = isValid });
         }
 
@@ -118,7 +118,7 @@ namespace ESCE_SYSTEM.Controllers
     public class ValidateCouponRequest
     {
         public string Code { get; set; } = string.Empty;
-        public int? ServiceComboId { get; set; }
+        public int? ServicecomboId { get; set; }
     }
 
     public class CalculateDiscountRequest

@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Repositories
 {
@@ -8,7 +8,7 @@ namespace ESCE_SYSTEM.Repositories
         Task<Coupon?> GetByIdAsync(int id);
         Task<Coupon?> GetByCodeAsync(string code);
         Task<IEnumerable<Coupon>> GetByHostIdAsync(int hostId);
-        Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int serviceComboId);
+        Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int ServiceComboId);
         Task<IEnumerable<Coupon>> GetActiveCouponsAsync();
         Task CreateAsync(Coupon coupon);
         Task UpdateAsync(Coupon coupon);

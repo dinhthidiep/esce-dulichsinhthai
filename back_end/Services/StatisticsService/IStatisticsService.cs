@@ -1,25 +1,25 @@
-﻿using ESCE_SYSTEM.DTOs.Statistics;
+using ESCE_SYSTEM.DTOs.Statistics;
 
 namespace ESCE_SYSTEM.Services.StatisticsService
 {
     public interface IStatisticsService
     {
-        // Thống kê tổng quan dashboard
+        // Th?ng k� t?ng quan dashboard
         Task<DashboardStatisticsDto> GetDashboardStatisticsAsync(StatisticsFilterDto filter);
 
-        // Thống kê theo thời gian (biểu đồ)
+        // Th?ng k� theo th?i gian (bi?u d?)
         Task<TimeSeriesStatisticsDto> GetTimeSeriesStatisticsAsync(StatisticsFilterDto filter);
 
-        // Thống kê chi tiết người dùng
+        // Th?ng k� chi ti?t ngu?i d�ng
         Task<UserStatisticsDto> GetUserStatisticsAsync(StatisticsFilterDto filter);
 
-        // Thống kê doanh thu
+        // Th?ng k� doanh thu
         Task<RevenueStatisticsDto> GetRevenueStatisticsAsync(StatisticsFilterDto filter);
 
-        // Thống kê ServiceCombo
+        // Th?ng k� Servicecombo
         Task<ServiceComboStatisticsDto> GetServiceComboStatisticsAsync(StatisticsFilterDto filter);
 
-        // Thống kê bài viết
+        // Th?ng k� b�i vi?t
         Task<PostStatisticsDto> GetPostStatisticsAsync(StatisticsFilterDto filter);
     }
 }

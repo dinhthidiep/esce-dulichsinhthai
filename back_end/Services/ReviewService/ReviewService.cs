@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,11 +45,11 @@ namespace ESCE_SYSTEM.Services
             return await _repository.GetByBookingIdAndUserIdAsync(bookingId, userId);
         }
 
-        public async Task<decimal> GetAverageRatingByServiceComboAsync(int serviceComboId)
+        public async Task<decimal> GetAverageRatingByServicecomboAsync(int ServicecomboId)
         {
             var reviews = await _context.Reviews
                 .Include(r => r.Booking)
-                .Where(r => r.Booking.ServiceComboId == serviceComboId && r.Status == "approved")
+                .Where(r => r.Booking.ServiceComboId == ServicecomboId && r.Status == "approved")
                 .Select(r => r.Rating)
                 .ToListAsync();
 
@@ -73,26 +73,26 @@ namespace ESCE_SYSTEM.Services
 
         public async Task<Review> CreateAsync(Review review)
         {
-            // Kiểm tra xem booking có tồn tại không
+            // Ki?m tra xem booking c� t?n t?i kh�ng
             var booking = await _bookingRepository.GetByIdAsync(review.BookingId);
             if (booking == null)
             {
                 throw new Exception("Booking not found");
             }
 
-            // Kiểm tra xem user có quyền review booking này không
+            // Ki?m tra xem user c� quy?n review booking n�y kh�ng
             if (booking.UserId != review.UserId)
             {
                 throw new Exception("User can only review their own bookings");
             }
 
-            // Kiểm tra xem booking đã thanh toán và được confirmed chưa
+            // Ki?m tra xem booking d� thanh to�n v� du?c confirmed chua
             if (booking.Status != "confirmed" && booking.Status != "completed")
             {
                 throw new Exception("Can only review bookings that have been paid (confirmed or completed)");
             }
 
-            // Kiểm tra xem user đã review booking này chưa
+            // Ki?m tra xem user d� review booking n�y chua
             var existingReview = await GetByBookingIdAndUserIdAsync(review.BookingId, review.UserId);
             if (existingReview != null)
             {
@@ -109,7 +109,7 @@ namespace ESCE_SYSTEM.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return null;
 
-            // Cho phép sửa bất cứ lúc nào
+            // Cho ph�p s?a b?t c? l�c n�o
             existing.Rating = review.Rating;
             existing.Comment = review.Comment;
 
@@ -141,13 +141,13 @@ namespace ESCE_SYSTEM.Services
             var booking = await _bookingRepository.GetByIdAsync(bookingId);
             if (booking == null) return false;
 
-            // Kiểm tra booking thuộc về user
+            // Ki?m tra booking thu?c v? user
             if (booking.UserId != userId) return false;
 
-            // Kiểm tra booking đã thanh toán chưa (confirmed hoặc completed)
+            // Ki?m tra booking d� thanh to�n chua (confirmed ho?c completed)
             if (booking.Status != "confirmed" && booking.Status != "completed") return false;
 
-            // Kiểm tra user đã review chưa
+            // Ki?m tra user d� review chua
             var existingReview = await GetByBookingIdAndUserIdAsync(bookingId, userId);
             if (existingReview != null) return false;
 

@@ -1,5 +1,3 @@
-﻿// File: Models/Account.cs
-
 using System;
 using System.Collections.Generic;
 
@@ -47,6 +45,10 @@ namespace ESCE_SYSTEM.Models
         public int RoleId { get; set; }
         public bool IS_BANNED { get; set; }
 
+        // --- Cột mới theo yêu cầu ---
+        public int Level { get; set; } = 0; // Cấp độ thành viên (0, 1, 2, 3)
+        public decimal TotalSpent { get; set; } = 0.00M; // Tổng chi tiêu (Decimal cho tiền tệ)
+
         public virtual Role Role { get; set; } = null!;
         public virtual ICollection<AgencieCertificate> AgencieCertificates { get; set; }
         public virtual ICollection<Booking> Bookings { get; set; }
@@ -55,7 +57,7 @@ namespace ESCE_SYSTEM.Models
         public virtual ICollection<Coupon> Coupons { get; set; }
         public virtual ICollection<HostCertificate> HostCertificates { get; set; }
         public virtual ICollection<Message> Messages { get; set; } // Tin nhắn đã gửi (Sender)
-        public virtual ICollection<Message> MessagesReceived { get; set; } // BỔ SUNG: Tin nhắn đã nhận (Receiver)
+        public virtual ICollection<Message> MessagesReceived { get; set; } // Tin nhắn đã nhận (Receiver)
         public virtual ICollection<News> News { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
         public virtual ICollection<Otp> Otps { get; set; }
@@ -70,3 +72,5 @@ namespace ESCE_SYSTEM.Models
         public virtual ICollection<SupportResponse> SupportResponses { get; set; }
     }
 }
+
+

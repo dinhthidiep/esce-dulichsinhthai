@@ -1,0 +1,308 @@
+# Copyright (C) 2024 payOS Team
+# This file is distributed under the GNU General Public License v3.0.
+msgid ""
+msgstr ""
+"Project-Id-Version: payOS 1.0.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/payos-woo\n"
+"Last-Translator: \n"
+"Language-Team: Tiếng Việt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2024-08-19T11:53:04+02:00\n"
+"PO-Revision-Date: 2024-09-20 08:17+0000\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Domain: payos\n"
+"Language: vi\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Loco-Version: 2.6.10; wp-6.6.1"
+
+#. translators: 1: order code, 2: amount, 3: description, 4: account number, 5: reference
+#: classes/class-payos.php:844
+msgid ""
+"<b>Transaction Information:</b> <br> Order Code: %1$s <br> Amount: %2$s <br> "
+"Description: %3$s <br> Account Number: %4$s <br> Reference: %5$s"
+msgstr ""
+"<b>Thông tin giao dịch:</b> <br> Mã đơn hàng: %1$s <br> Số tiền: %2$s <br> "
+"Mô tả: %3$s <br> Số tài khoản: %4$s <br > Mã tham chiếu: %5$s"
+
+#: classes/class-payos.php:386
+msgid "Account name"
+msgstr "Tên tài khoản"
+
+#: classes/class-payos.php:385
+msgid "Account number"
+msgstr "Số tài khoản"
+
+#: classes/class-payos.php:407
+msgid "API Key"
+msgstr "API Key"
+
+#: classes/class-payos.php:608
+msgid "Awaiting payment"
+msgstr "Chờ thanh toán"
+
+#: classes/class-payos.php:387
+msgid "Bank"
+msgstr "Ngân hàng"
+
+#: classes/class-payos.php:183
+msgid "Can not save settings! Please refresh this page."
+msgstr "Không thể lưu thiết lập! Vui lòng tải lại trang"
+
+#: classes/class-payos.php:489 classes/class-payos.php:511
+msgid "Cannot show payment link"
+msgstr "Không thể hiển thị link thanh toán"
+
+#: classes/class-payos.php:420
+msgid "Check connection payOS"
+msgstr "Kiểm tra kết nối payOS"
+
+#: classes/class-payos.php:414
+msgid "Checksum Key"
+msgstr "Checksum Key"
+
+#: classes/class-payos.php:400
+msgid "Client ID"
+msgstr "Client ID"
+
+#: classes/class-payos.php:298 classes/class-payos.php:381
+msgid "Connected"
+msgstr "Đã kết nối"
+
+#: classes/class-payos.php:374
+msgid "Connection Information"
+msgstr "Thông tin kết nối"
+
+#: classes/class-payos.php:805 classes/class-payos.php:974
+msgid "Data not integrity"
+msgstr "Dữ liệu không toàn vẹn"
+
+#: classes/class-payos.php:280
+msgid "Description"
+msgstr "Mô tả"
+
+#: classes/class-payos.php:475
+msgid "Enable"
+msgstr "Kích hoạt"
+
+#: classes/class-payos.php:269
+msgid "Enable bank transfer"
+msgstr "Kích hoạt chuyển khoản ngân hàng"
+
+#: classes/class-payos.php:471
+msgid "Enable refresh upon successful payment:"
+msgstr "Tải lại trang khi thanh toán thành công:"
+
+#: classes/class-payos.php:267
+msgid "Enable/Disable"
+msgstr "Kích hoạt/Vô hiệu hóa"
+
+#: classes/class-payos.php:395
+msgid "Enter information of payOS"
+msgstr "Nhập thông tin của payOS"
+
+#. translators: %d: order code
+#: classes/class-payos.php:797
+msgid "Error when get order #%d"
+msgstr "Lỗi khi lấy mã đơn hàng #%d"
+
+#: classes/class-payos.php:384
+msgid "Gateway name"
+msgstr "Tên cổng thanh toán"
+
+#: classes/class-payos.php:299
+msgid "Hide"
+msgstr "Ẩn"
+
+#. Author URI of the plugin
+#: C:\xampp\htdocs\wordpress\wp-content\plugins\payos-woo\payos.php
+msgid "https://payos.vn"
+msgstr "https://payos.vn"
+
+#. Plugin URI of the plugin
+#: C:\xampp\htdocs\wordpress\wp-content\plugins\payos-woo\payos.php
+msgid "https://payos.vn/docs/tich-hop-webhook/woocommerce/"
+msgstr "https://payos.vn/docs/tich-hop-webhook/woocommerce/"
+
+#: classes/class-payos.php:421
+msgid "Instructions to get Client ID and API Key"
+msgstr "Hướng dẫn lấy Client ID và API Key"
+
+#: classes/class-payos.php:430
+msgid ""
+"Maximum 3 characters, no spaces and no special characters. If contained, it "
+"will be deleted. Please do not prefix starting with FT, TF, TT, VQR"
+msgstr ""
+"Tối đa 3 kí tự, không khoảng trắng và không kí tự đặc biệt. Nếu có sẽ bị xóa."
+" Vui lòng không bắt đầu bằng FT, TF, TT, VQR"
+
+#: classes/class-payos.php:298 classes/class-payos.php:379
+msgid "No Connection"
+msgstr "Không có kết nối"
+
+#: classes/class-payos.php:628
+msgid "Not use PayOS as payment method"
+msgstr "Không sử dụng payOS làm phương thức thanh toán"
+
+#: classes/class-payos.php:631
+msgid "Not use PayOS payment gateway"
+msgstr "Không sử dụng cổng thanh toán payOS"
+
+#: classes/class-payos.php:804
+msgid "Order has been cancelled"
+msgstr "Đơn hàng đã bị hủy"
+
+#: classes/class-payos.php:825
+msgid "Order has been overpaid"
+msgstr "Đơn hàng đã thanh toán dư"
+
+#: classes/class-payos.php:504 classes/class-payos.php:508
+msgid "Order has been successfully paid."
+msgstr "Đơn hàng đã thanh toán thành công."
+
+#: classes/class-payos.php:832
+msgid "Order has been underpaid"
+msgstr "Đơn hàng bị thanh toán thiếu."
+
+#: classes/class-payos.php:283
+msgid "Pay for orders via payOS. Supported by almost Vietnamese banking apps"
+msgstr "Thanh toán thông qua payOS. Hỗ trợ hầu hết các ngân hàng tại Việt Nam."
+
+#: classes/class-payos.php:77 classes/class-payos.php:276
+msgid "Payment by bank transfer (Scan VietQR)"
+msgstr "Thanh toán bằng chuyển khoản ngân hàng (quét mã QR)"
+
+#: classes/class-payos.php:282
+msgid "Payment method description that the customer will see on your checkout."
+msgstr "Mô tả phương thức thanh toán mà khách hàng sẽ thấy khi thanh toán."
+
+#. Plugin Name of the plugin
+#: C:\xampp\htdocs\wordpress\wp-content\plugins\payos-woo\payos.php
+msgid "payOS"
+msgstr "payOS"
+
+#: classes/class-payos.php:138
+msgid ""
+"payOS has not been set up by the administrator. Please contact the system "
+"administrator."
+msgstr ""
+"payOS không được thiết lập bởi quản trị viên. Vui lòng liên hệ quản trị viên "
+"hệ thống."
+
+#: classes/class-payos.php:124
+msgid "payOS has not been set up yet!"
+msgstr "payOS chưa được thiết lập!"
+
+#. Author of the plugin
+#: C:\xampp\htdocs\wordpress\wp-content\plugins\payos-woo\payos.php
+msgid "payOS Team"
+msgstr "payOS Team"
+
+#: classes/class-payos.php:488
+msgid "Please wait..."
+msgstr "Vui lòng chờ..."
+
+#: classes/class-payos.php:427
+msgid "Prefix:"
+msgstr "Tiền tố"
+
+#. Description of the plugin
+#: C:\xampp\htdocs\wordpress\wp-content\plugins\payos-woo\payos.php
+msgid ""
+"Quick bank transfer by generating QR codes that are accepted by 37 Vietnam "
+"banking App: Vietcombank, Vietinbank, BIDV, ACB, VPBank, MBank, TPBank, "
+"Digimi, MSB ... Developed for WooCommerce."
+msgstr ""
+"Chuyển khoản ngân hàng nhanh chóng bằng cách tạo mã QR được 37 App ngân hàng "
+"Việt Nam chấp nhận: Vietcombank, Vietinbank, BIDV, ACB, VPBank, MBank, "
+"TPBank, Digimi, MSB... Được phát triển cho WooCommerce."
+
+#: payos.php:80
+msgid "Setting"
+msgstr "Cài đặt"
+
+#: classes/class-payos.php:177
+msgid "Settings saved"
+msgstr "Cài đặt được lưu"
+
+#: classes/class-payos.php:300 classes/class-payos.php:403
+#: classes/class-payos.php:410 classes/class-payos.php:417
+msgid "Show"
+msgstr "Hiện"
+
+#: classes/class-payos.php:297
+msgid "Show less"
+msgstr "Hiện ít lại"
+
+#: classes/class-payos.php:458
+msgid "Status if payment is failed:"
+msgstr "Trạng thái nếu thanh toán thất bại:"
+
+#: classes/class-payos.php:434
+msgid "Status if payment is successful:"
+msgstr "Trạng thái nếu thanh toán thành công:"
+
+#: classes/class-payos.php:446
+msgid "Status if payment is underpaid:"
+msgstr "Trạng thái nếu thanh toán thiếu:"
+
+#: classes/class-payos.php:164
+msgid "Successful webhook registration"
+msgstr "Đăng ký webhook thành công"
+
+#: classes/class-payos.php:78
+msgid ""
+"Take payments by scanning QR code with Vietnamese banking App. Supported by "
+"most major banks in Vietnam"
+msgstr ""
+"Thanh toán bằng cách quét mã QR bằng App ngân hàng Việt Nam. Được hỗ trợ bởi "
+"hầu hết các ngân hàng lớn tại Việt Nam"
+
+#: classes/class-payos.php:704
+msgid "Thank you. Your order has been fulfilled."
+msgstr "Cảm ơn. Đơn đặt hàng của bạn đã được thực hiện."
+
+#: classes/class-payos.php:706
+msgid "Thank you. Your order is processing."
+msgstr "Cảm ơn. Đơn hàng của bạn đang được xử lý."
+
+#: classes/class-payos.php:275
+msgid "This controls the title which the user sees during checkout."
+msgstr "Kiểm soát tiêu đề mà người dùng nhìn thấy trong quá trình thanh toán."
+
+#: classes/class-payos.php:273
+msgid "Title"
+msgstr "Tiêu đề"
+
+#: payos.php:68 payos.php:73 payos.php:97
+msgid "Underpaid"
+msgstr "Thanh toán thiếu"
+
+#: classes/class-payos.php:898
+msgid "Webhook confirmed"
+msgstr "Đã xác nhận webhook"
+
+#: classes/class-payos.php:171
+msgid "Webhook creation failed"
+msgstr "Tạo webhook thất bại"
+
+#: classes/class-payos.php:892
+msgid "Webhook creation request failed: "
+msgstr "Yêu cầu tạo webhook không thành công: "
+
+#: classes/class-payos.php:903
+msgid "Webhook creation response did not meet success criteria."
+msgstr "Phản hồi tạo webhook không đáp ứng tiêu chí thành công."
+
+#: classes/class-payos.php:785 classes/class-payos.php:852
+msgid "Webhook delivered successfully"
+msgstr "Webhook chuyển thành công"
+
+#: classes/class-payos.php:698
+msgid "Your order has been cancelled."
+msgstr "Đơn hàng của bạn đã bị hủy."
+
+#: classes/class-payos.php:700
+msgid "Your order is underpaid."
+msgstr "Đơn hàng của bạn đang thanh toán thiếu."

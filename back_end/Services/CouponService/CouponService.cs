@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 
 namespace ESCE_SYSTEM.Services
@@ -34,9 +34,9 @@ namespace ESCE_SYSTEM.Services
             return await _repository.GetByHostIdAsync(hostId);
         }
 
-        public async Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int serviceComboId)
+        public async Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int ServicecomboId)
         {
-            return await _repository.GetByServiceComboIdAsync(serviceComboId);
+            return await _repository.GetByServiceComboIdAsync(ServicecomboId);
         }
 
         public async Task<IEnumerable<Coupon>> GetActiveCouponsAsync()
@@ -78,22 +78,22 @@ namespace ESCE_SYSTEM.Services
             return true;
         }
 
-        public async Task<bool> ValidateCouponAsync(string code, int? serviceComboId = null)
+        public async Task<bool> ValidateCouponAsync(string code, int? ServicecomboId = null)
         {
             var coupon = await _repository.GetByCodeAsync(code);
             if (coupon == null) return false;
 
-            // Kiểm tra coupon có active không
+            // Ki?m tra coupon c� active kh�ng
             if (!coupon.IsActive.HasValue || !coupon.IsActive.Value) return false;
 
-            // Kiểm tra hạn sử dụng
+            // Ki?m tra h?n s? d?ng
             if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate < DateTime.Now) return false;
 
-            // Kiểm tra giới hạn sử dụng
+            // Ki?m tra gi?i h?n s? d?ng
             if (coupon.UsageCount >= coupon.UsageLimit) return false;
 
-            // Kiểm tra coupon có áp dụng cho combo cụ thể không
-            if (coupon.ServiceComboId.HasValue && coupon.ServiceComboId != serviceComboId) return false;
+            // Ki?m tra coupon c� �p d?ng cho combo c? th? kh�ng
+            if (coupon.ServiceComboId.HasValue && coupon.ServiceComboId != ServicecomboId) return false;
 
             return true;
         }
@@ -116,7 +116,7 @@ namespace ESCE_SYSTEM.Services
                 discount = coupon.DiscountAmount.Value;
             }
 
-            // Đảm bảo discount không vượt quá original amount
+            // �?m b?o discount kh�ng vu?t qu� original amount
             return Math.Min(discount, originalAmount);
         }
 
@@ -128,14 +128,14 @@ namespace ESCE_SYSTEM.Services
             var coupon = await _repository.GetByCodeAsync(couponCode);
             if (coupon == null) return false;
 
-            // Kiểm tra coupon đã được áp dụng chưa
+            // Ki?m tra coupon d� du?c �p d?ng chua
             var existingBookingCoupon = booking.BookingCoupons.FirstOrDefault(bc => bc.CouponId == coupon.Id);
             if (existingBookingCoupon != null) return false;
 
             // Validate coupon
             if (!await ValidateCouponAsync(couponCode, booking.ServiceComboId)) return false;
 
-            // Tạo BookingCoupon
+            // T?o BookingCoupon
             var bookingCoupon = new BookingCoupon
             {
                 BookingId = bookingId,
@@ -143,11 +143,11 @@ namespace ESCE_SYSTEM.Services
                 AppliedAt = DateTime.Now
             };
 
-            // Cập nhật usage count
+            // C?p nh?t usage count
             coupon.UsageCount++;
             await _repository.UpdateAsync(coupon);
 
-            // Thêm vào booking (cần cập nhật context)
+            // Th�m v�o booking (c?n c?p nh?t context)
             booking.BookingCoupons.Add(bookingCoupon);
             await _bookingRepository.UpdateAsync(booking);
 
@@ -165,11 +165,11 @@ namespace ESCE_SYSTEM.Services
             var bookingCoupon = booking.BookingCoupons.FirstOrDefault(bc => bc.CouponId == coupon.Id);
             if (bookingCoupon == null) return false;
 
-            // Giảm usage count
+            // Gi?m usage count
             coupon.UsageCount--;
             await _repository.UpdateAsync(coupon);
 
-            // Xóa BookingCoupon
+            // X�a BookingCoupon
             booking.BookingCoupons.Remove(bookingCoupon);
             await _bookingRepository.UpdateAsync(booking);
 

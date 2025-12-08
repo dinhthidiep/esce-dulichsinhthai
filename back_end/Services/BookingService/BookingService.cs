@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,51 +24,42 @@ namespace ESCE_SYSTEM.Services
         }
 
         public async Task<IEnumerable<Booking>> GetAllAsync()
-        {
-            return await _repository.GetAllAsync();
-        }
+            => await _repository.GetAllAsync();
 
         public async Task<Booking?> GetByIdAsync(int id)
-        {
-            return await _repository.GetByIdAsync(id);
-        }
+            => await _repository.GetByIdAsync(id);
 
         public async Task<IEnumerable<Booking>> GetByUserIdAsync(int userId)
-        {
-            return await _repository.GetByUserIdAsync(userId);
-        }
+            => await _repository.GetByUserIdAsync(userId);
 
         public async Task<IEnumerable<Booking>> GetByServiceComboIdAsync(int serviceComboId)
-        {
-            return await _repository.GetByServiceComboIdAsync(serviceComboId);
-        }
+            => await _repository.GetByServiceComboIdAsync(serviceComboId);
 
         public async Task<IEnumerable<Booking>> GetByServiceIdAsync(int serviceId)
-        {
-            return await _repository.GetByServiceIdAsync(serviceId);
-        }
+            => await _repository.GetByServiceIdAsync(serviceId);
 
         public async Task<Booking> CreateAsync(Booking booking)
         {
-            // Tạo booking number tự động
             booking.BookingNumber = GenerateBookingNumber();
+            booking.Status = "pending"; // 🔥 Quan trọng: dùng cho payment
 
-            // Tính toán total amount
+            // Validate itemType
+            if (booking.ItemType != "combo" && booking.ItemType != "service")
+                throw new Exception("ItemType must be 'combo' or 'service'");
+
             decimal totalAmount = await CalculateTotalAmountAsync(
                 booking.ServiceComboId ?? 0,
                 booking.ServiceId ?? 0,
                 booking.Quantity,
-                booking.ItemType);
+                booking.ItemType
+            );
 
-            // Kiểm tra nếu user là agency thì giảm 3%
             var user = await _context.Accounts
                 .Include(a => a.Role)
                 .FirstOrDefaultAsync(a => a.Id == booking.UserId);
 
-            if (user != null && user.Role != null && user.Role.Name.ToLower() == "agency")
-            {
-                totalAmount = totalAmount * 0.97m; // Giảm 3%
-            }
+            if (user?.Role?.Name.ToLower() == "agency")
+                totalAmount *= 0.97m;
 
             booking.TotalAmount = totalAmount;
 
@@ -84,24 +75,21 @@ namespace ESCE_SYSTEM.Services
             existing.Quantity = booking.Quantity;
             existing.Notes = booking.Notes;
             existing.Status = booking.Status;
-            existing.UpdatedAt = DateTime.Now;
+            existing.UpdatedAt = DateTime.UtcNow;
 
-            // Tính lại total amount nếu có thay đổi
             decimal totalAmount = await CalculateTotalAmountAsync(
                 existing.ServiceComboId ?? 0,
                 existing.ServiceId ?? 0,
                 existing.Quantity,
-                existing.ItemType);
+                existing.ItemType
+            );
 
-            // Kiểm tra nếu user là agency thì giảm 3%
             var user = await _context.Accounts
                 .Include(a => a.Role)
                 .FirstOrDefaultAsync(a => a.Id == existing.UserId);
 
-            if (user != null && user.Role != null && user.Role.Name.ToLower() == "agency")
-            {
-                totalAmount = totalAmount * 0.97m; // Giảm 3%
-            }
+            if (user?.Role?.Name.ToLower() == "agency")
+                totalAmount *= 0.97m;
 
             existing.TotalAmount = totalAmount;
 
@@ -124,12 +112,13 @@ namespace ESCE_SYSTEM.Services
             if (existing == null) return false;
 
             existing.Status = status;
-            existing.UpdatedAt = DateTime.Now;
+            existing.UpdatedAt = DateTime.UtcNow;
 
             if (status == "confirmed")
-                existing.ConfirmedDate = DateTime.Now;
-            else if (status == "completed")
-                existing.CompletedDate = DateTime.Now;
+                existing.ConfirmedDate = DateTime.UtcNow;
+
+            if (status == "completed")
+                existing.CompletedDate = DateTime.UtcNow;
 
             await _repository.UpdateAsync(existing);
             return true;
@@ -137,22 +126,20 @@ namespace ESCE_SYSTEM.Services
 
         public async Task<decimal> CalculateTotalAmountAsync(int serviceComboId, int serviceId, int quantity, string itemType)
         {
-            decimal unitPrice = 0;
+            decimal price = 0;
 
             if (itemType == "combo" && serviceComboId > 0)
             {
-                var serviceCombo = await _serviceComboRepository.GetByIdAsync(serviceComboId);
-                if (serviceCombo != null)
-                    unitPrice = serviceCombo.Price;
+                var combo = await _serviceComboRepository.GetByIdAsync(serviceComboId);
+                price = combo?.Price ?? 0;
             }
             else if (itemType == "service" && serviceId > 0)
             {
                 var service = await _serviceRepository.GetByIdAsync(serviceId);
-                if (service != null)
-                    unitPrice = service.Price;
+                price = service?.Price ?? 0;
             }
 
-            return unitPrice * quantity;
+            return price * quantity;
         }
 
         public async Task<decimal> CalculateTotalAmountWithCouponsAsync(int bookingId)
@@ -160,26 +147,21 @@ namespace ESCE_SYSTEM.Services
             var booking = await _repository.GetByIdAsync(bookingId);
             if (booking == null) return 0;
 
-            decimal totalAmount = booking.TotalAmount;
+            decimal total = booking.TotalAmount;
 
-            // Kiểm tra nếu user là agency thì giảm 3%
             var user = await _context.Accounts
                 .Include(a => a.Role)
                 .FirstOrDefaultAsync(a => a.Id == booking.UserId);
 
-            if (user != null && user.Role != null && user.Role.Name.ToLower() == "agency")
-            {
-                totalAmount = totalAmount * 0.97m; // Giảm 3%
-            }
+            if (user?.Role?.Name.ToLower() == "agency")
+                total *= 0.97m;
 
-            // Áp dụng coupon: tạm thời bỏ qua tính giảm trực tiếp (có thể bổ sung sau)
-
-            return Math.Max(totalAmount, 0); // Đảm bảo không âm
+            return Math.Max(total, 0);
         }
 
         private string GenerateBookingNumber()
         {
-            return "BK" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(1000, 9999);
+            return "BK" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + new Random().Next(1000, 9999);
         }
     }
 }

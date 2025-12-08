@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Repositories
@@ -14,6 +14,7 @@ namespace ESCE_SYSTEM.Repositories
 
         public async Task<IEnumerable<Booking>> GetAllAsync()
         {
+            // Load bookings first without includes to check if basic columns exist
             return await _context.Bookings
                 .Include(b => b.User)
                     .ThenInclude(u => u.Role)
@@ -43,14 +44,14 @@ namespace ESCE_SYSTEM.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Booking>> GetByServiceComboIdAsync(int serviceComboId)
+        public async Task<IEnumerable<Booking>> GetByServiceComboIdAsync(int ServicecomboId)
         {
             return await _context.Bookings
                 .Include(b => b.User)
                     .ThenInclude(u => u.Role)
                 .Include(b => b.ServiceCombo)
                 .Include(b => b.Service)
-                .Where(b => b.ServiceComboId == serviceComboId)
+                .Where(b => b.ServiceComboId == ServicecomboId)
                 .ToListAsync();
         }
 

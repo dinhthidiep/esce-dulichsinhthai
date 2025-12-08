@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 
@@ -41,16 +41,16 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ServiceCombo serviceCombo)
+        public async Task<IActionResult> Create(ServiceCombo ServiceCombo)
         {
-            var result = await _service.CreateAsync(serviceCombo);
+            var result = await _service.CreateAsync(ServiceCombo);
             return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ServiceCombo serviceCombo)
+        public async Task<IActionResult> Update(int id, ServiceCombo ServiceCombo)
         {
-            var result = await _service.UpdateAsync(id, serviceCombo);
+            var result = await _service.UpdateAsync(id, ServiceCombo);
             if (result == null) return NotFound();
             return Ok(result);
         }

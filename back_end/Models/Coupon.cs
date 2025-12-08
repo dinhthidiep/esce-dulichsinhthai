@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ESCE_SYSTEM.Models
@@ -23,6 +23,7 @@ namespace ESCE_SYSTEM.Models
         public DateTime? ExpiryDate { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int RequiredLevel { get; set; } = 0;
 
         public virtual Account Host { get; set; } = null!;
         public virtual ServiceCombo? ServiceCombo { get; set; }

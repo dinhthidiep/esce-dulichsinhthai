@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESCE_SYSTEM.Models
@@ -8,7 +8,7 @@ namespace ESCE_SYSTEM.Models
         public int Id { get; set; }
 
         // Foreign Key to ServiceCombo
-        public int ServiceComboId { get; set; }
+        public int ServicecomboId { get; set; }
 
         // Foreign Key to Service
         public int ServiceId { get; set; }

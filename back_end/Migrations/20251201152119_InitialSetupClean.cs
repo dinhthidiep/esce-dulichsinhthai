@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -291,7 +291,7 @@ namespace ESCE_SYSTEM.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SERVICECOMBO",
+                name: "Servicecombo",
                 columns: table => new
                 {
                     ID = table.Column<int>(type: "int", nullable: false)
@@ -310,7 +310,7 @@ namespace ESCE_SYSTEM.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SERVICECOMBO", x => x.ID);
+                    table.PrimaryKey("PK_Servicecombo", x => x.ID);
                     table.ForeignKey(
                         name: "FK__SERVICECO__HOST___45F365D3",
                         column: x => x.HOST_ID,
@@ -458,7 +458,7 @@ namespace ESCE_SYSTEM.Migrations
                     table.ForeignKey(
                         name: "FK__BOOKINGS__COMBO___59FA5E80",
                         column: x => x.COMBO_ID,
-                        principalTable: "SERVICECOMBO",
+                        principalTable: "Servicecombo",
                         principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK__BOOKINGS__SERVIC__59FA5E81",
@@ -485,7 +485,7 @@ namespace ESCE_SYSTEM.Migrations
                     USAGE_LIMIT = table.Column<int>(type: "int", nullable: false),
                     USAGE_COUNT = table.Column<int>(type: "int", nullable: true, defaultValueSql: "((0))"),
                     HOST_ID = table.Column<int>(type: "int", nullable: false),
-                    SERVICECOMBO_ID = table.Column<int>(type: "int", nullable: true),
+                    Servicecombo_ID = table.Column<int>(type: "int", nullable: true),
                     IS_ACTIVE = table.Column<bool>(type: "bit", nullable: true, defaultValueSql: "((1))"),
                     EXPIRY_DATE = table.Column<DateTime>(type: "datetime", nullable: true),
                     CREATED_AT = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
@@ -501,8 +501,8 @@ namespace ESCE_SYSTEM.Migrations
                         principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK__COUPONS__SERVICE__534D60F1",
-                        column: x => x.SERVICECOMBO_ID,
-                        principalTable: "SERVICECOMBO",
+                        column: x => x.Servicecombo_ID,
+                        principalTable: "Servicecombo",
                         principalColumn: "ID");
                 });
 
@@ -527,7 +527,7 @@ namespace ESCE_SYSTEM.Migrations
                     table.ForeignKey(
                         name: "FK__REQUEST_S__COMBO__09A971A2",
                         column: x => x.COMBO_ID,
-                        principalTable: "SERVICECOMBO",
+                        principalTable: "Servicecombo",
                         principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK__REQUEST_S__USER___08B54D69",
@@ -537,22 +537,22 @@ namespace ESCE_SYSTEM.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SERVICECOMBO_DETAIL",
+                name: "Servicecombo_DETAIL",
                 columns: table => new
                 {
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SERVICECOMBO_ID = table.Column<int>(type: "int", nullable: false),
+                    Servicecombo_ID = table.Column<int>(type: "int", nullable: false),
                     SERVICE_ID = table.Column<int>(type: "int", nullable: false),
                     QUANTITY = table.Column<int>(type: "int", nullable: false, defaultValueSql: "((1))")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SERVICECOMBO_DETAIL", x => x.ID);
+                    table.PrimaryKey("PK_Servicecombo_DETAIL", x => x.ID);
                     table.ForeignKey(
                         name: "FK__SERVICECO__SERVI__49C3F6B7",
-                        column: x => x.SERVICECOMBO_ID,
-                        principalTable: "SERVICECOMBO",
+                        column: x => x.Servicecombo_ID,
+                        principalTable: "Servicecombo",
                         principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK__SERVICECO__SERVI__4AB81AF0",
@@ -769,9 +769,9 @@ namespace ESCE_SYSTEM.Migrations
                 column: "HOST_ID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_COUPONS_SERVICECOMBO_ID",
+                name: "IX_COUPONS_Servicecombo_ID",
                 table: "COUPONS",
-                column: "SERVICECOMBO_ID");
+                column: "Servicecombo_ID");
 
             migrationBuilder.CreateIndex(
                 name: "UQ__COUPONS__AA1D4379B4900E43",
@@ -889,19 +889,19 @@ namespace ESCE_SYSTEM.Migrations
                 column: "HOST_ID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SERVICECOMBO_HOST_ID",
-                table: "SERVICECOMBO",
+                name: "IX_Servicecombo_HOST_ID",
+                table: "Servicecombo",
                 column: "HOST_ID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SERVICECOMBO_DETAIL_SERVICE_ID",
-                table: "SERVICECOMBO_DETAIL",
+                name: "IX_Servicecombo_DETAIL_SERVICE_ID",
+                table: "Servicecombo_DETAIL",
                 column: "SERVICE_ID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SERVICECOMBO_DETAIL_SERVICECOMBO_ID",
-                table: "SERVICECOMBO_DETAIL",
-                column: "SERVICECOMBO_ID");
+                name: "IX_Servicecombo_DETAIL_Servicecombo_ID",
+                table: "Servicecombo_DETAIL",
+                column: "Servicecombo_ID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SUPPORT_RESPONSES_RESPONDER_ID",
@@ -961,7 +961,7 @@ namespace ESCE_SYSTEM.Migrations
                 name: "REVIEWS");
 
             migrationBuilder.DropTable(
-                name: "SERVICECOMBO_DETAIL");
+                name: "Servicecombo_DETAIL");
 
             migrationBuilder.DropTable(
                 name: "SUPPORT_RESPONSES");
@@ -991,7 +991,7 @@ namespace ESCE_SYSTEM.Migrations
                 name: "SERVICE");
 
             migrationBuilder.DropTable(
-                name: "SERVICECOMBO");
+                name: "Servicecombo");
 
             migrationBuilder.DropTable(
                 name: "ACCOUNTS");

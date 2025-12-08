@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 
@@ -52,11 +52,11 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
-        [HttpGet("servicecombo/{serviceComboId}/average-rating")]
-        public async Task<IActionResult> GetAverageRatingByServiceCombo(int serviceComboId)
+        [HttpGet("ServiceCombo/{ServiceComboId}/average-rating")]
+        public async Task<IActionResult> GetAverageRatingByServiceCombo(int ServiceComboId)
         {
-            var rating = await _service.GetAverageRatingByServiceComboAsync(serviceComboId);
-            return Ok(new { ServiceComboId = serviceComboId, AverageRating = rating });
+            var rating = await _service.GetAverageRatingByServicecomboAsync(ServiceComboId);
+            return Ok(new { ServiceComboId = ServiceComboId, AverageRating = rating });
         }
 
         [HttpGet("service/{serviceId}/average-rating")]

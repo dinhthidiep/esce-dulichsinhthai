@@ -27,12 +27,17 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="payOS" Version="2.0.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\NewFolder1\" />
+    <Folder Include="DTOs\NewFolder2\" />
+    <Folder Include="DTOs\NewFolder3\" />
+    <Folder Include="DTOs\NewFolder\" />
     <Folder Include="Migrations\" />
     <Folder Include="Repositories\SystemLogRepository\" />
   </ItemGroup>

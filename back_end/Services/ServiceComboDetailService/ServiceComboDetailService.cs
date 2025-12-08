@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 
 namespace ESCE_SYSTEM.Services
@@ -22,9 +22,9 @@ namespace ESCE_SYSTEM.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<ServiceComboDetail>> GetByServiceComboIdAsync(int serviceComboId)
+        public async Task<IEnumerable<ServiceComboDetail>> GetByServiceComboIdAsync(int ServicecomboId)
         {
-            return await _repository.GetByServiceComboIdAsync(serviceComboId);
+            return await _repository.GetByServiceComboIdAsync(ServicecomboId);
         }
 
         public async Task<IEnumerable<ServiceComboDetail>> GetByServiceIdAsync(int serviceId)
@@ -32,20 +32,20 @@ namespace ESCE_SYSTEM.Services
             return await _repository.GetByServiceIdAsync(serviceId);
         }
 
-        public async Task<ServiceComboDetail> CreateAsync(ServiceComboDetail serviceComboDetail)
+        public async Task<ServiceComboDetail> CreateAsync(ServiceComboDetail ServicecomboDetail)
         {
-            await _repository.CreateAsync(serviceComboDetail);
-            return serviceComboDetail;
+            await _repository.CreateAsync(ServicecomboDetail);
+            return ServicecomboDetail;
         }
 
-        public async Task<ServiceComboDetail?> UpdateAsync(int id, ServiceComboDetail serviceComboDetail)
+        public async Task<ServiceComboDetail?> UpdateAsync(int id, ServiceComboDetail ServicecomboDetail)
         {
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return null;
 
-            existing.ServiceComboId = serviceComboDetail.ServiceComboId;
-            existing.ServiceId = serviceComboDetail.ServiceId;
-            existing.Quantity = serviceComboDetail.Quantity;
+            existing.ServicecomboId = ServicecomboDetail.ServicecomboId;
+            existing.ServiceId = ServicecomboDetail.ServiceId;
+            existing.Quantity = ServicecomboDetail.Quantity;
 
             await _repository.UpdateAsync(existing);
             return existing;
@@ -60,12 +60,12 @@ namespace ESCE_SYSTEM.Services
             return true;
         }
 
-        public async Task<bool> DeleteByServiceComboIdAsync(int serviceComboId)
+        public async Task<bool> DeleteByServiceComboIdAsync(int ServicecomboId)
         {
-            var existing = await _repository.GetByServiceComboIdAsync(serviceComboId);
+            var existing = await _repository.GetByServiceComboIdAsync(ServicecomboId);
             if (!existing.Any()) return false;
 
-            await _repository.DeleteByServiceComboIdAsync(serviceComboId);
+            await _repository.DeleteByServiceComboIdAsync(ServicecomboId);
             return true;
         }
     }

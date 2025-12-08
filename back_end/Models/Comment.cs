@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ESCE_SYSTEM.Models
@@ -19,7 +19,7 @@ namespace ESCE_SYSTEM.Models
         public string? Image { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public int ReactionsCount { get; set; }
-        public bool IsDeleted { get; set; }
+        public bool? IsDeleted { get; set; }
 
         public virtual Account Author { get; set; } = null!;
         public virtual Post Post { get; set; } = null!;

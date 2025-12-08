@@ -1,0 +1,91 @@
+### ============================================
+### TEST THANH TOÁN PAYOS
+### ============================================
+### Base URL
+@baseUrl = http://localhost:5002
+@token = YOUR_JWT_TOKEN_HERE
+
+### ============================================
+### 1. TEST THANH TOÁN BOOKING
+### ============================================
+### Tạo payment intent cho booking ID = 3
+POST {{baseUrl}}/api/payment/create-intent
+Content-Type: application/json
+
+{
+  "BookingId": 3,
+  "Amount": 100000,
+  "Description": "Thanh toán cho đặt dịch vụ #3"
+}
+
+### ============================================
+### 2. KIỂM TRA TRẠNG THÁI PAYMENT
+### ============================================
+### Kiểm tra payment status của booking ID = 3
+GET {{baseUrl}}/api/payment/status/3
+Accept: application/json
+
+### ============================================
+### 3. TEST THANH TOÁN UPGRADE AGENCY
+### ============================================
+### Tạo payment cho upgrade Agency (1,000,000 VND)
+### User ID = 5 (thuyen)
+POST {{baseUrl}}/api/payment/create-upgrade-payment
+Content-Type: application/json
+
+{
+  "UserId": 5,
+  "UpgradeType": "Agency",
+  "Amount": 1000000,
+  "Description": "Thanh toán phí nâng cấp tài khoản lên Agency"
+}
+
+### ============================================
+### 4. KIỂM TRA TRẠNG THÁI UPGRADE PAYMENT
+### ============================================
+### Kiểm tra payment status của upgrade Agency cho user ID = 5
+GET {{baseUrl}}/api/payment/upgrade-status/5?upgradeType=Agency
+Accept: application/json
+
+### ============================================
+### 5. TEST WEBHOOK (Simulate PayOS webhook)
+### ============================================
+### Lưu ý: Webhook này sẽ được PayOS gọi tự động
+### Đây chỉ là test manual (cần có signature hợp lệ)
+POST {{baseUrl}}/api/payment/payos-webhook
+Content-Type: application/json
+
+{
+  "code": "00",
+  "desc": "success",
+  "data": {
+    "orderCode": 3000000,
+    "amount": 100000,
+    "description": "Thanh toán cho đặt dịch vụ #3",
+    "accountNumber": "1234567890",
+    "reference": "REF123456",
+    "transactionDateTime": "2025-01-12T10:00:00Z",
+    "currency": "VND",
+    "paymentLinkId": "123456",
+    "code": "00",
+    "desc": "success",
+    "counterAccountBankId": null,
+    "counterAccountBankName": null,
+    "counterAccountName": null,
+    "counterAccountNumber": null,
+    "virtualAccountName": null,
+    "virtualAccountNumber": null,
+    "status": "PAID"
+  },
+  "signature": "test_signature"
+}
+
+### ============================================
+### 6. XEM TẤT CẢ PAYMENTS TRONG DATABASE
+### ============================================
+### (Cần query trực tiếp database hoặc tạo endpoint)
+### SELECT * FROM PAYMENTS ORDER BY ID DESC
+
+
+
+

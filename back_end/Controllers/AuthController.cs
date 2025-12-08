@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Services.RoleService;
+using ESCE_SYSTEM.Services.RoleService;
 using ESCE_SYSTEM.Services.UserService;
 using ESCE_SYSTEM.DTOs;
 using ESCE_SYSTEM.DTOs.Users;
@@ -70,7 +70,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 // Kiểm tra trạng thái tài khoản - QUAN TRỌNG
-                if (user.IS_BANNED)
+                if (user.IS_BANNED == true)
                 {
                     return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên." });
                 }
@@ -134,7 +134,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 //  QUAN TRỌNG: THÊM KIỂM TRA TRẠNG THÁI TÀI KHOẢN CHO GOOGLE LOGIN
-                if (user.IS_BANNED)
+                if (user.IS_BANNED == true)
                 {
                     return Unauthorized("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                 }

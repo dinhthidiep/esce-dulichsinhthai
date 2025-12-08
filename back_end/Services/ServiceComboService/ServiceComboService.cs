@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Repositories;
+using ESCE_SYSTEM.Repositories;
 using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Services
@@ -24,24 +24,24 @@ namespace ESCE_SYSTEM.Services
         {
             return await _repository.GetByNameAsync(name);
         }
-        public async Task<ServiceCombo> CreateAsync(ServiceCombo serviceCombo)
+        public async Task<ServiceCombo> CreateAsync(ServiceCombo Servicecombo)
         {
-            await _repository.CreateAsync(serviceCombo);
-            return serviceCombo;
+            await _repository.CreateAsync(Servicecombo);
+            return Servicecombo;
         }
-        public async Task<ServiceCombo?> UpdateAsync(int id, ServiceCombo serviceCombo)
+        public async Task<ServiceCombo?> UpdateAsync(int id, ServiceCombo Servicecombo)
         {
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return null;
 
-            existing.Name = serviceCombo.Name;
-            existing.Address = serviceCombo.Address;
-            existing.Description = serviceCombo.Description;
-            existing.Price = serviceCombo.Price;
-            existing.AvailableSlots = serviceCombo.AvailableSlots;
-            existing.Image = serviceCombo.Image;
-            existing.Status = serviceCombo.Status;
-            existing.CancellationPolicy = serviceCombo.CancellationPolicy;
+            existing.Name = Servicecombo.Name;
+            existing.Address = Servicecombo.Address;
+            existing.Description = Servicecombo.Description;
+            existing.Price = Servicecombo.Price;
+            existing.AvailableSlots = Servicecombo.AvailableSlots;
+            existing.Image = Servicecombo.Image;
+            existing.Status = Servicecombo.Status;
+            existing.CancellationPolicy = Servicecombo.CancellationPolicy;
             existing.UpdatedAt = DateTime.Now;
 
             await _repository.UpdateAsync(existing);

@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -13,34 +13,34 @@ namespace ESCE_SYSTEM.Repositories
         }
         public async Task<IEnumerable<ServiceCombo>> GetAllAsync()
         {
-            return await _context.ServiceCombos.ToListAsync();
+            return await _context.Servicecombos.ToListAsync();
         }
         public async Task<ServiceCombo?> GetByIdAsync(int id)
         {
-            return await _context.ServiceCombos.FindAsync(id);
+            return await _context.Servicecombos.FindAsync(id);
         }
 
         public async Task<ServiceCombo?> GetByNameAsync(string name)
         {
-            return _context.ServiceCombos.FirstOrDefault(sc => sc.Name == name);
+            return _context.Servicecombos.FirstOrDefault(sc => sc.Name == name);
 
         }
-        public async Task CreateAsync(ServiceCombo serviceCombo)
+        public async Task CreateAsync(ServiceCombo ServiceCombo)
         {
-            _context.ServiceCombos.Add(serviceCombo);
+            _context.Servicecombos.Add(ServiceCombo);
             await _context.SaveChangesAsync();
         }
-        public async Task UpdateAsync(ServiceCombo serviceCombo)
+        public async Task UpdateAsync(ServiceCombo ServiceCombo)
         {
-            _context.ServiceCombos.Update(serviceCombo);
+            _context.Servicecombos.Update(ServiceCombo);
             await _context.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)
         {
-            var serviceCombo = await _context.ServiceCombos.FindAsync(id);
-            if (serviceCombo != null)
+            var ServiceCombo = await _context.Servicecombos.FindAsync(id);
+            if (ServiceCombo != null)
             {
-                _context.ServiceCombos.Remove(serviceCombo);
+                _context.Servicecombos.Remove(ServiceCombo);
                 await _context.SaveChangesAsync();
             }
         }

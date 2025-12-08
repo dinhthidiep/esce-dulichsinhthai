@@ -1,10 +1,10 @@
-﻿using ESCE_SYSTEM.DTOs.Statistics;
+using ESCE_SYSTEM.DTOs.Statistics;
 using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Services.StatisticsService
 {
-    public class StatisticsService : IStatisticsService
+    public class StatisticsService :  IStatisticsService
     {
         private readonly ESCEContext _context;
 
@@ -21,7 +21,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             // Thống kê kỳ hiện tại
             var currentUsers = await _context.Accounts
                 .CountAsync(a => a.CreatedAt >= startDate && a.CreatedAt <= endDate);
-            var currentServiceCombos = await _context.ServiceCombos
+            var currentServiceCombos = await _context.Servicecombos
                 .CountAsync(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate);
             var currentPosts = await _context.Posts
                 .CountAsync(p => p.CreatedAt >= startDate && p.CreatedAt <= endDate && !p.IsDeleted);
@@ -34,7 +34,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             // Thống kê kỳ trước (để tính % tăng trưởng)
             var previousUsers = await _context.Accounts
                 .CountAsync(a => a.CreatedAt >= previousStartDate && a.CreatedAt < startDate);
-            var previousServiceCombos = await _context.ServiceCombos
+            var previousServiceCombos = await _context.Servicecombos
                 .CountAsync(s => s.CreatedAt >= previousStartDate && s.CreatedAt < startDate);
             var previousPosts = await _context.Posts
                 .CountAsync(p => p.CreatedAt >= previousStartDate && p.CreatedAt < startDate && !p.IsDeleted);
@@ -46,7 +46,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
 
             // Tổng số
             var totalUsers = await _context.Accounts.CountAsync();
-            var totalServiceCombos = await _context.ServiceCombos.CountAsync();
+            var totalServiceCombos = await _context.Servicecombos.CountAsync();
             var totalPosts = await _context.Posts.CountAsync(p => !p.IsDeleted);
             var totalRevenue = await _context.Payments
                 .Where(p => p.Status == "completed")
@@ -82,7 +82,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
                 var newUsers = await _context.Accounts
                     .CountAsync(a => a.CreatedAt >= pointStart && a.CreatedAt < pointEnd);
 
-                var newServiceCombos = await _context.ServiceCombos
+                var newServiceCombos = await _context.Servicecombos
                     .CountAsync(s => s.CreatedAt >= pointStart && s.CreatedAt < pointEnd);
 
                 var newPosts = await _context.Posts
@@ -196,13 +196,13 @@ namespace ESCE_SYSTEM.Services.StatisticsService
         {
             var (startDate, endDate, _, _) = GetDateRange(filter);
 
-            var totalServiceCombos = await _context.ServiceCombos.CountAsync();
-            var activeServiceCombos = await _context.ServiceCombos.CountAsync(s => s.Status == "open");
-            var newServiceCombosThisPeriod = await _context.ServiceCombos
+            var totalServiceCombos = await _context.Servicecombos.CountAsync();
+            var activeServiceCombos = await _context.Servicecombos.CountAsync(s => s.Status == "open");
+            var newServiceCombosThisPeriod = await _context.Servicecombos
                 .CountAsync(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate);
 
             // Top ServiceCombos theo số booking
-            var topServiceCombos = await _context.ServiceCombos
+            var topServiceCombos = await _context.Servicecombos
                 .Select(s => new TopServiceComboDto
                 {
                     Id = s.Id,

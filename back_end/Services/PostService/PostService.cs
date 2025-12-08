@@ -372,7 +372,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoPheDuyetBaiViet(Post post)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -397,7 +397,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoTuChoiBaiViet(Post post, string lyDoTuChoi)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -422,7 +422,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoYeuCauChinhSua(Post post, string noiDungYeuCau)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto

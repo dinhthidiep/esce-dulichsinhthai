@@ -1,6 +1,6 @@
-﻿namespace ESCE_SYSTEM.DTOs.Statistics
+namespace ESCE_SYSTEM.DTOs.Statistics
 {
-    // DTO cho thống kê tổng quan
+    // DTO cho th?ng k� t?ng quan
     public class DashboardStatisticsDto
     {
         public int TotalUsers { get; set; }
@@ -9,7 +9,7 @@
         public decimal TotalRevenue { get; set; }
         public int TotalBookings { get; set; }
 
-        // So sánh với kỳ trước
+        // So s�nh v?i k? tru?c
         public double UsersGrowthPercent { get; set; }
         public double ServiceCombosGrowthPercent { get; set; }
         public double PostsGrowthPercent { get; set; }
@@ -17,7 +17,7 @@
         public double BookingsGrowthPercent { get; set; }
     }
 
-    // DTO cho thống kê theo thời gian
+    // DTO cho th?ng k� theo th?i gian
     public class TimeSeriesStatisticsDto
     {
         public string Period { get; set; } = string.Empty; // "day", "week", "month", "year"
@@ -28,7 +28,7 @@
 
     public class TimeSeriesDataPoint
     {
-        public string Label { get; set; } = string.Empty; // Ngày/Tuần/Tháng/Năm
+        public string Label { get; set; } = string.Empty; // Ng�y/Tu?n/Th�ng/Nam
         public DateTime Date { get; set; }
         public int NewUsers { get; set; }
         public int NewServiceCombos { get; set; }
@@ -37,7 +37,7 @@
         public int NewBookings { get; set; }
     }
 
-    // DTO cho thống kê chi tiết người dùng
+    // DTO cho th?ng k� chi ti?t ngu?i d�ng
     public class UserStatisticsDto
     {
         public int TotalUsers { get; set; }
@@ -54,7 +54,7 @@
         public int Count { get; set; }
     }
 
-    // DTO cho thống kê doanh thu
+    // DTO cho th?ng k� doanh thu
     public class RevenueStatisticsDto
     {
         public decimal TotalRevenue { get; set; }
@@ -68,7 +68,8 @@
         public decimal AverageOrderValue { get; set; }
     }
 
-    // DTO cho thống kê ServiceCombo
+    // DTO cho th?ng k� Servicecombo
+
     public class ServiceComboStatisticsDto
     {
         public int TotalServiceCombos { get; set; }
@@ -85,7 +86,7 @@
         public decimal Revenue { get; set; }
     }
 
-    // DTO cho thống kê bài viết
+    // DTO cho th?ng k� b�i vi?t
     public class PostStatisticsDto
     {
         public int TotalPosts { get; set; }
@@ -103,6 +104,6 @@
         public string Period { get; set; } = "day"; // day, week, month, year
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public int? HostId { get; set; } // Lọc theo Host (nếu cần)
+        public int? HostId { get; set; } // L?c theo Host (n?u c?n)
     }
 }
