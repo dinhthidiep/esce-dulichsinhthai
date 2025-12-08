@@ -1,0 +1,105 @@
+/* Sử dụng lại styles từ ForgotPassword.css và thêm styles cho OTP */
+.otp-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 20px;
+}
+
+.otp-form {
+  margin-bottom: 20px;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.otp-input {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.otp-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+  transform: scale(1.05);
+}
+
+.otp-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+}
+
+.otp-input:not(:placeholder-shown) {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.resend-section {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.resend-button {
+  background: none;
+  border: none;
+  color: #fffb00;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.resend-button:hover {
+  color: #059669;
+}
+
+.resend-timer {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  text-align: center;
+  margin: 8px 0 16px 0;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 480px) {
+  .otp-inputs {
+    gap: 8px;
+  }
+  
+  .otp-input {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
