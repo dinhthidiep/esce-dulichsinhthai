@@ -39,3 +39,17 @@ Nếu URL hiển thị đúng, cấu hình đã thành công!
 - Sau khi sửa `.env`, **phải khởi động lại** dev server
 - Nếu gặp lỗi SSL, dùng HTTP thay vì HTTPS
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

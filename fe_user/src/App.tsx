@@ -1,99 +1,102 @@
+import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Suspense } from 'react'
 import LandingPage from '~/components/LandingPage'
+import ServicesPage from '~/components/ServicesPage'
+import ServiceDetail from '~/components/ServiceDetail'
 import LoginForm from '~/components/LoginForm'
 import Register from '~/components/Register'
 import ForgotPassword from '~/components/ForgotPassword'
 import OTPVerification from '~/components/OTPVerification'
 import ResetPassword from '~/components/ResetPassword'
-import ServicesPage from '~/components/ServicesPage'
-import ServiceDetail from '~/components/ServiceDetail'
 import BookingPage from '~/components/BookingPage'
 import PaymentPage from '~/components/PaymentPage'
+import PaymentSuccessPage from '~/components/PaymentSuccessPage'
+import PaymentFailurePage from '~/components/PaymentFailurePage'
 import ProfilePage from '~/components/ProfilePage'
-import AboutPage from '~/components/AboutPage'
-import CreateTour from '~/components/CreateTour'
+import ForumPage from '~/components/ForumPage'
 import NewsPage from '~/components/NewsPage'
 import NewsDetailPage from '~/components/NewsDetailPage'
 import PolicyPage from '~/components/PolicyPage'
-import ForumPage from '~/components/ForumPage'
-
-// Log để debug
-if (import.meta.env.DEV) {
-  console.log('✅ [App.tsx] App component đang được load')
-}
+import RegisterAgency from '~/components/RegisterAgency'
+import RegisterHost from '~/components/RegisterHost'
+import UpgradeAccount from '~/components/UpgradeAccount'
+import UpgradePaymentPage from '~/components/UpgradePaymentPage'
+import UpgradePaymentSuccessPage from '~/components/UpgradePaymentSuccessPage'
+import SubscriptionPackages from '~/components/SubscriptionPackages'
 
 function App() {
-  try {
-    if (import.meta.env.DEV) {
-      console.log('✅ [App.tsx] App component đang render')
-    }
-
-    return (
-      <BrowserRouter>
-        <Suspense fallback={
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Trang chủ */}
+        <Route path="/" element={<LandingPage />} />
+        
+        {/* Dịch vụ */}
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/services/:id" element={<ServiceDetail />} />
+        
+        {/* Xác thực */}
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/register/agency" element={<RegisterAgency />} />
+        <Route path="/register/host" element={<RegisterHost />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* Đặt dịch vụ và thanh toán */}
+        <Route path="/booking/:id" element={<BookingPage />} />
+        <Route path="/payment/:bookingId" element={<PaymentPage />} />
+        <Route path="/payment/success/:bookingId" element={<PaymentSuccessPage />} />
+        <Route path="/payment/failure/:bookingId" element={<PaymentFailurePage />} />
+        
+        {/* Nâng cấp tài khoản */}
+        <Route path="/upgrade" element={<UpgradeAccount />} />
+        <Route path="/upgrade/payment/:upgradeRequestId" element={<UpgradePaymentPage />} />
+        <Route path="/upgrade/payment/success/:upgradeRequestId" element={<UpgradePaymentSuccessPage />} />
+        <Route path="/subscription-packages" element={<SubscriptionPackages />} />
+        
+        {/* Trang người dùng */}
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/forum" element={<ForumPage />} />
+        <Route path="/news" element={<NewsPage />} />
+        <Route path="/news/:id" element={<NewsDetailPage />} />
+        <Route path="/policy" element={<PolicyPage />} />
+        
+        {/* 404 */}
+        <Route path="*" element={
           <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100vh',
-            fontSize: '1.2rem',
-            color: '#64748b'
+            padding: '2rem', 
+            textAlign: 'center',
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}>
-            Đang tải...
+            <h1 style={{ fontSize: '4rem', marginBottom: '1rem', color: '#dc2626' }}>404</h1>
+            <p style={{ fontSize: '1.5rem', color: '#64748b', marginBottom: '2rem' }}>
+              Không tìm thấy trang
+            </p>
+            <a 
+              href="/" 
+              style={{
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#059669',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
+                fontWeight: 600
+              }}
+            >
+              Về trang chủ
+            </a>
           </div>
-        }>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/otp-verification" element={<OTPVerification />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/services/:id" element={<ServiceDetail />} />
-            <Route path="/booking/:id" element={<BookingPage />} />
-            <Route path="/payment/:bookingId" element={<PaymentPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/create-tour" element={<CreateTour />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/news/:id" element={<NewsDetailPage />} />
-            <Route path="/policy" element={<PolicyPage />} />
-            <Route path="/forum" element={<ForumPage />} />
-            <Route path="*" element={
-              <div style={{ 
-                padding: '2rem', 
-                textAlign: 'center',
-                fontSize: '1.2rem',
-                color: '#64748b'
-              }}>
-                404 - Không tìm thấy trang
-              </div>
-            } />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    )
-  } catch (error) {
-    console.error('❌ [App.tsx] Lỗi khi render App:', error)
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        fontFamily: 'system-ui, sans-serif'
-      }}>
-        <h1 style={{ color: '#dc2626' }}>⚠️ Lỗi khi tải ứng dụng</h1>
-        <p style={{ color: '#64748b', marginTop: '1rem' }}>
-          {error instanceof Error ? error.message : 'Lỗi không xác định'}
-        </p>
-        <p style={{ color: '#64748b', marginTop: '1rem' }}>
-          Vui lòng mở Console (F12) để xem chi tiết lỗi.
-        </p>
-      </div>
-    )
-  }
+        } />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App
-

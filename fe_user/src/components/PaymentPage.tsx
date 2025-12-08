@@ -5,10 +5,12 @@ import Header from '~/components/Header'
 import Button from '~/components/ui/Button'
 import { Card, CardContent } from '~/components/ui/Card'
 import LoadingSpinner from '~/components/LoadingSpinner'
+import ComplementaryServices from '~/components/ComplementaryServices'
 import { ArrowLeftIcon, CheckCircleIcon, AlertCircleIcon, CreditCardIcon } from '~/components/icons'
 import { formatPrice } from '~/lib/utils'
 import { API_ENDPOINTS } from '~/config/api'
 import * as couponService from '~/services/couponService'
+import type { MembershipTier } from '~/mockdata/index'
 import './PaymentPage.css'
 
 interface BookingData {
@@ -93,7 +95,7 @@ const PaymentPage = () => {
   const [processing, setProcessing] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null)
 
-  // Coupon state
+  // Coupon state (giữ lại để tương thích với backend hiện tại)
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null)
   const [discountAmount, setDiscountAmount] = useState(0)
@@ -101,6 +103,33 @@ const PaymentPage = () => {
   const [validatingCoupon, setValidatingCoupon] = useState(false)
   const [couponError, setCouponError] = useState('')
   const [additionalServices, setAdditionalServices] = useState<Array<{ Name?: string; Description?: string }>>([])
+  
+  // Complementary Services state
+  const [userTier, setUserTier] = useState<MembershipTier>('none')
+  const [selectedComplementaryServices, setSelectedComplementaryServices] = useState<number[]>([])
+
+  // Lấy userTier từ user info
+  useEffect(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        // Lấy membership tier từ user info
+        const tier = (userInfo.MembershipTier || userInfo.membershipTier || userInfo.tier) as MembershipTier;
+        if (tier && ['silver', 'gold', 'diamond', 'none'].includes(tier)) {
+          setUserTier(tier);
+        } else {
+          // Nếu không có tier trong userInfo, mặc định là 'none' (level 0)
+          setUserTier('none');
+        }
+      } else {
+        setUserTier('none');
+      }
+    } catch (error) {
+      console.error('Error getting user tier:', error);
+      setUserTier('none');
+    }
+  }, []);
 
   const estimateBaseAmount = (bookingData: BookingData | null): number => {
     if (!bookingData) return 0
@@ -714,74 +743,15 @@ const PaymentPage = () => {
                     })()}
                   </div>
 
-                  {/* Coupon Section */}
+                  {/* Complementary Services Section */}
                   {canPay && (
                     <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
-                      <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px' }}>Mã giảm giá</h3>
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={couponCode}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                            setCouponCode(e.target.value.toUpperCase())
-                            setCouponError('')
-                          }}
-                          placeholder="Nhập mã giảm giá"
-                          disabled={validatingCoupon || !!appliedCoupon}
-                          style={{ flex: 1 }}
-                        />
-                        {!appliedCoupon ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleApplyCoupon}
-                            disabled={validatingCoupon || !couponCode.trim()}
-                          >
-                            {validatingCoupon ? 'Đang kiểm tra...' : 'Áp dụng'}
-                          </Button>
-                        ) : (
-                          <Button type="button" variant="outline" onClick={handleRemoveCoupon}>
-                            Gỡ mã
-                          </Button>
-                        )}
-                      </div>
-
-                      {couponError && (
-                        <p style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '4px' }}>{couponError}</p>
-                      )}
-
-                      {appliedCoupon && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '8px 12px',
-                            backgroundColor: '#f0fdf4',
-                            border: '1px solid #86efac',
-                            borderRadius: '6px',
-                            marginTop: '8px',
-                          }}
-                        >
-                          <CheckCircleIcon style={{ color: '#22c55e', width: '20px', height: '20px' }} />
-                          <span style={{ flex: 1, color: '#166534', fontWeight: '500' }}>
-                            Mã {(appliedCoupon.Code || appliedCoupon.code) as string} đã áp dụng
-                            {appliedCoupon.Description && (
-                              <span
-                                style={{
-                                  display: 'block',
-                                  fontSize: '0.875rem',
-                                  color: '#15803d',
-                                  marginTop: '2px',
-                                }}
-                              >
-                                {(appliedCoupon.Description || appliedCoupon.description) as string}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
+                      <ComplementaryServices
+                        userTier={userTier}
+                        selectedServices={selectedComplementaryServices}
+                        onSelectionChange={setSelectedComplementaryServices}
+                        disabled={processing}
+                      />
                     </div>
                   )}
                 </CardContent>
@@ -848,9 +818,18 @@ const PaymentPage = () => {
                         <strong>Thanh toán thành công!</strong>
                         <p>Đơn đặt dịch vụ của bạn đã được thanh toán thành công.</p>
                       </div>
-                      <Button variant="default" onClick={() => navigate('/')} className="success-button">
-                        Về trang chủ
-                      </Button>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column', width: '100%' }}>
+                        <Button 
+                          variant="default" 
+                          onClick={() => navigate(`/payment-success/${bookingIdValue}`)} 
+                          className="success-button"
+                        >
+                          Xem chi tiết thanh toán
+                        </Button>
+                        <Button variant="outline" onClick={() => navigate('/')} className="success-button">
+                          Về trang chủ
+                        </Button>
+                      </div>
                     </div>
                   ) : bookingStatusLower === 'cancelled' ? (
                     <div className="payment-cancelled-box">

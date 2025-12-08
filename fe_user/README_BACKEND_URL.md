@@ -76,3 +76,17 @@ Nếu URL không đúng, kiểm tra lại file `.env`.
 - Kiểm tra backend đang chạy trên port nào
 - Cập nhật URL trong file .env cho đúng
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -24,3 +24,22 @@
   color: white;
 }
 
+.badge-primary {
+  background: #059669;
+  color: white;
+}
+
+.badge-secondary {
+  background: #64748b;
+  color: white;
+}
+
+.badge-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.badge-danger {
+  background: #ef4444;
+  color: white;
+}

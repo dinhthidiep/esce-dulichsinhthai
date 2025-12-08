@@ -1,8 +1,21 @@
 import { API_BASE_URL } from '~/config/api'
+import { mockAuthService } from '~/mockdata/mockAuthService'
+
+// Sử dụng mock service thay vì real API
+const USE_MOCK_DATA = true
 
 const backend_url = API_BASE_URL.replace('/api', '')
 
 export const login = async (userEmail: string, password: string) => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.login(userEmail, password)
+    } catch (error) {
+      console.error('Login failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(`${backend_url}/api/Auth/login`, {
       method: 'POST',
@@ -50,6 +63,15 @@ export const login = async (userEmail: string, password: string) => {
 }
 
 export const forgotPassword = async (email: string, phoneNumber?: string) => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.forgotPassword(email, phoneNumber)
+    } catch (error) {
+      console.error('Forgot password failed:', error)
+      throw error
+    }
+  }
+
   try {
     const requestBody = {
       Email: email,
@@ -91,6 +113,15 @@ export const forgotPassword = async (email: string, phoneNumber?: string) => {
 }
 
 export const verifyOtp = async (email: string, otp: string) => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.verifyOtp(email, otp)
+    } catch (error) {
+      console.error('Verify OTP failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(
       `${backend_url}/api/Auth/VerifyOtpForgetPassword`,
@@ -127,6 +158,15 @@ export const verifyOtp = async (email: string, otp: string) => {
 }
 
 export const resetPassword = async (email: string, otp: string, newPassword: string) => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.resetPassword(email, otp, newPassword)
+    } catch (error) {
+      console.error('Reset password failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(`${backend_url}/api/Auth/ResetPassword`, {
       method: 'PUT',
@@ -165,6 +205,15 @@ export const resetPassword = async (email: string, otp: string, newPassword: str
 
 // Registration OTP functions
 export const requestOtpForRegister = async (email: string, phoneNumber: string = '') => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.requestOtpForRegister(email, phoneNumber)
+    } catch (error) {
+      console.error('Request OTP for register failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(`${backend_url}/api/Auth/RequestOtp`, {
       method: 'POST',
@@ -201,6 +250,15 @@ export const requestOtpForRegister = async (email: string, phoneNumber: string =
 }
 
 export const verifyOtpForRegister = async (email: string, otp: string) => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.verifyOtpForRegister(email, otp)
+    } catch (error) {
+      console.error('Verify OTP for register failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(`${backend_url}/api/Auth/VerifyOtp`, {
       method: 'PUT',
@@ -234,6 +292,15 @@ export const verifyOtpForRegister = async (email: string, otp: string) => {
 }
 
 export const register = async (userEmail: string, password: string, fullName: string, phone: string = '') => {
+  if (USE_MOCK_DATA) {
+    try {
+      return await mockAuthService.register(userEmail, password, fullName, phone)
+    } catch (error) {
+      console.error('Register failed:', error)
+      throw error
+    }
+  }
+
   try {
     const response = await fetch(`${backend_url}/api/Auth/register`, {
       method: 'POST',

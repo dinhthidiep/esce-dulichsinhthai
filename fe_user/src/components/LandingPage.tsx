@@ -68,6 +68,10 @@ const LandingPage = () => {
   const [autoPlayPaused, setAutoPlayPaused] = useState(false) // Tạm dừng auto play khi user click
   const { tours, loading, error } = useTours()
   const location = useLocation()
+  
+  // States for scroll animations
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set())
+  const [animatedStats, setAnimatedStats] = useState<Record<number, number>>({})
 
   useEffect(() => {
     setIsVisible(true)
@@ -82,6 +86,94 @@ const LandingPage = () => {
       document.documentElement.style.scrollBehavior = 'auto'
     }
   }, [location.pathname])
+
+  // Intersection Observer for scroll-triggered animations
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1,
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.getAttribute('data-section-id')
+          if (sectionId) {
+            setVisibleSections((prev) => new Set([...prev, sectionId]))
+          }
+        }
+      })
+    }, observerOptions)
+
+    // Observe all sections
+    const sections = document.querySelectorAll('[data-section-id]')
+    sections.forEach((section) => observer.observe(section))
+
+    return () => {
+      sections.forEach((section) => observer.unobserve(section))
+    }
+  }, [])
+
+  // Animate stats counting
+  useEffect(() => {
+    if (!visibleSections.has('stats')) return
+
+    const animateStat = (statId: number, targetValue: number, suffix: string, duration: number = 2000) => {
+      const startTime = Date.now()
+      const startValue = 0
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        
+        // Easing function (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3)
+        const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOut)
+        
+        setAnimatedStats((prev) => ({ ...prev, [statId]: currentValue }))
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          setAnimatedStats((prev) => ({ ...prev, [statId]: targetValue }))
+        }
+      }
+
+      requestAnimationFrame(animate)
+    }
+
+    // Animate each stat
+    stats.forEach((stat, index) => {
+      // Handle different formats: '500+', '10,000+', '4.8/5'
+      let numericValue: number | null = null
+      let suffix = ''
+      
+      if (stat.value.includes('/')) {
+        // Handle rating format like '4.8/5'
+        const parts = stat.value.split('/')
+        const rating = parseFloat(parts[0])
+        if (!isNaN(rating)) {
+          numericValue = rating * 10 // Animate to 48, then display as 4.8
+          suffix = '/5'
+        }
+      } else {
+        // Handle formats like '500+', '10,000+'
+        const cleanValue = stat.value.replace(/,/g, '')
+        const match = cleanValue.match(/(\d+)(.*)/)
+        if (match) {
+          numericValue = parseInt(match[1])
+          suffix = match[2] || ''
+        }
+      }
+      
+      if (numericValue !== null && !isNaN(numericValue)) {
+        setTimeout(() => {
+          animateStat(index, numericValue!, suffix, 2000)
+        }, index * 200) // Stagger animation
+      }
+    })
+  }, [visibleSections])
 
   // Kiểm tra nếu user vừa đăng nhập/đăng ký
   useEffect(() => {
@@ -461,23 +553,56 @@ const LandingPage = () => {
             </div>
 
             {/* Stats Section */}
-            <div className={`hero-stats ${isVisible ? 'fade-in-up' : ''}`} role="region" aria-label="Thống kê">
-              {stats.map((stat) => (
-                <div key={stat.id} className="stat-item">
-                  <div className={`stat-value ${stat.color}`} aria-label={stat.value}>
-                    {stat.value}
+            <div 
+              className={`hero-stats ${isVisible ? 'fade-in-up' : ''}`} 
+              role="region" 
+              aria-label="Thống kê"
+              data-section-id="stats"
+            >
+              {stats.map((stat, index) => {
+                let displayValue = stat.value
+                
+                if (animatedStats[index] !== undefined) {
+                  if (stat.value.includes('/')) {
+                    // Handle rating format: display as decimal
+                    const animated = animatedStats[index] / 10
+                    displayValue = `${animated.toFixed(1)}/5`
+                  } else {
+                    // Handle formats like '500+', '10,000+'
+                    const cleanValue = stat.value.replace(/,/g, '')
+                    const match = cleanValue.match(/(\d+)(.*)/)
+                    if (match) {
+                      const suffix = match[2] || ''
+                      const animated = animatedStats[index]
+                      // Format number with commas if needed
+                      const formatted = animated.toLocaleString('en-US')
+                      displayValue = `${formatted}${suffix}`
+                    }
+                  }
+                }
+                
+                return (
+                  <div key={stat.id} className="stat-item">
+                    <div className={`stat-value ${stat.color}`} aria-label={stat.value}>
+                      {displayValue}
+                    </div>
+                    <div className="stat-label">{stat.label}</div>
                   </div>
-                  <div className="stat-label">{stat.label}</div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="features-section" id="features" aria-labelledby="features-title">
+        <section 
+          className="features-section" 
+          id="features" 
+          aria-labelledby="features-title"
+          data-section-id="features"
+        >
           <div className="section-container">
-            <div className="section-header">
+            <div className={`section-header ${visibleSections.has('features') ? 'fade-in-up' : ''}`}>
               <h2 id="features-title" className="section-title">
                 Tại sao chọn ESCE Du lịch?
               </h2>
@@ -489,11 +614,12 @@ const LandingPage = () => {
             <div className="features-grid">
               {features.map((feature, index) => {
                 const IconComponent = iconMap[feature.icon]
+                const isFeatureVisible = visibleSections.has('features')
 
                 return (
                   <article
                     key={feature.id}
-                    className={`feature-card ${isVisible ? 'fade-in-up' : ''}`}
+                    className={`feature-card ${isFeatureVisible ? 'fade-in-up' : ''}`}
                     style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                   >
                     <Card className="feature-card-inner">
@@ -515,9 +641,14 @@ const LandingPage = () => {
         </section>
 
         {/* Popular Services Section */}
-        <section className="services-section" id="services" aria-labelledby="services-title">
+        <section 
+          className="services-section" 
+          id="services" 
+          aria-labelledby="services-title"
+          data-section-id="services"
+        >
           <div className="section-container">
-            <div className="services-header">
+            <div className={`services-header ${visibleSections.has('services') ? 'fade-in-up' : ''}`}>
               <div className="services-header-text">
                 <h2 id="services-title" className="section-title">
                   Dịch vụ được yêu thích nhất
@@ -574,7 +705,12 @@ const LandingPage = () => {
             ) : displayServices.length > 0 ? (
               <div className="services-grid">
                 {displayServices.map((service, index) => (
-                  <ServiceCard key={service.id} service={service as ServiceItem} index={index} isVisible={isVisible} />
+                  <ServiceCard 
+                    key={service.id} 
+                    service={service as ServiceItem} 
+                    index={index} 
+                    isVisible={visibleSections.has('services')} 
+                  />
                 ))}
               </div>
             ) : (
@@ -586,9 +722,14 @@ const LandingPage = () => {
         </section>
 
         {/* Testimonials Section */}
-        <section className="testimonials-section" id="testimonials" aria-labelledby="testimonials-title">
+        <section 
+          className="testimonials-section" 
+          id="testimonials" 
+          aria-labelledby="testimonials-title"
+          data-section-id="testimonials"
+        >
           <div className="section-container">
-            <div className="section-header">
+            <div className={`section-header ${visibleSections.has('testimonials') ? 'fade-in-up' : ''}`}>
               <h2 id="testimonials-title" className="section-title">
                 Trải nghiệm từ khách hàng
               </h2>
@@ -665,10 +806,12 @@ const LandingPage = () => {
                     return `${Math.floor(diffDays / 365)} năm trước`
                   }
 
+                  const isReviewVisible = visibleSections.has('testimonials')
+                  
                   return (
                     <article
                       key={review.Id || review.id || index}
-                      className={`review-card ${isVisible ? 'fade-in-up' : ''}`}
+                      className={`review-card ${isReviewVisible ? 'fade-in-up' : ''}`}
                       style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                     >
                       <Card className="review-card-inner">
@@ -714,9 +857,14 @@ const LandingPage = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="cta-section" id="cta" aria-labelledby="cta-title">
+        <section 
+          className="cta-section" 
+          id="cta" 
+          aria-labelledby="cta-title"
+          data-section-id="cta"
+        >
           <div className="section-container">
-            <div className={`cta-content ${isVisible ? 'fade-in-up' : ''}`}>
+            <div className={`cta-content ${visibleSections.has('cta') ? 'fade-in-up' : ''}`}>
               <h2 id="cta-title" className="cta-title">
                 Sẵn sàng khám phá cùng chúng tôi?
               </h2>
@@ -769,7 +917,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, index, isVisible }) 
   return (
     <article
       className={`service-card ${isVisible ? 'fade-in-up' : ''}`}
-      style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+      style={{ 
+        animationDelay: `${0.3 + index * 0.1}s`,
+        opacity: isVisible ? 1 : 0
+      }}
     >
       <Card className="service-card-inner">
         <div className="service-image-wrapper">

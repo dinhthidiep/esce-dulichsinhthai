@@ -5,6 +5,11 @@ import Header from './Header';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
 import LoadingSpinner from './LoadingSpinner';
+import LazyImage from './LazyImage';
+import { formatPrice, getImageUrl } from '../lib/utils';
+import { API_ENDPOINTS } from '../config/api';
+import { useUserLevel } from '../hooks/useUserLevel';
+import LevelProgressBar from './LevelProgressBar';
 import { 
   UserIcon, 
   CalendarIcon, 
@@ -18,6 +23,7 @@ import {
   StarIcon,
   ArrowRightIcon
 } from './icons/index';
+import './ProfilePage.css';
 
 // Additional Icons for Review Management
 const MoreVerticalIcon = ({ className = '', ...props }) => (
@@ -56,10 +62,6 @@ const TrashIcon = ({ className = '', ...props }) => (
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
   </svg>
 );
-import LazyImage from './LazyImage';
-import { formatPrice, getImageUrl } from '../lib/utils';
-import { API_ENDPOINTS } from '../config/api';
-import './ProfilePage.css';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -121,6 +123,10 @@ const ProfilePage = () => {
     }
   }, []);
 
+  // Get user level data
+  const userId = getUserId();
+  const { totalSpent, level, levelInfo, progress, nextLevelAmount, loading: levelLoading, error: levelError } = useUserLevel(userId);
+
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
@@ -143,10 +149,31 @@ const ProfilePage = () => {
           return;
         }
 
-        const response = await axiosInstance.get(`${API_ENDPOINTS.USER}/${userId}`);
-        console.log(' ProfilePage: Nhận được dữ liệu user:', response.data);
+        // Thử lấy userInfo từ localStorage trước (fallback)
+        const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        let userData: any = null;
+        
+        try {
+          const response = await axiosInstance.get(`${API_ENDPOINTS.USER}/${userId}`);
+          console.log('✅ [ProfilePage] Nhận được dữ liệu user từ API:', response.data);
+          userData = response.data;
+        } catch (apiErr: any) {
+          console.warn('⚠️ [ProfilePage] Không thể lấy user từ API, sử dụng data từ localStorage:', apiErr?.message);
+          
+          // Fallback: sử dụng userInfo từ localStorage
+          if (userInfoStr) {
+            try {
+              userData = JSON.parse(userInfoStr);
+              console.log('✅ [ProfilePage] Sử dụng userInfo từ localStorage:', userData);
+            } catch (parseErr) {
+              console.error('❌ [ProfilePage] Lỗi parse userInfo từ localStorage:', parseErr);
+              throw apiErr; // Ném lại lỗi API nếu không parse được
+            }
+          } else {
+            throw apiErr; // Ném lại lỗi API nếu không có userInfo trong storage
+          }
+        }
 
-        const userData = response.data;
         if (!userData) {
           setError('Không tìm thấy thông tin người dùng');
           return;
@@ -176,15 +203,26 @@ const ProfilePage = () => {
         setFormData(initialFormData);
         // Lưu original data để so sánh thay đổi
         originalFormDataRef.current = JSON.stringify(initialFormData);
-      } catch (err) {
-        console.error(' Lỗi khi tải thông tin user:', err);
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.');
-          navigate('/login', { state: { returnUrl: '/profile' } });
-        } else if (err.response?.status === 404) {
-          setError('Không tìm thấy thông tin người dùng');
+      } catch (err: any) {
+        console.error('❌ [ProfilePage] Lỗi khi tải thông tin user:', err);
+        console.error('  - Error message:', err?.message);
+        console.error('  - Response status:', err?.response?.status);
+        console.error('  - Response data:', err?.response?.data);
+        console.error('  - Request URL:', err?.config?.url);
+        
+        const errorMessage = err?.response?.data?.message || err?.message || 'Không thể tải thông tin người dùng';
+        
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          setTimeout(() => {
+            navigate('/login', { state: { returnUrl: '/profile' }, replace: true });
+          }, 1500);
+        } else if (err?.response?.status === 404) {
+          setError('Không tìm thấy thông tin người dùng. Vui lòng thử lại sau.');
+        } else if (err?.code === 'NETWORK_ERROR' || err?.message?.includes('Network Error')) {
+          setError('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.');
         } else {
-          setError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+          setError(`Không thể tải thông tin người dùng: ${errorMessage}. Vui lòng thử lại sau.`);
         }
       } finally {
         setLoading(false);
@@ -1247,6 +1285,22 @@ const ProfilePage = () => {
             {/* Personal Info Tab */}
             {activeTab === 'personal' && (
             <div className="profile-form-compact">
+              {/* Level Progress Bar */}
+              {!levelLoading && userId && level && (
+                <LevelProgressBar
+                  totalSpent={totalSpent}
+                  level={level}
+                  progress={progress}
+                  nextLevelAmount={nextLevelAmount}
+                  showDetails={true}
+                  size="large"
+                />
+              )}
+              {levelError && (
+                <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fef2f2', color: '#dc2626', borderRadius: '0.5rem' }}>
+                  {levelError}
+                </div>
+              )}
               {/* Avatar Section - Top - Chỉ hiện khi đang chỉnh sửa */}
               {isEditing && (
                 <div className="avatar-section-compact">

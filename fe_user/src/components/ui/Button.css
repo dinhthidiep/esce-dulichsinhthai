@@ -87,6 +87,44 @@
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
 }
 
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary, #475569);
+  border: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary, #1e293b);
+}
+
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--color-primary, #059669);
+  background: rgba(5, 150, 105, 0.1);
+}
+
+.btn-primary {
+  background: var(--color-primary, #059669);
+  color: var(--color-text-white, #ffffff);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark, #047857);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.btn-secondary {
+  background: var(--color-text-secondary, #475569);
+  color: var(--color-text-white, #ffffff);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-text-primary, #1e293b);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
 /* Sizes */
 .btn-sm {
   padding: var(--spacing-2, 0.5rem) var(--spacing-4, 1rem);

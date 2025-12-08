@@ -17,7 +17,9 @@ import {
 } from './icons/index';
 import { formatPrice, getImageUrl } from '../lib/utils';
 import { API_ENDPOINTS } from '../config/api';
-import * as couponService from '../services/couponService';
+import ComplementaryServices from './ComplementaryServices';
+import type { MembershipTier } from '../mockdata/index';
+import { mockComplementaryServices } from '../mockdata/index';
 import './BookingPage.css';
 
 const baNaHillImage = '/img/banahills.jpg';
@@ -70,12 +72,9 @@ const BookingPage = () => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
   
-  // Coupon state
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [validatingCoupon, setValidatingCoupon] = useState(false);
-  const [couponError, setCouponError] = useState('');
+  // Complementary Services state (thay thế cho coupon)
+  const [userTier, setUserTier] = useState<MembershipTier>('none');
+  const [selectedComplementaryServices, setSelectedComplementaryServices] = useState<number[]>([]);
 
   // Validate ID parameter
   useEffect(() => {
@@ -84,6 +83,29 @@ const BookingPage = () => {
       setLoading(false);
     }
   }, [id]);
+
+  // Lấy userTier từ user info
+  useEffect(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        // Lấy membership tier từ user info
+        const tier = (userInfo.MembershipTier || userInfo.membershipTier || userInfo.tier) as MembershipTier;
+        if (tier && ['silver', 'gold', 'diamond', 'none'].includes(tier)) {
+          setUserTier(tier);
+        } else {
+          // Nếu không có tier trong userInfo, mặc định là 'none' (level 0)
+          setUserTier('none');
+        }
+      } else {
+        setUserTier('none');
+      }
+    } catch (error) {
+      console.error('Error getting user tier:', error);
+      setUserTier('none');
+    }
+  }, []);
 
   // Fetch service data
   useEffect(() => {
@@ -367,72 +389,6 @@ const BookingPage = () => {
     return selectedServices.includes(serviceId);
   };
 
-  // Coupon handlers
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Vui lòng nhập mã giảm giá');
-      return;
-    }
-
-    if (!service) {
-      setCouponError('Chưa tải được thông tin dịch vụ');
-      return;
-    }
-
-    setValidatingCoupon(true);
-    setCouponError('');
-
-    try {
-      // Validate coupon
-      const serviceComboId = parseInt(id);
-      const validateResponse = await couponService.validateCoupon(couponCode.trim(), serviceComboId);
-      
-      if (!validateResponse.IsValid) {
-        setCouponError('Mã giảm giá không hợp lệ');
-        return;
-      }
-
-      // Calculate discount
-      const originalTotal = calculatedTotal;
-      const discountResponse = await couponService.calculateDiscount(couponCode.trim(), originalTotal);
-      const discount = discountResponse.Discount || 0;
-
-      if (discount <= 0) {
-        setCouponError('Mã giảm giá không áp dụng được cho đơn hàng này');
-        return;
-      }
-
-      // Get coupon info
-      const couponInfo = await couponService.getCouponByCode(couponCode.trim());
-      
-      setAppliedCoupon(couponInfo);
-      setDiscountAmount(discount);
-      setCouponError('');
-    } catch (err) {
-      console.error(' Error applying coupon:', err);
-      
-      if (err.response?.status === 404) {
-        setCouponError('Mã giảm giá không tồn tại');
-      } else if (err.response?.status === 400) {
-        const errorMessage = err.response?.data?.message || 'Mã giảm giá không hợp lệ';
-        setCouponError(errorMessage);
-      } else if (err.response?.data?.message) {
-        setCouponError(err.response.data.message);
-      } else {
-        setCouponError('Không thể áp dụng mã giảm giá. Vui lòng thử lại.');
-      }
-    } finally {
-      setValidatingCoupon(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setCouponCode('');
-    setAppliedCoupon(null);
-    setDiscountAmount(0);
-    setCouponError('');
-  };
-
   const validateForm = () => {
     if (!service) {
       setValidationError('Chưa tải được thông tin dịch vụ');
@@ -621,9 +577,6 @@ const BookingPage = () => {
       
       const finalTotal = baseTotal + additionalServicesTotal;
       
-      // Áp dụng discount nếu có coupon
-      const totalAfterDiscount = Math.max(0, finalTotal - discountAmount);
-      
       const currentStatus = currentService.Status || currentService.status || 'open';
       const currentAvailableSlots = currentService.AvailableSlots !== undefined 
         ? currentService.AvailableSlots 
@@ -782,18 +735,9 @@ const BookingPage = () => {
         console.log('  - Booking ID:', response.data.Id || response.data.id);
       }
 
-      // Áp dụng coupon nếu có
+      // Lấy bookingId từ response
       const bookingId = response.data.Id || response.data.id;
-      if (appliedCoupon && bookingId) {
-        try {
-          await couponService.applyCoupon(bookingId, appliedCoupon.Code);
-          console.log(' BookingPage: Coupon đã được áp dụng:', appliedCoupon.Code);
-        } catch (couponErr) {
-          console.error(' BookingPage: Không thể áp dụng coupon sau khi tạo booking:', couponErr);
-          // Không block flow, chỉ log warning
-        }
-      }
-
+      
       // Chuyển đến trang thanh toán
       if (!bookingId) {
         console.error(' BookingPage: Không nhận được bookingId từ response');
@@ -1332,74 +1276,15 @@ const BookingPage = () => {
                       </div>
                     )}
 
-                    {/* Coupon Section */}
-                    <div className="form-group">
-                      <label className="form-label">
-                        Mã giảm giá (tùy chọn)
-                      </label>
-                      <div className="coupon-input-wrapper" style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={couponCode}
-                          onChange={(e) => {
-                            setCouponCode(e.target.value.toUpperCase());
-                            setCouponError('');
-                          }}
-                          placeholder="Nhập mã giảm giá"
-                          disabled={validatingCoupon || !!appliedCoupon || !isAvailable}
-                          style={{ flex: 1 }}
-                        />
-                        {!appliedCoupon ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleApplyCoupon}
-                            disabled={validatingCoupon || !couponCode.trim() || !isAvailable}
-                          >
-                            {validatingCoupon ? 'Đang kiểm tra...' : 'Áp dụng'}
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleRemoveCoupon}
-                            disabled={!isAvailable}
-                          >
-                            Gỡ mã
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {couponError && (
-                        <p className="form-hint form-hint-error" style={{ color: '#ef4444', marginTop: '4px' }}>
-                          {couponError}
-                        </p>
-                      )}
-                      
-                      {appliedCoupon && (
-                        <div className="coupon-applied" style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '8px',
-                          padding: '8px 12px',
-                          backgroundColor: '#f0fdf4',
-                          border: '1px solid #86efac',
-                          borderRadius: '6px',
-                          marginTop: '8px'
-                        }}>
-                          <CheckCircleIcon style={{ color: '#22c55e', width: '20px', height: '20px' }} />
-                          <span style={{ flex: 1, color: '#166534', fontWeight: '500' }}>
-                            Mã {appliedCoupon.Code} đã áp dụng
-                            {appliedCoupon.Description && (
-                              <span style={{ display: 'block', fontSize: '0.875rem', color: '#15803d', marginTop: '2px' }}>
-                                {appliedCoupon.Description}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Complementary Services Section */}
+                    {isAvailable && (
+                      <ComplementaryServices
+                        userTier={userTier}
+                        selectedServices={selectedComplementaryServices}
+                        onSelectionChange={setSelectedComplementaryServices}
+                        disabled={submitting}
+                      />
+                    )}
 
                     <div className="form-group">
                       <label htmlFor="notes" className="form-label">
@@ -1514,9 +1399,48 @@ const BookingPage = () => {
                       </>
                     )}
                     
-                    <div className="summary-row">
-                      <span className="summary-label">Tổng cộng</span>
-                      <span className="summary-value">
+                    {/* Complementary Services in Summary */}
+                    {selectedComplementaryServices.length > 0 && (() => {
+                      const tierData = mockComplementaryServices[userTier];
+                      if (!tierData || tierData.availableServices.length === 0) return null;
+                      
+                      const selectedComplServices = tierData.availableServices.filter(s => 
+                        selectedComplementaryServices.includes(s.id)
+                      );
+                      
+                      if (selectedComplServices.length === 0) return null;
+                      
+                      const totalComplValue = selectedComplServices.reduce((sum, s) => sum + s.value, 0);
+                      
+                      return (
+                        <>
+                          <div className="summary-row summary-row-divider">
+                            <span className="summary-label">Ưu đãi của bạn</span>
+                            <span className="summary-value summary-value-free">Miễn phí</span>
+                          </div>
+                          {selectedComplServices.map(service => (
+                            <div key={service.id} className="summary-row summary-row-complementary">
+                              <span className="summary-label">
+                                {service.name}
+                              </span>
+                              <span className="summary-value summary-value-free">
+                                {formatPrice(service.value)}
+                              </span>
+                            </div>
+                          ))}
+                          <div className="summary-row summary-row-complementary-total">
+                            <span className="summary-label">Tổng giá trị tặng kèm</span>
+                            <span className="summary-value summary-value-free">
+                              {formatPrice(totalComplValue)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                    
+                    <div className="summary-row summary-row-total">
+                      <span className="summary-label">Thành tiền</span>
+                      <span className="summary-value summary-total">
                         {calculatingTotal ? (
                           <span className="calculating-text">Đang tính...</span>
                         ) : (
@@ -1524,36 +1448,6 @@ const BookingPage = () => {
                         )}
                       </span>
                     </div>
-                    
-                    {discountAmount > 0 && (
-                      <>
-                        <div className="summary-row summary-row-discount" style={{ color: '#22c55e' }}>
-                          <span className="summary-label">Giảm giá</span>
-                          <span className="summary-value" style={{ color: '#22c55e', fontWeight: '600' }}>
-                            -{formatPrice(discountAmount)}
-                          </span>
-                        </div>
-                        <div className="summary-row summary-row-total">
-                          <span className="summary-label">Thành tiền</span>
-                          <span className="summary-value summary-total">
-                            {formatPrice(Math.max(0, calculatedTotal - discountAmount))}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    
-                    {discountAmount === 0 && (
-                      <div className="summary-row summary-row-total">
-                        <span className="summary-label">Thành tiền</span>
-                        <span className="summary-value summary-total">
-                          {calculatingTotal ? (
-                            <span className="calculating-text">Đang tính...</span>
-                          ) : (
-                            formatPrice(calculatedTotal)
-                          )}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="booking-info-box">

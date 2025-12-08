@@ -70,3 +70,17 @@ Sau khi sửa, mở Developer Tools (F12) → Network tab:
 - Sau khi sửa `.env`, **phải khởi động lại** dev server
 - Nếu vẫn gặp lỗi, kiểm tra backend có đang chạy không
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

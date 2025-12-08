@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
   POST_REACTION: '/PostReaction',
   POST_SAVE: '/PostSave',
   COMMENT: '/Comment',
+  COMMENT_REACTION: '/CommentReaction',
 } as const
 
 

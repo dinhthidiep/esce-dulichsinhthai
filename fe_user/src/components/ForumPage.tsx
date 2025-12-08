@@ -55,6 +55,10 @@ interface PostComment {
   CreatedDate?: string
   Likes: any[]
   Replies: any[]
+  AuthorId?: number
+  ReactionsCount?: number
+  UserReactionId?: number
+  ParentCommentId?: number | null
 }
 
 interface Post {
@@ -136,6 +140,13 @@ const ForumPage = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [showPostMenu, setShowPostMenu] = useState<Record<string, boolean>>({})
   const [deletingPost, setDeletingPost] = useState<string | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editCommentInputs, setEditCommentInputs] = useState<Record<string, string>>({})
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({}) // key: postId-commentId
+  const [submittingReply, setSubmittingReply] = useState<string | null>(null)
+  const [deletingComment, setDeletingComment] = useState<string | null>(null)
+  const [showReplyInputs, setShowReplyInputs] = useState<Set<string>>(new Set()) // key: postId-commentId
+  const [showCommentMenu, setShowCommentMenu] = useState<Record<string, boolean>>({}) // key: postId-commentId
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -183,6 +194,48 @@ const ForumPage = () => {
   const getReactionTypeName = (reactionTypeId: number): string => {
     const reaction = REACTION_TYPES.find(r => r.id === reactionTypeId)
     return reaction ? reaction.name : 'Like'
+  }
+
+  // Helper function để build comment tree từ flat list
+  const buildCommentTree = (flatComments: PostComment[]): PostComment[] => {
+    // Tạo map để truy cập nhanh
+    const commentMap = new Map<string, PostComment>()
+    const topLevelComments: PostComment[] = []
+
+    // Bước 1: Tạo map và khởi tạo replies array cho mỗi comment
+    flatComments.forEach((comment) => {
+      commentMap.set(comment.PostCommentId, {
+        ...comment,
+        Replies: []
+      })
+    })
+
+    // Bước 2: Phân loại comments thành top-level và replies
+    flatComments.forEach((comment) => {
+      const commentId = comment.PostCommentId
+      const parentId = comment.ParentCommentId
+
+      if (parentId) {
+        // Đây là reply - thêm vào replies của parent
+        const parentComment = commentMap.get(String(parentId))
+        const replyComment = commentMap.get(commentId)
+        
+        if (parentComment && replyComment) {
+          // Kiểm tra tránh duplicate
+          if (!parentComment.Replies.some(r => r.PostCommentId === replyComment.PostCommentId)) {
+            parentComment.Replies.push(replyComment)
+          }
+        }
+      } else {
+        // Đây là top-level comment
+        const topComment = commentMap.get(commentId)
+        if (topComment && !topLevelComments.some(c => c.PostCommentId === topComment.PostCommentId)) {
+          topLevelComments.push(topComment)
+        }
+      }
+    })
+
+    return topLevelComments
   }
 
   const normalizePost = (post: Post): Post => {
@@ -254,23 +307,53 @@ const ForumPage = () => {
       let comments: PostComment[] = []
       if (post.Comments && Array.isArray(post.Comments) && post.Comments.length > 0) {
         // Đã là PostCommentResponseDto format từ GetAllPost
-        comments = post.Comments.map((comment: any) => ({
-          PostCommentId: comment.PostCommentId || String(comment.Id || ''),
-          FullName: comment.FullName || 'Người dùng',
-          Content: comment.Content || '',
-          Images: comment.Images && Array.isArray(comment.Images) && comment.Images.length > 0
-            ? comment.Images.map((img: string) => getImageUrl(img, '/img/banahills.jpg')).filter((img): img is string => img !== null)
-            : undefined,
-          CreatedDate: comment.CreatedDate 
-            ? (typeof comment.CreatedDate === 'string' 
-                ? comment.CreatedDate 
-                : comment.CreatedDate instanceof Date
-                  ? comment.CreatedDate.toISOString()
-                  : comment.CreatedDate ? new Date(comment.CreatedDate).toISOString() : undefined)
-            : undefined,
-          Likes: comment.Likes || [],
-          Replies: comment.Replies || [],
-        }))
+        const flatComments = post.Comments.map((comment: any) => {
+          const userId = userInfo?.Id || userInfo?.id
+          const userReaction = comment.Likes?.find((like: any) => 
+            String(like.AccountId || like.UserId) === String(userId)
+          )
+          
+          return {
+            PostCommentId: comment.PostCommentId || String(comment.Id || ''),
+            FullName: comment.FullName || 'Người dùng',
+            Content: comment.Content || '',
+            Images: comment.Images && Array.isArray(comment.Images) && comment.Images.length > 0
+              ? comment.Images.map((img: string) => getImageUrl(img, '/img/banahills.jpg')).filter((img): img is string => img !== null)
+              : undefined,
+            CreatedDate: comment.CreatedDate 
+              ? (typeof comment.CreatedDate === 'string' 
+                  ? comment.CreatedDate 
+                  : comment.CreatedDate instanceof Date
+                    ? comment.CreatedDate.toISOString()
+                    : comment.CreatedDate ? new Date(comment.CreatedDate).toISOString() : undefined)
+              : undefined,
+            Likes: comment.Likes || [],
+            Replies: [], // Sẽ được build từ tree
+            AuthorId: comment.AuthorId || comment.Author?.Id,
+            ReactionsCount: comment.ReactionsCount || 0,
+            UserReactionId: userReaction ? (userReaction.Id || userReaction.CommentReactionId) : undefined,
+            ParentCommentId: comment.ParentCommentId || null,
+          }
+        })
+
+        // Kiểm tra xem API đã trả về nested hay chưa
+        // Nếu có comment nào có Replies array không rỗng, nghĩa là API đã nested
+        const hasNestedReplies = flatComments.some(c => 
+          c.Replies && Array.isArray(c.Replies) && c.Replies.length > 0
+        )
+        
+        if (hasNestedReplies) {
+          // API đã trả về nested, giữ nguyên nhưng đảm bảo format đúng
+          comments = flatComments
+            .filter(c => !c.ParentCommentId) // Chỉ lấy top-level comments
+            .map(c => ({
+              ...c,
+              Replies: c.Replies || []
+            }))
+        } else {
+          // API trả về flat list, cần build tree
+          comments = buildCommentTree(flatComments)
+        }
       } else if (post.Comment && Array.isArray(post.Comment)) {
         // Convert từ Post model (nếu dùng /approved endpoint)
         post.Comment.forEach((comment) => {
@@ -1158,6 +1241,210 @@ const ForumPage = () => {
     }
   }
 
+  const handleEditComment = (commentId: string, currentContent: string) => {
+    setEditingCommentId(commentId)
+    setEditCommentInputs((prev) => ({
+      ...prev,
+      [commentId]: currentContent,
+    }))
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditCommentInputs((prev) => {
+      const newInputs = { ...prev }
+      delete newInputs[editingCommentId || '']
+      return newInputs
+    })
+  }
+
+  const handleUpdateComment = async (postId: string, commentId: string) => {
+    if (!userInfo) {
+      navigate('/login', { state: { returnUrl: '/forum' } })
+      return
+    }
+
+    const commentText = editCommentInputs[commentId]?.trim()
+    if (!commentText) return
+
+    try {
+      await axiosInstance.put(`${API_ENDPOINTS.COMMENT}/${commentId}`, {
+        Content: commentText,
+        Images: null,
+      })
+
+      // Refresh posts
+      await fetchPosts(true)
+      if (activeTab === 'saved') {
+        await fetchSavedPosts(true)
+      }
+
+      setEditingCommentId(null)
+      setEditCommentInputs((prev) => {
+        const newInputs = { ...prev }
+        delete newInputs[commentId]
+        return newInputs
+      })
+    } catch (err: any) {
+      console.error('Error updating comment:', err)
+      alert(err.response?.data?.message || 'Không thể cập nhật bình luận. Vui lòng thử lại.')
+    }
+  }
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    if (!userInfo) {
+      navigate('/login', { state: { returnUrl: '/forum' } })
+      return
+    }
+
+    if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) {
+      return
+    }
+
+    try {
+      setDeletingComment(commentId)
+      await axiosInstance.delete(`${API_ENDPOINTS.COMMENT}/${commentId}`)
+
+      // Refresh posts
+      await fetchPosts(true)
+      if (activeTab === 'saved') {
+        await fetchSavedPosts(true)
+      }
+    } catch (err: any) {
+      console.error('Error deleting comment:', err)
+      alert(err.response?.data?.message || 'Không thể xóa bình luận. Vui lòng thử lại.')
+    } finally {
+      setDeletingComment(null)
+    }
+  }
+
+  const handleReplyComment = async (postId: string, parentCommentId: string) => {
+    if (!userInfo) {
+      navigate('/login', { state: { returnUrl: '/forum' } })
+      return
+    }
+
+    const replyKey = `${postId}-${parentCommentId}`
+    const replyText = replyInputs[replyKey]?.trim()
+    if (!replyText) return
+
+    try {
+      setSubmittingReply(replyKey)
+      
+      // Optimistic update: thêm reply vào UI ngay lập tức
+      const userId = userInfo.Id || userInfo.id
+      const userName = userInfo.Name || userInfo.name || 'Bạn'
+      const tempReplyId = `temp-${Date.now()}`
+      
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.PostId === postId) {
+            const addReplyToComment = (comments: PostComment[]): PostComment[] => {
+              return comments.map((comment) => {
+                if (comment.PostCommentId === parentCommentId) {
+                  const newReply: PostComment = {
+                    PostCommentId: tempReplyId,
+                    FullName: userName,
+                    Content: replyText,
+                    CreatedDate: new Date().toISOString(),
+                    Likes: [],
+                    Replies: [],
+                    AuthorId: userId,
+                    ParentCommentId: parseInt(parentCommentId),
+                  }
+                  return {
+                    ...comment,
+                    Replies: [...(comment.Replies || []), newReply],
+                  }
+                }
+                // Recursively check replies
+                if (comment.Replies && comment.Replies.length > 0) {
+                  return {
+                    ...comment,
+                    Replies: addReplyToComment(comment.Replies),
+                  }
+                }
+                return comment
+              })
+            }
+            
+            return {
+              ...post,
+              Comments: post.Comments ? addReplyToComment(post.Comments) : [],
+            }
+          }
+          return post
+        })
+      )
+
+      await axiosInstance.post(API_ENDPOINTS.COMMENT, {
+        PostId: parseInt(postId),
+        Content: replyText,
+        Images: null,
+        ParentCommentId: parseInt(parentCommentId),
+      })
+
+      // Clear reply input
+      setReplyInputs((prev) => {
+        const newInputs = { ...prev }
+        delete newInputs[replyKey]
+        return newInputs
+      })
+      setShowReplyInputs((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(replyKey)
+        return newSet
+      })
+
+      // Refresh posts để lấy reply mới từ server
+      await fetchPosts(true)
+      if (activeTab === 'saved') {
+        await fetchSavedPosts(true)
+      }
+    } catch (err: any) {
+      console.error('Error replying to comment:', err)
+      // Revert optimistic update
+      await fetchPosts(true)
+      if (activeTab === 'saved') {
+        await fetchSavedPosts(true)
+      }
+      alert(err.response?.data?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.')
+    } finally {
+      setSubmittingReply(null)
+    }
+  }
+
+  const handleCommentReaction = async (postId: string, commentId: string, currentReactionId?: number) => {
+    if (!userInfo) {
+      navigate('/login', { state: { returnUrl: '/forum' } })
+      return
+    }
+
+    try {
+      if (currentReactionId) {
+        // Unlike
+        await axiosInstance.delete(`${API_ENDPOINTS.COMMENT_REACTION}/unlike/${currentReactionId}`)
+      } else {
+        // Like
+        await axiosInstance.post(`${API_ENDPOINTS.COMMENT_REACTION}/like`, {
+          PostCommentId: parseInt(commentId),
+        })
+      }
+
+      // Refresh posts
+      await fetchPosts(true)
+      if (activeTab === 'saved') {
+        await fetchSavedPosts(true)
+      }
+    } catch (err: any) {
+      console.error('Error reacting to comment:', err)
+      // Không hiển thị alert cho lỗi "đã thích rồi"
+      if (!err.response?.data?.message?.includes('đã thích')) {
+        alert(err.response?.data?.message || 'Không thể thả cảm xúc. Vui lòng thử lại.')
+      }
+    }
+  }
+
   const toggleComments = (postId: string) => {
     setExpandedComments((prev) => {
       const newSet = new Set(prev)
@@ -1326,6 +1613,23 @@ const ForumPage = () => {
                     showPostMenu={showPostMenu[post.PostId || '']}
                     setShowPostMenu={(show: boolean) => setShowPostMenu(prev => ({ ...prev, [post.PostId || '']: show }))}
                     deletingPost={deletingPost === post.PostId}
+                    onEditComment={handleEditComment}
+                    onUpdateComment={handleUpdateComment}
+                    onDeleteComment={handleDeleteComment}
+                    onReplyComment={handleReplyComment}
+                    onCommentReaction={handleCommentReaction}
+                    editCommentInputs={editCommentInputs}
+                    setEditCommentInputs={setEditCommentInputs}
+                    editingCommentId={editingCommentId}
+                    setEditingCommentId={setEditingCommentId}
+                    replyInputs={replyInputs}
+                    setReplyInputs={setReplyInputs}
+                    submittingReply={submittingReply}
+                    showReplyInputs={showReplyInputs}
+                    setShowReplyInputs={setShowReplyInputs}
+                    showCommentMenu={showCommentMenu}
+                    setShowCommentMenu={setShowCommentMenu}
+                    deletingComment={deletingComment}
                   />
                 ))}
               </div>
@@ -1541,6 +1845,23 @@ interface PostCardProps {
   showPostMenu?: boolean
   setShowPostMenu?: (show: boolean) => void
   deletingPost?: boolean
+  onEditComment?: (commentId: string, currentContent: string) => void
+  onUpdateComment?: (postId: string, commentId: string) => void
+  onDeleteComment?: (postId: string, commentId: string) => void
+  onReplyComment?: (postId: string, parentCommentId: string) => void
+  onCommentReaction?: (postId: string, commentId: string, currentReactionId?: number) => void
+  editCommentInputs?: Record<string, string>
+  setEditCommentInputs?: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  editingCommentId?: string | null
+  setEditingCommentId?: React.Dispatch<React.SetStateAction<string | null>>
+  replyInputs?: Record<string, string>
+  setReplyInputs?: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  submittingReply?: string | null
+  showReplyInputs?: Set<string>
+  setShowReplyInputs?: React.Dispatch<React.SetStateAction<Set<string>>>
+  showCommentMenu?: Record<string, boolean>
+  setShowCommentMenu?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  deletingComment?: string | null
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -1565,6 +1886,23 @@ const PostCard: React.FC<PostCardProps> = ({
   showPostMenu = false,
   setShowPostMenu,
   deletingPost = false,
+  onEditComment,
+  onUpdateComment,
+  onDeleteComment,
+  onReplyComment,
+  onCommentReaction,
+  editCommentInputs = {},
+  setEditCommentInputs,
+  editingCommentId = null,
+  setEditingCommentId,
+  replyInputs = {},
+  setReplyInputs,
+  submittingReply = null,
+  showReplyInputs = new Set(),
+  setShowReplyInputs,
+  showCommentMenu = {},
+  setShowCommentMenu,
+  deletingComment = null,
 }) => {
   const isCommentsExpanded = expandedComments.has(post.PostId || '')
   const reactionCount = post.Likes?.length || 0
@@ -1649,6 +1987,22 @@ const PostCard: React.FC<PostCardProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showPostMenu, setShowPostMenu])
+
+  // Close comment menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (setShowCommentMenu && Object.keys(showCommentMenu).length > 0) {
+        const target = e.target as HTMLElement
+        if (!target.closest('.forum-comment-menu-wrapper')) {
+          setShowCommentMenu({})
+        }
+      }
+    }
+    if (setShowCommentMenu && Object.keys(showCommentMenu).length > 0) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showCommentMenu, setShowCommentMenu])
 
   return (
     <article className="forum-post-card">
@@ -1918,37 +2272,274 @@ const PostCard: React.FC<PostCardProps> = ({
           {/* Comments List */}
           <div className="forum-comments-list">
             {post.Comments && post.Comments.length > 0 ? (
-              post.Comments.map((comment) => (
-                <div key={comment.PostCommentId} className="forum-comment-item">
-                  <div className="forum-comment-avatar">
-                    {comment.FullName?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="forum-comment-content">
-                    <div className="forum-comment-header">
-                      <span className="forum-comment-author">{comment.FullName}</span>
-                      {comment.CreatedDate && (
-                        <span className="forum-comment-date">
-                          {formatDate(comment.CreatedDate)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="forum-comment-text">{comment.Content}</p>
-                    {comment.Images && comment.Images.length > 0 && (
-                      <div className="forum-comment-images">
-                        {comment.Images.map((img, idx) => (
-                          <LazyImage
-                            key={idx}
-                            src={img}
-                            alt={`Comment image ${idx + 1}`}
-                            className="forum-comment-image"
-                            fallbackSrc="/img/banahills.jpg"
-                          />
-                        ))}
+              post.Comments.map((comment) => {
+                // Recursive function để render comment và replies
+                const renderComment = (comment: PostComment, depth: number = 0): React.ReactNode => {
+                  const commentKey = `${post.PostId}-${comment.PostCommentId}`
+                  const isEditing = editingCommentId === comment.PostCommentId
+                  const isCommentAuthor = userInfo && comment.AuthorId && (comment.AuthorId === userInfo.Id || comment.AuthorId === userInfo.id)
+                  const isReplyOpen = showReplyInputs.has(commentKey)
+                  const reactionCount = comment.ReactionsCount || 0
+                  const hasUserReaction = !!comment.UserReactionId
+                  const isReply = depth > 0
+
+                  return (
+                    <div key={comment.PostCommentId} className={`forum-comment-item ${isReply ? 'forum-comment-reply' : ''}`} style={{ marginLeft: depth > 0 ? `${depth * 2}rem` : '0' }}>
+                      <div className="forum-comment-avatar">
+                        {comment.FullName?.charAt(0).toUpperCase() || 'U'}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))
+                      <div className="forum-comment-content-wrapper">
+                        <div className="forum-comment-content">
+                          <div className="forum-comment-header">
+                            <span className="forum-comment-author">{comment.FullName}</span>
+                            {isCommentAuthor && setShowCommentMenu && (
+                              <div className="forum-comment-menu-wrapper">
+                                <button
+                                  className="forum-comment-menu-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setShowCommentMenu((prev) => ({
+                                      ...prev,
+                                      [commentKey]: !prev[commentKey],
+                                    }))
+                                  }}
+                                  aria-label="Tùy chọn"
+                                  disabled={deletingComment === comment.PostCommentId}
+                                >
+                                  <MoreVerticalIcon className="forum-comment-menu-icon" />
+                                </button>
+                                {showCommentMenu[commentKey] && (
+                                  <div className="forum-comment-menu">
+                                    <button
+                                      className="forum-comment-menu-item"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (onEditComment && comment.Content) {
+                                          onEditComment(comment.PostCommentId, comment.Content)
+                                          setShowCommentMenu((prev) => {
+                                            const newState = { ...prev }
+                                            delete newState[commentKey]
+                                            return newState
+                                          })
+                                        }
+                                      }}
+                                      disabled={deletingComment === comment.PostCommentId}
+                                    >
+                                      <EditIcon className="forum-comment-menu-item-icon" />
+                                      <span>Chỉnh sửa</span>
+                                    </button>
+                                    <button
+                                      className="forum-comment-menu-item forum-comment-menu-item-danger"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (onDeleteComment && post.PostId) {
+                                          onDeleteComment(post.PostId, comment.PostCommentId)
+                                          setShowCommentMenu((prev) => {
+                                            const newState = { ...prev }
+                                            delete newState[commentKey]
+                                            return newState
+                                          })
+                                        }
+                                      }}
+                                      disabled={deletingComment === comment.PostCommentId}
+                                    >
+                                      <TrashIcon className="forum-comment-menu-item-icon" />
+                                      <span>{deletingComment === comment.PostCommentId ? 'Đang xóa...' : 'Xóa'}</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {isEditing ? (
+                            <div className="forum-comment-edit-wrapper">
+                              <input
+                                type="text"
+                                className="forum-comment-edit-input"
+                                value={editCommentInputs[comment.PostCommentId] || comment.Content}
+                                onChange={(e) => {
+                                  if (setEditCommentInputs) {
+                                    setEditCommentInputs((prev) => ({
+                                      ...prev,
+                                      [comment.PostCommentId]: e.target.value,
+                                    }))
+                                  }
+                                }}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    if (onUpdateComment && post.PostId) {
+                                      onUpdateComment(post.PostId, comment.PostCommentId)
+                                    }
+                                  }
+                                  if (e.key === 'Escape') {
+                                    if (setEditingCommentId) {
+                                      setEditingCommentId(null)
+                                    }
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <div className="forum-comment-edit-actions">
+                                <button
+                                  className="forum-comment-edit-btn forum-comment-edit-btn-cancel"
+                                  onClick={() => {
+                                    if (setEditingCommentId) {
+                                      setEditingCommentId(null)
+                                    }
+                                    if (setEditCommentInputs) {
+                                      setEditCommentInputs((prev) => {
+                                        const newState = { ...prev }
+                                        delete newState[comment.PostCommentId]
+                                        return newState
+                                      })
+                                    }
+                                  }}
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  className="forum-comment-edit-btn forum-comment-edit-btn-save"
+                                  onClick={() => {
+                                    if (onUpdateComment && post.PostId) {
+                                      onUpdateComment(post.PostId, comment.PostCommentId)
+                                    }
+                                  }}
+                                  disabled={!editCommentInputs[comment.PostCommentId]?.trim()}
+                                >
+                                  Lưu
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="forum-comment-text">{comment.Content}</p>
+                              {comment.Images && comment.Images.length > 0 && (
+                                <div className="forum-comment-images">
+                                  {comment.Images.map((img, idx) => (
+                                    <LazyImage
+                                      key={idx}
+                                      src={img}
+                                      alt={`Comment image ${idx + 1}`}
+                                      className="forum-comment-image"
+                                      fallbackSrc="/img/banahills.jpg"
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {/* Comment Actions: Thời gian, Tim, Trả lời */}
+                        <div className="forum-comment-actions">
+                          {comment.CreatedDate && (
+                            <span className="forum-comment-time">{formatDate(comment.CreatedDate)}</span>
+                          )}
+                          <button
+                            className={`forum-comment-action-btn ${hasUserReaction ? 'liked' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (onCommentReaction && post.PostId) {
+                                onCommentReaction(post.PostId, comment.PostCommentId, comment.UserReactionId)
+                              }
+                            }}
+                            title={hasUserReaction ? 'Bỏ thích' : 'Thích'}
+                          >
+                            <HeartIcon className="forum-comment-action-icon" filled={hasUserReaction} />
+                            {reactionCount > 0 && <span className="forum-comment-reaction-count">{reactionCount}</span>}
+                          </button>
+                          <button
+                            className="forum-comment-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (setShowReplyInputs) {
+                                setShowReplyInputs((prev) => {
+                                  const newSet = new Set(prev)
+                                  if (newSet.has(commentKey)) {
+                                    newSet.delete(commentKey)
+                                  } else {
+                                    newSet.add(commentKey)
+                                  }
+                                  return newSet
+                                })
+                              }
+                            }}
+                          >
+                            Trả lời
+                          </button>
+                        </div>
+                        {/* Reply Input */}
+                        {isReplyOpen && userInfo && setReplyInputs && (
+                          <div className="forum-comment-reply-wrapper">
+                            <input
+                              type="text"
+                              className="forum-comment-reply-input"
+                              placeholder="Viết phản hồi..."
+                              value={replyInputs[commentKey] || ''}
+                              onChange={(e) =>
+                                setReplyInputs((prev) => ({
+                                  ...prev,
+                                  [commentKey]: e.target.value,
+                                }))
+                              }
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  if (onReplyComment && post.PostId) {
+                                    onReplyComment(post.PostId, comment.PostCommentId)
+                                  }
+                                }
+                              }}
+                            />
+                            <div className="forum-comment-reply-actions">
+                              <button
+                                className="forum-comment-reply-btn forum-comment-reply-btn-cancel"
+                                onClick={() => {
+                                  if (setShowReplyInputs) {
+                                    setShowReplyInputs((prev) => {
+                                      const newSet = new Set(prev)
+                                      newSet.delete(commentKey)
+                                      return newSet
+                                    })
+                                  }
+                                  if (setReplyInputs) {
+                                    setReplyInputs((prev) => {
+                                      const newState = { ...prev }
+                                      delete newState[commentKey]
+                                      return newState
+                                    })
+                                  }
+                                }}
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                className="forum-comment-reply-btn forum-comment-reply-btn-submit"
+                                onClick={() => {
+                                  if (onReplyComment && post.PostId) {
+                                    onReplyComment(post.PostId, comment.PostCommentId)
+                                  }
+                                }}
+                                disabled={!replyInputs[commentKey]?.trim() || submittingReply === commentKey}
+                              >
+                                {submittingReply === commentKey ? 'Đang gửi...' : 'Gửi'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {/* Render Replies (nested) */}
+                        {comment.Replies && comment.Replies.length > 0 && (
+                          <div className="forum-comment-replies">
+                            {comment.Replies.map((reply) => renderComment(reply, depth + 1))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+                return renderComment(comment, 0)
+              })
             ) : (
               <p className="forum-no-comments">Chưa có bình luận nào</p>
             )}

@@ -20,6 +20,7 @@ import {
 } from '~/components/icons'
 import { formatPrice, createSlug, getImageUrl } from '~/lib/utils'
 import { useTours } from '~/hooks/useTours'
+import { useServices, type ServiceResponse } from '~/hooks/useServices'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
 import type { ServiceItem } from '~/types/serviceCombo'
@@ -50,7 +51,9 @@ const ServicesPage = () => {
   const [favorites, setFavorites] = useState<Set<number>>(new Set())
   const [ratings, setRatings] = useState<Record<number, number>>({}) // Map serviceId -> rating
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [showServices, setShowServices] = useState(true) // true = Service, false = ServiceCombo
   const { tours, loading: toursLoading, error: toursError } = useTours()
+  const { services, loading: servicesLoading, error: servicesError } = useServices('Approved')
 
   useEffect(() => {
     setIsVisible(true)
@@ -111,8 +114,70 @@ const ServicesPage = () => {
 
 
   // Transform API data to display format
-  // API trả về PascalCase (Id, Name, Price, etc.) nên cần xử lý cả hai trường hợp
+  // Hỗ trợ cả Service (dịch vụ đơn lẻ) và ServiceCombo (tour combo)
   const allServices = useMemo(() => {
+    if (showServices) {
+      // Hiển thị Service (dịch vụ đơn lẻ)
+      console.log('🔄 [ServicesPage] Processing services data:')
+      console.log('  - services:', services)
+      console.log('  - services length:', services?.length || 0)
+      console.log('  - servicesLoading:', servicesLoading)
+      console.log('  - servicesError:', servicesError)
+      
+      if (!services || services.length === 0) {
+        console.warn('⚠️ [ServicesPage] Không có services từ API hoặc mảng rỗng')
+        return []
+      }
+
+      console.log(`✅ [ServicesPage] Nhận được ${services.length} service(s) từ API`)
+      
+      // Map ServiceResponse sang ServiceItem
+      const mappedServices: ServiceItem[] = services
+        .filter((service: ServiceResponse) => {
+          // Chỉ hiển thị services đã được approved
+          const status = (service.Status || '').toLowerCase().trim()
+          return status === 'approved'
+        })
+        .map((service: ServiceResponse) => {
+          const id = service.Id
+          const name = service.Name || 'Dịch vụ chưa có tên'
+          
+          // Xử lý Images - có thể là string hoặc null
+          let imagePath = service.Images || ''
+          if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
+            imagePath = imagePath.split(',')[0].trim()
+          }
+          const image = getImageUrl(imagePath, baNaHillImage)
+          
+          const address = 'Đà Nẵng' // Service không có Address, dùng mặc định
+          const price = Number(service.Price) || 0
+          const availableSlots = 0 // Service không có AvailableSlots
+          const status = service.Status || 'Approved'
+          const description = service.Description || ''
+
+          // Lấy rating từ state, mặc định là 0 nếu chưa có
+          const serviceRating = id !== null && ratings[id] !== undefined ? ratings[id] : 0
+
+          const mappedService: ServiceItem = {
+            id: id,
+            name: name,
+            slug: createSlug(name) || `service-${id}`,
+            image: image,
+            rating: serviceRating,
+            price: price,
+            address: address,
+            availableSlots: availableSlots,
+            status: status,
+            description: description,
+          }
+
+          return mappedService
+        })
+
+      console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} service(s)`)
+      return mappedServices
+    } else {
+      // Hiển thị ServiceCombo (tour combo) - code cũ
     console.log('🔄 [ServicesPage] Processing tours data:')
     console.log('  - tours:', tours)
     console.log('  - tours length:', tours?.length || 0)
@@ -121,46 +186,24 @@ const ServicesPage = () => {
     
     if (!tours || tours.length === 0) {
       console.warn('⚠️ [ServicesPage] Không có tours từ API hoặc mảng rỗng')
-      console.warn('  - tours is:', tours)
-      console.warn('  - Loading:', toursLoading)
-      console.warn('  - Error:', toursError)
       return []
     }
 
     console.log(`✅ [ServicesPage] Nhận được ${tours.length} tour(s) từ API`)
-    console.log('  - Sample tour data:', tours[0])
-    console.log('  - Full tours array:', JSON.stringify(tours, null, 2))
-
-    // Log tất cả status để debug
-    console.log('🔍 [ServicesPage] Kiểm tra status của tất cả tours:')
-    tours.forEach((tour, index) => {
-      const status = tour.Status || 'N/A'
-      const id = tour.Id || 'N/A'
-      const name = tour.Name || 'N/A'
-      console.log(`  Tour ${index + 1}: ID=${id}, Name="${name}", Status="${status}"`)
-    })
 
     // Backend trả về PascalCase (Id, Name, Status, etc.) vì PropertyNamingPolicy = null
     // Filter các service có status = 'open' (theo database schema default)
     const mappedServices: ServiceItem[] = tours
       .filter((tour: ServiceComboResponse) => {
-        // Backend trả về Status với PascalCase, default = "open"
         const status = (tour.Status || 'open').toLowerCase().trim()
         const isOpen = status === 'open'
-        
-        if (!isOpen) {
-          console.log(`⚠️ [ServicesPage] Bỏ qua service có status: "${tour.Status}" (ID: ${tour.Id}, Name: ${tour.Name})`)
-        }
         return isOpen
       })
       .map((tour: ServiceComboResponse) => {
-        // Map từ PascalCase (backend) sang camelCase (frontend)
         const id = tour.Id
         const name = tour.Name || 'Tour chưa có tên'
         
-        // Xử lý Image - có thể là string hoặc null
         let imagePath = tour.Image || ''
-        // Nếu có nhiều ảnh phân cách bởi dấu phẩy, lấy ảnh đầu tiên
         if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
           imagePath = imagePath.split(',')[0].trim()
         }
@@ -172,7 +215,6 @@ const ServicesPage = () => {
         const status = tour.Status || 'open'
         const description = tour.Description || ''
 
-        // Lấy rating từ state, mặc định là 0 nếu chưa có
         const serviceRating = id !== null && ratings[id] !== undefined ? ratings[id] : 0
 
         const mappedService: ServiceItem = {
@@ -192,13 +234,9 @@ const ServicesPage = () => {
       })
 
     console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} service(s) từ ${tours.length} tour(s)`)
-    if (mappedServices.length === 0 && tours.length > 0) {
-      console.warn('⚠️ [ServicesPage] Cảnh báo: Có tours nhưng không có service nào được map')
-      console.warn('  - Có thể tất cả services đều có status khác "open"')
-      console.warn('  - Tours status:', tours.map(t => ({ id: t.Id, name: t.Name, status: t.Status })))
+      return mappedServices
     }
-    return mappedServices
-  }, [tours, ratings])
+  }, [showServices, services, tours, ratings, servicesLoading, servicesError, toursLoading, toursError])
 
   // Filter and sort services
   const filteredAndSortedServices = useMemo(() => {
@@ -452,10 +490,44 @@ const ServicesPage = () => {
                 </div>
               </div>
 
+              {/* Toggle between Service and ServiceCombo */}
+              <div className="service-type-toggle" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+                <button
+                  className={`toggle-btn ${showServices ? 'active' : ''}`}
+                  onClick={() => setShowServices(true)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    background: showServices ? '#059669' : 'white',
+                    color: showServices ? 'white' : '#374151',
+                    cursor: 'pointer',
+                    fontWeight: showServices ? '600' : '400',
+                  }}
+                >
+                  Dịch vụ đơn lẻ
+                </button>
+                <button
+                  className={`toggle-btn ${!showServices ? 'active' : ''}`}
+                  onClick={() => setShowServices(false)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    background: !showServices ? '#059669' : 'white',
+                    color: !showServices ? 'white' : '#374151',
+                    cursor: 'pointer',
+                    fontWeight: !showServices ? '600' : '400',
+                  }}
+                >
+                  Tour Combo
+                </button>
+              </div>
+
               {/* Tour Cards */}
-              {toursLoading ? (
+              {(showServices ? servicesLoading : toursLoading) ? (
                 <LoadingSpinner message="Đang tải danh sách dịch vụ..." />
-              ) : toursError ? (
+              ) : (showServices ? servicesError : toursError) ? (
                 <div className="error-container" role="alert" style={{ 
                   padding: '2rem', 
                   textAlign: 'center',
@@ -466,7 +538,7 @@ const ServicesPage = () => {
                 }}>
                   <h3 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>❌ Lỗi tải dữ liệu</h3>
                   <p className="error-message" style={{ color: '#991b1b', whiteSpace: 'pre-line' }}>
-                    {toursError}
+                    {showServices ? servicesError : toursError}
                   </p>
                   <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
                     <p>🔍 Kiểm tra:</p>

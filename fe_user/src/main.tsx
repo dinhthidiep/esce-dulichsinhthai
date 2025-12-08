@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client'
 import React from 'react'
 import '~/styles/index.css'
 import App from '~/App.tsx'
-import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeContextProvider } from '~/contexts/theme'
 
 // Error Boundary Component
@@ -105,7 +104,6 @@ try {
     <React.StrictMode>
       <ErrorBoundary>
         <ThemeContextProvider>
-          <CssBaseline />
           <App />
         </ThemeContextProvider>
       </ErrorBoundary>
