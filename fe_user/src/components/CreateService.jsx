@@ -23,10 +23,20 @@ const CreateService = () => {
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [imagePreview, setImagePreview] = useState(null);
 
-   // Load user info to check role
+   // Check authentication and load user info
    useEffect(() => {
+     // Check authentication first - check both localStorage and sessionStorage
+     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+     if (!token) {
+       // Redirect to login if not authenticated
+       console.warn('No token found, redirecting to login');
+       window.location.href = '/login';
+       return;
+     }
+
      const loadUserInfo = async () => {
-       const storedUserInfo = localStorage.getItem('userInfo');
+       // Check both localStorage and sessionStorage for userInfo
+       const storedUserInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
        if (storedUserInfo) {
          try {
            const user = JSON.parse(storedUserInfo);
@@ -39,7 +49,9 @@ const CreateService = () => {
          const currentUser = await getCurrentUser();
          if (currentUser) {
            setUserInfo(currentUser);
-           localStorage.setItem('userInfo', JSON.stringify(currentUser));
+           // Save to the same storage where token is stored
+           const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+           storage.setItem('userInfo', JSON.stringify(currentUser));
          }
        } catch (err) {
          console.error('Error fetching current user:', err);

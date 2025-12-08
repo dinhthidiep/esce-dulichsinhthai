@@ -275,6 +275,8 @@ body {
 .content {
     margin: 2% 3%;
     width: 75%;
+    position: relative;
+    z-index: 1;
 }
 
 .form-content {
@@ -282,6 +284,10 @@ body {
     padding-top: 7%;
     max-width: 75%;
     align-items: center;
+    overflow: visible !important;
+    min-height: 200px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Hint and Error Styles */
@@ -584,13 +590,16 @@ body {
 
 /* Services Grid */
 .services-grid {
-    display: grid;
+    display: grid !important;
     /* auto-fit keeps multiple cards per row and wraps nicely on smaller widths */
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 20px;
     padding: 20px 0;
     width: 100%;
     margin: 0 auto;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 100px;
 }
 
 .no-services {
@@ -609,7 +618,7 @@ body {
     background: var(--white);
     box-shadow: var(--shadow);
     transition: var(--transition);
-    display: flex;
+    display: flex !important;
     /* row layout so details are on the left and buttons on the right */
     flex-direction: row;
     align-items: flex-start;
@@ -617,6 +626,9 @@ body {
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 100px;
 }
 
 .service-card:hover {

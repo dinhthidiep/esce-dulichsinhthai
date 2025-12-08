@@ -107,13 +107,41 @@ const NewsPage = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await axiosInstance.get<NewsItem[]>(API_ENDPOINTS.NEWS)
+      const response = await axiosInstance.get<any[]>(API_ENDPOINTS.NEWS)
+      
+      // Transform backend NewsDto to frontend NewsItem
+      // Backend returns: NewsId, Content (which is NewsTitle), Images (array), CreatedDate, AuthorName, etc.
+      // Frontend expects: id, title, content, summary, image (string), createdAt, author, etc.
+      const transformedNews: NewsItem[] = (response.data || []).map((news: any) => {
+        const content = news.Content || news.content || ''
+        const images = news.Images || news.images || []
+        const firstImage = images.length > 0 ? images[0] : defaultNewsImage
+        
+        // Create summary from content (first 200 chars)
+        const summary = content.length > 200 ? content.substring(0, 200) + '...' : content
+        
+        return {
+          id: news.NewsId || news.newsId || news.id,
+          title: content, // Backend Content is actually the title/content
+          content: content,
+          summary: summary,
+          image: firstImage,
+          author: news.AuthorName || news.authorName || news.author || '',
+          authorId: news.AuthorId || news.authorId,
+          createdAt: news.CreatedDate || news.createdDate || news.createdAt || '',
+          updatedAt: news.CreatedDate || news.createdDate || news.updatedAt || '',
+          status: 'published',
+          views: 0
+        }
+      })
+      
       // Sort by createdAt descending (newest first)
-      const sortedNews = (response.data || []).sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime()
-        const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime()
+      const sortedNews = transformedNews.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime()
+        const dateB = new Date(b.createdAt || 0).getTime()
         return dateB - dateA
       })
+      
       setNewsList(sortedNews)
     } catch (err: any) {
       console.error('Error fetching news:', err)
@@ -138,11 +166,20 @@ const NewsPage = () => {
         return
       }
 
+      // Backend expects: Content (which becomes NewsTitle), Images (array), SocialMediaLink (optional)
+      // Combine title and content for the Content field (backend stores this as NewsTitle)
+      const fullContent = formData.title.trim() 
+        ? `${formData.title.trim()}\n\n${formData.content.trim()}`
+        : formData.content.trim()
+      
+      const images = formData.image.trim() 
+        ? [formData.image.trim()]
+        : [defaultNewsImage]
+      
       const newsData = {
-        Title: formData.title.trim(),
-        Content: formData.content.trim(),
-        Summary: formData.summary.trim() || formData.content.trim().substring(0, 200),
-        Image: formData.image.trim() || defaultNewsImage,
+        Content: fullContent,
+        Images: images,
+        SocialMediaLink: null // Optional field
       }
 
       await axiosInstance.post(API_ENDPOINTS.NEWS, newsData)

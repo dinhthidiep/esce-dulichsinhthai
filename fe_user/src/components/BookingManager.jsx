@@ -31,12 +31,21 @@ const BookingManager = () => {
     return Number(roleId);
   };
 
-  // Load user info and check role
+  // Check authentication and load user info
   useEffect(() => {
+    // Check authentication first - check both localStorage and sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      // Redirect to login if not authenticated
+      console.warn('No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
     const loadUserInfo = async () => {
       try {
-        // Try to get from localStorage first
-        const storedUserInfo = localStorage.getItem('userInfo');
+        // Try to get from storage (check both localStorage and sessionStorage)
+        const storedUserInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
         let storedUser = null;
         if (storedUserInfo) {
           try {
@@ -45,7 +54,7 @@ const BookingManager = () => {
             
             // Check if user has RoleId 2 (Host)
             const roleId = getRoleId(storedUser);
-            console.log('RoleId from localStorage:', roleId, 'User object:', storedUser);
+            console.log('RoleId from storage:', roleId, 'User object:', storedUser);
             if (roleId !== 2) {
               alert('Bạn không có quyền truy cập trang này. Chỉ Host mới có thể quản lý booking.');
               navigate('/');
@@ -61,7 +70,9 @@ const BookingManager = () => {
           const currentUser = await getCurrentUser();
           if (currentUser) {
             setUserInfo(currentUser);
-            localStorage.setItem('userInfo', JSON.stringify(currentUser));
+            // Save to the same storage where token is stored
+            const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+            storage.setItem('userInfo', JSON.stringify(currentUser));
             
             // Check if user has RoleId 2 (Host)
             const roleId = getRoleId(currentUser);
@@ -71,12 +82,24 @@ const BookingManager = () => {
               navigate('/');
               return;
             }
+          } else if (!storedUser) {
+            // No user found at all
+            alert('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+            window.location.href = '/login';
+            return;
           }
         } catch (err) {
           console.error('Error fetching current user:', err);
+          // If we have stored user info, continue with it
+          if (!storedUser) {
+            alert('Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.');
+            window.location.href = '/login';
+            return;
+          }
         }
       } catch (error) {
         console.error('Error loading user info:', error);
+        window.location.href = '/login';
       } finally {
         setLoading(false);
       }
@@ -87,9 +110,17 @@ const BookingManager = () => {
 
   // Load bookings
   useEffect(() => {
+    // Check authentication first - check both localStorage and sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login';
+      return;
+    }
+
+    if (!userInfo) return;
+    
     const loadBookings = async () => {
-      if (!userInfo) return;
-      
       try {
         const allBookings = await getAllBookings();
         const bookingsArray = Array.isArray(allBookings) ? allBookings : [];
@@ -111,6 +142,15 @@ const BookingManager = () => {
         setAllBookings(userBookings);
       } catch (err) {
         console.error('Error loading bookings:', err);
+        // If authentication error, redirect to login
+        if (err.message && err.message.includes('Authentication')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userInfo');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('userInfo');
+          window.location.href = '/login';
+          return;
+        }
         setError(err.message || 'Không thể tải danh sách booking');
       }
     };

@@ -8,11 +8,11 @@ import { getCurrentUser } from '../API/SocialMediaApi';
 const CreateCoupon = () => {
   // State management - matching database schema
   const [formData, setFormData] = useState({
-    code: '',                    // CODE NVARCHAR(50) UNIQUE NOT NULL
-    description: '',             // DESCRIPTION NVARCHAR(255)
-    discountType: 'percentage',  // DISCOUNT_PERCENT or DISCOUNT_AMOUNT
-    discountValue: '',          // DISCOUNT_PERCENT DECIMAL(5,2) or DISCOUNT_AMOUNT DECIMAL(18,2)
-    usageLimit: ''              // USAGE_LIMIT INT NOT NULL
+    code: '',                    
+    description: '',            
+    discountType: 'percentage',  
+    discountValue: '', 
+    usageLimit: ''             
   });
 
   const [errors, setErrors] = useState({});
@@ -20,10 +20,20 @@ const CreateCoupon = () => {
   const [sidebarActive, setSidebarActive] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  // Load user info to check role
+  // Check authentication and load user info
   useEffect(() => {
+    // Check authentication first - check both localStorage and sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      // Redirect to login if not authenticated
+      console.warn('No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
     const loadUserInfo = async () => {
-      const storedUserInfo = localStorage.getItem('userInfo');
+      // Check both localStorage and sessionStorage for userInfo
+      const storedUserInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
       if (storedUserInfo) {
         try {
           const user = JSON.parse(storedUserInfo);
@@ -36,7 +46,9 @@ const CreateCoupon = () => {
         const currentUser = await getCurrentUser();
         if (currentUser) {
           setUserInfo(currentUser);
-          localStorage.setItem('userInfo', JSON.stringify(currentUser));
+          // Save to the same storage where token is stored
+          const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+          storage.setItem('userInfo', JSON.stringify(currentUser));
         }
       } catch (err) {
         console.error('Error fetching current user:', err);
@@ -52,10 +64,10 @@ const CreateCoupon = () => {
 
   // Configuration matching database constraints
   const config = {
-    maxCodeLength: 50,           // CODE NVARCHAR(50)
-    maxDescriptionLength: 255,   // DESCRIPTION NVARCHAR(255)
-    maxDiscountPercent: 100,      // DISCOUNT_PERCENT DECIMAL(5,2) - max 100%
-    minUsageLimit: 1             // USAGE_LIMIT INT NOT NULL - minimum 1
+    maxCodeLength: 50, 
+    maxDescriptionLength: 255, 
+    maxDiscountPercent: 100,  
+    minUsageLimit: 1           
   };
 
   // Validation matching database schema
@@ -216,13 +228,28 @@ const CreateCoupon = () => {
     }
 
     try {
-      // Get HostId from localStorage (set during login)
+      // Get HostId from storage (check both localStorage and sessionStorage)
       let hostId = null;
       try {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        hostId = userInfo.Id || userInfo.id || null;
+        const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          hostId = userInfo.Id || userInfo.id || userInfo.ID || null;
+        }
       } catch (e) {
         console.error('Error parsing userInfo:', e);
+      }
+
+      // If hostId is still null, try to fetch from API
+      if (!hostId) {
+        try {
+          const currentUser = await getCurrentUser();
+          if (currentUser) {
+            hostId = currentUser.Id || currentUser.id || currentUser.ID || null;
+          }
+        } catch (err) {
+          console.error('Error fetching current user for HostId:', err);
+        }
       }
 
       if (!hostId) {
@@ -231,9 +258,6 @@ const CreateCoupon = () => {
         return;
       }
 
-      // Prepare coupon data according to database schema
-      // Schema: CODE, DESCRIPTION, DISCOUNT_PERCENT, DISCOUNT_AMOUNT, USAGE_LIMIT, SERVICECOMBO_ID, HOST_ID
-      // CREATED_AT, UPDATED_AT, USAGE_COUNT, IS_ACTIVE are set by backend (IS_ACTIVE defaults to 1)
       const couponData = {
         Code: formData.code.trim(),
         Description: formData.description.trim() || null,
@@ -409,7 +433,7 @@ const CreateCoupon = () => {
                     checked={formData.discountType === 'percentage'}
                     onChange={handleInputChange}
                   />
-                  <span>Phần trăm (%)</span>
+                  <span>Phần trăm</span>
                 </label>
                 <label className="radio-label">
                   <input
@@ -419,7 +443,7 @@ const CreateCoupon = () => {
                     checked={formData.discountType === 'amount'}
                     onChange={handleInputChange}
                   />
-                  <span>Số tiền (VND)</span>
+                  <span>Số tiền giảm giá</span>
                 </label>
               </div>
             </div>
@@ -447,14 +471,13 @@ const CreateCoupon = () => {
               <div id="discountValue-hint" className="hint">
                 {formData.discountType === 'percentage' 
                   ? `Phần trăm giảm giá tối đa ${config.maxDiscountPercent}%`
-                  : 'Nhập số tiền giảm giá (VND)'}
+                  : 'Nhập số tiền giảm giá'}
               </div>
             </div>
 
-            {/* USAGE_LIMIT Field - USAGE_LIMIT INT NOT NULL */}
             <div className="field">
               <label htmlFor="usageLimit">
-                Giới hạn sử dụng (USAGE_LIMIT)
+                Giới hạn sử dụng
                 <span className="required-indicator">*</span>
               </label>
               <input

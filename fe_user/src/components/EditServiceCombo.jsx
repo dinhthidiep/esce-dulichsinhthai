@@ -1,7 +1,7 @@
 import './EditServiceCombo.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { updateServiceCombo, getServiceComboById } from '../API/ServiceComboApi';
-import { getAllServices, addServiceToCombo, getServiceComboDetailsByComboId, deleteServiceComboDetail, updateServiceComboDetail } from '../API/ServiceApi';
+import { getMyServices, addServiceToCombo, getServiceComboDetailsByComboId, deleteServiceComboDetail, updateServiceComboDetail } from '../API/ServiceApi';
 import Header from '~/components/Header';
 import { getCurrentUser } from '../API/SocialMediaApi';
 
@@ -404,11 +404,11 @@ const EditServiceCombo = () => {
     loadServiceComboData();
   }, []);
 
-  // Load all services
+  // Load approved services for current host
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const services = await getAllServices();
+        const services = await getMyServices();
         setAllServices(Array.isArray(services) ? services : []);
       } catch (err) {
         console.error('Error loading services:', err);

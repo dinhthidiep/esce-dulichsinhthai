@@ -26,10 +26,20 @@ const CreateServiceCombo = () => {
    const [allServices, setAllServices] = useState([]);
    const [selectedServices, setSelectedServices] = useState({}); // { serviceId: { selected: boolean, quantity: number } }
 
-   // Load user info to check role
+   // Check authentication and load user info
    useEffect(() => {
+     // Check authentication first - check both localStorage and sessionStorage
+     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+     if (!token) {
+       // Redirect to login if not authenticated
+       console.warn('No token found, redirecting to login');
+       window.location.href = '/login';
+       return;
+     }
+
      const loadUserInfo = async () => {
-       const storedUserInfo = localStorage.getItem('userInfo');
+       // Check both localStorage and sessionStorage for userInfo
+       const storedUserInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
        if (storedUserInfo) {
          try {
            const user = JSON.parse(storedUserInfo);
@@ -42,7 +52,9 @@ const CreateServiceCombo = () => {
          const currentUser = await getCurrentUser();
          if (currentUser) {
            setUserInfo(currentUser);
-           localStorage.setItem('userInfo', JSON.stringify(currentUser));
+           // Save to the same storage where token is stored
+           const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+           storage.setItem('userInfo', JSON.stringify(currentUser));
          }
        } catch (err) {
          console.error('Error fetching current user:', err);
@@ -230,23 +242,45 @@ const CreateServiceCombo = () => {
     }
 
     try {
-      // Grab current user id from localStorage (saved at login)
+      // Grab current user id from storage (check both localStorage and sessionStorage)
       let hostId = null;
       try {
-        const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        hostId = info.Id || info.id || null;
+        const userInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        if (userInfo) {
+          const info = JSON.parse(userInfo);
+          hostId = info.Id || info.id || info.ID || null;
+        }
       } catch {}
+      
+      // If hostId is still null, try to fetch from API
+      if (!hostId) {
+        try {
+          const { getCurrentUser } = await import('../API/SocialMediaApi');
+          const currentUser = await getCurrentUser();
+          if (currentUser) {
+            hostId = currentUser.Id || currentUser.id || currentUser.ID || null;
+          }
+        } catch (err) {
+          console.error('Error fetching current user for HostId:', err);
+        }
+      }
+      
+      // Ensure HostId is a valid integer
+      const hostIdInt = hostId ? parseInt(hostId, 10) : null;
+      if (!hostIdInt || isNaN(hostIdInt)) {
+        throw new Error('Không thể xác định người dùng. Vui lòng đăng nhập lại.');
+      }
 
       // Convert formData to object for API (Image will be handled by backend from file upload)
       const submitData = {
         Name: formData.name,
         Address: formData.address,
         Description: formData.description || null,
-        Price: parseFloat(formData.price),
-        AvailableSlots: parseInt(formData.availableSlots),
+        Price: parseFloat(formData.price) || 0,
+        AvailableSlots: parseInt(formData.availableSlots, 10) || 0,
         Status: formData.status || 'open',
         CancellationPolicy: formData.cancellationPolicy || null,
-        HostId: hostId
+        HostId: hostIdInt // Ensure it's an integer
         // Image will be uploaded as a file, backend will save it and set the filename
       };
 

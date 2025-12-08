@@ -1,3 +1,33 @@
+/* Force visibility for content areas */
+.content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 500px; /* Ensure it has height */
+}
+
+.form-content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 400px; /* Ensure it has height */
+}
+
+.reviews-list {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 200px; /* Ensure it has height */
+}
+
+.review-card {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 150px; /* Ensure it has height */
+}
+
 /* Review Filters */
 .review-filters {
   display: flex;

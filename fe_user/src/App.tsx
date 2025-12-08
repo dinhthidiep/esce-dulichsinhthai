@@ -11,6 +11,7 @@ import ServiceDetail from '~/components/ServiceDetail'
 import BookingPage from '~/components/BookingPage'
 import PaymentPage from '~/components/PaymentPage'
 import ProfilePage from '~/components/ProfilePage'
+import HostDashboard from '~/components/HostDashboard'
 import AboutPage from '~/components/AboutPage'
 import CreateTour from '~/components/CreateTour'
 import NewsPage from '~/components/NewsPage'
@@ -68,6 +69,7 @@ function App() {
             <Route path="/booking/:id" element={<BookingPage />} />
             <Route path="/payment/:bookingId" element={<PaymentPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/host-dashboard" element={<HostDashboard />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/create-tour" element={<CreateTour />} />
             <Route path="/news" element={<NewsPage />} />

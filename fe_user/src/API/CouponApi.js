@@ -1,9 +1,22 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 // Get all coupons
 export const getAllCoupons = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -14,7 +27,7 @@ export const getAllCoupons = async () => {
 
 // Get active coupons
 export const getActiveCoupons = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/active`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -25,7 +38,7 @@ export const getActiveCoupons = async () => {
 
 // Get coupon by code
 export const getCouponByCode = async (code) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/code/${encodeURIComponent(code)}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -39,7 +52,7 @@ export const getCouponByCode = async (code) => {
 
 // Get coupons by host ID
 export const getCouponsByHostId = async (hostId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/host/${hostId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -50,7 +63,7 @@ export const getCouponsByHostId = async (hostId) => {
 
 // Get coupons by service combo ID
 export const getCouponsByComboId = async (comboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -99,7 +112,7 @@ export const getCouponsByComboId = async (comboId) => {
 
 // Create coupon
 export const createCoupon = async (couponData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -146,7 +159,7 @@ export const createCoupon = async (couponData) => {
 
 // Delete coupon
 export const deleteCoupon = async (couponId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -182,7 +195,7 @@ export const deleteCoupon = async (couponId) => {
 
 // Get coupon by ID
 export const getCouponById = async (id) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/${id}`, {
     method: 'GET',
@@ -201,7 +214,7 @@ export const getCouponById = async (id) => {
 
 // Update coupon
 export const updateCoupon = async (id, updateData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/${id}`, {
     method: 'PUT',
@@ -223,7 +236,7 @@ export const updateCoupon = async (id, updateData) => {
 
 // Validate coupon
 export const validateCoupon = async (code, serviceComboId = null) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/validate`, {
     method: 'POST',
@@ -243,7 +256,7 @@ export const validateCoupon = async (code, serviceComboId = null) => {
 
 // Calculate discount
 export const calculateDiscount = async (code, originalAmount) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/calculate-discount`, {
     method: 'POST',
@@ -263,7 +276,7 @@ export const calculateDiscount = async (code, originalAmount) => {
 
 // Apply coupon to booking
 export const applyCoupon = async (bookingId, couponCode) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/apply`, {
     method: 'POST',
@@ -285,7 +298,7 @@ export const applyCoupon = async (bookingId, couponCode) => {
 
 // Remove coupon from booking
 export const removeCoupon = async (bookingId, couponCode) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Coupon/remove`, {
     method: 'POST',

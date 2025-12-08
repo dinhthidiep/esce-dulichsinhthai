@@ -1,9 +1,22 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 // Get all bookings
 export const getAllBookings = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking`, {
@@ -50,7 +63,7 @@ export const getAllBookings = async () => {
 
 // Get booking by ID
 export const getBookingById = async (bookingId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/${bookingId}`, {
@@ -84,7 +97,7 @@ export const getBookingById = async (bookingId) => {
 
 // Get bookings by user ID
 export const getBookingsByUserId = async (userId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/user/${userId}`, {
@@ -118,7 +131,7 @@ export const getBookingsByUserId = async (userId) => {
 
 // Get bookings by service combo ID
 export const getBookingsByServiceComboId = async (serviceComboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/combo/${serviceComboId}`, {
@@ -152,7 +165,7 @@ export const getBookingsByServiceComboId = async (serviceComboId) => {
 
 // Get bookings by service ID (Note: This endpoint may not work due to database schema limitations)
 export const getBookingsByServiceId = async (serviceId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/service/${serviceId}`, {
@@ -186,16 +199,16 @@ export const getBookingsByServiceId = async (serviceId) => {
 
 // Create booking
 export const createBooking = async (bookingData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   // Get current user ID if not provided
   let userId = bookingData.UserId || bookingData.userId;
   if (!userId) {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      userId = userInfo.Id || userInfo.id;
-    } catch {}
+    const userInfo = getUserInfo();
+    if (userInfo) {
+      userId = userInfo.Id || userInfo.id || userInfo.ID || null;
+    }
   }
 
   const body = {
@@ -250,7 +263,7 @@ export const createBooking = async (bookingData) => {
 
 // Update booking
 export const updateBooking = async (bookingId, bookingData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const body = {
@@ -298,7 +311,7 @@ export const updateBooking = async (bookingId, bookingData) => {
 
 // Delete booking
 export const deleteBooking = async (bookingId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/${bookingId}`, {
@@ -337,7 +350,7 @@ export const deleteBooking = async (bookingId) => {
 
 // Update booking status
 export const updateBookingStatus = async (bookingId, status) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/${bookingId}/status`, {
@@ -377,7 +390,7 @@ export const updateBookingStatus = async (bookingId, status) => {
 
 // Calculate total amount for a booking
 export const calculateTotalAmount = async (serviceComboId, serviceId, quantity, itemType) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const body = {
@@ -420,7 +433,7 @@ export const calculateTotalAmount = async (serviceComboId, serviceId, quantity, 
 
 // Calculate total amount with coupons for a booking
 export const calculateTotalAmountWithCoupons = async (bookingId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/booking/${bookingId}/total-with-coupons`, {

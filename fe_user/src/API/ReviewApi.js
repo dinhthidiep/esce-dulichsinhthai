@@ -1,9 +1,22 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 // Get all reviews
 export const getAllReviews = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review`, {
@@ -47,7 +60,7 @@ export const getAllReviews = async () => {
 
 // Get review by ID
 export const getReviewById = async (reviewId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/${reviewId}`, {
@@ -81,7 +94,7 @@ export const getReviewById = async (reviewId) => {
 
 // Get reviews by booking ID
 export const getReviewsByBookingId = async (bookingId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/booking/${bookingId}`, {
@@ -115,7 +128,7 @@ export const getReviewsByBookingId = async (bookingId) => {
 
 // Update review
 export const updateReview = async (reviewId, reviewData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/${reviewId}`, {
@@ -150,7 +163,7 @@ export const updateReview = async (reviewId, reviewData) => {
 
 // Update review status
 export const updateReviewStatus = async (reviewId, status) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/${reviewId}/status`, {
@@ -185,7 +198,7 @@ export const updateReviewStatus = async (reviewId, status) => {
 
 // Create reply to a review
 export const createReply = async (parentReviewId, authorId, content) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/${parentReviewId}/reply`, {
@@ -220,7 +233,7 @@ export const createReply = async (parentReviewId, authorId, content) => {
 
 // Update reply
 export const updateReply = async (replyId, content) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/reply/${replyId}`, {
@@ -255,7 +268,7 @@ export const updateReply = async (replyId, content) => {
 
 // Delete reply
 export const deleteReply = async (replyId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/Review/reply/${replyId}`, {

@@ -1,7 +1,25 @@
+/* Force visibility for content areas */
+.content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 500px; /* Ensure it has height */
+}
+
+.form-content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 400px; /* Ensure it has height */
+}
+
 .revenue-content {
     padding: var(--spacing-lg);
     max-width: 1400px;
     margin: 0 auto;
+    z-index: 1 !important;
+    position: relative !important;
+    overflow: visible !important;
 }
 
 .revenue-stats-section {
@@ -19,7 +37,7 @@
 .revenue-stats-grid {
     display: grid;
     margin-top: 0.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
 }
@@ -62,6 +80,10 @@
 
 .revenue-stat-pending {
     color: #f57c00;
+}
+
+.revenue-stat-completed {
+    color: #1976d2;
 }
 
 .revenue-chart-section {
@@ -173,6 +195,16 @@
     flex: 0 0 auto;
 }
 
+.revenue-date-filter {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .revenue-filter-date {
     padding: var(--spacing-xs) var(--spacing-md);
     border: 1px solid var(--border-color);
@@ -182,8 +214,9 @@
     color: var(--text-color);
     cursor: pointer;
     transition: var(--transition);
-    min-width: 180px;
-    flex: 1;
+    min-width: 150px;
+    height: 38px;
+    flex: 0 1 auto;
 }
 
 .revenue-filter-date:hover {
@@ -200,8 +233,10 @@
     font-weight: bold;
     color: var(--text-color);
     font-size: 1em;
-    min-width: 50px;
+    min-width: 80px;
     flex-shrink: 0;
+    text-align: left;
+    white-space: nowrap;
 }
 
 .revenue-filter-year {
@@ -328,6 +363,11 @@
 .revenue-top-combos-section {
     margin-top: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1 !important;
+    position: relative !important;
 }
 
 .revenue-section-header {
@@ -357,10 +397,13 @@
 }
 
 .revenue-combos-grid {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     gap: var(--spacing-lg);
     margin-top: var(--spacing-md);
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 200px; /* Ensure it has height */
 }
 
 .revenue-combo-card {
@@ -370,9 +413,12 @@
     padding: var(--spacing-md);
     box-shadow: var(--shadow);
     transition: var(--transition);
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     position: relative;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 150px; /* Ensure it has height */
 }
 
 .revenue-combo-card:hover {

@@ -1,9 +1,22 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 // Get payments by host ID
 export const getPaymentsByHostId = async (hostId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/payment/host/${hostId}`, {
@@ -38,7 +51,7 @@ export const getPaymentsByHostId = async (hostId) => {
 
 // Get payment status by booking ID
 export const getPaymentStatus = async (bookingId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`${backend_url}/api/payment/status/${bookingId}`, {

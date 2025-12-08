@@ -1,15 +1,36 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 export const createService = async (formData) => {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('Authentication required.');
+  const token = getToken();
+  if (!token) {
+    console.error('createService: No token found in localStorage or sessionStorage');
+    console.log('localStorage token:', localStorage.getItem('token') ? 'exists' : 'null');
+    console.log('sessionStorage token:', sessionStorage.getItem('token') ? 'exists' : 'null');
+    throw new Error('Authentication required.');
+  }
+  console.log('createService: Token found, length:', token.length);
   
   // Resolve current user id to set HostId so the new service appears under "my services"
   let hostId = null;
   try {
-    const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    hostId = info.Id || info.id || info.ID || null;
+    const info = getUserInfo();
+    if (info) {
+      hostId = info.Id || info.id || info.ID || null;
+    }
   } catch {}
   
   // If hostId is still null, try to fetch from API
@@ -19,9 +40,10 @@ export const createService = async (formData) => {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         hostId = currentUser.Id || currentUser.id || currentUser.ID || null;
-        // Update localStorage for future use
+        // Save to the same storage where token is stored
         if (currentUser) {
-          localStorage.setItem('userInfo', JSON.stringify(currentUser));
+          const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+          storage.setItem('userInfo', JSON.stringify(currentUser));
         }
       }
     } catch (err) {
@@ -55,18 +77,40 @@ export const createService = async (formData) => {
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await res.text() || 'Failed to create service');
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('createService API error:', {
+      status: res.status,
+      statusText: res.statusText,
+      errorText: errorText,
+      tokenLength: token ? token.length : 0,
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'null'
+    });
+    
+    if (res.status === 401) {
+      // Token might be expired or invalid - clear it and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('userInfo');
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+    
+    throw new Error(errorText || 'Failed to create service');
+  }
   return res.json();
 };
 
 export const getMyServices = async () => {
-  const token = localStorage.getItem('token');
+  // Check both localStorage and sessionStorage for token
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   if (!token) throw new Error('Authentication required.');
   
-  // Get userId from localStorage or fetch from API
+  // Get userId from storage (check both) or fetch from API
   let userId = null;
   try {
-    const userInfo = localStorage.getItem('userInfo');
+    const userInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
     if (userInfo) {
       const u = JSON.parse(userInfo);
       userId = u.Id || u.id || u.ID || null;
@@ -79,7 +123,9 @@ export const getMyServices = async () => {
       if (currentUser) {
         userId = currentUser.Id || currentUser.id || currentUser.ID || null;
         if (currentUser) {
-          localStorage.setItem('userInfo', JSON.stringify(currentUser));
+          // Save to the same storage where token is stored
+          const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+          storage.setItem('userInfo', JSON.stringify(currentUser));
         }
       }
     }
@@ -111,7 +157,7 @@ export const getMyServices = async () => {
 };
 
 export const getAllServices = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/Service`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -122,7 +168,7 @@ export const getAllServices = async () => {
 };
 
 export const getServiceById = async (serviceId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Service/${serviceId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -132,7 +178,7 @@ export const getServiceById = async (serviceId) => {
 };
 
 export const updateService = async (formData) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const serviceId = formData instanceof FormData ? (formData.get('id') || formData.get('Id')) : (formData.id || formData.Id);
   if (!serviceId) throw new Error('Service ID is required');
@@ -170,7 +216,7 @@ export const updateService = async (formData) => {
 };
 
 export const deleteService = async (serviceId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required');
   const res = await fetch(`${backend_url}/api/Service/${serviceId}`, {
     method: 'DELETE',
@@ -182,7 +228,7 @@ export const deleteService = async (serviceId) => {
 };
 
 export const addServiceToCombo = async (comboId, serviceId, quantity = 1) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail`, {
     method: 'POST',
@@ -194,7 +240,7 @@ export const addServiceToCombo = async (comboId, serviceId, quantity = 1) => {
 };
 
 export const getServiceComboDetailByComboAndService = async (comboId, serviceId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/combo/${comboId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -207,7 +253,7 @@ export const getServiceComboDetailByComboAndService = async (comboId, serviceId)
 };
 
 export const updateServiceComboDetail = async (detailId, comboId, serviceId, quantity) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/${detailId}`, {
     method: 'PUT',
@@ -219,7 +265,7 @@ export const updateServiceComboDetail = async (detailId, comboId, serviceId, qua
 };
 
 export const deleteServiceComboDetail = async (detailId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/${detailId}`, {
     method: 'DELETE',
@@ -231,7 +277,7 @@ export const deleteServiceComboDetail = async (detailId) => {
 };
 
 export const getServiceComboDetailsByComboId = async (comboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/combo/${comboId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -241,7 +287,7 @@ export const getServiceComboDetailsByComboId = async (comboId) => {
 };
 
 export const getAllServiceComboDetails = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -252,7 +298,7 @@ export const getAllServiceComboDetails = async () => {
 };
 
 export const getServiceComboDetailById = async (detailId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/${detailId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -262,7 +308,7 @@ export const getServiceComboDetailById = async (detailId) => {
 };
 
 export const getServiceComboDetailsByServiceId = async (serviceId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/service/${serviceId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -273,7 +319,7 @@ export const getServiceComboDetailsByServiceId = async (serviceId) => {
 };
 
 export const deleteServiceComboDetailsByComboId = async (comboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/combo/${comboId}`, {
     method: 'DELETE',

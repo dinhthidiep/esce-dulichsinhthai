@@ -53,8 +53,10 @@ const EditService = () => {
   // Utility functions
   const validateField = useCallback((name, value) => {
     switch (name) {
-      // Name field is locked, no validation needed
       case 'name':
+        if (!value || value.trim() === '') return 'Tên dịch vụ không được để trống';
+        if (value.trim().length < 3) return 'Tên dịch vụ phải có ít nhất 3 ký tự';
+        if (value.trim().length > 255) return 'Tên dịch vụ không được vượt quá 255 ký tự';
         return '';
       
       case 'price':
@@ -70,11 +72,6 @@ const EditService = () => {
   // Event handlers
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    
-    // Prevent changes to name field
-    if (name === 'name') {
-      return;
-    }
     
     const fieldValue = files ? files[0] : value;
     
@@ -138,8 +135,9 @@ const EditService = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check required fields - only price is required (name is locked)
+    // Check required fields
     const requiredFields = {
+      name: formData.name,
       price: formData.price
     };
     
@@ -168,9 +166,9 @@ const EditService = () => {
     
     setIsLoading(true);
 
-    // Validate fields (excluding name since it's locked)
+    // Validate fields
     const newErrors = {};
-    ['description', 'price'].forEach(key => {
+    ['name', 'description', 'price'].forEach(key => {
       const error = validateField(key, formData[key]);
       if (error) {
         newErrors[key] = error;
@@ -191,9 +189,11 @@ const EditService = () => {
     }
 
     try {
-      // Create FormData for update - only include description, price, and image (name is locked)
       const submitData = new FormData();
-      // Do NOT include name - it's locked and cannot be changed
+      if (formData.name) {
+        submitData.append('name', formData.name);
+        submitData.append('Name', formData.name);
+      }
       if (formData.description !== null && formData.description !== undefined) {
         submitData.append('description', formData.description);
       }
@@ -345,26 +345,23 @@ const EditService = () => {
           </div>
           
           <form id="createServiceForm" onSubmit={handleSubmit} noValidate>
-            {/* Service Name Field - Read Only */}
             <div className="field">
               <label htmlFor="name">
                 Tên dịch vụ (Service Name)
+                <span className="required-indicator">*</span>
               </label>
               <input
                 id="name"
                 name="name"
                 type="text"
                 maxLength="255"
-                readOnly
-                disabled
+                required
                 placeholder="Tên dịch vụ..."
                 value={formData.name}
+                onChange={handleInputChange}
                 autoComplete="off"
-                style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
               />
-              <div className="hint" style={{ color: '#666', fontSize: '0.9em', marginTop: '4px' }}>
-                Tên dịch vụ không thể thay đổi
-              </div>
+              {errors.name && <div className="error">{errors.name}</div>}
             </div>
 
 

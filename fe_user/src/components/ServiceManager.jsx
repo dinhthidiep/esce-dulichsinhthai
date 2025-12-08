@@ -134,7 +134,10 @@ const ServiceManager = () => {
           console.log('Setting services:', servicesArray);
           setServices(servicesArray);
           // Initially show all services with default sort
-          setFilteredServices(applyFilters(servicesArray, '', 'newest'));
+          const filtered = applyFilters(servicesArray, '', 'newest');
+          console.log('After applyFilters:', filtered);
+          console.log('Filtered length:', filtered.length);
+          setFilteredServices(filtered);
           if (servicesArray.length === 0) {
             console.warn('No services found');
           }
@@ -234,14 +237,22 @@ const ServiceManager = () => {
               ➕ Tạo dịch vụ mới
             </button>
           </div>
+          {(() => {
+            console.log('Render check - loading:', loading, 'error:', error, 'filteredServices.length:', filteredServices.length);
+            return null;
+          })()}
           {loading && <div>Đang tải...</div>}
           {error && <div className="error" role="alert">{error}</div>}
           {!loading && !error && (
             <div className="services-grid">
-              {filteredServices.length === 0 ? (
-                <div className="no-services">Không có dịch vụ nào</div>
-              ) : (
-                filteredServices.map(s => (
+              {(() => {
+                console.log('Inside services-grid - filteredServices:', filteredServices);
+                return filteredServices.length === 0 ? (
+                  <div className="no-services">Không có dịch vụ nào</div>
+                ) : (
+                  filteredServices.map(s => {
+                    console.log('Rendering service card:', s);
+                    return (
                   <div key={s.Id || s.id} className="service-card">
                     <div className="service-details">
                       <h3 className="service-name">{s.Name || s.name}</h3>
@@ -264,8 +275,10 @@ const ServiceManager = () => {
                       </button>
                     </div>
                   </div>
-                ))
-              )}
+                    );
+                  })
+                );
+              })()}
             </div>
           )}
         </div>

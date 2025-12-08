@@ -1,8 +1,21 @@
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
 
+// Helper function to get token from either storage
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper function to get userInfo from either storage
+const getUserInfo = () => {
+  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+  if (!info) return null;
+  try {
+    return JSON.parse(info);
+  } catch {
+    return null;
+  }
+};
+
 export const createServiceCombo = async (serviceComboData, imageFile = null) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   
   // Upload image to Firebase Storage first if provided
@@ -18,6 +31,16 @@ export const createServiceCombo = async (serviceComboData, imageFile = null) => 
     Image: imageUrl // Send Firebase Storage URL (backend expects 'Image', not 'ImageUrl')
   };
   
+  // Ensure HostId is an integer
+  if (requestBody.HostId !== undefined) {
+    requestBody.HostId = parseInt(requestBody.HostId, 10);
+    if (isNaN(requestBody.HostId)) {
+      throw new Error('HostId must be a valid integer');
+    }
+  }
+  
+  console.log('createServiceCombo: Sending request body:', requestBody);
+  
   const res = await fetch(`${backend_url}/api/ServiceCombo`, {
     method: 'POST',
     headers: { 
@@ -26,16 +49,25 @@ export const createServiceCombo = async (serviceComboData, imageFile = null) => 
     },
     body: JSON.stringify(requestBody),
   });
-  if (!res.ok) throw new Error(await res.text() || 'Failed to create service combo');
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('createServiceCombo API error:', {
+      status: res.status,
+      statusText: res.statusText,
+      errorText: errorText
+    });
+    throw new Error(errorText || 'Failed to create service combo');
+  }
   return res.json();
 };
 
 export const getMyServiceCombos = async () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
-  const userInfo = localStorage.getItem('userInfo');
+  const u = getUserInfo();
   let userId = null;
-  if (userInfo) { try { const u = JSON.parse(userInfo); userId = u.Id || u.id; } catch {} }
+  if (u) { userId = u.Id || u.id || u.ID || null; }
   const res = await fetch(`${backend_url}/api/ServiceCombo`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -45,7 +77,7 @@ export const getMyServiceCombos = async () => {
 };
 
 export const getServiceComboById = async (id) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceCombo/${id}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -55,7 +87,7 @@ export const getServiceComboById = async (id) => {
 };
 
 export const getServiceComboByName = async (name) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceCombo/name/${encodeURIComponent(name)}`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -68,7 +100,7 @@ export const getServiceComboByName = async (name) => {
 };
 
 export const updateServiceCombo = async (id, updateData, imageFile = null) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   
   console.log('Updating service combo:', { id, updateData, hasImageFile: imageFile instanceof File });
@@ -116,7 +148,7 @@ export const updateServiceCombo = async (id, updateData, imageFile = null) => {
 };
 
 export const deleteServiceCombo = async (serviceComboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   
   const res = await fetch(`${backend_url}/api/ServiceCombo/${serviceComboId}`, {
@@ -165,7 +197,7 @@ export const deleteServiceCombo = async (serviceComboId) => {
 };
 
 export const getServicesByComboId = async (comboId) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) throw new Error('Authentication required.');
   const res = await fetch(`${backend_url}/api/ServiceComboDetail/combo/${comboId}`, {
     headers: { 'Authorization': `Bearer ${token}` }

@@ -15,10 +15,20 @@ const CouponManager = () => {
 
   const toggleSidebar = () => setSidebarActive(!sidebarActive);
 
-  // Load user info to check role
+  // Check authentication and load user info
   useEffect(() => {
+    // Check authentication first - check both localStorage and sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      // Redirect to login if not authenticated
+      console.warn('No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
     const loadUserInfo = async () => {
-      const storedUserInfo = localStorage.getItem('userInfo');
+      // Check both localStorage and sessionStorage for userInfo
+      const storedUserInfo = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
       if (storedUserInfo) {
         try {
           const user = JSON.parse(storedUserInfo);
@@ -31,7 +41,9 @@ const CouponManager = () => {
         const currentUser = await getCurrentUser();
         if (currentUser) {
           setUserInfo(currentUser);
-          localStorage.setItem('userInfo', JSON.stringify(currentUser));
+          // Save to the same storage where token is stored
+          const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+          storage.setItem('userInfo', JSON.stringify(currentUser));
         }
       } catch (err) {
         console.error('Error fetching current user:', err);
@@ -90,6 +102,14 @@ const CouponManager = () => {
 
 
   useEffect(() => {
+    // Check authentication first - check both localStorage and sessionStorage
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login';
+      return;
+    }
+
     // Reset loading and error when location changes
     setLoading(true);
     setError('');
@@ -115,6 +135,15 @@ const CouponManager = () => {
         }
       } catch (e) {
         if (mounted) {
+          // If authentication error, redirect to login
+          if (e.message && e.message.includes('Authentication')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('userInfo');
+            window.location.href = '/login';
+            return;
+          }
           setError(e.message || 'Không thể tải danh sách coupon. Vui lòng thử lại.');
         }
       } finally {
