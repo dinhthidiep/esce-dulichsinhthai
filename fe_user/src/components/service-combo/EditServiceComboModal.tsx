@@ -16,6 +16,10 @@ interface EditServiceComboModalProps {
     status: string;
     cancellationPolicy: string;
     image: File | string | null;
+    startDate: string;
+    endDate: string;
+    numberOfDays: string;
+    numberOfNights: string;
   };
   errors: Record<string, string>;
   imagePreview: string | null;
@@ -264,6 +268,84 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                   <div className="edit-service-combo-hint">
                     Còn lại: <span>{1000 - formData.description.length}</span> ký tự
                   </div>
+                </div>
+
+                {/* Start Date and End Date Fields */}
+                <div className="edit-service-combo-field-row">
+                  <div className="edit-service-combo-field">
+                    <label htmlFor="edit-service-combo-startDate">
+                      Ngày triển khai
+                      <span className="edit-service-combo-required-indicator">*</span>
+                    </label>
+                    <input
+                      id="edit-service-combo-startDate"
+                      name="startDate"
+                      type="datetime-local"
+                      required
+                      value={formData.startDate}
+                      onChange={onInputChange}
+                    />
+                    {errors.startDate && <div className="edit-service-combo-error">{errors.startDate}</div>}
+                  </div>
+
+                  <div className="edit-service-combo-field">
+                    <label htmlFor="edit-service-combo-endDate">
+                      Ngày kết thúc
+                      <span className="edit-service-combo-required-indicator">*</span>
+                    </label>
+                    <input
+                      id="edit-service-combo-endDate"
+                      name="endDate"
+                      type="datetime-local"
+                      required
+                      value={formData.endDate}
+                      onChange={onInputChange}
+                      min={formData.startDate || undefined}
+                    />
+                    {errors.endDate && <div className="edit-service-combo-error">{errors.endDate}</div>}
+                  </div>
+                </div>
+
+                {/* Duration Field */}
+                <div className="edit-service-combo-field">
+                  <label>
+                    Thời hạn
+                    <span className="edit-service-combo-required-indicator">*</span>
+                  </label>
+                  <div className="edit-service-combo-duration-inputs">
+                    <input
+                      id="edit-service-combo-numberOfDays"
+                      name="numberOfDays"
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      required
+                      placeholder="0"
+                      value={formData.numberOfDays}
+                      onChange={onInputChange}
+                      inputMode="numeric"
+                      className="edit-service-combo-duration-input"
+                    />
+                    <span className="edit-service-combo-duration-label">ngày</span>
+                    <input
+                      id="edit-service-combo-numberOfNights"
+                      name="numberOfNights"
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      required
+                      placeholder="0"
+                      value={formData.numberOfNights}
+                      onChange={onInputChange}
+                      inputMode="numeric"
+                      className="edit-service-combo-duration-input"
+                    />
+                    <span className="edit-service-combo-duration-label">đêm</span>
+                  </div>
+                  {errors.numberOfDays && <div className="edit-service-combo-error">{errors.numberOfDays}</div>}
+                  {errors.numberOfNights && <div className="edit-service-combo-error">{errors.numberOfNights}</div>}
                 </div>
 
                 {/* Price and Available Slots Fields */}
@@ -592,7 +674,6 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                             <option value="Đồng">Đồng</option>
                             <option value="Bạc">Bạc</option>
                             <option value="Vàng">Vàng</option>
-                            <option value="Kim cương">Kim cương</option>
                           </select>
                         </div>
                       </div>
@@ -603,6 +684,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                             <tr>
                               <th>Tên ưu đãi</th>
                               <th>Hạng người dùng</th>
+                              <th>Loại người dùng</th>
                               <th>Số lượng</th>
                               <th>Chọn</th>
                             </tr>
@@ -610,7 +692,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                           <tbody>
                             {filteredPromotions.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="edit-service-combo-empty-cell">
+                                <td colSpan={5} className="edit-service-combo-empty-cell">
                                   Không có ưu đãi nào
                                 </td>
                               </tr>
@@ -627,6 +709,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                         {promotion.Rank || promotion.rank || 'N/A'}
                                       </span>
                                     </td>
+                                    <td>{promotion.UserType || promotion.userType || 'N/A'}</td>
                                     <td>
                                       <input
                                         type="number"
@@ -774,7 +857,6 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                             <option value="Đồng">Đồng</option>
                             <option value="Bạc">Bạc</option>
                             <option value="Vàng">Vàng</option>
-                            <option value="Kim cương">Kim cương</option>
                             <option value="Tất cả">Tất cả</option>
                           </select>
                         </div>

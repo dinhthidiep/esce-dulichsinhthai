@@ -37,7 +37,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     availableSlots: '',
     status: 'open',
     cancellationPolicy: '',
-    image: null
+    image: null,
+    startDate: '',
+    endDate: '',
+    numberOfDays: '',
+    numberOfNights: ''
   });
   const [createServiceComboErrors, setCreateServiceComboErrors] = useState({});
   const [isCreatingServiceCombo, setIsCreatingServiceCombo] = useState(false);
@@ -80,7 +84,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     availableSlots: '',
     status: 'open',
     cancellationPolicy: '',
-    image: null
+    image: null,
+    startDate: '',
+    endDate: '',
+    numberOfDays: '',
+    numberOfNights: ''
   });
   const [editServiceComboErrors, setEditServiceComboErrors] = useState({});
   const [isEditingServiceCombo, setIsEditingServiceCombo] = useState(false);
@@ -145,9 +153,9 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
 
     // Sort by date
     filtered.sort((a, b) => {
-      const dateA = new Date(a.CreatedAt || a.createdAt || 0).getTime();
-      const dateB = new Date(b.CreatedAt || b.createdAt || 0).getTime();
-      return order === 'newest' ? dateB - dateA : dateA - dateB;
+      const dateA = new Date(a.CreatedAt || a.createdAt || 0);
+      const dateB = new Date(b.CreatedAt || b.createdAt || 0);
+      return order === 'newest' ? (dateB as any) - (dateA as any) : (dateA as any) - (dateB as any);
     });
 
     return filtered;
@@ -162,6 +170,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       const createdDate = new Date(Date.now() - i * 86400000);
       const statuses = ['open', 'closed', 'canceled'];
       const status = statuses[i % statuses.length];
+      const startDate = new Date(Date.now() + i * 86400000);
+      const endDate = new Date(startDate.getTime() + (i % 7 + 1) * 86400000);
+      const numberOfDays = Math.floor(Math.random() * 5) + 1;
+      const numberOfNights = Math.floor(Math.random() * 5) + 1;
       
       return {
         Id: `mock-combo-${i + 1}`,
@@ -183,7 +195,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         Image: '/img/banahills.jpg',
         image: '/img/banahills.jpg',
         CreatedAt: createdDate.toISOString(),
-        createdAt: createdDate.toISOString()
+        createdAt: createdDate.toISOString(),
+        StartDate: startDate.toISOString(),
+        startDate: startDate.toISOString(),
+        EndDate: endDate.toISOString(),
+        endDate: endDate.toISOString(),
+        NumberOfDays: numberOfDays,
+        numberOfDays: numberOfDays,
+        NumberOfNights: numberOfNights,
+        numberOfNights: numberOfNights
       };
     });
     
@@ -263,7 +283,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null
+      image: null,
+      startDate: '',
+      endDate: '',
+      numberOfDays: '',
+      numberOfNights: ''
     });
     setCreateServiceComboErrors({});
     setCreateServiceComboImagePreview(null);
@@ -289,7 +313,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     const mockPromotions = Array.from({ length: 15 }, (_, i) => ({
       Id: i + 1,
       ServiceName: `Dịch vụ ${i + 1}`,
-      Rank: ['Đồng', 'Bạc', 'Vàng', 'Kim cương', 'Tất cả'][i % 5]
+      Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3]
     }));
     setCreateServiceComboAllPromotions(mockPromotions);
     
@@ -297,7 +321,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     const mockCoupons = Array.from({ length: 15 }, (_, i) => ({
       Id: i + 1,
       Code: `COUPON${i + 1}`,
-      Rank: ['Đồng', 'Bạc', 'Vàng', 'Kim cương', 'Tất cả'][i % 5],
+      Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3],
       UserType: ['Khách hàng', 'Công ty'][i % 2]
     }));
     setCreateServiceComboAllCoupons(mockCoupons);
@@ -314,7 +338,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null
+      image: null,
+      startDate: '',
+      endDate: '',
+      numberOfDays: '',
+      numberOfNights: ''
     });
     setCreateServiceComboErrors({});
     setCreateServiceComboImagePreview(null);
@@ -422,12 +450,31 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     e.preventDefault();
     
     // Validate required fields
-    const newErrors: Record<string, string> = {};
+    const newErrors: { name?: string; address?: string; startDate?: string; endDate?: string; numberOfDays?: string; numberOfNights?: string; price?: string; availableSlots?: string } = {};
     if (!createServiceComboFormData.name || createServiceComboFormData.name.trim() === '') {
       newErrors.name = 'Tên combo dịch vụ không được để trống';
     }
     if (!createServiceComboFormData.address || createServiceComboFormData.address.trim() === '') {
       newErrors.address = 'Địa chỉ không được để trống';
+    }
+    if (!createServiceComboFormData.startDate || createServiceComboFormData.startDate.trim() === '') {
+      newErrors.startDate = 'Ngày bắt đầu không được để trống';
+    }
+    if (!createServiceComboFormData.endDate || createServiceComboFormData.endDate.trim() === '') {
+      newErrors.endDate = 'Ngày kết thúc không được để trống';
+    }
+    if (createServiceComboFormData.startDate && createServiceComboFormData.endDate) {
+      const startDate = new Date(createServiceComboFormData.startDate);
+      const endDate = new Date(createServiceComboFormData.endDate);
+      if (endDate <= startDate) {
+        newErrors.endDate = 'Ngày kết thúc phải sau ngày bắt đầu';
+      }
+    }
+    if (!createServiceComboFormData.numberOfDays || createServiceComboFormData.numberOfDays.trim() === '' || parseInt(createServiceComboFormData.numberOfDays) < 0) {
+      newErrors.numberOfDays = 'Số ngày không được để trống và phải >= 0';
+    }
+    if (!createServiceComboFormData.numberOfNights || createServiceComboFormData.numberOfNights.trim() === '' || parseInt(createServiceComboFormData.numberOfNights) < 0) {
+      newErrors.numberOfNights = 'Số đêm không được để trống và phải >= 0';
     }
     if (!createServiceComboFormData.price || parseFloat(createServiceComboFormData.price) < 0) {
       newErrors.price = 'Giá phải là số >= 0';
@@ -466,7 +513,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         Image: createServiceComboImagePreview || DEFAULT_IMAGE_URL,
         image: createServiceComboImagePreview || DEFAULT_IMAGE_URL,
         CreatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        StartDate: createServiceComboFormData.startDate || '',
+        startDate: createServiceComboFormData.startDate || '',
+        EndDate: createServiceComboFormData.endDate || '',
+        endDate: createServiceComboFormData.endDate || '',
+        NumberOfDays: parseInt(createServiceComboFormData.numberOfDays) || 0,
+        numberOfDays: parseInt(createServiceComboFormData.numberOfDays) || 0,
+        NumberOfNights: parseInt(createServiceComboFormData.numberOfNights) || 0,
+        numberOfNights: parseInt(createServiceComboFormData.numberOfNights) || 0
       };
       
       const updatedCombos = [newCombo, ...serviceCombos];
@@ -522,6 +577,18 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       
       const existingImage = serviceCombo.Image || serviceCombo.image || null;
       
+      // Format datetime-local from ISO string
+      const formatDateTimeLocal = (isoString) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+      
       setEditServiceComboFormData({
         name: serviceCombo.Name || serviceCombo.name || '',
         address: serviceCombo.Address || serviceCombo.address || '',
@@ -530,7 +597,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         availableSlots: String(serviceCombo.AvailableSlots || serviceCombo.availableSlots || ''),
         status: serviceCombo.Status || serviceCombo.status || 'open',
         cancellationPolicy: serviceCombo.CancellationPolicy || serviceCombo.cancellationPolicy || '',
-        image: existingImage
+        image: existingImage,
+        startDate: formatDateTimeLocal(serviceCombo.StartDate || serviceCombo.startDate),
+        endDate: formatDateTimeLocal(serviceCombo.EndDate || serviceCombo.endDate),
+        numberOfDays: String(serviceCombo.NumberOfDays || serviceCombo.numberOfDays || ''),
+        numberOfNights: String(serviceCombo.NumberOfNights || serviceCombo.numberOfNights || '')
       });
       
       if (existingImage && (existingImage.startsWith('data:image') || existingImage.startsWith('http://') || existingImage.startsWith('https://'))) {
@@ -552,7 +623,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       const mockPromotions = Array.from({ length: 15 }, (_, i) => ({
         Id: i + 1,
         ServiceName: `Dịch vụ ${i + 1}`,
-        Rank: ['Đồng', 'Bạc', 'Vàng', 'Kim cương', 'Tất cả'][i % 5]
+        Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3]
       }));
       setEditServiceComboAllPromotions(mockPromotions);
       
@@ -594,7 +665,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null
+      image: null,
+      startDate: '',
+      endDate: '',
+      numberOfDays: '',
+      numberOfNights: ''
     });
     setEditServiceComboErrors({});
     setEditServiceComboImagePreview(null);
@@ -721,12 +796,31 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     }
     
     // Validate required fields
-    const newErrors: Record<string, string> = {};
+    const newErrors: { name?: string; address?: string; startDate?: string; endDate?: string; numberOfDays?: string; numberOfNights?: string; price?: string; availableSlots?: string } = {};
     if (!editServiceComboFormData.name || editServiceComboFormData.name.trim() === '') {
       newErrors.name = 'Tên combo dịch vụ không được để trống';
     }
     if (!editServiceComboFormData.address || editServiceComboFormData.address.trim() === '') {
       newErrors.address = 'Địa chỉ không được để trống';
+    }
+    if (!editServiceComboFormData.startDate || editServiceComboFormData.startDate.trim() === '') {
+      newErrors.startDate = 'Ngày triển khai không được để trống';
+    }
+    if (!editServiceComboFormData.endDate || editServiceComboFormData.endDate.trim() === '') {
+      newErrors.endDate = 'Ngày kết thúc không được để trống';
+    }
+    if (editServiceComboFormData.startDate && editServiceComboFormData.endDate) {
+      const startDate = new Date(editServiceComboFormData.startDate);
+      const endDate = new Date(editServiceComboFormData.endDate);
+      if (endDate <= startDate) {
+        newErrors.endDate = 'Ngày kết thúc phải sau ngày triển khai';
+      }
+    }
+    if (!editServiceComboFormData.numberOfDays || editServiceComboFormData.numberOfDays.trim() === '' || parseInt(editServiceComboFormData.numberOfDays) < 0) {
+      newErrors.numberOfDays = 'Số ngày không được để trống và phải >= 0';
+    }
+    if (!editServiceComboFormData.numberOfNights || editServiceComboFormData.numberOfNights.trim() === '' || parseInt(editServiceComboFormData.numberOfNights) < 0) {
+      newErrors.numberOfNights = 'Số đêm không được để trống và phải >= 0';
     }
     if (!editServiceComboFormData.price || parseFloat(editServiceComboFormData.price) < 0) {
       newErrors.price = 'Giá phải là số >= 0';
@@ -764,7 +858,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
             CancellationPolicy: editServiceComboFormData.cancellationPolicy?.trim() || '',
             cancellationPolicy: editServiceComboFormData.cancellationPolicy?.trim() || '',
             Image: editServiceComboImagePreview || sc.Image || sc.image || DEFAULT_IMAGE_URL,
-            image: editServiceComboImagePreview || sc.Image || sc.image || DEFAULT_IMAGE_URL
+            image: editServiceComboImagePreview || sc.Image || sc.image || DEFAULT_IMAGE_URL,
+            StartDate: editServiceComboFormData.startDate ? new Date(editServiceComboFormData.startDate).toISOString() : '',
+            startDate: editServiceComboFormData.startDate ? new Date(editServiceComboFormData.startDate).toISOString() : '',
+            EndDate: editServiceComboFormData.endDate ? new Date(editServiceComboFormData.endDate).toISOString() : '',
+            endDate: editServiceComboFormData.endDate ? new Date(editServiceComboFormData.endDate).toISOString() : '',
+            NumberOfDays: parseInt(editServiceComboFormData.numberOfDays) || 0,
+            numberOfDays: parseInt(editServiceComboFormData.numberOfDays) || 0,
+            NumberOfNights: parseInt(editServiceComboFormData.numberOfNights) || 0,
+            numberOfNights: parseInt(editServiceComboFormData.numberOfNights) || 0
           };
         }
         return sc;
@@ -906,7 +1008,12 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                           </div>
                           <div className="service-details">
                             <h3 className="service-name">{s.Name || s.name}</h3>
-                            <p className="service-date">Ngày tạo: {new Date(s.CreatedAt || s.createdAt).toLocaleDateString('vi-VN')}</p>
+                            <p className="service-date">
+                              Thời gian: {s.StartDate || s.startDate ? new Date(s.StartDate || s.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {s.EndDate || s.endDate ? new Date(s.EndDate || s.endDate).toLocaleDateString('vi-VN') : 'N/A'}
+                            </p>
+                            <p className="service-duration">
+                              Trong: {s.NumberOfDays || s.numberOfDays || 0} ngày {s.NumberOfNights || s.numberOfNights || 0} đêm
+                            </p>
                             <p className="service-status-gray">Trạng thái: {s.Status || s.status}</p>
                             <p className="service-price">Giá tiền: {(s.Price || s.price || 0).toLocaleString('vi-VN')} VND</p>
                           </div>

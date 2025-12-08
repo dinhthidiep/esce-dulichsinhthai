@@ -14,6 +14,10 @@ interface CreateServiceComboModalProps {
     status: string;
     cancellationPolicy: string;
     image: File | string | null;
+    startDate: string;
+    endDate: string;
+    numberOfDays: string;
+    numberOfNights: string;
   };
   errors: Record<string, string>;
   imagePreview: string | null;
@@ -257,6 +261,84 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               <div className="create-service-combo-hint">
                 Còn lại: <span>{1000 - formData.description.length}</span> ký tự
               </div>
+            </div>
+
+            {/* Start Date and End Date Fields */}
+            <div className="create-service-combo-field-row">
+              <div className="create-service-combo-field">
+                <label htmlFor="create-service-combo-startDate">
+                  Ngày triển khai
+                  <span className="create-service-combo-required-indicator">*</span>
+                </label>
+                <input
+                  id="create-service-combo-startDate"
+                  name="startDate"
+                  type="datetime-local"
+                  required
+                  value={formData.startDate}
+                  onChange={onInputChange}
+                />
+                {errors.startDate && <div className="create-service-combo-error">{errors.startDate}</div>}
+              </div>
+
+              <div className="create-service-combo-field">
+                <label htmlFor="create-service-combo-endDate">
+                  Ngày kết thúc
+                  <span className="create-service-combo-required-indicator">*</span>
+                </label>
+                <input
+                  id="create-service-combo-endDate"
+                  name="endDate"
+                  type="datetime-local"
+                  required
+                  value={formData.endDate}
+                  onChange={onInputChange}
+                  min={formData.startDate || undefined}
+                />
+                {errors.endDate && <div className="create-service-combo-error">{errors.endDate}</div>}
+              </div>
+            </div>
+
+            {/* Duration Field */}
+            <div className="create-service-combo-field">
+              <label>
+                Thời hạn
+                <span className="create-service-combo-required-indicator">*</span>
+              </label>
+              <div className="create-service-combo-duration-inputs">
+                <input
+                  id="create-service-combo-numberOfDays"
+                  name="numberOfDays"
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="1"
+                  required
+                  placeholder="0"
+                  value={formData.numberOfDays}
+                  onChange={onInputChange}
+                  inputMode="numeric"
+                  className="create-service-combo-duration-input"
+                />
+                <span className="create-service-combo-duration-label">ngày</span>
+                <input
+                  id="create-service-combo-numberOfNights"
+                  name="numberOfNights"
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="1"
+                  required
+                  placeholder="0"
+                  value={formData.numberOfNights}
+                  onChange={onInputChange}
+                  inputMode="numeric"
+                  className="create-service-combo-duration-input"
+                />
+                <span className="create-service-combo-duration-label">đêm</span>
+              </div>
+              {errors.numberOfDays && <div className="create-service-combo-error">{errors.numberOfDays}</div>}
+              {errors.numberOfNights && <div className="create-service-combo-error">{errors.numberOfNights}</div>}
             </div>
 
             {/* Price and Available Slots Fields */}
@@ -570,7 +652,6 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                         <option value="Đồng">Đồng</option>
                         <option value="Bạc">Bạc</option>
                         <option value="Vàng">Vàng</option>
-                        <option value="Kim cương">Kim cương</option>
                       </select>
                     </div>
                   </div>
@@ -581,6 +662,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                         <tr>
                           <th>Tên ưu đãi</th>
                           <th>Hạng người dùng</th>
+                          <th>Loại người dùng</th>
                           <th>Số lượng</th>
                           <th>Chọn</th>
                         </tr>
@@ -588,7 +670,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <tbody>
                         {filteredPromotions.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="create-service-combo-empty-cell">
+                            <td colSpan={5} className="create-service-combo-empty-cell">
                               Không có ưu đãi nào
                             </td>
                           </tr>
@@ -605,6 +687,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                                     {promotion.Rank || promotion.rank || 'N/A'}
                                   </span>
                                 </td>
+                                <td>{promotion.UserType || promotion.userType || 'N/A'}</td>
                                 <td>
                                   <input
                                     type="number"
@@ -752,7 +835,6 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                         <option value="Đồng">Đồng</option>
                         <option value="Bạc">Bạc</option>
                         <option value="Vàng">Vàng</option>
-                        <option value="Kim cương">Kim cương</option>
                         <option value="Tất cả">Tất cả</option>
                       </select>
                     </div>

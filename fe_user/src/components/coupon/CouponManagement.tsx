@@ -20,18 +20,6 @@ export interface CouponManagementRef {
   getToggleState: () => boolean; // true = promotions list, false = coupons list
 }
 
-type CouponFormData = {
-  code: string;
-  description: string;
-  discountType: 'percentage' | 'amount';
-  discountValue: string;
-  usageLimit: string;
-  startDate: string;
-  expiryDate: string;
-}
-
-type EditCouponFormData = CouponFormData & { isActive: boolean }
-
 const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(({ 
   onSuccess, 
   onError,
@@ -179,7 +167,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
 
   // Create Coupon Modal states
   const [isCreateCouponModalOpen, setIsCreateCouponModalOpen] = useState(false);
-  const [createCouponFormData, setCreateCouponFormData] = useState<CouponFormData>({
+  const [createCouponFormData, setCreateCouponFormData] = useState({
     code: '',
     description: '',
     discountType: 'percentage',
@@ -195,7 +183,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   const [isEditCouponModalOpen, setIsEditCouponModalOpen] = useState(false);
   const [editingCouponId, setEditingCouponId] = useState(null);
   const [loadingEditCouponData, setLoadingEditCouponData] = useState(false);
-  const [editCouponFormData, setEditCouponFormData] = useState<EditCouponFormData>({
+  const [editCouponFormData, setEditCouponFormData] = useState({
     code: '',
     description: '',
     discountType: 'percentage',
@@ -205,7 +193,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     expiryDate: '',
     isActive: true
   });
-  const [editCouponErrors, setEditCouponErrors] = useState({});
+  const [editCouponErrors, setEditCouponErrors] = useState<{ code?: string; description?: string; discountType?: string; discountValue?: string; usageLimit?: string; startDate?: string; expiryDate?: string; isActive?: boolean }>({});
   const [isEditingCoupon, setIsEditingCoupon] = useState(false);
 
   // Load initial mock data
@@ -253,9 +241,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
 
     // Sort by date
     filtered.sort((a, b) => {
-      const dateA = new Date(a.CreatedAt || a.Created_At || 0).getTime();
-      const dateB = new Date(b.CreatedAt || b.Created_At || 0).getTime();
-      return order === 'newest' ? dateB - dateA : dateA - dateB;
+      const dateA = new Date(a.CreatedAt || a.Created_At || 0);
+      const dateB = new Date(b.CreatedAt || b.Created_At || 0);
+      return order === 'newest' ? (dateB as any) - (dateA as any) : (dateA as any) - (dateB as any);
     });
 
     return filtered;
@@ -485,7 +473,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     setIsCreatingCoupon(true);
     setCreateCouponErrors({});
 
-    const newErrors: Record<string, string> = {};
+    const newErrors = {};
     Object.keys(createCouponFormData).forEach(key => {
       if (key !== 'discountType') {
         const error = validateCreateCouponField(key, createCouponFormData[key]);
@@ -692,7 +680,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     setIsEditingCoupon(true);
     setEditCouponErrors({});
 
-    const newErrors: Record<string, string> = {};
+    const newErrors = {};
     Object.keys(editCouponFormData).forEach(key => {
       if (key !== 'discountType' && key !== 'isActive') {
         const error = validateEditCouponField(key, editCouponFormData[key]);
@@ -1194,7 +1182,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
           <CreateCouponModal
             isOpen={isCreateCouponModalOpen}
             onClose={handleCloseCreateCouponModal}
-            formData={createCouponFormData}
+            formData={createCouponFormData as { code: string; description: string; discountType: 'percentage' | 'amount'; discountValue: string; usageLimit: string; startDate: string; expiryDate: string }}
             errors={createCouponErrors}
             isSubmitting={isCreatingCoupon}
             onInputChange={handleCreateCouponInputChange}
@@ -1206,8 +1194,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
             isOpen={isEditCouponModalOpen}
             onClose={handleCloseEditCouponModal}
             loading={loadingEditCouponData}
-            formData={editCouponFormData}
-            errors={editCouponErrors}
+            formData={editCouponFormData as { code: string; description: string; discountType: 'percentage' | 'amount'; discountValue: string; usageLimit: string; startDate: string; expiryDate: string; isActive: boolean }}
+            errors={editCouponErrors as Record<string, string>}
             isSubmitting={isEditingCoupon}
             onInputChange={handleEditCouponInputChange}
             onSubmit={handleEditCouponSubmit}

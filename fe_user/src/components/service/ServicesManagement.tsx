@@ -67,9 +67,9 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
 
     // Sort by date
     filtered.sort((a, b) => {
-      const dateA = new Date(a.Created_At || a.CreatedAt || 0).getTime();
-      const dateB = new Date(b.Created_At || b.CreatedAt || 0).getTime();
-      return order === 'newest' ? dateB - dateA : dateA - dateB;
+      const dateA = new Date(a.Created_At || a.CreatedAt || 0);
+      const dateB = new Date(b.Created_At || b.CreatedAt || 0);
+      return order === 'newest' ? (dateB as any) - (dateA as any) : (dateA as any) - (dateB as any);
     });
 
     return filtered;

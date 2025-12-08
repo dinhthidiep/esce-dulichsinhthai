@@ -266,16 +266,63 @@
 }
 
 .create-service-combo-quantity-input {
-  width: 80px;
-  padding: 0.25rem;
+  width: 50px !important;
+  max-width: 50px !important;
+  min-width: 50px !important;
+  padding: 0.25rem 0.125rem;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 0.875rem;
+  box-sizing: border-box;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .create-service-combo-quantity-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Hide spinner for quantity inputs */
+.create-service-combo-quantity-input::-webkit-outer-spin-button,
+.create-service-combo-quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.create-service-combo-quantity-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Table column widths - Services table (5 columns: Tên, Mô tả, Giá, Số lượng, Chọn) */
+.create-service-combo-table thead tr th:nth-child(1),
+.create-service-combo-table tbody tr td:nth-child(1) {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.create-service-combo-table thead tr th:nth-child(2),
+.create-service-combo-table tbody tr td:nth-child(2) {
+  min-width: 250px;
+  max-width: 400px;
+}
+
+/* Quantity column - narrow (4th column in services, 4th column in promotions) */
+.create-service-combo-table thead tr th:nth-child(4),
+.create-service-combo-table tbody tr td:nth-child(4) {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  text-align: center;
+}
+
+/* Checkbox column - narrow (last column) */
+.create-service-combo-table thead tr th:last-child,
+.create-service-combo-table tbody tr td:last-child {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  text-align: center;
 }
 
 .create-service-combo-rank-badge {
@@ -404,8 +451,10 @@
 }
 
 .create-service-combo-pagination-input {
-  width: 60px;
-  padding: 0.375rem;
+  width: 50px !important;
+  max-width: 50px !important;
+  min-width: 50px !important;
+  padding: 0.375rem 0.25rem;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -463,4 +512,50 @@
 .create-service-combo-btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Duration Inputs Styles */
+.create-service-combo-duration-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-service-combo-duration-input {
+  width: 35px !important;
+  max-width: 35px !important;
+  min-width: 35px !important;
+  padding: 0.375rem 0.125rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Hide spinner for number inputs */
+.create-service-combo-duration-input::-webkit-outer-spin-button,
+.create-service-combo-duration-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.create-service-combo-duration-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.create-service-combo-duration-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.create-service-combo-duration-label {
+  font-size: 0.875rem;
+  color: #475569;
+  font-weight: 500;
+  white-space: nowrap;
 }

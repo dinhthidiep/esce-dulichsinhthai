@@ -60,8 +60,30 @@ const NewsDetailPage = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await axiosInstance.get<NewsItem>(`${API_ENDPOINTS.NEWS}/${id}`)
-      setNews(response.data)
+      const response = await axiosInstance.get<any>(`${API_ENDPOINTS.NEWS}/${id}`)
+      
+      // Transform backend NewsDto to frontend NewsItem
+      const newsData = response.data
+      const content = newsData.Content || newsData.content || ''
+      const images = newsData.Images || newsData.images || []
+      const firstImage = images.length > 0 ? images[0] : defaultNewsImage
+      const summary = content.length > 200 ? content.substring(0, 200) + '...' : content
+      
+      const transformedNews: NewsItem = {
+        id: newsData.NewsId || newsData.newsId || newsData.id,
+        title: content, // Backend Content is actually the title/content
+        content: content,
+        summary: summary,
+        image: firstImage,
+        author: newsData.AuthorName || newsData.authorName || newsData.author || '',
+        authorId: newsData.AuthorId || newsData.authorId,
+        createdAt: newsData.CreatedDate || newsData.createdDate || newsData.createdAt || '',
+        updatedAt: newsData.CreatedDate || newsData.createdDate || newsData.updatedAt || '',
+        status: 'published',
+        views: 0
+      }
+      
+      setNews(transformedNews)
     } catch (err: any) {
       console.error('Error fetching news detail:', err)
       setError(err.response?.data?.message || 'Không thể tải tin tức. Vui lòng thử lại sau.')
@@ -74,9 +96,32 @@ const NewsDetailPage = () => {
     if (!id) return
 
     try {
-      const response = await axiosInstance.get<NewsItem[]>(API_ENDPOINTS.NEWS)
+      const response = await axiosInstance.get<any[]>(API_ENDPOINTS.NEWS)
+      
+      // Transform backend NewsDto to frontend NewsItem
+      const transformedNews: NewsItem[] = (response.data || []).map((news: any) => {
+        const content = news.Content || news.content || ''
+        const images = news.Images || news.images || []
+        const firstImage = images.length > 0 ? images[0] : defaultNewsImage
+        const summary = content.length > 200 ? content.substring(0, 200) + '...' : content
+        
+        return {
+          id: news.NewsId || news.newsId || news.id,
+          title: content,
+          content: content,
+          summary: summary,
+          image: firstImage,
+          author: news.AuthorName || news.authorName || news.author || '',
+          authorId: news.AuthorId || news.authorId,
+          createdAt: news.CreatedDate || news.createdDate || news.createdAt || '',
+          updatedAt: news.CreatedDate || news.createdDate || news.updatedAt || '',
+          status: 'published',
+          views: 0
+        }
+      })
+      
       // Lấy 3 tin tức khác (không phải tin hiện tại)
-      const filtered = (response.data || [])
+      const filtered = transformedNews
         .filter((item) => item.id !== parseInt(id, 10))
         .slice(0, 3)
       setRelatedNews(filtered)
