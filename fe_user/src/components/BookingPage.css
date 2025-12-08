@@ -1073,6 +1073,34 @@
   background-color: transparent;
 }
 
+/* Time Info Display (for fixed time range) */
+.time-info-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.time-info-display .time-input-icon {
+  position: absolute;
+  left: 1rem;
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
+.time-info-text {
+  color: #047857;
+  font-weight: 600;
+}
+
 /* Responsive for booking type selector */
 @media (max-width: 640px) {
   .booking-type-selector {
