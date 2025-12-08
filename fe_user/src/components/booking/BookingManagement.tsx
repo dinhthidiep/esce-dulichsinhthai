@@ -1,0 +1,615 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import LoadingSpinner from '../LoadingSpinner';
+import { CalendarIcon, UserIcon } from '../icons/index';
+import BookingConfirmationModal from './BookingConfirmationModal';
+import { formatPrice, getImageUrl } from '../../lib/utils';
+import './BookingManagement.css';
+
+interface BookingManagementProps {
+  onSuccess?: (message: string) => void;
+  onError?: (message: string) => void;
+}
+
+const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onError }) => {
+  // Bookings state
+  const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
+  const [bookingServiceNameFilter, setBookingServiceNameFilter] = useState('');
+  const [bookingUserNameFilter, setBookingUserNameFilter] = useState('');
+  const [bookingSortOrder, setBookingSortOrder] = useState('newest');
+  const [bookingCurrentPage, setBookingCurrentPage] = useState(1);
+  const [bookingPageInput, setBookingPageInput] = useState('');
+  const [bookingItemsPerPage] = useState(5);
+  
+  // Booking Modal states
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingModalData, setBookingModalData] = useState({ bookingId: null, action: '', notes: '' });
+
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
+    }
+  }, []);
+
+  // Load bookings - use mock data
+  useEffect(() => {
+    setLoadingBookings(true);
+    
+    const userId = getUserId();
+    if (!userId) {
+      setLoadingBookings(false);
+      return;
+    }
+    
+    // Generate mock bookings data (25 bookings with 4 statuses)
+    const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+    const mockBookings = Array.from({ length: 25 }, (_, i) => {
+      const status = statuses[i % 4];
+      const bookingDate = new Date(Date.now() - i * 86400000);
+      const startDate = new Date(bookingDate.getTime() + 7 * 86400000);
+      const endDate = new Date(startDate.getTime() + 3 * 86400000);
+      
+      return {
+        Id: `mock-booking-${i + 1}`,
+        id: `mock-booking-${i + 1}`,
+        Status: status,
+        status: status,
+        BookingDate: bookingDate.toISOString(),
+        bookingDate: bookingDate.toISOString(),
+        StartDate: startDate.toISOString(),
+        startDate: startDate.toISOString(),
+        EndDate: endDate.toISOString(),
+        endDate: endDate.toISOString(),
+        Quantity: Math.floor(Math.random() * 5) + 1,
+        quantity: Math.floor(Math.random() * 5) + 1,
+        TotalAmount: Math.floor(Math.random() * 5000000) + 1000000,
+        totalAmount: Math.floor(Math.random() * 5000000) + 1000000,
+        Notes: i % 3 === 0 ? `Ghi chú cho booking ${i + 1}` : '',
+        notes: i % 3 === 0 ? `Ghi chú cho booking ${i + 1}` : '',
+        CreatedAt: bookingDate.toISOString(),
+        createdAt: bookingDate.toISOString(),
+        User: {
+          Id: `user-${i + 1}`,
+          id: `user-${i + 1}`,
+          Name: `Người dùng ${i + 1}`,
+          name: `Người dùng ${i + 1}`
+        },
+        user: {
+          Id: `user-${i + 1}`,
+          id: `user-${i + 1}`,
+          Name: `Người dùng ${i + 1}`,
+          name: `Người dùng ${i + 1}`
+        },
+        ServiceCombo: {
+          Id: `combo-${i + 1}`,
+          id: `combo-${i + 1}`,
+          Name: `Combo dịch vụ ${i + 1}`,
+          name: `Combo dịch vụ ${i + 1}`,
+          Image: '/img/banahills.jpg',
+          image: '/img/banahills.jpg',
+          HostId: userId,
+          hostId: userId
+        },
+        serviceCombo: {
+          Id: `combo-${i + 1}`,
+          id: `combo-${i + 1}`,
+          Name: `Combo dịch vụ ${i + 1}`,
+          name: `Combo dịch vụ ${i + 1}`,
+          Image: '/img/banahills.jpg',
+          image: '/img/banahills.jpg',
+          HostId: userId,
+          hostId: userId
+        }
+      };
+    });
+    
+    setBookings(mockBookings);
+    setLoadingBookings(false);
+  }, [getUserId]);
+
+  // Filter and sort bookings
+  useEffect(() => {
+    let filtered = [...bookings];
+
+    // Filter by status
+    if (bookingStatusFilter && bookingStatusFilter !== 'all') {
+      filtered = filtered.filter(booking => {
+        const status = (booking.Status || booking.status || '').toLowerCase();
+        return status === bookingStatusFilter.toLowerCase();
+      });
+    }
+
+    // Filter by service name
+    if (bookingServiceNameFilter && bookingServiceNameFilter.trim() !== '') {
+      filtered = filtered.filter(booking => {
+        const serviceCombo = booking.ServiceCombo || booking.serviceCombo;
+        const serviceName = serviceCombo?.Name || serviceCombo?.name || '';
+        return serviceName.toLowerCase().includes(bookingServiceNameFilter.toLowerCase().trim());
+      });
+    }
+
+    // Filter by user name
+    if (bookingUserNameFilter && bookingUserNameFilter.trim() !== '') {
+      filtered = filtered.filter(booking => {
+        const user = booking.User || booking.user || {};
+        const userName = user.Name || user.name || '';
+        return userName.toLowerCase().includes(bookingUserNameFilter.toLowerCase().trim());
+      });
+    }
+
+    // Sort by date
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.BookingDate || a.bookingDate || 0);
+      const dateB = new Date(b.BookingDate || b.bookingDate || 0);
+      
+      if (bookingSortOrder === 'newest') {
+        return dateB.getTime() - dateA.getTime();
+      } else {
+        return dateA.getTime() - dateB.getTime();
+      }
+    });
+
+    setFilteredBookings(filtered);
+    setBookingCurrentPage(1);
+    setBookingPageInput('');
+  }, [bookings, bookingStatusFilter, bookingServiceNameFilter, bookingUserNameFilter, bookingSortOrder]);
+
+  // Paginated bookings
+  const paginatedBookings = useMemo(() => {
+    const totalPages = Math.ceil(filteredBookings.length / bookingItemsPerPage);
+    const startIndex = (bookingCurrentPage - 1) * bookingItemsPerPage;
+    const endIndex = startIndex + bookingItemsPerPage;
+    return filteredBookings.slice(startIndex, endIndex);
+  }, [filteredBookings, bookingCurrentPage, bookingItemsPerPage]);
+
+  const bookingTotalPages = Math.ceil(filteredBookings.length / bookingItemsPerPage);
+
+  // Helper functions
+  const formatBookingDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('vi-VN', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    if (amount == null) return '0 VNĐ';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  const getBookingStatusDisplay = (status) => {
+    const statusLower = (status || '').toLowerCase();
+    switch (statusLower) {
+      case 'pending':
+        return { text: 'Đã xử lý', className: 'status-pending' };
+      case 'confirmed':
+        return { text: 'Đã xác nhận', className: 'status-confirmed' };
+      case 'completed':
+        return { text: 'Đã hoàn thành', className: 'status-completed' };
+      case 'cancelled':
+        return { text: 'Đã hủy', className: 'status-cancelled' };
+      default:
+        return { text: 'Đã xử lý', className: 'status-pending' };
+    }
+  };
+
+  // Booking handlers
+  const handleAcceptBooking = (bookingId, currentNotes) => {
+    setBookingModalData({
+      bookingId: bookingId,
+      action: 'accept',
+      notes: currentNotes || ''
+    });
+    setShowBookingModal(true);
+  };
+
+  const handleRejectBooking = (bookingId, currentNotes) => {
+    setBookingModalData({
+      bookingId: bookingId,
+      action: 'reject',
+      notes: currentNotes || ''
+    });
+    setShowBookingModal(true);
+  };
+
+  const handleCompleteBooking = (bookingId, currentNotes) => {
+    setBookingModalData({
+      bookingId: bookingId,
+      action: 'complete',
+      notes: currentNotes || ''
+    });
+    setShowBookingModal(true);
+  };
+
+  const handleCloseBookingModal = () => {
+    setShowBookingModal(false);
+    setBookingModalData({ bookingId: null, action: '', notes: '' });
+  };
+
+  const handleConfirmBookingAction = () => {
+    const { bookingId, action, notes } = bookingModalData;
+    
+    let newStatus;
+    let actionText;
+    if (action === 'accept') {
+      newStatus = 'confirmed';
+      actionText = 'chấp nhận';
+    } else if (action === 'reject') {
+      newStatus = 'cancelled';
+      actionText = 'từ chối';
+    } else if (action === 'complete') {
+      newStatus = 'completed';
+      actionText = 'hoàn thành';
+    } else {
+      if (onError) {
+        onError('Hành động không hợp lệ');
+      }
+      return;
+    }
+    
+    // Update state directly (mock data)
+    setBookings(prevBookings => 
+      prevBookings.map(booking => {
+        const id = booking.Id || booking.id;
+        if (id === bookingId) {
+          return {
+            ...booking,
+            Status: newStatus,
+            status: newStatus,
+            Notes: notes || booking.Notes || booking.notes || '',
+            notes: notes || booking.Notes || booking.notes || ''
+          };
+        }
+        return booking;
+      })
+    );
+    
+    if (onSuccess) {
+      onSuccess(`Đã ${actionText} booking thành công!`);
+    }
+    handleCloseBookingModal();
+  };
+
+  return (
+    <div className="booking-management">
+      {loadingBookings ? (
+        <LoadingSpinner message="Đang tải danh sách booking..." />
+      ) : (
+        <>
+          {/* Filters */}
+          <div className="booking-filter-container">
+            <div className="filter-row">
+              <div className="filter-group">
+                <label htmlFor="booking-status-filter" className="filter-label">Trạng thái</label>
+                <select 
+                  id="booking-status-filter"
+                  className="filter-select"
+                  value={bookingStatusFilter}
+                  onChange={(e) => {
+                    setBookingStatusFilter(e.target.value);
+                    setBookingCurrentPage(1);
+                    setBookingPageInput('');
+                  }}
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="pending">Đã xử lý</option>
+                  <option value="confirmed">Đã xác nhận</option>
+                  <option value="completed">Đã hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="booking-service-name-filter" className="filter-label">Tên dịch vụ</label>
+                <input
+                  type="text"
+                  id="booking-service-name-filter"
+                  className="filter-select"
+                  value={bookingServiceNameFilter}
+                  onChange={(e) => {
+                    setBookingServiceNameFilter(e.target.value);
+                    setBookingCurrentPage(1);
+                    setBookingPageInput('');
+                  }}
+                  placeholder="Tìm theo tên dịch vụ..."
+                  style={{ minWidth: '200px' }}
+                />
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="booking-user-name-filter" className="filter-label">Tên người dùng</label>
+                <input
+                  type="text"
+                  id="booking-user-name-filter"
+                  className="filter-select"
+                  value={bookingUserNameFilter}
+                  onChange={(e) => {
+                    setBookingUserNameFilter(e.target.value);
+                    setBookingCurrentPage(1);
+                    setBookingPageInput('');
+                  }}
+                  placeholder="Tìm theo tên người dùng..."
+                  style={{ minWidth: '200px' }}
+                />
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="booking-sort-order" className="filter-label">Sắp xếp</label>
+                <select 
+                  id="booking-sort-order"
+                  className="filter-select"
+                  value={bookingSortOrder}
+                  onChange={(e) => {
+                    setBookingSortOrder(e.target.value);
+                    setBookingCurrentPage(1);
+                    setBookingPageInput('');
+                  }}
+                >
+                  <option value="newest">Mới nhất</option>
+                  <option value="oldest">Cũ nhất</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {filteredBookings.length === 0 ? (
+            <div className="empty-state">
+              <CalendarIcon className="empty-state-icon" />
+              <h3>Không có booking nào</h3>
+              <p>Bạn chưa có booking nào.</p>
+            </div>
+          ) : (
+            <div className="bookings-list">
+              {paginatedBookings.map((booking) => {
+                const statusDisplay = getBookingStatusDisplay(booking.Status || booking.status);
+                const bookingId = booking.Id || booking.id;
+                const serviceCombo = booking.ServiceCombo || booking.serviceCombo;
+                const serviceName = serviceCombo?.Name || serviceCombo?.name || 'Dịch vụ';
+                // Xử lý trường hợp có nhiều ảnh phân cách bởi dấu phẩy - lấy ảnh đầu tiên
+                let imagePath = serviceCombo?.Image || serviceCombo?.image || '';
+                if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
+                  imagePath = imagePath.split(',')[0].trim();
+                }
+                const serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
+                const bookingDate = booking.BookingDate || booking.bookingDate;
+                const startDate = booking.StartDate || booking.startDate || booking.START_DATE;
+                const endDate = booking.EndDate || booking.endDate || booking.END_DATE;
+                const quantity = booking.Quantity || booking.quantity || 0;
+                const totalAmount = booking.TotalAmount || booking.totalAmount || 0;
+                const notes = booking.Notes || booking.notes || 'Không có ghi chú';
+                const status = (booking.Status || booking.status || '').toLowerCase();
+                const user = booking.User || booking.user || {};
+                const userName = user.Name || user.name || 'N/A';
+                const isPending = status === 'pending';
+                const isConfirmed = status === 'confirmed';
+                
+                return (
+                  <div key={bookingId} className="booking-card card">
+                    <div className="booking-card-content">
+                      {/* Part 1: Main Info */}
+                      <div className="booking-card-main">
+                        <div className="booking-card-header">
+                          <div className="booking-card-left">
+                            <div className="booking-image">
+                              <img
+                                src={serviceImage}
+                                alt={serviceName}
+                                className="booking-image-img"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/img/banahills.jpg';
+                                }}
+                              />
+                            </div>
+                            <div className="booking-info">
+                              <div className="booking-title-row">
+                                <h3 className="booking-service-name">{serviceName}</h3>
+                                <Badge className={`status-badge ${statusDisplay.className}`}>
+                                  {statusDisplay.text}
+                                </Badge>
+                              </div>
+                              <div className="booking-details">
+                                <div className="booking-detail-item">
+                                  <span className="booking-info-label">Người đặt:</span>
+                                  <span className="booking-info-value">{userName}</span>
+                                </div>
+                                {bookingDate && (
+                                  <div className="booking-detail-item">
+                                    <CalendarIcon className="detail-icon" />
+                                    <span>Ngày đặt: {formatBookingDate(bookingDate)}</span>
+                                  </div>
+                                )}
+                                {startDate && (
+                                  <div className="booking-detail-item">
+                                    <CalendarIcon className="detail-icon" />
+                                    <span>
+                                      {formatBookingDate(startDate)}
+                                      {endDate && ` - ${formatBookingDate(endDate)}`}
+                                    </span>
+                                  </div>
+                                )}
+                                {quantity > 0 && (
+                                  <div className="booking-detail-item">
+                                    <UserIcon className="detail-icon" />
+                                    <span>Số người: {quantity}</span>
+                                  </div>
+                                )}
+                                {totalAmount > 0 && (
+                                  <div className="booking-detail-item">
+                                    <span className="booking-price">
+                                      Tổng tiền: {formatCurrency(totalAmount)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {isPending && (
+                            <div className="booking-card-actions">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="btn-edit-service"
+                                onClick={() => handleAcceptBooking(bookingId, notes)}
+                              >
+                                Chấp nhận
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="cancel-booking-btn"
+                                onClick={() => handleRejectBooking(bookingId, notes)}
+                              >
+                                Từ chối
+                              </Button>
+                            </div>
+                          )}
+                          {isConfirmed && (
+                            <div className="booking-card-actions">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="btn-edit-service"
+                                onClick={() => handleCompleteBooking(bookingId, notes)}
+                              >
+                                Hoàn thành
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* Part 2: Notes */}
+                      <div className="booking-card-notes">
+                        <div className="booking-notes">
+                          <span className="booking-info-label">Ghi chú:</span>
+                          <span className="booking-info-value">{notes || 'Không có ghi chú'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Pagination */}
+              {bookingTotalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    onClick={() => {
+                      const newPage = Math.max(1, bookingCurrentPage - 1);
+                      setBookingCurrentPage(newPage);
+                      setBookingPageInput('');
+                    }}
+                    disabled={bookingCurrentPage === 1}
+                  >
+                    <span>←</span> Trước
+                  </button>
+                  
+                  <div className="pagination-controls">
+                    <div className="pagination-numbers">
+                      {Array.from({ length: bookingTotalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`pagination-number ${bookingCurrentPage === page ? 'active' : ''}`}
+                          onClick={() => {
+                            setBookingCurrentPage(page);
+                            setBookingPageInput('');
+                          }}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Đến trang:</span>
+                    <input
+                      type="text"
+                      value={bookingPageInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setBookingPageInput(value);
+                          const pageNum = parseInt(value);
+                          if (value !== '' && pageNum >= 1 && pageNum <= bookingTotalPages) {
+                            setBookingCurrentPage(pageNum);
+                            setBookingPageInput('');
+                          }
+                        }
+                      }}
+                      placeholder={bookingCurrentPage.toString()}
+                      style={{
+                        width: '60px',
+                        padding: '0.375rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        textAlign: 'center'
+                      }}
+                      inputMode="numeric"
+                    />
+                  </div>
+                  
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    onClick={() => {
+                      const newPage = Math.min(bookingTotalPages, bookingCurrentPage + 1);
+                      setBookingCurrentPage(newPage);
+                      setBookingPageInput('');
+                    }}
+                    disabled={bookingCurrentPage === bookingTotalPages}
+                  >
+                    Sau <span>→</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Booking Confirmation Modal */}
+      <BookingConfirmationModal
+        isOpen={showBookingModal}
+        onClose={handleCloseBookingModal}
+        modalData={bookingModalData}
+        onConfirm={handleConfirmBookingAction}
+        onModalDataChange={setBookingModalData}
+      />
+    </div>
+  );
+};
+
+export default BookingManagement;

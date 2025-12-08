@@ -1,0 +1,176 @@
+/* Create Privilege Modal Styles */
+
+.create-privilege-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.create-privilege-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.create-privilege-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.create-privilege-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.create-privilege-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #64748b;
+}
+
+.create-privilege-modal-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.create-privilege-modal-close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.create-privilege-modal-body {
+  padding: 1.5rem;
+}
+
+.create-privilege-disclaimer-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.create-privilege-required-indicator {
+  color: #ef4444;
+}
+
+.create-privilege-field {
+  margin-bottom: 1.5rem;
+}
+
+.create-privilege-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.create-privilege-field input,
+.create-privilege-field select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.create-privilege-field input:focus,
+.create-privilege-field select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.create-privilege-field input.create-privilege-input-error,
+.create-privilege-field select.create-privilege-input-error {
+  border-color: #ef4444;
+}
+
+.create-privilege-field input.create-privilege-input-error:focus,
+.create-privilege-field select.create-privilege-input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.create-privilege-error {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
+.create-privilege-form-action {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.create-privilege-btn-primary,
+.create-privilege-btn-secondary {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.create-privilege-btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.create-privilege-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.create-privilege-btn-primary:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.create-privilege-btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.create-privilege-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.create-privilege-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

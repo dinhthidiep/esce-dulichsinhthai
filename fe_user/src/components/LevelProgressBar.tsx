@@ -59,7 +59,7 @@ const LevelProgressBar: React.FC<LevelProgressBarProps> = ({
 
       {showDetails && (
         <div className="level-milestones">
-          <div className={`milestone ${level === 'default' ? 'active' : level !== 'default' ? 'completed' : ''}`}>
+          <div className={`milestone ${level === 'default' ? 'active' : 'completed'}`}>
             <span className="milestone-icon">⭐</span>
             <span className="milestone-label">Mới bắt đầu</span>
           </div>

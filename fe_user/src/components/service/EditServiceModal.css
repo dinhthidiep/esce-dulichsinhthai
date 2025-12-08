@@ -1,0 +1,193 @@
+/* Edit Service Modal Styles */
+
+.edit-service-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.edit-service-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.edit-service-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+}
+
+.edit-service-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.edit-service-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.edit-service-modal-close:hover {
+  background: #f1f5f9;
+}
+
+.edit-service-modal-close-icon {
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
+.edit-service-modal-body {
+  padding: 1.5rem;
+}
+
+.edit-service-disclaimer-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  font-style: normal;
+}
+
+.edit-service-required-indicator {
+  color: #ef4444;
+}
+
+.edit-service-field {
+  margin-bottom: 1.5rem;
+}
+
+.edit-service-field label {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.edit-service-field input,
+.edit-service-field textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.edit-service-field input:focus,
+.edit-service-field textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.edit-service-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.edit-service-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+.edit-service-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.edit-service-img-preview {
+  max-width: 300px;
+  max-height: 300px;
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+.edit-service-form-action {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.edit-service-btn-primary,
+.edit-service-btn-secondary {
+  flex: 0 0 auto;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.edit-service-btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.edit-service-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.edit-service-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-service-btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.edit-service-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.edit-service-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
