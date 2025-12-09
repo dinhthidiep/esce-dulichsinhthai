@@ -64,7 +64,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         })
       )
     } catch (err) {
-      console.error('Error marking notification as read:', err)
+      console.error('Error marking notification as notif-read:', err)
       alert('Không thể đánh dấu thông báo là đã đọc')
     }
   }
@@ -94,23 +94,23 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
   if (!isOpen) return null
 
   return (
-    <div className="notification-dropdown" ref={dropdownRef}>
-      <div className="notification-dropdown-header">
+    <div className="notif-notification-dropdown" ref={dropdownRef}>
+      <div className="notif-notification-dropdown-header">
         <h3>Thông báo</h3>
-        <button className="notification-close-btn" onClick={onClose} aria-label="Đóng">
+        <button className="notif-notification-close-btn" onClick={onClose} aria-label="Đóng">
           ×
         </button>
       </div>
 
-      <div className="notification-dropdown-content">
+      <div className="notif-notification-dropdown-content">
         {loading ? (
-          <div className="notification-loading">Đang tải...</div>
+          <div className="notif-notification-loading">Đang tải...</div>
         ) : error ? (
-          <div className="notification-error">{error}</div>
+          <div className="notif-notification-error">{error}</div>
         ) : notifications.length === 0 ? (
-          <div className="notification-empty">Bạn chưa có thông báo nào</div>
+          <div className="notif-notification-empty">Bạn chưa có thông báo nào</div>
         ) : (
-          <div className="notification-list">
+          <div className="notif-notification-list">
             {notifications.map((notification) => {
               const notificationId = notification.Id || notification.id
               const isRead = notification.IsRead || notification.isRead || false
@@ -121,7 +121,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
               return (
                 <div
                   key={notificationId}
-                  className={`notification-item ${isRead ? 'read' : 'unread'}`}
+                  className={`notif-notification-item ${isRead ? 'notif-read' : 'notif-unread'}`}
                   onClick={() => {
                     if (!isRead) {
                       handleMarkAsRead(notification)
@@ -129,14 +129,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                   }}
                   style={{ cursor: !isRead ? 'pointer' : 'default' }}
                 >
-                  <div className="notification-item-content">
-                    <div className="notification-item-header">
-                      <h4 className="notification-item-title">{title}</h4>
-                      {!isRead && <span className="notification-unread-badge">Mới</span>}
+                  <div className="notif-notification-item-content">
+                    <div className="notif-notification-item-header">
+                      <h4 className="notif-notification-item-title">{title}</h4>
+                      {!isRead && <span className="notif-notification-unread-badge">Mới</span>}
                     </div>
-                    <p className="notification-item-message">{message}</p>
+                    <p className="notif-notification-item-message">{message}</p>
                     {createdAt && (
-                      <span className="notification-item-time">{formatDate(createdAt)}</span>
+                      <span className="notif-notification-item-time">{formatDate(createdAt)}</span>
                     )}
                   </div>
                 </div>

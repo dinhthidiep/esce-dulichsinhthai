@@ -1,7 +1,7 @@
 /* Services Management Styles */
 
 /* Filter Container */
-.service-filter-container {
+.svc-admin-service-filter-container {
   margin-bottom: 1.5rem;
   padding: 1.25rem;
   background: white;
@@ -10,14 +10,14 @@
   border: 1px solid #e2e8f0;
 }
 
-.filter-row {
+.svc-admin-filter-row {
   display: flex;
   gap: 1rem;
   align-items: flex-end;
   flex-wrap: wrap;
 }
 
-.filter-field {
+.svc-admin-filter-field {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -25,14 +25,14 @@
   min-width: 150px;
 }
 
-.filter-field label {
+.svc-admin-filter-field label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
 }
 
-.filter-input,
-.filter-select {
+.svc-admin-filter-input,
+.svc-admin-filter-select {
   padding: 0.625rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -44,18 +44,18 @@
   box-sizing: border-box;
 }
 
-.filter-input:focus,
-.filter-select:focus {
+.svc-admin-filter-input:focus,
+.svc-admin-filter-select:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.filter-select {
+.svc-admin-filter-select {
   cursor: pointer;
 }
 
-.btn-search {
+.svc-admin-btn-search {
   padding: 0.625rem 1.5rem;
   background: #10b981;
   color: white;
@@ -69,18 +69,18 @@
   white-space: nowrap;
 }
 
-.btn-search:hover {
+.svc-admin-btn-search:hover {
   background: #059669;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
-.btn-search:active {
+.svc-admin-btn-search:svc-admin-active {
   transform: translateY(0);
 }
 
 /* Services Grid */
-.services-grid {
+.svc-admin-services-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.25rem;
@@ -92,7 +92,7 @@
   min-height: 100px;
 }
 
-.no-services {
+.svc-admin-no-services {
   grid-column: 1 / -1;
   text-align: center;
   padding: 2.5rem;
@@ -101,7 +101,7 @@
 }
 
 /* Service Card */
-.service-card {
+.svc-admin-service-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 1rem;
@@ -120,30 +120,30 @@
   min-height: 100px;
 }
 
-.service-card-left {
+.svc-admin-service-card-left {
   display: flex;
   gap: 1rem;
   flex: 1;
   min-width: 0;
 }
 
-.service-card:hover {
+.svc-admin-service-card:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border-color: #10b981;
 }
 
-.service-card:hover .service-name {
+.svc-admin-service-card:hover .svc-admin-service-name {
   color: #10b981;
   transition: color 0.2s ease;
 }
 
-.service-card .service-image {
+.svc-admin-service-card .svc-admin-service-image {
   overflow: hidden;
   border-radius: 8px;
   transition: transform 0.3s ease;
 }
 
-.service-card .service-image-img {
+.svc-admin-service-card .svc-admin-service-image-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -151,15 +151,15 @@
   transition: transform 0.3s ease;
 }
 
-.service-card:hover .service-image {
+.svc-admin-service-card:hover .svc-admin-service-image {
   transform: scale(1.05);
 }
 
-.service-card:hover .service-image-img {
+.svc-admin-service-card:hover .svc-admin-service-image-img {
   transform: scale(1.05);
 }
 
-.service-details {
+.svc-admin-service-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -168,7 +168,7 @@
   overflow: hidden;
 }
 
-.service-name {
+.svc-admin-service-name {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
@@ -177,7 +177,7 @@
   transition: color 0.2s ease;
 }
 
-.service-description {
+.svc-admin-service-description {
   margin: 0;
   font-size: 0.9rem;
   color: #64748b;
@@ -189,21 +189,21 @@
   -webkit-box-orient: vertical;
 }
 
-.service-date {
+.svc-admin-service-date {
   margin: 0;
   font-size: 0.9rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.service-price {
+.svc-admin-service-price {
   margin: 0;
   font-size: 1rem;
   color: #10b981;
   font-weight: 600;
 }
 
-.service-actions {
+.svc-admin-service-actions {
   display: flex;
   gap: 0.625rem;
   flex-wrap: wrap;
@@ -212,7 +212,7 @@
   flex-shrink: 0;
 }
 
-.service-actions button {
+.svc-admin-service-actions button {
   width: 160px;
   padding: 0.5rem 0.75rem;
   border: none;
@@ -229,7 +229,7 @@
 }
 
 /* Pagination */
-.pagination {
+.svc-admin-pagination {
   margin-top: 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -243,7 +243,7 @@
   position: relative;
 }
 
-.pagination-controls {
+.svc-admin-pagination-controls {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,7 +251,7 @@
   margin: 0 auto;
 }
 
-.pagination-btn {
+.svc-admin-pagination-btn {
   padding: 0.5rem 1rem;
   background: white;
   color: #475569;
@@ -263,23 +263,23 @@
   transition: all 0.2s ease;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.svc-admin-pagination-btn:hover:not(:disabled) {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.pagination-btn:disabled {
+.svc-admin-pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination-numbers {
+.svc-admin-pagination-numbers {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.pagination-number {
+.svc-admin-pagination-number {
   min-width: 2.5rem;
   height: 2.5rem;
   padding: 0 0.5rem;
@@ -296,25 +296,25 @@
   justify-content: center;
 }
 
-.pagination-number:hover {
+.svc-admin-pagination-number:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.pagination-number.active {
+.svc-admin-pagination-number.svc-admin-active {
   background: #10b981;
   color: white;
   border-color: #10b981;
   font-weight: 600;
 }
 
-.pagination-number.active:hover {
+.svc-admin-pagination-number.svc-admin-active:hover {
   background: #059669;
   border-color: #059669;
 }
 
 /* Modal Styles */
-.modal-overlay {
+.svc-admin-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -328,7 +328,7 @@
   padding: 1rem;
 }
 
-.modal-content {
+.svc-admin-modal-content {
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -338,7 +338,7 @@
   overflow-y: auto;
 }
 
-.modal-header {
+.svc-admin-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -346,14 +346,14 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.modal-header h2 {
+.svc-admin-modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e293b;
 }
 
-.modal-close {
+.svc-admin-modal-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -365,35 +365,35 @@
   transition: all 0.2s ease;
 }
 
-.modal-close:hover {
+.svc-admin-modal-close:hover {
   background: #f1f5f9;
 }
 
-.modal-close-icon {
+.svc-admin-modal-close-icon {
   width: 20px;
   height: 20px;
   color: #64748b;
 }
 
-.modal-body {
+.svc-admin-modal-body {
   padding: 1.5rem;
 }
 
-.disclaimer-text {
+.svc-admin-disclaimer-text {
   font-size: 0.875rem;
   color: #64748b;
   margin-bottom: 1rem;
 }
 
-.required-indicator {
+.svc-admin-required-indicator {
   color: #dc2626;
 }
 
-.field {
+.svc-admin-field {
   margin-bottom: 1.25rem;
 }
 
-.field label {
+.svc-admin-field label {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
@@ -401,8 +401,8 @@
   margin-bottom: 0.5rem;
 }
 
-.field input,
-.field textarea {
+.svc-admin-field input,
+.svc-admin-field textarea {
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: 1px solid #e2e8f0;
@@ -413,38 +413,38 @@
   box-sizing: border-box;
 }
 
-.field input:focus,
-.field textarea:focus {
+.svc-admin-field input:focus,
+.svc-admin-field textarea:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.field textarea {
+.svc-admin-field textarea {
   resize: vertical;
   min-height: 100px;
 }
 
-.hint {
+.svc-admin-hint {
   font-size: 0.75rem;
   color: #64748b;
   margin-top: 0.25rem;
 }
 
-.error {
+.svc-admin-error {
   color: #dc2626;
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
-.img-preview {
+.svc-admin-img-preview {
   display: block;
   margin-top: 0.5rem;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
 
-.form-action {
+.svc-admin-form-action {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
@@ -453,7 +453,7 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.form-action button {
+.svc-admin-form-action button {
   padding: 0.625rem 1.5rem;
   border: none;
   border-radius: 8px;
@@ -463,83 +463,83 @@
   transition: all 0.2s ease;
 }
 
-.form-action button.primary {
+.svc-admin-form-action button.svc-admin-primary {
   background: #10b981;
   color: white;
 }
 
-.form-action button.primary:hover:not(:disabled) {
+.svc-admin-form-action button.svc-admin-primary:hover:not(:disabled) {
   background: #059669;
 }
 
-.form-action button.secondary {
+.svc-admin-form-action button.svc-admin-secondary {
   background: #f1f5f9;
   color: #475569;
 }
 
-.form-action button.secondary:hover:not(:disabled) {
+.svc-admin-form-action button.svc-admin-secondary:hover:not(:disabled) {
   background: #e2e8f0;
 }
 
-.form-action button:disabled {
+.svc-admin-form-action button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Empty State */
-.empty-state {
+.svc-admin-empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
   color: #64748b;
 }
 
-.empty-state-icon {
+.svc-admin-empty-state-icon {
   width: 64px;
   height: 64px;
   color: #cbd5e1;
   margin: 0 auto 1rem;
 }
 
-.empty-state h3 {
+.svc-admin-empty-state h3 {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.5rem;
 }
 
-.empty-state p {
+.svc-admin-empty-state p {
   font-size: 0.875rem;
   margin: 0 0 1.5rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .services-grid {
+  .svc-admin-services-grid {
     grid-template-columns: 1fr;
   }
   
-  .service-card {
+  .svc-admin-service-card {
     flex-direction: column;
   }
   
-  .service-actions {
+  .svc-admin-service-actions {
     flex-direction: row;
     width: 100%;
   }
   
-  .service-actions button {
+  .svc-admin-service-actions button {
     flex: 1;
   }
   
-  .filter-row {
+  .svc-admin-filter-row {
     flex-direction: column;
   }
   
-  .filter-field {
+  .svc-admin-filter-field {
     width: 100%;
   }
   
-  .btn-search {
+  .svc-admin-btn-search {
     width: 100%;
   }
 }

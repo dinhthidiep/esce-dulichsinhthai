@@ -1,19 +1,19 @@
-/* Force visibility for content areas */
-.content {
+/* Force visibility for rev-page-content areas */
+.rev-page-content {
   z-index: 1 !important;
   position: relative !important;
   overflow: visible !important;
   min-height: 500px; /* Ensure it has height */
 }
 
-.form-content {
+.rev-page-form-content {
   z-index: 1 !important;
   position: relative !important;
   overflow: visible !important;
   min-height: 400px; /* Ensure it has height */
 }
 
-.revenue-content {
+.rev-page-revenue-content {
     padding: var(--spacing-lg);
     max-width: 1400px;
     margin: 0 auto;
@@ -22,11 +22,11 @@
     overflow: visible !important;
 }
 
-.revenue-stats-section {
+.rev-page-revenue-stats-section {
     margin-bottom: var(--spacing-xl);
 }
 
-.revenue-section-title {
+.rev-page-revenue-section-title {
     font-size: 1.5em;
     font-weight: bold;
     display: flex;
@@ -34,7 +34,7 @@
     color: var(--primary-color);
 }
 
-.revenue-stats-grid {
+.rev-page-revenue-stats-grid {
     display: grid;
     margin-top: 0.5rem;
     grid-template-columns: repeat(5, 1fr);
@@ -42,7 +42,7 @@
     margin-bottom: var(--spacing-lg);
 }
 
-.revenue-stat-card {
+.rev-page-revenue-stat-card {
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -52,46 +52,46 @@
     transition: var(--transition);
 }
 
-.revenue-stat-card:hover {
+.rev-page-revenue-stat-card:hover {
     box-shadow: var(--shadow-hover);
     transform: translateY(-2px);
 }
 
-.revenue-stat-label {
+.rev-page-revenue-stat-label {
     font-size: 0.9em;
     color: var(--text-muted);
     margin-bottom: var(--spacing-xs);
     font-weight: 500;
 }
 
-.revenue-stat-value {
+.rev-page-revenue-stat-value {
     font-size: 2em;
     font-weight: bold;
     color: var(--primary-color);
 }
 
-.revenue-stat-accepted {
+.rev-page-revenue-stat-accepted {
     color: #2e7d32;
 }
 
-.revenue-stat-rejected {
+.rev-page-revenue-stat-rejected {
     color: #c62828;
 }
 
-.revenue-stat-pending {
+.rev-page-revenue-stat-pending {
     color: #f57c00;
 }
 
-.revenue-stat-completed {
+.rev-page-revenue-stat-completed {
     color: #1976d2;
 }
 
-.revenue-chart-section {
+.rev-page-revenue-chart-section {
     margin-top: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
 }
 
-.revenue-chart-container {
+.rev-page-revenue-chart-container {
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -100,7 +100,7 @@
     margin-top: 0.5rem;
 }
 
-.revenue-date-filter {
+.rev-page-revenue-date-filter {
     display: flex;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
@@ -110,7 +110,7 @@
     align-items: flex-start;
 }
 
-.revenue-month-picker {
+.rev-page-revenue-month-picker {
     display: flex;
     gap: 4px;
     flex: 1;
@@ -119,7 +119,7 @@
     min-width: 0;
 }
 
-.revenue-month-btn {
+.rev-page-revenue-month-btn {
     padding: 0;
     background: var(--white);
     border: 1px solid var(--border-color);
@@ -139,25 +139,25 @@
     box-sizing: border-box;
 }
 
-.revenue-month-btn:hover {
+.rev-page-revenue-month-btn:hover {
     border-color: var(--primary-color);
     background: rgba(0, 123, 255, 0.05);
     transform: translateY(-1px);
 }
 
-.revenue-month-selected {
+.rev-page-revenue-month-selected {
     background: var(--primary-color);
     color: var(--white);
     border-color: var(--primary-color);
     font-weight: bold;
 }
 
-.revenue-month-selected:hover {
+.rev-page-revenue-month-selected:hover {
     background: var(--primary-color-dark);
     border-color: var(--primary-color-dark);
 }
 
-.revenue-year-input {
+.rev-page-revenue-year-input {
     padding: var(--spacing-xs) var(--spacing-md);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -168,17 +168,17 @@
     text-align: center;
 }
 
-.revenue-year-input:hover {
+.rev-page-revenue-year-input:hover {
     border-color: var(--primary-color);
 }
 
-.revenue-year-input:focus {
+.rev-page-revenue-year-input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.revenue-date-filter-group {
+.rev-page-revenue-date-filter-group {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -186,16 +186,16 @@
     min-width: 0;
 }
 
-.revenue-date-filter-group:first-child {
+.rev-page-revenue-date-filter-group:first-child {
     flex: 1 1 auto;
     min-width: 300px;
 }
 
-.revenue-date-filter-group:last-child {
+.rev-page-revenue-date-filter-group:last-child {
     flex: 0 0 auto;
 }
 
-.revenue-date-filter {
+.rev-page-revenue-date-filter {
     display: flex;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
@@ -205,7 +205,7 @@
     align-items: center;
 }
 
-.revenue-filter-date {
+.rev-page-revenue-filter-date {
     padding: var(--spacing-xs) var(--spacing-md);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -219,17 +219,17 @@
     flex: 0 1 auto;
 }
 
-.revenue-filter-date:hover {
+.rev-page-revenue-filter-date:hover {
     border-color: var(--primary-color);
 }
 
-.revenue-filter-date:focus {
+.rev-page-revenue-filter-date:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.revenue-filter-label {
+.rev-page-revenue-filter-label {
     font-weight: bold;
     color: var(--text-color);
     font-size: 1em;
@@ -239,7 +239,7 @@
     white-space: nowrap;
 }
 
-.revenue-filter-year {
+.rev-page-revenue-filter-year {
     padding: var(--spacing-xs) var(--spacing-md);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -250,17 +250,17 @@
     text-align: center;
 }
 
-.revenue-filter-year:hover {
+.rev-page-revenue-filter-year:hover {
     border-color: var(--primary-color);
 }
 
-.revenue-filter-year:focus {
+.rev-page-revenue-filter-year:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.revenue-filter-confirm-btn {
+.rev-page-revenue-filter-confirm-btn {
     padding: var(--spacing-xs) var(--spacing-lg);
     background: var(--primary-color);
     color: var(--white);
@@ -273,17 +273,17 @@
     min-width: 120px;
 }
 
-.revenue-filter-confirm-btn:hover {
+.rev-page-revenue-filter-confirm-btn:hover {
     background: var(--primary-color-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow);
 }
 
-.revenue-filter-confirm-btn:active {
+.rev-page-revenue-filter-confirm-btn:active {
     transform: translateY(0);
 }
 
-.revenue-filter-select {
+.rev-page-revenue-filter-select {
     padding: var(--spacing-xs) var(--spacing-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -294,35 +294,35 @@
     transition: var(--transition);
 }
 
-.revenue-filter-select:hover {
+.rev-page-revenue-filter-select:hover {
     border-color: var(--primary-color);
 }
 
-.revenue-filter-select:focus {
+.rev-page-revenue-filter-select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.revenue-chart-layout {
+.rev-page-revenue-chart-layout {
     display: flex;
     gap: var(--spacing-lg);
     align-items: flex-start;
 }
 
-.revenue-chart-wrapper {
+.rev-page-revenue-chart-wrapper {
     flex: 1;
     height: 400px;
     position: relative;
     min-width: 0;
 }
 
-.revenue-total-display {
+.rev-page-revenue-total-display {
     flex-shrink: 0;
     width: 300px;
 }
 
-.revenue-total-card {
+.rev-page-revenue-total-card {
     background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
     border-radius: var(--border-radius);
     padding: var(--spacing-lg);
@@ -331,27 +331,27 @@
     color: var(--white);
 }
 
-.revenue-total-label {
+.rev-page-revenue-total-label {
     font-size: 1em;
     opacity: 0.9;
     margin-bottom: var(--spacing-sm);
     font-weight: 500;
 }
 
-.revenue-total-value {
+.rev-page-revenue-total-value {
     font-size: 2em;
     font-weight: bold;
     margin-bottom: var(--spacing-xs);
     word-break: break-word;
 }
 
-.revenue-total-period {
+.rev-page-revenue-total-period {
     font-size: 0.9em;
     opacity: 0.8;
     font-style: italic;
 }
 
-.revenue-chart-empty {
+.rev-page-revenue-chart-empty {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -360,7 +360,7 @@
     font-size: 1.1em;
 }
 
-.revenue-top-combos-section {
+.rev-page-revenue-top-combos-section {
     margin-top: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
     display: block !important;
@@ -370,7 +370,7 @@
     position: relative !important;
 }
 
-.revenue-section-header {
+.rev-page-revenue-section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -379,24 +379,24 @@
     gap: var(--spacing-md);
 }
 
-.revenue-combo-filters {
+.rev-page-revenue-combo-filters {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
 }
 
-.revenue-combo-filter {
+.rev-page-revenue-combo-filter {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
 }
 
-.revenue-combo-filter .revenue-filter-label {
+.rev-page-revenue-combo-filter .rev-page-revenue-filter-label {
     white-space: nowrap;
     min-width: 120px;
 }
 
-.revenue-combos-grid {
+.rev-page-revenue-combos-grid {
     display: flex !important;
     flex-direction: column !important;
     gap: var(--spacing-lg);
@@ -406,7 +406,7 @@
     min-height: 200px; /* Ensure it has height */
 }
 
-.revenue-combo-card {
+.rev-page-revenue-combo-card {
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -421,19 +421,19 @@
     min-height: 150px; /* Ensure it has height */
 }
 
-.revenue-combo-card:hover {
+.rev-page-revenue-combo-card:hover {
     box-shadow: var(--shadow-hover);
     transform: translateY(-2px);
 }
 
-.revenue-combo-content {
+.rev-page-revenue-combo-content {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: var(--spacing-md);
 }
 
-.revenue-combo-ranking {
+.rev-page-revenue-combo-ranking {
     font-size: 1.5em;
     font-weight: bold;
     flex-shrink: 0;
@@ -441,19 +441,19 @@
     text-align: center;
 }
 
-.revenue-ranking-1 {
+.rev-page-revenue-ranking-1 {
     color: #FFD700; /* Gold */
 }
 
-.revenue-ranking-2 {
+.rev-page-revenue-ranking-2 {
     color: #C0C0C0; /* Silver */
 }
 
-.revenue-ranking-3 {
+.rev-page-revenue-ranking-3 {
     color: #CD7F32; /* Bronze */
 }
 
-.revenue-combo-image {
+.rev-page-revenue-combo-image {
     width: 120px;
     height: 120px;
     object-fit: cover;
@@ -461,27 +461,27 @@
     flex-shrink: 0;
 }
 
-.revenue-combo-info {
+.rev-page-revenue-combo-info {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
     flex: 1;
 }
 
-.revenue-combo-name {
+.rev-page-revenue-combo-name {
     font-size: 1.1em;
     font-weight: bold;
     color: var(--text-color);
     margin: 0;
 }
 
-.revenue-combo-revenue {
+.rev-page-revenue-combo-revenue {
     font-size: 1em;
     font-weight: bold;
     color: var(--primary-color);
 }
 
-.revenue-combo-rating {
+.rev-page-revenue-combo-rating {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -489,18 +489,18 @@
     flex-shrink: 0;
 }
 
-.revenue-rating-value {
+.rev-page-revenue-rating-value {
     font-size: 1.2em;
     font-weight: bold;
     color: var(--primary-color);
 }
 
-.revenue-rating-count {
+.rev-page-revenue-rating-count {
     font-size: 0.9em;
     color: var(--text-muted);
 }
 
-.revenue-no-combos {
+.rev-page-revenue-no-combos {
     text-align: center;
     padding: var(--spacing-xl);
     color: var(--text-muted);
@@ -510,43 +510,43 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .revenue-stats-grid {
+    .rev-page-revenue-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .revenue-stat-value {
+    .rev-page-revenue-stat-value {
         font-size: 1.5em;
     }
     
-    .revenue-combos-grid {
+    .rev-page-revenue-combos-grid {
         grid-template-columns: 1fr;
     }
     
-    .revenue-date-filter {
+    .rev-page-revenue-date-filter {
         flex-direction: column;
     }
     
-    .revenue-date-filter-group {
+    .rev-page-revenue-date-filter-group {
         width: 100%;
     }
     
-    .revenue-filter-date {
+    .rev-page-revenue-filter-date {
         flex: 1;
     }
     
-    .revenue-month-picker {
+    .rev-page-revenue-month-picker {
         grid-template-columns: repeat(3, 1fr);
     }
     
-    .revenue-chart-layout {
+    .rev-page-revenue-chart-layout {
         flex-direction: column;
     }
     
-    .revenue-total-display {
+    .rev-page-revenue-total-display {
         width: 100%;
     }
     
-    .revenue-chart-wrapper {
+    .rev-page-revenue-chart-wrapper {
         height: 300px;
     }
 }

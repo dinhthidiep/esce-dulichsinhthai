@@ -99,8 +99,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         createdAt: createdDate.toISOString(),
         UpdatedAt: updatedDate.toISOString(),
         Updated_At: updatedDate.toISOString(),
-        Status: 'active',
-        status: 'active'
+        Status: 'svc-admin-active',
+        status: 'svc-admin-active'
       };
     });
     
@@ -108,7 +108,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     // Apply initial filters
     const filtered = applyServiceFilters(mockServices, filterName, sortOrder);
     setFilteredServices(filtered);
-    // Reset pagination when filter changes
+    // Reset svc-admin-pagination when filter changes
     setServiceCurrentPage(1);
     setServicePageInput('');
     setLoadingServices(false);
@@ -142,7 +142,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       [name]: fieldValue
     }));
 
-    // Clear error when user starts typing
+    // Clear svc-admin-error when user starts typing
     if (createServiceErrors[name]) {
       setCreateServiceErrors(prev => ({
         ...prev,
@@ -170,7 +170,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         return;
       }
 
-      // Clear error
+      // Clear svc-admin-error
       setCreateServiceErrors(prev => ({ ...prev, image: '' }));
 
       // Create preview
@@ -232,8 +232,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         createdAt: new Date().toISOString(),
         UpdatedAt: new Date().toISOString(),
         Updated_At: new Date().toISOString(),
-        Status: 'active',
-        status: 'active'
+        Status: 'svc-admin-active',
+        status: 'svc-admin-active'
       };
       
       // Add new service to the list
@@ -312,7 +312,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       [name]: fieldValue
     }));
 
-    // Clear error when user starts typing
+    // Clear svc-admin-error when user starts typing
     if (editServiceErrors[name]) {
       setEditServiceErrors(prev => ({
         ...prev,
@@ -340,7 +340,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         return;
       }
 
-      // Clear error
+      // Clear svc-admin-error
       setEditServiceErrors(prev => ({ ...prev, image: '' }));
 
       // Create preview
@@ -459,14 +459,14 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         <>
           {/* Services List */}
           {/* Filter Section */}
-          <div className="service-filter-container">
-            <div className="filter-row">
-              <div className="filter-field">
+          <div className="svc-admin-service-filter-container">
+            <div className="svc-admin-filter-row">
+              <div className="svc-admin-filter-field">
                 <label htmlFor="filter-name">Lọc theo tên</label>
                 <input
                   id="filter-name"
                   type="text"
-                  className="filter-input"
+                  className="svc-admin-filter-input"
                   placeholder="Nhập tên dịch vụ..."
                   value={filterName}
                   onChange={(e) => setFilterName(e.target.value)}
@@ -477,11 +477,11 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                   }}
                 />
               </div>
-              <div className="filter-field">
+              <div className="svc-admin-filter-field">
                 <label htmlFor="sort-order">Thứ tự:</label>
                 <select
                   id="sort-order"
-                  className="filter-select"
+                  className="svc-admin-filter-select"
                   value={sortOrder}
                   onChange={(e) => {
                     setSortOrder(e.target.value);
@@ -493,7 +493,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                   <option value="oldest">Cũ nhất</option>
                 </select>
               </div>
-              <button className="btn-search" onClick={handleServiceSearch}>
+              <button className="svc-admin-btn-search" onClick={handleServiceSearch}>
                 Tìm kiếm
               </button>
             </div>
@@ -501,8 +501,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
 
           {/* Services List */}
           {filteredServices.length === 0 ? (
-            <div className="empty-state">
-              <GridIcon className="empty-state-icon" />
+            <div className="svc-admin-empty-state">
+              <GridIcon className="svc-admin-empty-state-icon" />
               <h3>Chưa có dịch vụ nào</h3>
               <p>Bạn chưa tạo dịch vụ nào. Hãy tạo dịch vụ mới để bắt đầu!</p>
               <Button variant="default" onClick={() => setIsCreateServiceModalOpen(true)}>
@@ -511,7 +511,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
             </div>
           ) : (
             <>
-              <div className="services-grid">
+              <div className="svc-admin-services-grid">
                 {(() => {
                   const totalPages = Math.ceil(filteredServices.length / serviceItemsPerPage);
                   const startIndex = (serviceCurrentPage - 1) * serviceItemsPerPage;
@@ -527,13 +527,13 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                     const serviceImage = getImageUrl(serviceImagePath, '/img/banahills.jpg');
                     
                     return (
-                      <div key={s.Id || s.id} className="service-card">
-                        <div className="service-card-left">
-                          <div className="service-image">
+                      <div key={s.Id || s.id} className="svc-admin-service-card">
+                        <div className="svc-admin-service-card-left">
+                          <div className="svc-admin-service-image">
                             <img
                               src={serviceImage || '/img/banahills.jpg'}
                               alt={s.Name || s.name}
-                              className="service-image-img"
+                              className="svc-admin-service-image-img"
                               onError={(e) => {
                                 if (e.currentTarget.src !== '/img/banahills.jpg') {
                                   e.currentTarget.src = '/img/banahills.jpg';
@@ -541,16 +541,16 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                               }}
                             />
                           </div>
-                          <div className="service-details">
-                            <h3 className="service-name">{s.Name || s.name}</h3>
+                          <div className="svc-admin-service-details">
+                            <h3 className="svc-admin-service-name">{s.Name || s.name}</h3>
                             {s.Description || s.description ? (
-                              <p className="service-description">Mô tả: {s.Description || s.description}</p>
+                              <p className="svc-admin-service-description">Mô tả: {s.Description || s.description}</p>
                             ) : null}
-                            <p className="service-date">Ngày sửa: {s.Updated_At || s.UpdatedAt ? new Date(s.Updated_At || s.UpdatedAt).toLocaleDateString('vi-VN') : 'Không'}</p>
-                            <p className="service-price">Giá dịch vụ: {s.Price ? s.Price.toLocaleString('vi-VN') : '0'} VND</p>
+                            <p className="svc-admin-service-date">Ngày sửa: {s.Updated_At || s.UpdatedAt ? new Date(s.Updated_At || s.UpdatedAt).toLocaleDateString('vi-VN') : 'Không'}</p>
+                            <p className="svc-admin-service-price">Giá dịch vụ: {s.Price ? s.Price.toLocaleString('vi-VN') : '0'} VND</p>
                           </div>
                         </div>
-                        <div className="service-actions">
+                        <div className="svc-admin-service-actions">
                           <Button
                             variant="outline"
                             size="sm"
@@ -583,10 +583,10 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                 if (totalPages <= 1) return null;
                 
                 return (
-                  <div className="pagination">
+                  <div className="svc-admin-pagination">
                     <button
                       type="button"
-                      className="pagination-btn"
+                      className="svc-admin-pagination-btn"
                       onClick={() => {
                         const newPage = Math.max(1, serviceCurrentPage - 1);
                         setServiceCurrentPage(newPage);
@@ -597,13 +597,13 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                       <span>←</span> Trước
                     </button>
                     
-                    <div className="pagination-controls">
-                      <div className="pagination-numbers">
+                    <div className="svc-admin-pagination-controls">
+                      <div className="svc-admin-pagination-numbers">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
                             type="button"
-                            className={`pagination-number ${serviceCurrentPage === page ? 'active' : ''}`}
+                            className={`svc-admin-pagination-number ${serviceCurrentPage === page ? 'svc-admin-active' : ''}`}
                             onClick={() => {
                               setServiceCurrentPage(page);
                               setServicePageInput('');
@@ -646,7 +646,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                     
                     <button
                       type="button"
-                      className="pagination-btn"
+                      className="svc-admin-pagination-btn"
                       onClick={() => {
                         const newPage = Math.min(totalPages, serviceCurrentPage + 1);
                         setServiceCurrentPage(newPage);

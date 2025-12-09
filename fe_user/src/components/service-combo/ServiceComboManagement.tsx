@@ -219,7 +219,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setServiceComboPageInput('');
   }, [serviceComboFilterName, serviceComboFilterStatus, serviceComboSortOrder, serviceCombos, applyServiceComboFilters]);
 
-  // Calculate pagination values using useMemo - with safe defaults
+  // Calculate combo-pagination values using useMemo - with safe defaults
   const paginationData = useMemo(() => {
     // Safe defaults
     const safeFiltered = Array.isArray(filteredServiceCombos) ? filteredServiceCombos : [];
@@ -898,14 +898,14 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       ) : (
         <>
           {/* Filter Section */}
-          <div className="service-filter-container">
-            <div className="filter-row">
-              <div className="filter-field">
+          <div className="combo-service-filter-container">
+            <div className="combo-filter-row">
+              <div className="combo-filter-field">
                 <label htmlFor="service-combo-filter-name">Lọc theo tên:</label>
                 <input
                   id="service-combo-filter-name"
                   type="text"
-                  className="filter-input"
+                  className="combo-filter-input"
                   placeholder="Nhập tên combo..."
                   value={serviceComboFilterName}
                   onChange={(e) => setServiceComboFilterName(e.target.value)}
@@ -916,11 +916,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                   }}
                 />
               </div>
-              <div className="filter-field">
+              <div className="combo-filter-field">
                 <label htmlFor="service-combo-filter-status">Trạng thái:</label>
                 <select
                   id="service-combo-filter-status"
-                  className="filter-select"
+                  className="combo-filter-select"
                   value={serviceComboFilterStatus}
                   onChange={(e) => setServiceComboFilterStatus(e.target.value)}
                 >
@@ -930,11 +930,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                   <option value="canceled">Đã hủy</option>
                 </select>
               </div>
-              <div className="filter-field">
+              <div className="combo-filter-field">
                 <label htmlFor="service-combo-sort-order">Thứ tự:</label>
                 <select
                   id="service-combo-sort-order"
-                  className="filter-select"
+                  className="combo-filter-select"
                   value={serviceComboSortOrder}
                   onChange={(e) => setServiceComboSortOrder(e.target.value)}
                 >
@@ -942,7 +942,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                   <option value="oldest">Cũ nhất</option>
                 </select>
               </div>
-              <button className="btn-search" onClick={handleServiceComboSearch}>
+              <button className="combo-btn-search" onClick={handleServiceComboSearch}>
                 Tìm kiếm
               </button>
             </div>
@@ -950,8 +950,8 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
 
           {/* Service Combos List */}
           {filteredServiceCombos.length === 0 ? (
-            <div className="empty-state">
-              <GridIcon className="empty-state-icon" />
+            <div className="combo-empty-state">
+              <GridIcon className="combo-empty-state-icon" />
               <h3>Chưa có gói dịch vụ nào</h3>
               <p>Bạn chưa tạo gói dịch vụ nào. Hãy tạo gói dịch vụ mới để bắt đầu!</p>
               <Button variant="default" onClick={handleOpenCreateServiceComboModal}>
@@ -960,7 +960,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
             </div>
           ) : (
             <>
-              <div className="services-grid">
+              <div className="combo-services-grid">
                 {paginationData.paginatedServiceCombos.map((s) => {
                     const imageName = s.Image || s.image || '';
                     const isAbsolute = imageName.startsWith('data:image') || imageName.startsWith('http://') || imageName.startsWith('https://');
@@ -980,15 +980,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                     }
                     
                     return (
-                      <div key={s.Id || s.id} className="servicecombo-card">
-                        <div className="service-card-left">
-                          <div className="service-image">
+                      <div key={s.Id || s.id} className="combo-servicecombo-card">
+                        <div className="combo-service-card-left">
+                          <div className="combo-service-image">
                             <img
                               src={candidates[0]}
                               data-candidates={JSON.stringify(candidates)}
                               data-idx="0"
                               alt={s.Name || s.name}
-                              className="service-image-img"
+                              className="combo-service-image-img"
                               onError={(e) => {
                                 try {
                                   const list = JSON.parse((e.target as HTMLImageElement).dataset.candidates || '[]');
@@ -1006,19 +1006,19 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                               }}
                             />
                           </div>
-                          <div className="service-details">
-                            <h3 className="service-name">{s.Name || s.name}</h3>
-                            <p className="service-date">
+                          <div className="combo-service-details">
+                            <h3 className="combo-service-name">{s.Name || s.name}</h3>
+                            <p className="combo-service-date">
                               Thời gian: {s.StartDate || s.startDate ? new Date(s.StartDate || s.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {s.EndDate || s.endDate ? new Date(s.EndDate || s.endDate).toLocaleDateString('vi-VN') : 'N/A'}
                             </p>
                             <p className="service-duration">
                               Trong: {s.NumberOfDays || s.numberOfDays || 0} ngày {s.NumberOfNights || s.numberOfNights || 0} đêm
                             </p>
-                            <p className="service-status-gray">Trạng thái: {s.Status || s.status}</p>
-                            <p className="service-price">Giá tiền: {(s.Price || s.price || 0).toLocaleString('vi-VN')} VND</p>
+                            <p className="combo-service-status-gray">Trạng thái: {s.Status || s.status}</p>
+                            <p className="combo-service-price">Giá tiền: {(s.Price || s.price || 0).toLocaleString('vi-VN')} VND</p>
                           </div>
                         </div>
-                        <div className="service-actions">
+                        <div className="combo-service-actions">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1043,10 +1043,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
               
               {/* Pagination */}
               {(!paginationData || paginationData.totalPages <= 1) ? null : (
-                      <div className="pagination">
+                      <div className="combo-pagination">
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="combo-pagination-btn"
                           onClick={() => {
                             const newPage = Math.max(1, serviceComboCurrentPage - 1);
                             setServiceComboCurrentPage(newPage);
@@ -1057,13 +1057,13 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                           <span>←</span> Trước
                         </button>
                         
-                        <div className="pagination-controls">
-                          <div className="pagination-numbers">
+                        <div className="combo-pagination-controls">
+                          <div className="combo-pagination-numbers">
                             {Array.from({ length: paginationData?.totalPages || 1 }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
                                 type="button"
-                                className={`pagination-number ${serviceComboCurrentPage === page ? 'active' : ''}`}
+                                className={`combo-pagination-number ${serviceComboCurrentPage === page ? 'combo-active' : ''}`}
                                 onClick={() => {
                                   setServiceComboCurrentPage(page);
                                   setServiceComboPageInput('');
@@ -1107,7 +1107,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                         
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="combo-pagination-btn"
                           onClick={() => {
                             const currentTotalPages = paginationData?.totalPages || 1;
                             const newPage = Math.min(currentTotalPages, serviceComboCurrentPage + 1);

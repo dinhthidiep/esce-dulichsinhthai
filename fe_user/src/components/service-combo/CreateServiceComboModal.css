@@ -1,6 +1,6 @@
 /* Create Service Combo Modal Styles */
 
-.create-service-combo-modal-overlay {
+.combo-create-create-service-combo-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,7 +14,7 @@
     padding: 1rem;
 }
 
-.create-service-combo-modal-content {
+.combo-create-create-service-combo-modal-content {
     background: white;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -27,7 +27,7 @@
     position: relative;
 }
 
-.create-service-combo-modal-header {
+.combo-create-create-service-combo-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -40,14 +40,14 @@
     border-radius: 12px 12px 0 0;
 }
 
-.create-service-combo-modal-header h2 {
+.combo-create-create-service-combo-modal-header h2 {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
     color: #1e293b;
 }
 
-.create-service-combo-modal-close {
+.combo-create-create-service-combo-modal-close {
     background: none;
     border: none;
     cursor: pointer;
@@ -59,47 +59,47 @@
     transition: background 0.2s ease;
 }
 
-.create-service-combo-modal-close:hover {
+.combo-create-create-service-combo-modal-close:hover {
     background: #f1f5f9;
 }
 
-.create-service-combo-modal-close-icon {
+.combo-create-create-service-combo-modal-close-icon {
     width: 20px;
     height: 20px;
     color: #64748b;
 }
 
-.create-service-combo-modal-body {
+.combo-create-create-service-combo-modal-body {
     padding: 1.5rem;
 }
 
-.create-service-combo-disclaimer-text {
+.combo-create-create-service-combo-disclaimer-text {
     font-size: 0.875rem;
     color: #64748b;
     margin-bottom: 1.5rem;
     font-style: normal;
 }
 
-.create-service-combo-required-indicator {
+.combo-create-create-service-combo-required-indicator {
     color: #ef4444;
 }
 
-.create-service-combo-field {
+.combo-create-create-service-combo-field {
     margin-bottom: 1.5rem;
 }
 
-.create-service-combo-field-row {
+.combo-create-create-service-combo-field-row {
     display: flex;
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
 
-.create-service-combo-field-row .create-service-combo-field {
+.combo-create-create-service-combo-field-row .combo-create-create-service-combo-field {
     flex: 1;
     margin-bottom: 0;
 }
 
-.create-service-combo-field label {
+.combo-create-create-service-combo-field label {
     display: block;
     font-weight: 600;
     color: #1e293b;
@@ -107,9 +107,9 @@
     font-size: 0.875rem;
 }
 
-.create-service-combo-field input,
-.create-service-combo-field textarea,
-.create-service-combo-field select {
+.combo-create-create-service-combo-field input,
+.combo-create-create-service-combo-field textarea,
+.combo-create-create-service-combo-field select {
     width: 100%;
     padding: 0.625rem 0.75rem;
     border: 1px solid #e2e8f0;
@@ -120,32 +120,32 @@
     box-sizing: border-box;
 }
 
-.create-service-combo-field input:focus,
-.create-service-combo-field textarea:focus,
-.create-service-combo-field select:focus {
+.combo-create-create-service-combo-field input:focus,
+.combo-create-create-service-combo-field textarea:focus,
+.combo-create-create-service-combo-field select:focus {
     outline: none;
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.create-service-combo-field textarea {
+.combo-create-create-service-combo-field textarea {
     resize: vertical;
     min-height: 100px;
 }
 
-.create-service-combo-hint {
+.combo-create-create-service-combo-hint {
     font-size: 0.75rem;
     color: #64748b;
     margin-top: 0.5rem;
 }
 
-.create-service-combo-error {
+.combo-create-create-service-combo-error {
     color: #ef4444;
     font-size: 0.75rem;
     margin-top: 0.5rem;
 }
 
-.create-service-combo-img-preview {
+.combo-create-create-service-combo-img-preview {
     max-width: 200px;
     max-height: 200px;
     margin-top: 0.5rem;
@@ -153,18 +153,18 @@
     border-radius: 4px;
 }
 
-.create-service-combo-section-header {
+.combo-create-create-service-combo-section-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
 }
 
-.create-service-combo-section-header label {
+.combo-create-create-service-combo-section-header label {
     margin: 0;
 }
 
-.create-service-combo-toggle-btn {
+.combo-create-create-service-combo-toggle-btn {
     background: transparent;
     border: none;
     cursor: pointer;
@@ -175,19 +175,19 @@
     transition: transform 0.2s ease;
 }
 
-.create-service-combo-chevron-icon {
+.combo-create-create-service-combo-chevron-icon {
     width: 16px;
     height: 16px;
     transition: transform 0.2s ease;
 }
 
-.create-service-combo-table-container {
+.combo-create-create-service-combo-table-container {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.create-service-combo-table-filters {
+.combo-create-create-service-combo-table-filters {
     padding: 0.75rem;
     border-bottom: 1px solid #e2e8f0;
     background: #f8fafc;
@@ -196,14 +196,14 @@
     align-items: flex-end;
 }
 
-.create-service-combo-filter-field {
+.combo-create-create-service-combo-filter-field {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.create-service-combo-filter-field label {
+.combo-create-create-service-combo-filter-field label {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.875rem;
@@ -211,8 +211,8 @@
     font-weight: 500;
 }
 
-.create-service-combo-filter-input,
-.create-service-combo-filter-select {
+.combo-create-create-service-combo-filter-input,
+.combo-create-create-service-combo-filter-select {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #e2e8f0;
@@ -221,29 +221,29 @@
     box-sizing: border-box;
 }
 
-.create-service-combo-filter-select {
+.combo-create-create-service-combo-filter-select {
     background: white;
     cursor: pointer;
 }
 
-.create-service-combo-table-wrapper {
+.combo-create-create-service-combo-table-wrapper {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.create-service-combo-table {
+.combo-create-create-service-combo-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.create-service-combo-table thead {
+.combo-create-create-service-combo-table thead {
     position: sticky;
     top: 0;
     background: #f8fafc;
     z-index: 1;
 }
 
-.create-service-combo-table th {
+.combo-create-create-service-combo-table th {
     padding: 0.5rem;
     text-align: left;
     border-bottom: 1px solid #e2e8f0;
@@ -252,20 +252,20 @@
     color: #1e293b;
 }
 
-.create-service-combo-table td {
+.combo-create-create-service-combo-table td {
     padding: 0.5rem;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.875rem;
     color: #475569;
 }
 
-.create-service-combo-empty-cell {
+.combo-create-create-service-combo-empty-cell {
     text-align: center;
     padding: 1rem;
     color: #64748b;
 }
 
-.create-service-combo-quantity-input {
+.combo-create-create-service-combo-quantity-input {
     width: 50px !important;
     max-width: 50px !important;
     min-width: 50px !important;
@@ -278,38 +278,38 @@
     flex-shrink: 0;
 }
 
-.create-service-combo-quantity-input:disabled {
+.combo-create-create-service-combo-quantity-input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Hide spinner for quantity inputs */
-.create-service-combo-quantity-input::-webkit-outer-spin-button,
-.create-service-combo-quantity-input::-webkit-inner-spin-button {
+.combo-create-create-service-combo-quantity-input::-webkit-outer-spin-button,
+.combo-create-create-service-combo-quantity-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.create-service-combo-quantity-input[type="number"] {
+.combo-create-create-service-combo-quantity-input[type="number"] {
     -moz-appearance: textfield;
 }
 
 /* Table column widths - Services table (5 columns: Tên, Mô tả, Giá, Số lượng, Chọn) */
-.create-service-combo-table thead tr th:nth-child(1),
-.create-service-combo-table tbody tr td:nth-child(1) {
+.combo-create-create-service-combo-table thead tr th:nth-child(1),
+.combo-create-create-service-combo-table tbody tr td:nth-child(1) {
     min-width: 200px;
     max-width: 300px;
 }
 
-.create-service-combo-table thead tr th:nth-child(2),
-.create-service-combo-table tbody tr td:nth-child(2) {
+.combo-create-create-service-combo-table thead tr th:nth-child(2),
+.combo-create-create-service-combo-table tbody tr td:nth-child(2) {
     min-width: 250px;
     max-width: 400px;
 }
 
 /* Quantity column - narrow (4th column in services, 4th column in promotions) */
-.create-service-combo-table thead tr th:nth-child(4),
-.create-service-combo-table tbody tr td:nth-child(4) {
+.combo-create-create-service-combo-table thead tr th:nth-child(4),
+.combo-create-create-service-combo-table tbody tr td:nth-child(4) {
     width: 80px !important;
     min-width: 80px !important;
     max-width: 80px !important;
@@ -317,15 +317,15 @@
 }
 
 /* Checkbox column - narrow (last column) */
-.create-service-combo-table thead tr th:last-child,
-.create-service-combo-table tbody tr td:last-child {
+.combo-create-create-service-combo-table thead tr th:last-child,
+.combo-create-create-service-combo-table tbody tr td:last-child {
     width: 60px !important;
     min-width: 60px !important;
     max-width: 60px !important;
     text-align: center;
 }
 
-.create-service-combo-rank-badge {
+.combo-create-create-service-combo-rank-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -342,37 +342,37 @@
     width: auto;
 }
 
-.create-service-combo-rank-badge.rank-đồng,
-.create-service-combo-rank-badge.rank-bronze {
+.combo-create-create-service-combo-rank-badge.combo-create-rank-đồng,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-bronze {
     background: #cd7f32;
     color: white;
 }
 
-.create-service-combo-rank-badge.rank-bạc,
-.create-service-combo-rank-badge.rank-silver {
+.combo-create-create-service-combo-rank-badge.combo-create-rank-bạc,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-silver {
     background: #c0c0c0;
     color: #1e293b;
 }
 
-.create-service-combo-rank-badge.rank-vàng,
-.create-service-combo-rank-badge.rank-gold {
+.combo-create-create-service-combo-rank-badge.combo-create-rank-vàng,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-gold {
     background: #ffd700;
     color: #1e293b;
 }
 
-.create-service-combo-rank-badge.rank-kim-cương,
-.create-service-combo-rank-badge.rank-diamond {
+.combo-create-create-service-combo-rank-badge.combo-create-rank-kim-cương,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-diamond {
     background: #0ea5e9;
     color: #0c4a6e;
 }
 
-.create-service-combo-rank-badge.rank-tất-cả,
-.create-service-combo-rank-badge.rank-all {
+.combo-create-create-service-combo-rank-badge.combo-create-rank-tất-cả,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-all {
     background: #e2e8f0;
     color: #1e293b;
 }
 
-.create-service-combo-pagination {
+.combo-create-create-service-combo-pagination {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -382,7 +382,7 @@
     gap: 1rem;
 }
 
-.create-service-combo-pagination-btn {
+.combo-create-create-service-combo-pagination-btn {
     padding: 0.5rem 1rem;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
@@ -395,18 +395,18 @@
     transition: all 0.2s ease;
 }
 
-.create-service-combo-pagination-btn:hover:not(:disabled) {
+.combo-create-create-service-combo-pagination-btn:hover:not(:disabled) {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.create-service-combo-pagination-btn:disabled {
+.combo-create-create-service-combo-pagination-btn:disabled {
     background: #f1f5f9;
     cursor: not-allowed;
     opacity: 0.5;
 }
 
-.create-service-combo-pagination-numbers {
+.combo-create-create-service-combo-pagination-numbers {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -414,7 +414,7 @@
     justify-content: center;
 }
 
-.create-service-combo-pagination-number {
+.combo-create-create-service-combo-pagination-number {
     padding: 0.375rem 0.75rem;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
@@ -427,30 +427,30 @@
     transition: all 0.2s ease;
 }
 
-.create-service-combo-pagination-number:hover {
+.combo-create-create-service-combo-pagination-number:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.create-service-combo-pagination-number.active {
+.combo-create-create-service-combo-pagination-number.combo-create-active {
     background: #8b5cf6;
     color: white;
     border-color: #8b5cf6;
     font-weight: 600;
 }
 
-.create-service-combo-pagination-jump {
+.combo-create-create-service-combo-pagination-jump {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.create-service-combo-pagination-jump span {
+.combo-create-create-service-combo-pagination-jump span {
     font-size: 0.875rem;
     color: #64748b;
 }
 
-.create-service-combo-pagination-input {
+.combo-create-create-service-combo-pagination-input {
     width: 50px !important;
     max-width: 50px !important;
     min-width: 50px !important;
@@ -462,7 +462,7 @@
     box-sizing: border-box;
 }
 
-.create-service-combo-form-action {
+.combo-create-create-service-combo-form-action {
     display: flex;
     gap: 0.75rem;
     margin-top: 1.5rem;
@@ -472,8 +472,8 @@
     justify-content: flex-end;
 }
 
-.create-service-combo-btn-primary,
-.create-service-combo-btn-secondary {
+.combo-create-create-service-combo-btn-primary,
+.combo-create-create-service-combo-btn-secondary {
     flex: 0 0 auto;
     padding: 0.625rem 1.25rem;
     border-radius: 8px;
@@ -484,44 +484,44 @@
     border: none;
 }
 
-.create-service-combo-btn-primary {
+.combo-create-create-service-combo-btn-primary {
     background: #10b981;
     color: white;
 }
 
-.create-service-combo-btn-primary:hover:not(:disabled) {
+.combo-create-create-service-combo-btn-primary:hover:not(:disabled) {
     background: #059669;
 }
 
-.create-service-combo-btn-primary:disabled {
+.combo-create-create-service-combo-btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.create-service-combo-btn-secondary {
+.combo-create-create-service-combo-btn-secondary {
     background: white;
     color: #64748b;
     border: 1px solid #e2e8f0;
 }
 
-.create-service-combo-btn-secondary:hover:not(:disabled) {
+.combo-create-create-service-combo-btn-secondary:hover:not(:disabled) {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.create-service-combo-btn-secondary:disabled {
+.combo-create-create-service-combo-btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Duration Inputs Styles */
-.create-service-combo-duration-inputs {
+.combo-create-create-service-combo-duration-inputs {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.create-service-combo-duration-input {
+.combo-create-create-service-combo-duration-input {
     width: 35px !important;
     max-width: 35px !important;
     min-width: 35px !important;
@@ -537,23 +537,23 @@
 }
 
 /* Hide spinner for number inputs */
-.create-service-combo-duration-input::-webkit-outer-spin-button,
-.create-service-combo-duration-input::-webkit-inner-spin-button {
+.combo-create-create-service-combo-duration-input::-webkit-outer-spin-button,
+.combo-create-create-service-combo-duration-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.create-service-combo-duration-input[type="number"] {
+.combo-create-create-service-combo-duration-input[type="number"] {
     -moz-appearance: textfield;
 }
 
-.create-service-combo-duration-input:focus {
+.combo-create-create-service-combo-duration-input:focus {
     outline: none;
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.create-service-combo-duration-label {
+.combo-create-create-service-combo-duration-label {
     font-size: 0.875rem;
     color: #475569;
     font-weight: 500;

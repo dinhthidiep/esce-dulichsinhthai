@@ -18,8 +18,7 @@ import {
 import { formatPrice, getImageUrl } from '../lib/utils';
 import { API_ENDPOINTS } from '../config/api';
 import ComplementaryServices from './ComplementaryServices';
-import type { MembershipTier } from '../mockdata/index';
-import { mockComplementaryServices } from '../mockdata/index';
+import type { MembershipTier } from '~/types/membership';
 import './BookingPage.css';
 
 const baNaHillImage = '/img/banahills.jpg';
@@ -594,7 +593,7 @@ const BookingPage = () => {
         return;
       }
 
-      // Validate selected services - chỉ validate nếu có dịch vụ được chọn
+      // Validate bk-selected services - chỉ validate nếu có dịch vụ được chọn
       let validSelectedServices = [];
       
       // Nếu không có dịch vụ được chọn, bỏ qua validation
@@ -800,9 +799,9 @@ const BookingPage = () => {
 
   if (loading) {
     return (
-      <div className="booking-page">
+      <div className="bk-booking-page">
         <Header />
-        <main className="booking-main">
+        <main className="bk-booking-main">
           <LoadingSpinner message="Đang tải thông tin dịch vụ..." />
         </main>
       </div>
@@ -821,13 +820,13 @@ const BookingPage = () => {
     }
     
     return (
-      <div className="booking-page">
+      <div className="bk-booking-page">
         <Header />
-        <main className="booking-main">
-          <div className="booking-container">
-            <div className="error-container" role="alert">
-              <h2 className="error-title">Không thể đặt dịch vụ</h2>
-              <p className="error-message">{error || 'Dịch vụ không tồn tại'}</p>
+        <main className="bk-booking-main">
+          <div className="bk-booking-container">
+            <div className="bk-error-container" role="bk-alert">
+              <h2 className="bk-error-title">Không thể đặt dịch vụ</h2>
+              <p className="bk-error-message">{error || 'Dịch vụ không tồn tại'}</p>
               {import.meta.env.DEV && (
                 <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '0.875rem' }}>
                   <strong>Debug Info:</strong>
@@ -837,7 +836,7 @@ const BookingPage = () => {
                 </div>
               )}
               <Button variant="default" onClick={() => navigate('/services')}>
-                <ArrowLeftIcon className="button-icon" />
+                <ArrowLeftIcon className="bk-button-icon" />
                 Quay lại danh sách dịch vụ
               </Button>
             </div>
@@ -853,9 +852,9 @@ const BookingPage = () => {
       console.error('❌ [BookingPage] Service is null/undefined in render, but passed error check')
     }
     return (
-      <div className="booking-page">
+      <div className="bk-booking-page">
         <Header />
-        <main className="booking-main">
+        <main className="bk-booking-main">
           <LoadingSpinner message="Đang tải thông tin dịch vụ..." />
         </main>
       </div>
@@ -888,61 +887,61 @@ const BookingPage = () => {
   }
 
   return (
-    <div className="booking-page">
+    <div className="bk-booking-page">
       <Header />
       
-      <main className="booking-main">
-        <div className="booking-container">
+      <main className="bk-booking-main">
+        <div className="bk-booking-container">
           {/* Header */}
-          <div className="booking-header">
+          <div className="bk-booking-header">
             <Button 
               variant="outline" 
               onClick={() => navigate(-1)}
-              className="back-button"
+              className="bk-back-button"
             >
-              <ArrowLeftIcon className="button-icon" />
+              <ArrowLeftIcon className="bk-button-icon" />
               Quay lại
             </Button>
-            <h1 className="booking-page-title">Đặt dịch vụ</h1>
+            <h1 className="bk-booking-page-title">Đặt dịch vụ</h1>
           </div>
 
-          <div className="booking-content">
+          <div className="bk-booking-content">
             {/* Left Column - Service Info */}
-            <div className="booking-left">
-              <Card className="service-summary-card">
+            <div className="bk-booking-left">
+              <Card className="bk-service-summary-card">
                 <CardContent>
-                  <h2 className="summary-title">Thông tin dịch vụ</h2>
-                  <div className="service-summary">
-                    <div className="service-summary-image">
+                  <h2 className="bk-summary-title">Thông tin dịch vụ</h2>
+                  <div className="bk-service-summary">
+                    <div className="bk-service-summary-image">
                       <LazyImage
                         src={serviceImage}
                         alt={serviceName}
-                        className="summary-image"
+                        className="bk-summary-image"
                         fallbackSrc={baNaHillImage}
                       />
                     </div>
-                    <div className="service-summary-info">
-                      <h3 className="summary-service-name">{serviceName}</h3>
+                    <div className="bk-service-summary-info">
+                      <h3 className="bk-summary-service-name">{serviceName}</h3>
                       {serviceAddress && (
-                        <div className="summary-address">
-                          <MapPinIcon className="summary-icon" />
+                        <div className="bk-summary-address">
+                          <MapPinIcon className="bk-summary-icon" />
                           <span>{serviceAddress}</span>
                         </div>
                       )}
-                      <div className="summary-price">
-                        <span className="summary-price-label">Giá:</span>
-                        <span className="summary-price-value">{formatPrice(servicePrice)}</span>
-                        <span className="summary-price-unit">/ người</span>
+                      <div className="bk-summary-price">
+                        <span className="bk-summary-price-label">Giá:</span>
+                        <span className="bk-summary-price-value">{formatPrice(servicePrice)}</span>
+                        <span className="bk-summary-price-unit">/ người</span>
                       </div>
                       {availableSlots > 0 && (
-                        <div className="summary-slots">
-                          <UsersIcon className="summary-icon" />
+                        <div className="bk-summary-slots">
+                          <UsersIcon className="bk-summary-icon" />
                           <span>Còn {availableSlots} chỗ trống</span>
                         </div>
                       )}
                       {availableSlots === 0 && (
-                        <div className="summary-slots summary-slots-full">
-                          <UsersIcon className="summary-icon" />
+                        <div className="bk-summary-slots bk-summary-slots-full">
+                          <UsersIcon className="bk-summary-icon" />
                           <span>Đã hết chỗ</span>
                         </div>
                       )}
@@ -952,28 +951,28 @@ const BookingPage = () => {
               </Card>
 
               {/* Booking Form */}
-              <Card className="booking-form-card">
+              <Card className="bk-booking-form-card">
                 <CardContent>
-                  <h2 className="form-title">Thông tin đặt dịch vụ</h2>
-                  <form onSubmit={handleSubmit} className="booking-form">
+                  <h2 className="bk-form-title">Thông tin đặt dịch vụ</h2>
+                  <form onSubmit={handleSubmit} className="bk-booking-form">
                     {validationError && (
-                      <div className="alert alert-error">
-                        <AlertCircleIcon className="alert-icon" />
-                        <div className="alert-content">
+                      <div className="bk-alert bk-alert-error">
+                        <AlertCircleIcon className="bk-alert-icon" />
+                        <div className="bk-alert-content">
                           <strong>Lỗi xác thực</strong>
                           <p>{validationError}</p>
                         </div>
                       </div>
                     )}
 
-                    <div className="form-group">
-                      <label htmlFor="quantity" className="form-label">
-                        Số lượng người <span className="required">*</span>
+                    <div className="bk-form-group">
+                      <label htmlFor="quantity" className="bk-form-label">
+                        Số lượng người <span className="bk-required">*</span>
                       </label>
-                      <div className="quantity-input-wrapper">
+                      <div className="bk-quantity-input-wrapper">
                         <button
                           type="button"
-                          className="quantity-btn quantity-btn-decrease"
+                          className="bk-quantity-btn quantity-btn-decrease"
                           onClick={handleQuantityDecrease}
                           disabled={quantity <= 1 || !isAvailable}
                         >
@@ -982,17 +981,17 @@ const BookingPage = () => {
                         <input
                           type="number"
                           id="quantity"
-                          className="quantity-input"
+                          className="bk-quantity-input"
                           value={quantity}
                           onChange={handleQuantityChange}
                           min="1"
                           max={availableSlots > 0 ? availableSlots : undefined}
-                          required
+                          bk-required
                           disabled={!isAvailable}
                         />
                         <button
                           type="button"
-                          className="quantity-btn quantity-btn-increase"
+                          className="bk-quantity-btn quantity-btn-increase"
                           onClick={handleQuantityIncrease}
                           disabled={!isAvailable || (availableSlots > 0 && quantity >= availableSlots)}
                         >
@@ -1000,24 +999,24 @@ const BookingPage = () => {
                         </button>
                       </div>
                       {availableSlots > 0 && (
-                        <p className="form-hint">
+                        <p className="bk-form-hint">
                           Tối đa {availableSlots} người
                         </p>
                       )}
                       {availableSlots === 0 && (
-                        <p className="form-hint form-hint-error">
+                        <p className="bk-form-hint bk-form-hint-error">
                           Dịch vụ đã hết chỗ
                         </p>
                       )}
                     </div>
 
                     {/* Booking Type Selection */}
-                    <div className="form-group">
-                      <label className="form-label">
-                        Loại đặt dịch vụ <span className="required">*</span>
+                    <div className="bk-form-group">
+                      <label className="bk-form-label">
+                        Loại đặt dịch vụ <span className="bk-required">*</span>
                       </label>
-                      <div className="booking-type-selector">
-                        <label className={`booking-type-option ${bookingType === 'single-day' ? 'active' : ''}`}>
+                      <div className="bk-booking-type-selector">
+                        <label className={`bk-booking-type-option ${bookingType === 'single-day' ? 'bk-active' : ''}`}>
                           <input
                             type="radio"
                             name="bookingType"
@@ -1031,12 +1030,12 @@ const BookingPage = () => {
                             }}
                             disabled={!isAvailable}
                           />
-                          <div className="booking-type-content">
-                            <span className="booking-type-title">Đi trong ngày</span>
-                            <span className="booking-type-desc">Chọn ngày và thời gian cụ thể</span>
+                          <div className="bk-booking-type-content">
+                            <span className="bk-booking-type-title">Đi trong ngày</span>
+                            <span className="bk-booking-type-desc">Chọn ngày và thời gian cụ thể</span>
                           </div>
                         </label>
-                        <label className={`booking-type-option ${bookingType === 'multi-day' ? 'active' : ''}`}>
+                        <label className={`bk-booking-type-option ${bookingType === 'multi-day' ? 'bk-active' : ''}`}>
                           <input
                             type="radio"
                             name="bookingType"
@@ -1055,9 +1054,9 @@ const BookingPage = () => {
                             }}
                             disabled={!isAvailable}
                           />
-                          <div className="booking-type-content">
-                            <span className="booking-type-title">Đi nhiều ngày</span>
-                            <span className="booking-type-desc">Chọn khoảng thời gian từ ngày này đến ngày khác</span>
+                          <div className="bk-booking-type-content">
+                            <span className="bk-booking-type-title">Đi nhiều ngày</span>
+                            <span className="bk-booking-type-desc">Chọn khoảng thời gian từ ngày này đến ngày khác</span>
                           </div>
                         </label>
                       </div>
@@ -1066,58 +1065,58 @@ const BookingPage = () => {
                     {/* Single Day Booking Fields */}
                     {bookingType === 'single-day' && (
                       <>
-                        <div className="form-group">
-                          <label htmlFor="startDate" className="form-label">
-                            Ngày đi <span className="required">*</span>
+                        <div className="bk-form-group">
+                          <label htmlFor="startDate" className="bk-form-label">
+                            Ngày đi <span className="bk-required">*</span>
                           </label>
-                          <div className="date-input-wrapper">
-                            <CalendarIcon className="date-input-icon" />
+                          <div className="bk-date-input-wrapper">
+                            <CalendarIcon className="bk-date-input-icon" />
                             <input
                               type="date"
                               id="startDate"
-                              className="date-input"
+                              className="bk-date-input"
                               value={startDate}
                               onChange={(e) => {
                                 setStartDate(e.target.value);
                                 setValidationError('');
                               }}
                               min={new Date().toISOString().split('T')[0]}
-                              required
+                              bk-required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />
                             {!startDate && (
-                              <span className="date-placeholder">dd / mm / yyyy</span>
+                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
                             )}
                           </div>
-                          <p className="form-hint">
+                          <p className="bk-form-hint">
                             Chọn ngày bạn muốn sử dụng dịch vụ
                           </p>
                         </div>
 
-                        <div className="form-group">
-                          <label htmlFor="startTime" className="form-label">
-                            Thời gian bắt đầu <span className="required">*</span>
+                        <div className="bk-form-group">
+                          <label htmlFor="startTime" className="bk-form-label">
+                            Thời gian bắt đầu <span className="bk-required">*</span>
                           </label>
-                          <div className="time-input-wrapper">
-                            <svg className="time-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <div className="bk-time-input-wrapper">
+                            <svg className="bk-time-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <circle cx="12" cy="12" r="10"/>
                               <polyline points="12 6 12 12 16 14"/>
                             </svg>
                             <input
                               type="time"
                               id="startTime"
-                              className="time-input"
+                              className="bk-time-input"
                               value={startTime}
                               onChange={(e) => {
                                 setStartTime(e.target.value);
                                 setValidationError('');
                               }}
-                              required
+                              bk-required
                               disabled={!isAvailable}
                             />
                           </div>
-                          <p className="form-hint">
+                          <p className="bk-form-hint">
                             Chọn thời gian bắt đầu sử dụng dịch vụ
                           </p>
                         </div>
@@ -1127,16 +1126,16 @@ const BookingPage = () => {
                     {/* Multi-Day Booking Fields */}
                     {bookingType === 'multi-day' && (
                       <>
-                        <div className="form-group">
-                          <label htmlFor="startDate" className="form-label">
-                            Ngày bắt đầu <span className="required">*</span>
+                        <div className="bk-form-group">
+                          <label htmlFor="startDate" className="bk-form-label">
+                            Ngày bắt đầu <span className="bk-required">*</span>
                           </label>
-                          <div className="date-input-wrapper">
-                            <CalendarIcon className="date-input-icon" />
+                          <div className="bk-date-input-wrapper">
+                            <CalendarIcon className="bk-date-input-icon" />
                             <input
                               type="date"
                               id="startDate"
-                              className="date-input"
+                              className="bk-date-input"
                               value={startDate}
                               onChange={(e) => {
                                 setStartDate(e.target.value);
@@ -1152,44 +1151,44 @@ const BookingPage = () => {
                                 setValidationError('');
                               }}
                               min={new Date().toISOString().split('T')[0]}
-                              required
+                              bk-required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />
                             {!startDate && (
-                              <span className="date-placeholder">dd / mm / yyyy</span>
+                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
                             )}
                           </div>
-                          <p className="form-hint">
+                          <p className="bk-form-hint">
                             Chọn ngày bắt đầu sử dụng dịch vụ
                           </p>
                         </div>
 
-                        <div className="form-group">
-                          <label htmlFor="endDate" className="form-label">
-                            Ngày kết thúc <span className="required">*</span>
+                        <div className="bk-form-group">
+                          <label htmlFor="endDate" className="bk-form-label">
+                            Ngày kết thúc <span className="bk-required">*</span>
                           </label>
-                          <div className="date-input-wrapper">
-                            <CalendarIcon className="date-input-icon" />
+                          <div className="bk-date-input-wrapper">
+                            <CalendarIcon className="bk-date-input-icon" />
                             <input
                               type="date"
                               id="endDate"
-                              className="date-input"
+                              className="bk-date-input"
                               value={endDate}
                               onChange={(e) => {
                                 setEndDate(e.target.value);
                                 setValidationError('');
                               }}
                               min={startDate || new Date().toISOString().split('T')[0]}
-                              required
+                              bk-required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />
                             {!endDate && (
-                              <span className="date-placeholder">dd / mm / yyyy</span>
+                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
                             )}
                           </div>
-                          <p className="form-hint">
+                          <p className="bk-form-hint">
                             Chọn ngày kết thúc sử dụng dịch vụ
                           </p>
                         </div>
@@ -1198,21 +1197,21 @@ const BookingPage = () => {
 
                     {/* Additional Services Section */}
                     {loadingServices ? (
-                      <div className="form-group">
-                        <label className="form-label">Dịch vụ thêm (tùy chọn)</label>
-                        <div className="services-loading">Đang tải danh sách dịch vụ...</div>
+                      <div className="bk-form-group">
+                        <label className="bk-form-label">Dịch vụ thêm (tùy chọn)</label>
+                        <div className="bk-services-loading">Đang tải danh sách dịch vụ...</div>
                       </div>
                     ) : availableServices.length > 0 ? (
-                      <div className="form-group">
-                        <label className="form-label">
+                      <div className="bk-form-group">
+                        <label className="bk-form-label">
                           Dịch vụ thêm (tùy chọn)
                           {selectedServices.length > 0 && (
-                            <span className="selected-count">
+                            <span className="bk-selected-count">
                               ({selectedServices.length} đã chọn)
                             </span>
                           )}
                         </label>
-                        <div className="services-list">
+                        <div className="bk-services-list">
                           {availableServices.map((svc) => {
                               const serviceId = svc.Id || svc.id;
                               const serviceName = svc.Name || svc.name || 'Dịch vụ';
@@ -1223,10 +1222,10 @@ const BookingPage = () => {
                               return (
                                 <div
                                   key={serviceId}
-                                  className={`service-item ${isSelected ? 'selected' : ''}`}
+                                  className={`bk-service-item ${isSelected ? 'bk-selected' : ''}`}
                                   onClick={() => isAvailable && handleServiceToggle(serviceId)}
                                 >
-                                  <div className="service-item-checkbox">
+                                  <div className="bk-service-item-checkbox">
                                     <input
                                       type="checkbox"
                                       checked={isSelected}
@@ -1234,13 +1233,13 @@ const BookingPage = () => {
                                       disabled={!isAvailable}
                                     />
                                   </div>
-                                  <div className="service-item-content">
-                                    <div className="service-item-header">
-                                      <h4 className="service-item-name">{serviceName}</h4>
-                                      <span className="service-item-price">{formatPrice(servicePrice)}</span>
+                                  <div className="bk-service-item-content">
+                                    <div className="bk-service-item-header">
+                                      <h4 className="bk-service-item-name">{serviceName}</h4>
+                                      <span className="bk-service-item-price">{formatPrice(servicePrice)}</span>
                                     </div>
                                     {serviceDescription && (
-                                      <p className="service-item-description">{serviceDescription}</p>
+                                      <p className="bk-service-item-description">{serviceDescription}</p>
                                     )}
                                   </div>
                                 </div>
@@ -1248,7 +1247,7 @@ const BookingPage = () => {
                             })}
                         </div>
                         {selectedServices.length > 0 && availableServices.length > 0 && (
-                          <p className="form-hint">
+                          <p className="bk-form-hint">
                             Tổng tiền dịch vụ thêm: {formatPrice(
                               selectedServices.reduce((sum, serviceId) => {
                                 const selectedService = availableServices.find(s => {
@@ -1268,9 +1267,9 @@ const BookingPage = () => {
                         )}
                       </div>
                     ) : (
-                      <div className="form-group">
-                        <label className="form-label">Dịch vụ thêm (tùy chọn)</label>
-                        <p className="form-hint" style={{ color: '#64748b', fontStyle: 'italic' }}>
+                      <div className="bk-form-group">
+                        <label className="bk-form-label">Dịch vụ thêm (tùy chọn)</label>
+                        <p className="bk-form-hint" style={{ color: '#64748b', fontStyle: 'italic' }}>
                           Không có dịch vụ thêm nào cho combo này
                         </p>
                       </div>
@@ -1286,18 +1285,18 @@ const BookingPage = () => {
                       />
                     )}
 
-                    <div className="form-group">
-                      <label htmlFor="notes" className="form-label">
+                    <div className="bk-form-group">
+                      <label htmlFor="notes" className="bk-form-label">
                         Ghi chú (tùy chọn)
                         {notes.length > 0 && (
-                          <span className="notes-counter">
+                          <span className="bk-notes-counter">
                             {notes.length}/1000
                           </span>
                         )}
                       </label>
                       <textarea
                         id="notes"
-                        className="form-textarea"
+                        className="bk-form-textarea"
                         value={notes}
                         onChange={(e) => {
                           if (e.target.value.length <= 1000) {
@@ -1312,9 +1311,9 @@ const BookingPage = () => {
                     </div>
 
                     {!isAvailable && (
-                      <div className="alert alert-warning">
-                        <AlertCircleIcon className="alert-icon" />
-                        <div className="alert-content">
+                      <div className="bk-alert bk-alert-warning">
+                        <AlertCircleIcon className="bk-alert-icon" />
+                        <div className="bk-alert-content">
                           <strong>Dịch vụ không khả dụng</strong>
                           <p>
                             {status.toLowerCase() === 'closed' 
@@ -1327,12 +1326,12 @@ const BookingPage = () => {
                       </div>
                     )}
 
-                    <div className="form-actions">
+                    <div className="bk-form-actions">
                       <Button
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="submit-button"
+                        className="bk-submit-button"
                         disabled={!isAvailable || submitting}
                       >
                         {submitting 
@@ -1348,32 +1347,32 @@ const BookingPage = () => {
             </div>
 
             {/* Right Column - Order Summary */}
-            <div className="booking-right">
-              <Card className="order-summary-card">
+            <div className="bk-booking-right">
+              <Card className="bk-order-summary-card">
                 <CardContent>
-                  <h2 className="summary-title">Tóm tắt đơn hàng</h2>
+                  <h2 className="bk-summary-title">Tóm tắt đơn hàng</h2>
                   
-                  <div className="order-summary-content">
-                    <div className="summary-row">
-                      <span className="summary-label">Dịch vụ</span>
-                      <span className="summary-value">{serviceName}</span>
+                  <div className="bk-order-summary-content">
+                    <div className="bk-summary-row">
+                      <span className="bk-summary-label">Dịch vụ</span>
+                      <span className="bk-summary-value">{serviceName}</span>
                     </div>
                     
-                    <div className="summary-row">
-                      <span className="summary-label">Số lượng</span>
-                      <span className="summary-value">{quantity} người</span>
+                    <div className="bk-summary-row">
+                      <span className="bk-summary-label">Số lượng</span>
+                      <span className="bk-summary-value">{quantity} người</span>
                     </div>
                     
-                    <div className="summary-row">
-                      <span className="summary-label">Đơn giá</span>
-                      <span className="summary-value">{formatPrice(servicePrice)}</span>
+                    <div className="bk-summary-row">
+                      <span className="bk-summary-label">Đơn giá</span>
+                      <span className="bk-summary-value">{formatPrice(servicePrice)}</span>
                     </div>
                     
                     {selectedServices.length > 0 && (
                       <>
-                        <div className="summary-row summary-row-subtotal">
-                          <span className="summary-label">Tổng combo</span>
-                          <span className="summary-value">
+                        <div className="bk-summary-row bk-summary-row-subtotal">
+                          <span className="bk-summary-label">Tổng combo</span>
+                          <span className="bk-summary-value">
                             {formatPrice((servicePrice || 0) * quantity)}
                           </span>
                         </div>
@@ -1388,9 +1387,9 @@ const BookingPage = () => {
                           const price = selectedService.Price || selectedService.price || 0;
                           const name = selectedService.Name || selectedService.name || 'Dịch vụ';
                           return (
-                            <div key={serviceId} className="summary-row summary-row-additional">
-                              <span className="summary-label">+ {name}</span>
-                              <span className="summary-value">
+                            <div key={serviceId} className="bk-summary-row bk-summary-row-additional">
+                              <span className="bk-summary-label">+ {name}</span>
+                              <span className="bk-summary-value">
                                 {formatPrice(price * quantity)}
                               </span>
                             </div>
@@ -1400,49 +1399,18 @@ const BookingPage = () => {
                     )}
                     
                     {/* Complementary Services in Summary */}
-                    {selectedComplementaryServices.length > 0 && (() => {
-                      const tierData = mockComplementaryServices[userTier];
-                      if (!tierData || tierData.availableServices.length === 0) return null;
-                      
-                      const selectedComplServices = tierData.availableServices.filter(s => 
-                        selectedComplementaryServices.includes(s.id)
-                      );
-                      
-                      if (selectedComplServices.length === 0) return null;
-                      
-                      const totalComplValue = selectedComplServices.reduce((sum, s) => sum + s.value, 0);
-                      
-                      return (
-                        <>
-                          <div className="summary-row summary-row-divider">
-                            <span className="summary-label">Ưu đãi của bạn</span>
-                            <span className="summary-value summary-value-free">Miễn phí</span>
-                          </div>
-                          {selectedComplServices.map(service => (
-                            <div key={service.id} className="summary-row summary-row-complementary">
-                              <span className="summary-label">
-                                {service.name}
-                              </span>
-                              <span className="summary-value summary-value-free">
-                                {formatPrice(service.value)}
-                              </span>
-                            </div>
-                          ))}
-                          <div className="summary-row summary-row-complementary-total">
-                            <span className="summary-label">Tổng giá trị tặng kèm</span>
-                            <span className="summary-value summary-value-free">
-                              {formatPrice(totalComplValue)}
-                            </span>
-                          </div>
-                        </>
-                      );
-                    })()}
+                    {selectedComplementaryServices.length > 0 && (
+                      <div className="bk-summary-row bk-summary-row-divider">
+                        <span className="bk-summary-label">Ưu đãi của bạn</span>
+                        <span className="bk-summary-value bk-summary-value-free">Đang cập nhật</span>
+                      </div>
+                    )}
                     
-                    <div className="summary-row summary-row-total">
-                      <span className="summary-label">Thành tiền</span>
-                      <span className="summary-value summary-total">
+                    <div className="bk-summary-row bk-summary-row-total">
+                      <span className="bk-summary-label">Thành tiền</span>
+                      <span className="bk-summary-value bk-summary-total">
                         {calculatingTotal ? (
-                          <span className="calculating-text">Đang tính...</span>
+                          <span className="bk-calculating-text">Đang tính...</span>
                         ) : (
                           formatPrice(calculatedTotal)
                         )}
@@ -1450,9 +1418,9 @@ const BookingPage = () => {
                     </div>
                   </div>
 
-                  <div className="booking-info-box">
-                    <CheckCircleIcon className="info-box-icon" />
-                    <div className="info-box-content">
+                  <div className="bk-booking-info-box">
+                    <CheckCircleIcon className="bk-info-box-icon" />
+                    <div className="bk-info-box-content">
                       <strong>Thông tin quan trọng</strong>
                       <ul>
                         <li>Bạn sẽ nhận được email xác nhận sau khi đặt dịch vụ</li>

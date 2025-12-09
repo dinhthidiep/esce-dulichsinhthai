@@ -1,4 +1,4 @@
-.notification-dropdown {
+.notif-notification-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
@@ -14,7 +14,7 @@
   overflow: hidden;
 }
 
-.notification-dropdown-header {
+.notif-notification-dropdown-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -23,14 +23,14 @@
   background: #f9fafb;
 }
 
-.notification-dropdown-header h3 {
+.notif-notification-dropdown-header h3 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
 }
 
-.notification-close-btn {
+.notif-notification-close-btn {
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -46,36 +46,36 @@
   transition: all 0.2s;
 }
 
-.notification-close-btn:hover {
+.notif-notification-close-btn:hover {
   background: #e5e7eb;
   color: #374151;
 }
 
-.notification-dropdown-content {
+.notif-notification-dropdown-content {
   flex: 1;
   overflow-y: auto;
   min-height: 200px;
   max-height: 500px;
 }
 
-.notification-loading,
-.notification-error,
-.notification-empty {
+.notif-notification-loading,
+.notif-notification-error,
+.notif-notification-empty {
   padding: 2rem;
   text-align: center;
   color: #6b7280;
 }
 
-.notification-error {
+.notif-notification-error {
   color: #dc2626;
 }
 
-.notification-list {
+.notif-notification-list {
   display: flex;
   flex-direction: column;
 }
 
-.notification-item {
+.notif-notification-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -85,37 +85,37 @@
   gap: 1rem;
 }
 
-.notification-item:hover {
+.notif-notification-item:hover {
   background-color: #f9fafb;
 }
 
-.notification-item.unread {
+.notif-notification-item.notif-unread {
   background-color: #eff6ff;
   border-left: 3px solid #3b82f6;
 }
 
-.notification-item.unread:hover {
+.notif-notification-item.notif-unread:hover {
   background-color: #dbeafe;
 }
 
-.notification-item.read {
+.notif-notification-item.notif-read {
   background-color: #ffffff;
   opacity: 0.8;
 }
 
-.notification-item-content {
+.notif-notification-item-content {
   flex: 1;
   min-width: 0;
 }
 
-.notification-item-header {
+.notif-notification-item-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.notification-item-title {
+.notif-notification-item-title {
   margin: 0;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -123,7 +123,7 @@
   flex: 1;
 }
 
-.notification-unread-badge {
+.notif-notification-unread-badge {
   background: #dc2626;
   color: white;
   font-size: 0.75rem;
@@ -133,7 +133,7 @@
   white-space: nowrap;
 }
 
-.notification-read-badge {
+.notif-notification-read-badge {
   background: #10b981;
   color: white;
   font-size: 0.75rem;
@@ -143,7 +143,7 @@
   white-space: nowrap;
 }
 
-.notification-item-message {
+.notif-notification-item-message {
   margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
   color: #4b5563;
@@ -151,44 +151,44 @@
   word-wrap: break-word;
 }
 
-.notification-item-time {
+.notif-notification-item-time {
   font-size: 0.75rem;
   color: #9ca3af;
 }
 
 
 /* Scrollbar styling */
-.notification-dropdown-content::-webkit-scrollbar {
+.notif-notification-dropdown-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.notification-dropdown-content::-webkit-scrollbar-track {
+.notif-notification-dropdown-content::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-.notification-dropdown-content::-webkit-scrollbar-thumb {
+.notif-notification-dropdown-content::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
 
-.notification-dropdown-content::-webkit-scrollbar-thumb:hover {
+.notif-notification-dropdown-content::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .notification-dropdown {
+  .notif-notification-dropdown {
     width: calc(100vw - 2rem);
     right: 1rem;
     left: 1rem;
   }
 
-  .notification-item {
+  .notif-notification-item {
     flex-direction: column;
     gap: 0.75rem;
   }
 
-  .notification-item-actions {
+  .notif-notification-item-actions {
     align-self: flex-end;
   }
 }

@@ -190,9 +190,9 @@ const PaymentSuccessPage = () => {
 
   if (loading) {
     return (
-      <div className="payment-success-page">
+      <div className="pay-success-payment-success-page">
         <Header />
-        <main className="payment-success-main">
+        <main className="pay-success-payment-success-main">
           <LoadingSpinner message="Đang tải thông tin..." />
         </main>
       </div>
@@ -201,13 +201,13 @@ const PaymentSuccessPage = () => {
 
   if (error || !booking) {
     return (
-      <div className="payment-success-page">
+      <div className="pay-success-payment-success-page">
         <Header />
-        <main className="payment-success-main">
-          <div className="payment-success-container">
-            <div className="error-container" role="alert">
-              <h2 className="error-title">Không thể tải thông tin</h2>
-              <p className="error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
+        <main className="pay-success-payment-success-main">
+          <div className="pay-success-payment-success-container">
+            <div className="pay-success-error-container" role="alert">
+              <h2 className="pay-success-error-title">Không thể tải thông tin</h2>
+              <p className="pay-success-error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
               <Button variant="default" onClick={() => navigate('/services')}>
                 Quay lại danh sách dịch vụ
               </Button>
@@ -228,65 +228,65 @@ const PaymentSuccessPage = () => {
   const startDate = booking.StartDate || booking.startDate
   const endDate = booking.EndDate || booking.endDate
 
-  const paymentAmount = payment?.Amount || payment?.amount || totalAmount
+  const paymentAmount = payment?.Amount ?? payment?.amount ?? totalAmount
   const paymentMethod = payment?.PaymentMethod || payment?.paymentMethod || 'PayOS'
   const paymentDate = payment?.CreatedAt || payment?.createdAt || new Date().toISOString()
 
   return (
-    <div className="payment-success-page">
+    <div className="pay-success-payment-success-page">
       <Header />
-      <main className="payment-success-main">
-        <div className="payment-success-container">
+      <main className="pay-success-payment-success-main">
+        <div className="pay-success-payment-success-container">
           {/* Success Icon */}
-          <div className="success-icon-wrapper">
-            <CheckCircleIcon className="success-icon" />
+          <div className="pay-success-success-icon-wrapper">
+            <CheckCircleIcon className="pay-success-success-icon" />
           </div>
 
           {/* Success Message */}
-          <Card className="success-card">
+          <Card className="pay-success-success-card">
             <CardContent>
-              <h1 className="success-title">Thanh toán thành công!</h1>
-              <p className="success-message">
+              <h1 className="pay-success-success-title">Thanh toán thành công!</h1>
+              <p className="pay-success-success-message">
                 Đơn đặt dịch vụ của bạn đã được thanh toán thành công. Bạn sẽ nhận được email xác nhận trong vài phút.
               </p>
 
               {/* Booking Details */}
-              <div className="details-section">
-                <h2 className="details-title">Thông tin đặt dịch vụ</h2>
-                <div className="details-list">
-                  <div className="detail-item">
-                    <span className="detail-label">Mã đặt dịch vụ:</span>
-                    <span className="detail-value">{bookingNumber}</span>
+              <div className="pay-success-details-section">
+                <h2 className="pay-success-details-title">Thông tin đặt dịch vụ</h2>
+                <div className="pay-success-details-list">
+                  <div className="pay-success-detail-item">
+                    <span className="pay-success-detail-label">Mã đặt dịch vụ:</span>
+                    <span className="pay-success-detail-value">{bookingNumber}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Dịch vụ:</span>
-                    <span className="detail-value">{serviceName}</span>
+                  <div className="pay-success-detail-item">
+                    <span className="pay-success-detail-label">Dịch vụ:</span>
+                    <span className="pay-success-detail-value">{serviceName}</span>
                   </div>
                   {serviceAddress && (
-                    <div className="detail-item">
-                      <span className="detail-label">
-                        <MapPinIcon className="detail-icon" />
+                    <div className="pay-success-detail-item">
+                      <span className="pay-success-detail-label">
+                        <MapPinIcon className="pay-success-detail-icon" />
                         Địa điểm:
                       </span>
-                      <span className="detail-value">{serviceAddress}</span>
+                      <span className="pay-success-detail-value">{serviceAddress}</span>
                     </div>
                   )}
                   {quantity > 0 && (
-                    <div className="detail-item">
-                      <span className="detail-label">
-                        <UsersIcon className="detail-icon" />
+                    <div className="pay-success-detail-item">
+                      <span className="pay-success-detail-label">
+                        <UsersIcon className="pay-success-detail-icon" />
                         Số lượng:
                       </span>
-                      <span className="detail-value">{quantity} người</span>
+                      <span className="pay-success-detail-value">{quantity} người</span>
                     </div>
                   )}
                   {startDate && (
-                    <div className="detail-item">
-                      <span className="detail-label">
-                        <CalendarIcon className="detail-icon" />
+                    <div className="pay-success-detail-item">
+                      <span className="pay-success-detail-label">
+                        <CalendarIcon className="pay-success-detail-icon" />
                         Ngày bắt đầu:
                       </span>
-                      <span className="detail-value">
+                      <span className="pay-success-detail-value">
                         {new Date(startDate).toLocaleDateString('vi-VN', {
                           weekday: 'long',
                           year: 'numeric',
@@ -297,12 +297,12 @@ const PaymentSuccessPage = () => {
                     </div>
                   )}
                   {endDate && endDate !== startDate && (
-                    <div className="detail-item">
-                      <span className="detail-label">
-                        <CalendarIcon className="detail-icon" />
+                    <div className="pay-success-detail-item">
+                      <span className="pay-success-detail-label">
+                        <CalendarIcon className="pay-success-detail-icon" />
                         Ngày kết thúc:
                       </span>
-                      <span className="detail-value">
+                      <span className="pay-success-detail-value">
                         {new Date(endDate).toLocaleDateString('vi-VN', {
                           weekday: 'long',
                           year: 'numeric',
@@ -316,25 +316,25 @@ const PaymentSuccessPage = () => {
               </div>
 
               {/* Payment Details */}
-              <div className="details-section">
-                <h2 className="details-title">Chi tiết thanh toán</h2>
-                <div className="details-list">
-                  <div className="detail-item">
-                    <span className="detail-label">Số tiền đã thanh toán:</span>
-                    <span className="detail-value amount">
+              <div className="pay-success-details-section">
+                <h2 className="pay-success-details-title">Chi tiết thanh toán</h2>
+                <div className="pay-success-details-list">
+                  <div className="pay-success-detail-item">
+                    <span className="pay-success-detail-label">Số tiền đã thanh toán:</span>
+                    <span className="pay-success-detail-value pay-success-amount">
                       {formatPrice(paymentAmount)}
                     </span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">
-                      <CreditCardIcon className="detail-icon" />
+                  <div className="pay-success-detail-item">
+                    <span className="pay-success-detail-label">
+                      <CreditCardIcon className="pay-success-detail-icon" />
                       Phương thức thanh toán:
                     </span>
-                    <span className="detail-value">{paymentMethod}</span>
+                    <span className="pay-success-detail-value">{paymentMethod}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Thời gian thanh toán:</span>
-                    <span className="detail-value">
+                  <div className="pay-success-detail-item">
+                    <span className="pay-success-detail-label">Thời gian thanh toán:</span>
+                    <span className="pay-success-detail-value">
                       {new Date(paymentDate).toLocaleString('vi-VN', {
                         year: 'numeric',
                         month: 'long',
@@ -348,32 +348,32 @@ const PaymentSuccessPage = () => {
               </div>
 
               {/* Next Steps */}
-              <div className="next-steps-section">
-                <h3 className="next-steps-title">Những việc tiếp theo</h3>
-                <div className="steps-list">
-                  <div className="step-item">
-                    <div className="step-number">1</div>
-                    <div className="step-content">
-                      <h4 className="step-title">Kiểm tra email</h4>
-                      <p className="step-description">
+              <div className="pay-success-next-steps-section">
+                <h3 className="pay-success-next-steps-title">Những việc tiếp theo</h3>
+                <div className="pay-success-steps-list">
+                  <div className="pay-success-step-item">
+                    <div className="pay-success-step-number">1</div>
+                    <div className="pay-success-step-content">
+                      <h4 className="pay-success-step-title">Kiểm tra email</h4>
+                      <p className="pay-success-step-description">
                         Bạn sẽ nhận được email xác nhận đặt dịch vụ trong vài phút. Vui lòng kiểm tra hộp thư đến và thư mục spam.
                       </p>
                     </div>
                   </div>
-                  <div className="step-item">
-                    <div className="step-number">2</div>
-                    <div className="step-content">
-                      <h4 className="step-title">Chuẩn bị cho chuyến đi</h4>
-                      <p className="step-description">
+                  <div className="pay-success-step-item">
+                    <div className="pay-success-step-number">2</div>
+                    <div className="pay-success-step-content">
+                      <h4 className="pay-success-step-title">Chuẩn bị cho chuyến đi</h4>
+                      <p className="pay-success-step-description">
                         Vui lòng chuẩn bị đầy đủ giấy tờ và đồ dùng cần thiết cho chuyến đi của bạn.
                       </p>
                     </div>
                   </div>
-                  <div className="step-item">
-                    <div className="step-number">3</div>
-                    <div className="step-content">
-                      <h4 className="step-title">Liên hệ hỗ trợ</h4>
-                      <p className="step-description">
+                  <div className="pay-success-step-item">
+                    <div className="pay-success-step-number">3</div>
+                    <div className="pay-success-step-content">
+                      <h4 className="pay-success-step-title">Liên hệ hỗ trợ</h4>
+                      <p className="pay-success-step-description">
                         Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ bộ phận hỗ trợ khách hàng của chúng tôi.
                       </p>
                     </div>
@@ -382,21 +382,21 @@ const PaymentSuccessPage = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="action-buttons">
+              <div className="pay-success-action-buttons">
                 <Button
                   onClick={() => navigate('/profile', { state: { activeTab: 'bookings' } })}
                   variant="default"
                   size="lg"
-                  className="view-booking-button"
+                  className="pay-success-view-booking-button"
                 >
                   Xem đơn đặt dịch vụ
-                  <ArrowRightIcon className="button-icon" />
+                  <ArrowRightIcon className="pay-success-button-icon" />
                 </Button>
                 <Button
                   onClick={() => navigate('/services')}
                   variant="outline"
                   size="lg"
-                  className="view-services-button"
+                  className="pay-success-view-services-button"
                 >
                   Xem thêm dịch vụ
                 </Button>
@@ -404,7 +404,7 @@ const PaymentSuccessPage = () => {
                   onClick={() => navigate('/')}
                   variant="outline"
                   size="lg"
-                  className="home-button"
+                  className="pay-success-home-button"
                 >
                   Về trang chủ
                 </Button>

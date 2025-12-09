@@ -21,7 +21,7 @@ const ReviewManager = () => {
     const [filteredReviews, setFilteredReviews] = useState([]);
     const [selectedReview, setSelectedReview] = useState(null);
     const [ratingFilter, setRatingFilter] = useState("all");
-    const [replyFilter, setReplyFilter] = useState("all"); // all, replied, not-replied
+    const [replyFilter, setReplyFilter] = useState("all"); // all, rev-page-replied, rev-page-not-replied
     const [comboFilter, setComboFilter] = useState("all");
     const [userNameFilter, setUserNameFilter] = useState("");
     const [comboNameFilter, setComboNameFilter] = useState("");
@@ -87,9 +87,9 @@ const ReviewManager = () => {
             filtered = filtered.filter((review) => {
                 const replies = review.Replies || review.replies || [];
                 const hasReply = replies.length > 0;
-                if (replyFilter === "replied") {
+                if (replyFilter === "rev-page-replied") {
                     return hasReply;
-                } else if (replyFilter === "not-replied") {
+                } else if (replyFilter === "rev-page-not-replied") {
                     return !hasReply;
                 }
                 return true;
@@ -339,13 +339,13 @@ const ReviewManager = () => {
         return DEFAULT_AVATAR_URL;
     };
 
-    // Render stars - only show 1 star: grey at 0, yellow for > 0
+    // Render stars - only show 1 rev-page-star: grey at 0, yellow for > 0
     const renderStars = (rating) => {
         const ratingValue = rating || 0;
 
-        // Always show only 1 star: grey if 0, yellow if > 0
+        // Always show only 1 rev-page-star: grey if 0, yellow if > 0
         return (
-            <span className={ratingValue === 0 ? "star greyed" : "star filled"}>
+            <span className={ratingValue === 0 ? "rev-page-star rev-page-greyed" : "rev-page-star rev-page-filled"}>
                 ⭐
             </span>
         );
@@ -391,10 +391,10 @@ const ReviewManager = () => {
 
             {/* Main Content */}
             <main
-                className={`content ${sidebarActive ? "shift" : ""}`}
+                className={`rev-page-content ${sidebarActive ? "shift" : ""}`}
                 role="main"
             >
-                <div className="form-content">
+                <div className="rev-page-form-content">
                     {error && (
                         <div
                             className="error-message"
@@ -405,19 +405,19 @@ const ReviewManager = () => {
                     )}
 
                     {/* Filters */}
-                    <div className="review-filters">
+                    <div className="rev-page-review-filters">
                         {/* Filter Row 1: Dropdowns */}
-                        <div className="filter-row">
-                            <div className="filter-group">
+                        <div className="rev-page-filter-row">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="rating-filter"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Đánh giá:
                                 </label>
                                 <select
                                     id="rating-filter"
-                                    className="filter-select"
+                                    className="rev-page-filter-select"
                                     value={ratingFilter}
                                     onChange={(e) =>
                                         setRatingFilter(e.target.value)
@@ -433,39 +433,39 @@ const ReviewManager = () => {
                                 </select>
                             </div>
 
-                            <div className="filter-group">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="reply-filter"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Trạng thái phản hồi:
                                 </label>
                                 <select
                                     id="reply-filter"
-                                    className="filter-select"
+                                    className="rev-page-filter-select"
                                     value={replyFilter}
                                     onChange={(e) =>
                                         setReplyFilter(e.target.value)
                                     }
                                 >
                                     <option value="all">Tất cả</option>
-                                    <option value="replied">Đã phản hồi</option>
-                                    <option value="not-replied">
+                                    <option value="rev-page-replied">Đã phản hồi</option>
+                                    <option value="rev-page-not-replied">
                                         Chưa phản hồi
                                     </option>
                                 </select>
                             </div>
 
-                            <div className="filter-group">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="combo-filter"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Combo:
                                 </label>
                                 <select
                                     id="combo-filter"
-                                    className="filter-select"
+                                    className="rev-page-filter-select"
                                     value={comboFilter}
                                     onChange={(e) =>
                                         setComboFilter(e.target.value)
@@ -480,16 +480,16 @@ const ReviewManager = () => {
                                 </select>
                             </div>
 
-                            <div className="filter-group">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="sort-order"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Sắp xếp:
                                 </label>
                                 <select
                                     id="sort-order"
-                                    className="filter-select"
+                                    className="rev-page-filter-select"
                                     value={sortOrder}
                                     onChange={(e) =>
                                         setSortOrder(e.target.value)
@@ -502,18 +502,18 @@ const ReviewManager = () => {
                         </div>
 
                         {/* Filter Row 2: Search Fields */}
-                        <div className="filter-row">
-                            <div className="filter-group">
+                        <div className="rev-page-filter-row">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="user-name-filter"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Tên người dùng:
                                 </label>
                                 <input
                                     id="user-name-filter"
                                     type="text"
-                                    className="filter-input"
+                                    className="rev-page-filter-input"
                                     placeholder="Tìm theo tên người dùng..."
                                     value={userNameFilter}
                                     onChange={(e) =>
@@ -522,17 +522,17 @@ const ReviewManager = () => {
                                 />
                             </div>
 
-                            <div className="filter-group">
+                            <div className="rev-page-filter-group">
                                 <label
                                     htmlFor="combo-name-filter"
-                                    className="filter-label"
+                                    className="rev-page-filter-label"
                                 >
                                     Tên combo dịch vụ:
                                 </label>
                                 <input
                                     id="combo-name-filter"
                                     type="text"
-                                    className="filter-input"
+                                    className="rev-page-filter-input"
                                     placeholder="Tìm theo tên combo..."
                                     value={comboNameFilter}
                                     onChange={(e) =>
@@ -545,13 +545,13 @@ const ReviewManager = () => {
 
                     {filteredReviews.length === 0 ? (
                         <div
-                            className="no-reviews"
+                            className="rev-page-no-reviews"
                             style={{ textAlign: "center", padding: "2rem" }}
                         >
                             <p>Không có review nào.</p>
                         </div>
                     ) : (
-                        <div className="reviews-list">
+                        <div className="rev-page-reviews-list">
                             {filteredReviews.map((review) => {
                                 const user = review.User || review.user;
                                 const booking =
@@ -573,10 +573,10 @@ const ReviewManager = () => {
                                 return (
                                     <div
                                         key={review.Id || review.id}
-                                        className="review-card"
+                                        className="rev-page-review-card"
                                     >
-                                        <div className="review-header">
-                                            <div className="review-user-info">
+                                        <div className="rev-page-review-header">
+                                            <div className="rev-page-review-user-info">
                                                 <img
                                                     src={getAvatarUrl(user)}
                                                     alt={
@@ -584,54 +584,54 @@ const ReviewManager = () => {
                                                         user?.name ||
                                                         "User"
                                                     }
-                                                    className="review-avatar"
+                                                    className="rev-page-review-avatar"
                                                     onError={(e) => {
                                                         e.target.src =
                                                             DEFAULT_AVATAR_URL;
                                                     }}
                                                 />
-                                                <div className="review-user-details">
-                                                    <div className="review-user-name">
+                                                <div className="rev-page-review-user-details">
+                                                    <div className="rev-page-review-user-name">
                                                         {user?.Name ||
                                                             user?.name ||
                                                             "Người dùng"}
                                                     </div>
-                                                    <div className="review-date">
+                                                    <div className="rev-page-review-date">
                                                         {formatDate(
                                                             createdDate
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="review-rating">
+                                            <div className="rev-page-review-rating">
                                                 {renderStars(rating)}
-                                                <span className="rating-value">
+                                                <span className="rev-page-rating-value">
                                                     {rating || 0}/5
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <div className="review-combo-info">
+                                        <div className="rev-page-review-combo-info">
                                             <strong>Combo:</strong>{" "}
                                             {serviceCombo?.Name ||
                                                 serviceCombo?.name ||
                                                 "N/A"}
                                         </div>
 
-                                        <div className="review-comment">
+                                        <div className="rev-page-review-comment">
                                             {comment}
                                         </div>
 
                                         {hasReply && reply && (
-                                            <div className="review-reply-section">
-                                                <div className="review-reply-label">
+                                            <div className="rev-page-review-reply-section">
+                                                <div className="rev-page-review-reply-label">
                                                     Phản hồi từ Host:
                                                 </div>
-                                                <div className="review-reply-content">
+                                                <div className="rev-page-review-reply-content">
                                                     {reply.Comment ||
                                                         reply.comment}
                                                 </div>
-                                                <div className="review-reply-date">
+                                                <div className="rev-page-review-reply-date">
                                                     Đã phản hồi:{" "}
                                                     {formatDate(
                                                         reply.CreatedDate ||
@@ -641,9 +641,9 @@ const ReviewManager = () => {
                                             </div>
                                         )}
 
-                                        <div className="review-status">
+                                        <div className="rev-page-review-status">
                                             <span
-                                                className={`status-badge ${hasReply ? "replied" : "not-replied"}`}
+                                                className={`rev-page-status-badge ${hasReply ? "rev-page-replied" : "rev-page-not-replied"}`}
                                             >
                                                 {hasReply
                                                     ? "Đã phản hồi"
@@ -652,7 +652,7 @@ const ReviewManager = () => {
                                         </div>
 
                                         <button
-                                            className="review-detail-btn"
+                                            className="rev-page-review-detail-btn"
                                             onClick={() =>
                                                 handleViewDetails(
                                                     review.Id || review.id
@@ -672,24 +672,24 @@ const ReviewManager = () => {
             {/* Review Detail Modal */}
             {selectedReview && (
                 <div
-                    className="review-detail-modal-overlay"
+                    className="rev-page-review-detail-modal-overlay"
                     onClick={handleCloseDetails}
                 >
                     <div
-                        className="review-detail-modal"
+                        className="rev-page-review-detail-modal"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="review-detail-header">
+                        <div className="rev-page-review-detail-header">
                             <h3>Chi tiết Review</h3>
                             <button
-                                className="close-btn"
+                                className="rev-page-close-btn"
                                 onClick={handleCloseDetails}
                             >
                                 ×
                             </button>
                         </div>
 
-                        <div className="review-detail-content">
+                        <div className="rev-page-review-detail-content">
                             {(() => {
                                 const user =
                                     selectedReview.User || selectedReview.user;
@@ -719,9 +719,9 @@ const ReviewManager = () => {
 
                                 return (
                                     <>
-                                        <div className="review-detail-section">
+                                        <div className="rev-page-review-detail-section">
                                             <h4>Thông tin người đánh giá</h4>
-                                            <div className="review-detail-user">
+                                            <div className="rev-page-review-detail-user">
                                                 <img
                                                     src={getAvatarUrl(user)}
                                                     alt={
@@ -729,7 +729,7 @@ const ReviewManager = () => {
                                                         user?.name ||
                                                         "User"
                                                     }
-                                                    className="review-detail-avatar"
+                                                    className="rev-page-review-detail-avatar"
                                                     onError={(e) => {
                                                         e.target.src =
                                                             DEFAULT_AVATAR_URL;
@@ -752,16 +752,16 @@ const ReviewManager = () => {
                                             </div>
                                         </div>
 
-                                        <div className="review-detail-section">
-                                            <div className="review-rating-row">
-                                                <div className="review-rating-item">
+                                        <div className="rev-page-review-detail-section">
+                                            <div className="rev-page-review-rating-row">
+                                                <div className="rev-page-review-rating-item">
                                                     <strong>Đánh giá:</strong>{" "}
                                                     {renderStars(rating)}
-                                                    <span className="rating-value">
+                                                    <span className="rev-page-rating-value">
                                                         {rating || 0}/5
                                                     </span>
                                                 </div>
-                                                <div className="review-rating-item">
+                                                <div className="rev-page-review-rating-item">
                                                     <strong>
                                                         Ngày đánh giá:
                                                     </strong>{" "}
@@ -770,14 +770,14 @@ const ReviewManager = () => {
                                             </div>
                                         </div>
 
-                                        <div className="review-detail-section">
+                                        <div className="rev-page-review-detail-section">
                                             <h4>Nội dung review</h4>
-                                            <div className="review-detail-comment">
+                                            <div className="rev-page-review-detail-comment">
                                                 {comment}
                                             </div>
                                         </div>
 
-                                        <div className="review-detail-section">
+                                        <div className="rev-page-review-detail-section">
                                             <h4>Thông tin combo dịch vụ</h4>
                                             <div>
                                                 <strong>Combo:</strong>{" "}
@@ -809,15 +809,15 @@ const ReviewManager = () => {
                                             </div>
                                         </div>
 
-                                        <div className="review-detail-section">
+                                        <div className="rev-page-review-detail-section">
                                             <h4>Phản hồi từ Host</h4>
                                             {hasReply && reply ? (
                                                 <>
-                                                    <div className="review-detail-reply">
+                                                    <div className="rev-page-review-detail-reply">
                                                         {reply.Comment ||
                                                             reply.comment}
                                                     </div>
-                                                    <div className="review-detail-reply-date">
+                                                    <div className="rev-page-review-detail-reply-date">
                                                         Đã phản hồi:{" "}
                                                         {formatDate(
                                                             reply.CreatedDate ||
@@ -830,7 +830,7 @@ const ReviewManager = () => {
                                                         }}
                                                     >
                                                         <textarea
-                                                            className="review-reply-textarea"
+                                                            className="rev-page-review-reply-textarea"
                                                             placeholder="Nhập phản hồi của bạn..."
                                                             value={replyText}
                                                             onChange={(e) =>
@@ -850,7 +850,7 @@ const ReviewManager = () => {
                                                             }}
                                                         >
                                                             <button
-                                                                className="review-submit-reply-btn"
+                                                                className="rev-page-review-submit-reply-btn"
                                                                 onClick={
                                                                     handleSubmitReply
                                                                 }
@@ -863,7 +863,7 @@ const ReviewManager = () => {
                                                                     : "Cập nhật phản hồi"}
                                                             </button>
                                                             <button
-                                                                className="review-delete-reply-btn"
+                                                                className="rev-page-review-delete-reply-btn"
                                                                 onClick={
                                                                     handleDeleteReply
                                                                 }
@@ -881,7 +881,7 @@ const ReviewManager = () => {
                                             ) : (
                                                 <>
                                                     <textarea
-                                                        className="review-reply-textarea"
+                                                        className="rev-page-review-reply-textarea"
                                                         placeholder="Nhập phản hồi của bạn..."
                                                         value={replyText}
                                                         onChange={(e) =>
@@ -892,7 +892,7 @@ const ReviewManager = () => {
                                                         rows="4"
                                                     />
                                                     <button
-                                                        className="review-submit-reply-btn"
+                                                        className="rev-page-review-submit-reply-btn"
                                                         onClick={
                                                             handleSubmitReply
                                                         }

@@ -232,7 +232,7 @@ const ProfilePage = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Fetch bookings when tab is active
+  // Fetch bookings when tab is profile-active
   useEffect(() => {
     const fetchBookings = async () => {
       if (activeTab !== 'bookings') return;
@@ -278,7 +278,7 @@ const ProfilePage = () => {
     }
   }, [location.state, location.pathname, navigate]);
 
-  // Fetch reviews when tab is active
+  // Fetch reviews when tab is profile-active
   useEffect(() => {
     const fetchReviews = async () => {
       if (activeTab !== 'reviews') return;
@@ -519,7 +519,7 @@ const ProfilePage = () => {
       setSuccess(null);
       setFieldErrors({});
 
-      // Validate all required fields
+      // Validate all profile-required fields
       validateField('name', formData.name);
       validateField('phone', formData.phone);
       validateField('address', formData.address);
@@ -587,7 +587,7 @@ const ProfilePage = () => {
         setError('Vui lòng kiểm tra lại thông tin đã nhập');
         setSaving(false);
         // Scroll to first error
-        const firstErrorField = document.querySelector('.form-input[aria-invalid="true"]');
+        const firstErrorField = document.querySelector('.profile-form-input[aria-invalid="true"]');
         if (firstErrorField) {
           firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
           (firstErrorField as HTMLElement).focus();
@@ -614,7 +614,7 @@ const ProfilePage = () => {
       }
 
       // Build payload exactly matching UpdateProfileDto
-      // Backend requires: Name, Phone, Gender, Address, DOB (all required)
+      // Backend requires: Name, Phone, Gender, Address, DOB (all profile-required)
       // Lấy giá trị từ formData, nếu không có thì lấy từ userInfo hiện tại
       // Nếu cả hai đều không có, gửi null (không phải empty string) để backend không báo lỗi validation
       const getValue = (formValue: string | undefined, userValue: any) => {
@@ -1084,25 +1084,25 @@ const ProfilePage = () => {
     const statusLower = (status || '').toLowerCase();
     switch (statusLower) {
       case 'pending':
-        return { text: 'Chờ xác nhận', className: 'status-pending' };
+        return { text: 'Chờ xác nhận', className: 'profile-status-pending' };
       case 'confirmed':
-        return { text: 'Đã xác nhận', className: 'status-confirmed' };
+        return { text: 'Đã xác nhận', className: 'profile-status-confirmed' };
       case 'processing':
-        return { text: 'Đang xử lý', className: 'status-confirmed' };
+        return { text: 'Đang xử lý', className: 'profile-status-confirmed' };
       case 'completed':
-        return { text: 'Hoàn thành', className: 'status-completed' };
+        return { text: 'Hoàn thành', className: 'profile-status-completed' };
       case 'cancelled':
-        return { text: 'Đã hủy', className: 'status-cancelled' };
+        return { text: 'Đã hủy', className: 'profile-status-cancelled' };
       default:
-        return { text: status || 'Chưa xác định', className: 'status-unknown' };
+        return { text: status || 'Chưa xác định', className: 'profile-status-unknown' };
     }
   };
 
   if (loading) {
     return (
-      <div className="profile-page">
+      <div className="profile-profile-page">
         <Header />
-        <main className="profile-main">
+        <main className="profile-profile-main">
           <LoadingSpinner message="Đang tải thông tin cá nhân..." />
         </main>
       </div>
@@ -1111,11 +1111,11 @@ const ProfilePage = () => {
 
   if (error && !userInfo) {
     return (
-      <div className="profile-page">
+      <div className="profile-profile-page">
         <Header />
-        <main className="profile-main">
-          <div className="profile-container">
-            <div className="error-container">
+        <main className="profile-profile-main">
+          <div className="profile-profile-container">
+            <div className="profile-error-container">
               <h2>Không thể tải thông tin</h2>
               <p>{error}</p>
               <Button variant="default" onClick={() => navigate('/')}>
@@ -1152,100 +1152,100 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="profile-page">
+    <div className="profile-profile-page">
       <Header />
-      <main className="profile-main">
-        <div className="profile-container">
+      <main className="profile-profile-main">
+        <div className="profile-profile-container">
           {/* Sidebar */}
-          <aside className="profile-sidebar">
-            <div className="sidebar-user-info">
-              <div className="sidebar-avatar">
+          <aside className="profile-profile-sidebar">
+            <div className="profile-sidebar-user-info">
+              <div className="profile-sidebar-avatar">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar" />
                 ) : (
-                  <div className="sidebar-avatar-placeholder">
+                  <div className="profile-sidebar-avatar-placeholder">
                     {displayName.substring(0, 2).toUpperCase()}
                   </div>
                 )}
               </div>
-              <h3 className="sidebar-user-name">{displayName}</h3>
-              <p className="sidebar-user-email">{displayEmail}</p>
-              <Badge variant="default" className="sidebar-role-badge">
+              <h3 className="profile-sidebar-user-name">{displayName}</h3>
+              <p className="profile-sidebar-user-email">{displayEmail}</p>
+              <Badge variant="default" className="profile-sidebar-role-badge">
                 {roleName}
               </Badge>
             </div>
 
-            <nav className="sidebar-menu">
+            <nav className="profile-sidebar-menu">
               <button
                 onClick={() => handleTabChange('personal')}
-                className={`sidebar-menu-item ${activeTab === 'personal' ? 'active' : ''}`}
+                className={`profile-sidebar-menu-item ${activeTab === 'personal' ? 'profile-active' : ''}`}
               >
-                <UserIcon className="sidebar-menu-icon" />
+                <UserIcon className="profile-sidebar-menu-icon" />
                 <span>Thông tin cá nhân</span>
               </button>
               <button
                 onClick={() => handleTabChange('bookings')}
-                className={`sidebar-menu-item ${activeTab === 'bookings' ? 'active' : ''}`}
+                className={`profile-sidebar-menu-item ${activeTab === 'bookings' ? 'profile-active' : ''}`}
               >
-                <CalendarIcon className="sidebar-menu-icon" />
+                <CalendarIcon className="profile-sidebar-menu-icon" />
                 <span>Lịch sử đặt dịch vụ</span>
               </button>
               <button
                 onClick={() => handleTabChange('reviews')}
-                className={`sidebar-menu-item ${activeTab === 'reviews' ? 'active' : ''}`}
+                className={`profile-sidebar-menu-item ${activeTab === 'reviews' ? 'profile-active' : ''}`}
               >
-                <StarIcon className="sidebar-menu-icon" />
+                <StarIcon className="profile-sidebar-menu-icon" />
                 <span>Đánh giá của tôi</span>
               </button>
               <button
                 onClick={() => handleTabChange('notifications')}
-                className={`sidebar-menu-item ${activeTab === 'notifications' ? 'active' : ''}`}
+                className={`profile-sidebar-menu-item ${activeTab === 'notifications' ? 'profile-active' : ''}`}
               >
-                <BellIcon className="sidebar-menu-icon" />
+                <BellIcon className="profile-sidebar-menu-icon" />
                 <span>Thông báo</span>
               </button>
               <button
                 onClick={() => handleTabChange('settings')}
-                className={`sidebar-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
+                className={`profile-sidebar-menu-item ${activeTab === 'settings' ? 'profile-active' : ''}`}
               >
-                <SettingsIcon className="sidebar-menu-icon" />
+                <SettingsIcon className="profile-sidebar-menu-icon" />
                 <span>Cài đặt</span>
               </button>
             </nav>
           </aside>
 
           {/* Main Content */}
-          <div className="profile-content">
-            <div className="profile-content-header">
-              <h1 className="profile-title">{getTabTitle()}</h1>
+          <div className="profile-profile-content">
+            <div className="profile-profile-content-header">
+              <h1 className="profile-profile-title">{getTabTitle()}</h1>
               {activeTab === 'personal' && (
                 !isEditing ? (
                   <Button 
                     variant="default" 
                     onClick={handleEdit}
-                    className="edit-button"
+                    className="profile-edit-button"
                   >
-                    <EditIcon className="button-icon" />
+                    <EditIcon className="profile-button-icon" />
                     Chỉnh sửa
                   </Button>
                 ) : (
-                  <div className="edit-actions">
+                  <div className="profile-edit-actions">
                     <Button 
                       variant="outline" 
                       onClick={handleCancel}
                       disabled={saving}
-                      className="cancel-button"
+                      className="profile-cancel-button"
                     >
-                      <XIcon className="button-icon" />
+                      <XIcon className="profile-button-icon" />
                       Hủy
                     </Button>
                     <Button 
                       variant="default" 
                       onClick={handleSave}
                       disabled={saving}
-                      className="save-button"
+                      className="profile-save-button"
                     >
-                      <SaveIcon className="button-icon" />
+                      <SaveIcon className="profile-button-icon" />
                       {saving ? 'Đang lưu...' : 'Lưu'}
                     </Button>
                   </div>
@@ -1255,7 +1255,7 @@ const ProfilePage = () => {
                 <Button 
                   variant="default" 
                   onClick={() => navigate('/services')}
-                  className="edit-button"
+                  className="profile-edit-button"
                 >
                   Đặt dịch vụ mới
                 </Button>
@@ -1263,9 +1263,9 @@ const ProfilePage = () => {
             </div>
 
             {error && (
-              <div className="alert alert-error" role="alert">
-                <AlertCircleIcon className="alert-icon" />
-                <div className="alert-content">
+              <div className="profile-alert profile-alert-error" role="profile-alert">
+                <AlertCircleIcon className="profile-alert-icon" />
+                <div className="profile-alert-content">
                   <strong>Lỗi</strong>
                   <p>{error}</p>
                 </div>
@@ -1273,9 +1273,9 @@ const ProfilePage = () => {
             )}
 
             {success && (
-              <div className="alert alert-success" role="alert">
-                <CheckCircleIcon className="alert-icon" />
-                <div className="alert-content">
+              <div className="profile-alert profile-alert-success" role="profile-alert">
+                <CheckCircleIcon className="profile-alert-icon" />
+                <div className="profile-alert-content">
                   <strong>Thành công</strong>
                   <p>{success}</p>
                 </div>
@@ -1284,7 +1284,7 @@ const ProfilePage = () => {
 
             {/* Personal Info Tab */}
             {activeTab === 'personal' && (
-            <div className="profile-form-compact">
+            <div className="profile-profile-form-compact">
               {/* Level Progress Bar */}
               {!levelLoading && userId && level && (
                 <LevelProgressBar
@@ -1303,18 +1303,18 @@ const ProfilePage = () => {
               )}
               {/* Avatar Section - Top - Chỉ hiện khi đang chỉnh sửa */}
               {isEditing && (
-                <div className="avatar-section-compact">
-                  <div className="avatar-wrapper-compact">
-                    <div className="avatar-preview-compact">
+                <div className="profile-avatar-section-compact">
+                  <div className="profile-avatar-wrapper-compact">
+                    <div className="profile-avatar-preview-compact">
                       {formData.avatar ? (
                         <img src={formData.avatar} alt="Avatar" />
                       ) : (
-                        <div className="avatar-placeholder-compact">
+                        <div className="profile-avatar-placeholder-compact">
                           {formData.name ? formData.name.substring(0, 2).toUpperCase() : 'U'}
                         </div>
                       )}
                     </div>
-                    <label htmlFor="avatar-upload" className="avatar-change-button">
+                    <label htmlFor="avatar-upload" className="profile-avatar-change-button">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="4"/>
@@ -1332,7 +1332,7 @@ const ProfilePage = () => {
                     />
                   </div>
                   {(fieldErrors as { [key: string]: string }).avatar && (
-                    <span className="field-error" role="alert">
+                    <span className="profile-field-error" role="profile-alert">
                       {(fieldErrors as { [key: string]: string }).avatar}
                     </span>
                   )}
@@ -1340,38 +1340,38 @@ const ProfilePage = () => {
               )}
 
               {/* Form Fields - 2 Columns Layout */}
-              <div className="profile-fields-grid">
+              <div className="profile-profile-fields-grid">
                 {/* Left Column */}
-                <div className="profile-fields-column">
-                  <div className="form-field-compact">
-                    <label htmlFor="name" className="form-label-compact">
-                      <UserIcon className="field-icon" />
-                      Họ và tên <span className="required">*</span>
+                <div className="profile-profile-fields-column">
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="name" className="profile-form-label-compact">
+                      <UserIcon className="profile-field-icon" />
+                      Họ và tên <span className="profile-required">*</span>
                     </label>
                     <input
                       type="text"
                       id="name"
                       name="name"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).name ? 'input-error' : ''}`}
+                      className={`profile-form-input-compact ${(fieldErrors as { [key: string]: string }).name ? 'profile-input-error' : ''}`}
                       value={formData.name}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('name', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      profile-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).name}
                       aria-describedby={(fieldErrors as { [key: string]: string }).name ? 'name-error' : undefined}
                       placeholder="Nhập họ và tên của bạn"
                     />
                     {(fieldErrors as { [key: string]: string }).name && (
-                      <span id="name-error" className="field-error" role="alert">
+                      <span id="name-error" className="profile-field-error" role="profile-alert">
                         {(fieldErrors as { [key: string]: string }).name}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="phone" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="phone" className="profile-form-label-compact">
+                      <svg className="profile-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                       </svg>
                       Số điện thoại
@@ -1380,37 +1380,37 @@ const ProfilePage = () => {
                       type="tel"
                       id="phone"
                       name="phone"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).phone ? 'input-error' : ''}`}
+                      className={`profile-form-input-compact ${(fieldErrors as { [key: string]: string }).phone ? 'profile-input-error' : ''}`}
                       value={formData.phone}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('phone', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      profile-required
                       placeholder="0901234567"
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).phone}
                       aria-describedby={(fieldErrors as { [key: string]: string }).phone ? 'phone-error' : undefined}
                     />
                     {(fieldErrors as { [key: string]: string }).phone && (
-                      <span id="phone-error" className="field-error" role="alert">
+                      <span id="phone-error" className="profile-field-error" role="profile-alert">
                         {(fieldErrors as { [key: string]: string }).phone}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="gender" className="form-label-compact">
-                      <UserIcon className="field-icon" />
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="gender" className="profile-form-label-compact">
+                      <UserIcon className="profile-field-icon" />
                       Giới tính
                     </label>
                     <select
                       id="gender"
                       name="gender"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).gender ? 'input-error' : ''}`}
+                      className={`profile-form-input-compact ${(fieldErrors as { [key: string]: string }).gender ? 'profile-input-error' : ''}`}
                       value={formData.gender}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('gender', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      profile-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).gender}
                       aria-describedby={(fieldErrors as { [key: string]: string }).gender ? 'gender-error' : undefined}
                     >
@@ -1420,15 +1420,15 @@ const ProfilePage = () => {
                       <option value="Khác">Khác</option>
                     </select>
                     {(fieldErrors as { [key: string]: string }).gender && (
-                      <span id="gender-error" className="field-error" role="alert">
+                      <span id="gender-error" className="profile-field-error" role="profile-alert">
                         {(fieldErrors as { [key: string]: string }).gender}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="address" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="address" className="profile-form-label-compact">
+                      <svg className="profile-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                         <circle cx="12" cy="10" r="3"/>
                       </svg>
@@ -1438,18 +1438,18 @@ const ProfilePage = () => {
                       type="text"
                       id="address"
                       name="address"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).address ? 'input-error' : ''}`}
+                      className={`profile-form-input-compact ${(fieldErrors as { [key: string]: string }).address ? 'profile-input-error' : ''}`}
                       value={formData.address}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('address', e.target.value)}
-                      required
+                      profile-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).address}
                       aria-describedby={(fieldErrors as { [key: string]: string }).address ? 'address-error' : undefined}
                       disabled={!isEditing}
                       placeholder="123 Đường ABC, Quận 1, TP.HCM"
                     />
                     {(fieldErrors as { [key: string]: string }).address && (
-                      <span id="address-error" className="field-error" role="alert">
+                      <span id="address-error" className="profile-field-error" role="profile-alert">
                         {(fieldErrors as { [key: string]: string }).address}
                       </span>
                     )}
@@ -1457,10 +1457,10 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="profile-fields-column">
-                  <div className="form-field-compact">
-                    <label htmlFor="email" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="profile-profile-fields-column">
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="email" className="profile-form-label-compact">
+                      <svg className="profile-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                         <polyline points="22,6 12,13 2,6"/>
                       </svg>
@@ -1470,23 +1470,23 @@ const ProfilePage = () => {
                       type="email"
                       id="email"
                       name="email"
-                      className="form-input-compact"
+                      className="profile-form-input-compact"
                       value={formData.email}
                       disabled
                       readOnly
                     />
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="dob" className="form-label-compact">
-                      <CalendarIcon className="field-icon" />
+                  <div className="profile-form-field-compact">
+                    <label htmlFor="dob" className="profile-form-label-compact">
+                      <CalendarIcon className="profile-field-icon" />
                       Ngày sinh
                     </label>
                     <input
                       type="date"
                       id="dob"
                       name="dob"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).dob ? 'input-error' : ''}`}
+                      className={`profile-form-input-compact ${(fieldErrors as { [key: string]: string }).dob ? 'profile-input-error' : ''}`}
                       value={formData.dob}
                       onChange={handleInputChange}
                       onFocus={(e) => {
@@ -1497,7 +1497,7 @@ const ProfilePage = () => {
                       }}
                       onBlur={(e) => validateField('dob', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      profile-required
                       max={(() => {
                         // Max date là 18 năm trước từ hôm nay
                         const today = new Date();
@@ -1509,7 +1509,7 @@ const ProfilePage = () => {
                       aria-describedby={(fieldErrors as { [key: string]: string }).dob ? 'dob-error' : undefined}
                     />
                     {(fieldErrors as { [key: string]: string }).dob && (
-                      <span id="dob-error" className="field-error" role="alert">
+                      <span id="dob-error" className="profile-field-error" role="profile-alert">
                         {(fieldErrors as { [key: string]: string }).dob}
                       </span>
                     )}
@@ -1521,12 +1521,12 @@ const ProfilePage = () => {
 
             {/* Bookings Tab */}
             {activeTab === 'bookings' && (
-              <div className="tab-content">
+              <div className="profile-tab-content">
                 {loadingBookings ? (
                   <LoadingSpinner message="Đang tải lịch sử đặt dịch vụ..." />
                 ) : bookings.length === 0 ? (
-                  <div className="empty-state">
-                    <CalendarIcon className="empty-state-icon" />
+                  <div className="profile-empty-state">
+                    <CalendarIcon className="profile-empty-state-icon" />
                     <h3>Chưa có đặt dịch vụ nào</h3>
                     <p>Bạn chưa có đặt dịch vụ nào. Hãy khám phá và đặt dịch vụ ngay!</p>
                     <Button variant="default" onClick={() => navigate('/services')}>
@@ -1534,7 +1534,7 @@ const ProfilePage = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="bookings-list">
+                  <div className="profile-bookings-list">
                     {bookings.map((booking) => {
                       const statusDisplay = getBookingStatusDisplay(booking.Status || booking.status);
                       const bookingId = booking.Id || booking.id;
@@ -1548,24 +1548,24 @@ const ProfilePage = () => {
                       const serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
                       
                       return (
-                        <div key={bookingId} className="booking-card card">
+                        <div key={bookingId} className="profile-booking-card card">
                           <div className="card-content">
-                            <div className="booking-card-content">
-                              <div className="booking-card-left">
-                                <div className="booking-image">
+                            <div className="profile-booking-card-content">
+                              <div className="profile-booking-card-left">
+                                <div className="profile-booking-image">
                                   <LazyImage
                                     src={serviceImage}
                                     alt={serviceName}
-                                    className="booking-image-img"
+                                    className="profile-booking-image-img"
                                     fallbackSrc="/img/banahills.jpg"
                                   />
                                 </div>
-                                <div className="booking-info">
-                                  <h3 className="booking-service-name">{serviceName}</h3>
-                                  <div className="booking-details">
+                                <div className="profile-booking-info">
+                                  <h3 className="profile-booking-service-name">{serviceName}</h3>
+                                  <div className="profile-booking-details">
                                     {booking.StartDate && (
-                                      <div className="booking-detail-item">
-                                        <CalendarIcon className="detail-icon" />
+                                      <div className="profile-booking-detail-item">
+                                        <CalendarIcon className="profile-detail-icon" />
                                         <span>
                                           {formatDate(booking.StartDate || booking.startDate)}
                                           {booking.EndDate && ` - ${formatDate(booking.EndDate || booking.endDate)}`}
@@ -1573,27 +1573,27 @@ const ProfilePage = () => {
                                       </div>
                                     )}
                                     {booking.Quantity && (
-                                      <div className="booking-detail-item">
-                                        <UserIcon className="detail-icon" />
+                                      <div className="profile-booking-detail-item">
+                                        <UserIcon className="profile-detail-icon" />
                                         <span>Số người: {booking.Quantity || booking.quantity}</span>
                                       </div>
                                     )}
                                     {booking.TotalAmount && (
-                                      <div className="booking-detail-item">
-                                        <span className="booking-price">
+                                      <div className="profile-booking-detail-item">
+                                        <span className="profile-booking-price">
                                           Tổng tiền: {formatPrice(booking.TotalAmount || booking.totalAmount)}
                                         </span>
                                       </div>
                                     )}
                                   </div>
-                                  <div className="booking-status-row">
-                                    <Badge className={`status-badge ${statusDisplay.className}`}>
+                                  <div className="profile-booking-status-row">
+                                    <Badge className={`profile-status-badge ${statusDisplay.className}`}>
                                       {statusDisplay.text}
                                     </Badge>
                                   </div>
                                 </div>
                               </div>
-                              <div className="booking-card-actions">
+                              <div className="profile-booking-card-actions">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1610,7 +1610,7 @@ const ProfilePage = () => {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="cancel-booking-btn"
+                                    className="profile-cancel-booking-btn"
                                     onClick={async () => {
                                       if (window.confirm('Bạn có chắc muốn hủy đặt dịch vụ này?')) {
                                         try {
@@ -1662,12 +1662,12 @@ const ProfilePage = () => {
 
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
-              <div className="tab-content">
+              <div className="profile-tab-content">
                 {loadingReviews ? (
                   <LoadingSpinner message="Đang tải đánh giá..." />
                 ) : error && error.includes('đánh giá') ? (
-                  <div className="empty-state">
-                    <AlertCircleIcon className="empty-state-icon" />
+                  <div className="profile-empty-state">
+                    <AlertCircleIcon className="profile-empty-state-icon" />
                     <h3>Không thể tải đánh giá</h3>
                     <p>{error}</p>
                     <Button variant="default" onClick={() => {
@@ -1682,8 +1682,8 @@ const ProfilePage = () => {
                     </Button>
                   </div>
                 ) : !reviews || reviews.length === 0 ? (
-                  <div className="empty-state">
-                    <StarIcon className="empty-state-icon" />
+                  <div className="profile-empty-state">
+                    <StarIcon className="profile-empty-state-icon" />
                     <h3>Chưa có đánh giá nào</h3>
                     <p>Bạn chưa đánh giá dịch vụ nào. Hãy đánh giá sau khi sử dụng dịch vụ!</p>
                     <Button variant="default" onClick={() => navigate('/services')}>
@@ -1693,12 +1693,12 @@ const ProfilePage = () => {
                 ) : (
                   <>
                     {/* Filter and Sort Controls */}
-                    <div className="reviews-controls">
-                      <div className="filter-group">
-                        <label htmlFor="rating-filter" className="filter-label">Lọc theo sao:</label>
+                    <div className="profile-reviews-controls">
+                      <div className="profile-filter-group">
+                        <label htmlFor="rating-filter" className="profile-filter-label">Lọc theo sao:</label>
                         <select
                           id="rating-filter"
-                          className="filter-select"
+                          className="profile-filter-select"
                           value={reviewFilterRating}
                           onChange={(e) => setReviewFilterRating(parseInt(e.target.value))}
                         >
@@ -1710,11 +1710,11 @@ const ProfilePage = () => {
                           <option value={1}>1 sao</option>
                         </select>
                       </div>
-                      <div className="sort-group">
-                        <label htmlFor="sort-by" className="filter-label">Sắp xếp:</label>
+                      <div className="profile-sort-group">
+                        <label htmlFor="sort-by" className="profile-filter-label">Sắp xếp:</label>
                         <select
                           id="sort-by"
-                          className="filter-select"
+                          className="profile-filter-select"
                           value={reviewSortBy}
                           onChange={(e) => setReviewSortBy(e.target.value)}
                         >
@@ -1724,16 +1724,16 @@ const ProfilePage = () => {
                           <option value="lowest">Thấp nhất</option>
                         </select>
                       </div>
-                      <div className="results-count">
+                      <div className="profile-results-count">
                         Hiển thị {sortedAndFilteredReviews.length} / {reviews.length} đánh giá
                       </div>
                     </div>
 
                     {/* Reviews List */}
-                    <div className="reviews-list">
+                    <div className="profile-reviews-list">
                       {sortedAndFilteredReviews.length === 0 ? (
-                        <div className="empty-state">
-                          <StarIcon className="empty-state-icon" />
+                        <div className="profile-empty-state">
+                          <StarIcon className="profile-empty-state-icon" />
                           <h3>Không tìm thấy đánh giá</h3>
                           <p>Không có đánh giá nào phù hợp với bộ lọc đã chọn.</p>
                           <Button variant="outline" onClick={() => setReviewFilterRating(0)}>
@@ -1773,27 +1773,27 @@ const ProfilePage = () => {
                         const isEditing = editingReviewId === reviewId;
                         
                         return (
-                          <div key={reviewId} className="review-card-enhanced">
+                          <div key={reviewId} className="profile-review-card-enhanced">
                             {isEditing ? (
                               /* Edit Mode */
-                              <div className="review-edit-form">
-                                <div className="review-form-rating">
+                              <div className="profile-review-edit-form">
+                                <div className="profile-review-form-rating">
                                   <label>Đánh giá:</label>
-                                  <div className="star-rating-input">
+                                  <div className="profile-star-rating-input">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <button
                                         key={star}
                                         type="button"
-                                        className={`star-button ${star <= editReviewForm.rating ? 'active' : ''}`}
+                                        className={`profile-star-button ${star <= editReviewForm.rating ? 'profile-active' : ''}`}
                                         onClick={() => setEditReviewForm({ ...editReviewForm, rating: star })}
                                         aria-label={`${star} sao`}
                                       >
-                                        <StarIcon className="star-icon" filled={star <= editReviewForm.rating} />
+                                        <StarIcon className="profile-star-icon" filled={star <= editReviewForm.rating} />
                                       </button>
                                     ))}
                                   </div>
                                 </div>
-                                <div className="review-form-comment">
+                                <div className="profile-review-form-comment">
                                   <label htmlFor={`edit-comment-${reviewId}`}>Nhận xét:</label>
                                   <textarea
                                     id={`edit-comment-${reviewId}`}
@@ -1803,11 +1803,11 @@ const ProfilePage = () => {
                                     placeholder="Chia sẻ trải nghiệm của bạn về dịch vụ này..."
                                     maxLength={1000}
                                   />
-                                  <div className="char-count-wrapper">
-                                    <span className="char-count">{editReviewForm.comment.length}/1000 ký tự</span>
+                                  <div className="profile-char-count-wrapper">
+                                    <span className="profile-char-count">{editReviewForm.comment.length}/1000 ký tự</span>
                                   </div>
                                 </div>
-                                <div className="review-form-actions">
+                                <div className="profile-review-form-actions">
                                   <Button
                                     variant="outline"
                                     onClick={() => {
@@ -1829,17 +1829,17 @@ const ProfilePage = () => {
                               </div>
                             ) : (
                               /* View Mode - Layout theo yêu cầu */
-                              <div className="review-content-wrapper">
+                              <div className="profile-review-content-wrapper">
                                 {/* Main Content: Image + Info */}
-                                <div className="review-main-content">
+                                <div className="profile-review-main-content">
                                   {/* Service Image - Left */}
-                                  <div className="review-image-container">
+                                  <div className="profile-review-image-container">
                                     {serviceId ? (
                                       <Link to={`/services/${serviceId}`}>
                                         <LazyImage
                                           src={serviceImage}
                                           alt={serviceName}
-                                          className="review-service-image"
+                                          className="profile-review-service-image"
                                           fallbackSrc="/img/banahills.jpg"
                                         />
                                       </Link>
@@ -1847,41 +1847,41 @@ const ProfilePage = () => {
                                       <LazyImage
                                         src={serviceImage}
                                         alt={serviceName}
-                                        className="review-service-image"
+                                        className="profile-review-service-image"
                                         fallbackSrc="/img/banahills.jpg"
                                       />
                                     )}
                                   </div>
 
                                   {/* Service Info - Right */}
-                                  <div className="review-info-container">
+                                  <div className="profile-review-info-container">
                                     {serviceId ? (
-                                      <Link to={`/services/${serviceId}`} className="review-service-link">
-                                        <h3 className="review-service-title">{serviceName}</h3>
+                                      <Link to={`/services/${serviceId}`} className="profile-review-service-link">
+                                        <h3 className="profile-review-service-title">{serviceName}</h3>
                                       </Link>
                                     ) : (
-                                      <h3 className="review-service-title">{serviceName}</h3>
+                                      <h3 className="profile-review-service-title">{serviceName}</h3>
                                     )}
                                     
                                     {createdAt && (
-                                      <div className="review-date-row">
-                                        <CalendarIcon className="review-date-icon" />
+                                      <div className="profile-review-date-row">
+                                        <CalendarIcon className="profile-review-date-icon" />
                                         <span>{formatDate(createdAt)}</span>
                                       </div>
                                     )}
                                     
                                     {rating > 0 && (
-                                      <div className="review-rating-row">
-                                        <div className="review-stars-inline">
+                                      <div className="profile-review-rating-row">
+                                        <div className="profile-review-stars-inline">
                                           {[1, 2, 3, 4, 5].map((star) => (
                                             <StarIcon
                                               key={star}
-                                              className="review-star-inline"
+                                              className="profile-review-star-inline"
                                               filled={star <= rating}
                                             />
                                           ))}
                                         </div>
-                                        <span className="review-rating-text-inline">
+                                        <span className="profile-review-rating-text-inline">
                                           ({rating.toFixed(1)})
                                         </span>
                                       </div>
@@ -1889,38 +1889,38 @@ const ProfilePage = () => {
                                   </div>
 
                                   {/* Actions Menu - Top Right */}
-                                  <div className="review-menu-wrapper">
+                                  <div className="profile-review-menu-wrapper">
                                     <button
-                                      className="review-menu-button"
+                                      className="profile-review-menu-button"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setOpenReviewMenuId(openReviewMenuId === reviewId ? null : reviewId);
                                       }}
                                       aria-label="Tùy chọn"
                                     >
-                                      <MoreVerticalIcon className="review-menu-icon" />
+                                      <MoreVerticalIcon className="profile-review-menu-icon" />
                                     </button>
                                     {openReviewMenuId === reviewId && (
-                                      <div className="review-menu-dropdown">
+                                      <div className="profile-review-menu-dropdown">
                                         <button
-                                          className="review-menu-item"
+                                          className="profile-review-menu-item"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleEditReview(review);
                                           }}
                                         >
-                                          <EditIcon className="review-menu-item-icon" />
+                                          <EditIcon className="profile-review-menu-item-icon" />
                                           <span>Chỉnh sửa</span>
                                         </button>
                                         <button
-                                          className="review-menu-item review-menu-item-delete"
+                                          className="profile-review-menu-item profile-review-menu-item-delete"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteReview(reviewId);
                                           }}
                                           disabled={deletingReviewId === reviewId}
                                         >
-                                          <TrashIcon className="review-menu-item-icon" />
+                                          <TrashIcon className="profile-review-menu-item-icon" />
                                           <span>{deletingReviewId === reviewId ? 'Đang xóa...' : 'Xóa'}</span>
                                         </button>
                                       </div>
@@ -1930,8 +1930,8 @@ const ProfilePage = () => {
 
                                 {/* Comment Section - Below */}
                                 {comment && (
-                                  <div className="review-comment-wrapper">
-                                    <p className="review-comment-text">{comment}</p>
+                                  <div className="profile-review-comment-wrapper">
+                                    <p className="profile-review-comment-text">{comment}</p>
                                   </div>
                                 )}
                               </div>
@@ -1941,7 +1941,7 @@ const ProfilePage = () => {
                       } catch (err) {
                         console.error(' ProfilePage: Lỗi khi render review:', err, review);
                         return (
-                          <div key={`error-${index}`} className="review-card card">
+                          <div key={`error-${index}`} className="profile-review-card card">
                             <div className="card-content">
                               <p>Lỗi khi hiển thị đánh giá này</p>
                             </div>
@@ -1958,9 +1958,9 @@ const ProfilePage = () => {
 
             {/* Notifications Tab */}
             {activeTab === 'notifications' && (
-              <div className="tab-content">
-                <div className="empty-state">
-                  <BellIcon className="empty-state-icon" />
+              <div className="profile-tab-content">
+                <div className="profile-empty-state">
+                  <BellIcon className="profile-empty-state-icon" />
                   <h3>Chức năng đang phát triển</h3>
                   <p>Chức năng thông báo đang được phát triển. Vui lòng quay lại sau!</p>
                 </div>
@@ -1969,9 +1969,9 @@ const ProfilePage = () => {
 
             {/* Settings Tab */}
             {activeTab === 'settings' && (
-              <div className="tab-content">
-                <div className="empty-state">
-                  <SettingsIcon className="empty-state-icon" />
+              <div className="profile-tab-content">
+                <div className="profile-empty-state">
+                  <SettingsIcon className="profile-empty-state-icon" />
                   <h3>Chức năng đang phát triển</h3>
                   <p>Chức năng cài đặt đang được phát triển. Vui lòng quay lại sau!</p>
                 </div>

@@ -1,10 +1,10 @@
 /* Revenue Management Styles */
 
-.revenue-management {
+.revenue-mgr-revenue-management {
   width: 100%;
 }
 
-.revenue-content {
+.revenue-mgr-revenue-content {
   padding: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
@@ -13,11 +13,11 @@
   overflow: visible !important;
 }
 
-.revenue-stats-section {
+.revenue-mgr-revenue-stats-section {
   margin-bottom: var(--spacing-xl);
 }
 
-.revenue-section-title {
+.revenue-mgr-revenue-section-title {
   font-size: 1.5em;
   font-weight: bold;
   display: flex;
@@ -25,7 +25,7 @@
   color: var(--primary-color);
 }
 
-.revenue-stats-grid {
+.revenue-mgr-revenue-stats-grid {
   display: grid;
   margin-top: 0.5rem;
   grid-template-columns: repeat(5, 1fr);
@@ -33,7 +33,7 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.revenue-stat-card {
+.revenue-mgr-revenue-stat-card {
   background: var(--white);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
@@ -43,46 +43,46 @@
   transition: var(--transition);
 }
 
-.revenue-stat-card:hover {
+.revenue-mgr-revenue-stat-card:hover {
   box-shadow: var(--shadow-hover);
   transform: translateY(-2px);
 }
 
-.revenue-stat-label {
+.revenue-mgr-revenue-stat-label {
   font-size: 0.9em;
   color: var(--text-muted);
   margin-bottom: var(--spacing-xs);
   font-weight: 500;
 }
 
-.revenue-stat-value {
+.revenue-mgr-revenue-stat-value {
   font-size: 2em;
   font-weight: bold;
   color: var(--primary-color);
 }
 
-.revenue-stat-accepted {
+.revenue-mgr-revenue-stat-accepted {
   color: #2e7d32;
 }
 
-.revenue-stat-rejected {
+.revenue-mgr-revenue-stat-rejected {
   color: #c62828;
 }
 
-.revenue-stat-pending {
+.revenue-mgr-revenue-stat-pending {
   color: #f57c00;
 }
 
-.revenue-stat-completed {
+.revenue-mgr-revenue-stat-completed {
   color: #1976d2;
 }
 
-.revenue-chart-section {
+.revenue-mgr-revenue-chart-section {
   margin-top: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
 }
 
-.revenue-chart-container {
+.revenue-mgr-revenue-chart-container {
   background: var(--white);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
@@ -91,7 +91,7 @@
   margin-top: 0.5rem;
 }
 
-.revenue-date-filter {
+.revenue-mgr-revenue-date-filter {
   display: flex;
   gap: 1rem;
   align-items: flex-end;
@@ -99,19 +99,19 @@
   flex-wrap: wrap;
 }
 
-.revenue-date-filter-group {
+.revenue-mgr-revenue-date-filter-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.revenue-filter-label {
+.revenue-mgr-revenue-filter-label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
 }
 
-.revenue-filter-select {
+.revenue-mgr-revenue-filter-select {
   padding: 0.625rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -122,13 +122,13 @@
   min-width: 150px;
 }
 
-.revenue-filter-select:focus {
+.revenue-mgr-revenue-filter-select:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.revenue-filter-date {
+.revenue-mgr-revenue-filter-date {
   padding: 0.625rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -139,13 +139,13 @@
   min-width: 120px;
 }
 
-.revenue-filter-date:focus {
+.revenue-mgr-revenue-filter-date:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.revenue-chart-wrapper {
+.revenue-mgr-revenue-chart-wrapper {
   width: 100%;
   height: 400px;
   position: relative;
@@ -153,25 +153,25 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .revenue-stats-grid {
+  .revenue-mgr-revenue-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .revenue-date-filter {
+  .revenue-mgr-revenue-date-filter {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .revenue-date-filter-group {
+  .revenue-mgr-revenue-date-filter-group {
     width: 100%;
   }
 
-  .revenue-filter-select,
-  .revenue-filter-date {
+  .revenue-mgr-revenue-filter-select,
+  .revenue-mgr-revenue-filter-date {
     width: 100%;
   }
 
-  .revenue-chart-wrapper {
+  .revenue-mgr-revenue-chart-wrapper {
     height: 300px;
   }
 }

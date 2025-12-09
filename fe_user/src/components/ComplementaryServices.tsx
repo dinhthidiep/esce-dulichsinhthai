@@ -3,9 +3,11 @@ import Badge from './ui/Badge'
 import { 
   AlertCircleIcon
 } from './icons/index'
-import type { MembershipTier, ComplementaryService, TierComplementaryServices } from '~/mockdata/index'
-import { mockComplementaryServices } from '~/mockdata/index'
+import type { MembershipTier, ComplementaryService, TierComplementaryServices } from '~/types/membership'
 import './ComplementaryServices.css'
+
+// Dữ liệu ưu đãi sẽ được lấy từ API sau; hiện để map rỗng
+const complementaryServicesByTier: Partial<Record<MembershipTier, TierComplementaryServices>> = {}
 
 interface ComplementaryServicesProps {
   userTier: MembershipTier
@@ -29,7 +31,7 @@ const ComplementaryServices = ({
       return
     }
     
-    const data = mockComplementaryServices[userTier]
+    const data = complementaryServicesByTier[userTier] || null
     setTierData(data)
     
     // Reset selection nếu user tier thay đổi
@@ -46,9 +48,9 @@ const ComplementaryServices = ({
   // Nếu customer chưa có gói thành viên (level 0)
   if (userTier === 'none') {
     return (
-      <div className="complementary-services-wrapper">
-        <div className="complementary-services-empty">
-          <p className="empty-message">
+      <div className="comp-complementary-services-wrapper">
+        <div className="comp-complementary-services-empty">
+          <p className="comp-empty-message">
             Bạn đang ở cấp 0. <a href="/services">Đặt ngay</a> để tích lũy và nhận ưu đãi đặc biệt!
           </p>
         </div>
@@ -59,9 +61,9 @@ const ComplementaryServices = ({
   // Nếu không có data hoặc không có dịch vụ nào
   if (!tierData || tierData.availableServices.length === 0) {
     return (
-      <div className="complementary-services-wrapper">
-        <div className="complementary-services-empty">
-          <p className="empty-message">
+      <div className="comp-complementary-services-wrapper">
+        <div className="comp-complementary-services-empty">
+          <p className="comp-empty-message">
             Hiện tại không có ưu đãi nào dành cho bạn.
           </p>
         </div>
@@ -106,22 +108,22 @@ const ComplementaryServices = ({
     .reduce((sum, s) => sum + s.value, 0)
 
   return (
-    <div className="complementary-services-wrapper">
-      <div className="services-header">
-        <h3 className="services-title">Ưu đãi dành cho bạn</h3>
-        <p className="services-subtitle">
+    <div className="comp-complementary-services-wrapper">
+      <div className="comp-services-header">
+        <h3 className="comp-services-title">Ưu đãi dành cho bạn</h3>
+        <p className="comp-services-subtitle">
           Chọn tối đa <strong>{tierData.maxSelectable}</strong> trong số <strong>{tierData.availableServices.length}</strong> ưu đãi
         </p>
       </div>
 
       {selectedCount >= tierData.maxSelectable && (
-        <div className="limit-reached-alert">
-          <AlertCircleIcon className="alert-icon" />
+        <div className="comp-limit-reached-alert">
+          <AlertCircleIcon className="comp-alert-icon" />
           <span>Bạn đã chọn đủ {tierData.maxSelectable} dịch vụ. Bỏ chọn một dịch vụ để chọn dịch vụ khác.</span>
         </div>
       )}
 
-      <div className="vouchers-list">
+      <div className="comp-vouchers-list">
         {tierData.availableServices.map((service) => {
           const isSelected = selectedServices.includes(service.id)
           const canSelect = !isSelected && selectedCount < tierData.maxSelectable
@@ -129,26 +131,26 @@ const ComplementaryServices = ({
           return (
             <div
               key={service.id}
-              className={`voucher-card ${isSelected ? 'selected' : ''} ${!canSelect && !isSelected ? 'disabled' : ''}`}
+              className={`comp-voucher-card ${isSelected ? 'comp-selected' : ''} ${!canSelect && !isSelected ? 'comp-disabled' : ''}`}
               onClick={() => handleToggleService(service.id)}
             >
-              <div className="voucher-checkbox">
+              <div className="comp-voucher-checkbox">
                 <input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => handleToggleService(service.id)}
                   disabled={disabled || (!canSelect && !isSelected)}
-                  className="checkbox-input"
+                  className="comp-checkbox-input"
                 />
-                <div className={`checkbox-custom ${isSelected ? 'checked' : ''}`}>
-                  {isSelected && <span className="check-mark">✓</span>}
+                <div className={`comp-checkbox-custom ${isSelected ? 'comp-checked' : ''}`}>
+                  {isSelected && <span className="comp-check-mark">✓</span>}
                 </div>
               </div>
-              <div className="voucher-content">
-                <h4 className="voucher-name">{service.name}</h4>
-                <p className="voucher-description">{service.description}</p>
-                <div className="voucher-value">
-                  {new Intl.NumberFormat('vi-VN').format(service.value)} <span className="value-currency">VNĐ</span>
+              <div className="comp-voucher-content">
+                <h4 className="comp-voucher-name">{service.name}</h4>
+                <p className="comp-voucher-description">{service.description}</p>
+                <div className="comp-voucher-value">
+                  {new Intl.NumberFormat('vi-VN').format(service.value)} <span className="comp-value-currency">VNĐ</span>
                 </div>
               </div>
             </div>
@@ -157,11 +159,11 @@ const ComplementaryServices = ({
       </div>
 
       {selectedCount > 0 && (
-        <div className="selection-summary">
-          <div className="summary-info">
+        <div className="comp-selection-summary">
+          <div className="comp-summary-info">
             <span>Đã chọn: <strong>{selectedCount}/{tierData.maxSelectable}</strong></span>
             {totalValue > 0 && (
-              <span className="total-value">
+              <span className="comp-total-value">
                 Tổng giá trị: <strong>{new Intl.NumberFormat('vi-VN').format(totalValue)} VNĐ</strong>
               </span>
             )}

@@ -150,9 +150,9 @@ const RegisterAgency = () => {
           certificateId: (response as any)?.agencyId || (response as any)?.id
         }
       })
-    } catch (error: any) {
+    } catch (reg-agency-error: any) {
       setErrors({
-        submit: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+        submit: reg-agency-error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
       })
     } finally {
       setLoading(false)
@@ -160,39 +160,39 @@ const RegisterAgency = () => {
   }
 
   return (
-    <div className="register-agency-page">
+    <div className="reg-agency-register-agency-page">
       <Header />
-      <main className="register-agency-main">
-        <div className="register-agency-container">
+      <main className="reg-agency-register-agency-main">
+        <div className="reg-agency-register-agency-container">
           {/* Header */}
-          <div className="register-agency-header">
+          <div className="reg-agency-register-agency-header">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/upgrade-account')}
-              className="back-button"
+              className="reg-agency-back-button"
             >
-              <ArrowLeftIcon className="back-icon" />
+              <ArrowLeftIcon className="reg-agency-back-icon" />
               Quay lại
             </Button>
-            <div className="register-agency-title-section">
-              <h1 className="register-agency-title">Đăng ký trở thành Agency</h1>
-              <p className="register-agency-subtitle">
+            <div className="reg-agency-register-agency-title-section">
+              <h1 className="reg-agency-register-agency-title">Đăng ký trở thành Agency</h1>
+              <p className="reg-agency-register-agency-subtitle">
                 Điền thông tin để nâng cấp tài khoản của bạn lên Agency
               </p>
             </div>
           </div>
 
           {/* Form */}
-          <Card className="register-agency-form-card">
+          <Card className="reg-agency-register-agency-form-card">
               <CardContent>
-                <form onSubmit={handleSubmit} className="register-agency-form">
-                  <div className="form-section">
-                    <h2 className="section-title">Thông tin công ty</h2>
+                <form onSubmit={handleSubmit} className="reg-agency-register-agency-form">
+                  <div className="reg-agency-form-section">
+                    <h2 className="reg-agency-section-title">Thông tin công ty</h2>
                     
-                    <div className="form-group">
-                      <label htmlFor="companyName" className="form-label">
-                        Tên công ty <span className="required">*</span>
+                    <div className="reg-agency-form-group">
+                      <label htmlFor="companyName" className="reg-agency-form-label">
+                        Tên công ty <span className="reg-agency-required">*</span>
                       </label>
                       <input
                         type="text"
@@ -200,21 +200,21 @@ const RegisterAgency = () => {
                         name="companyName"
                         value={form.companyName}
                         onChange={handleChange}
-                        className={`form-input ${errors.companyName ? 'error' : ''}`}
+                        className={`reg-agency-form-input ${errors.companyName ? 'reg-agency-error' : ''}`}
                         placeholder="Nhập tên công ty của bạn"
                         disabled={loading}
                       />
                       {errors.companyName && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-agency-error-message">
+                          <AlertCircleIcon className="reg-agency-error-icon" />
                           <span>{errors.companyName}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="phone" className="form-label">
-                        Số điện thoại <span className="required">*</span>
+                    <div className="reg-agency-form-group">
+                      <label htmlFor="phone" className="reg-agency-form-label">
+                        Số điện thoại <span className="reg-agency-required">*</span>
                       </label>
                       <input
                         type="tel"
@@ -222,21 +222,21 @@ const RegisterAgency = () => {
                         name="phone"
                         value={form.phone}
                         onChange={handleChange}
-                        className={`form-input ${errors.phone ? 'error' : ''}`}
+                        className={`reg-agency-form-input ${errors.phone ? 'reg-agency-error' : ''}`}
                         placeholder="Nhập số điện thoại"
                         disabled={loading}
                       />
                       {errors.phone && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-agency-error-message">
+                          <AlertCircleIcon className="reg-agency-error-icon" />
                           <span>{errors.phone}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="email" className="form-label">
-                        Email <span className="required">*</span>
+                    <div className="reg-agency-form-group">
+                      <label htmlFor="email" className="reg-agency-form-label">
+                        Email <span className="reg-agency-required">*</span>
                       </label>
                       <input
                         type="email"
@@ -244,20 +244,20 @@ const RegisterAgency = () => {
                         name="email"
                         value={form.email}
                         onChange={handleChange}
-                        className={`form-input ${errors.email ? 'error' : ''}`}
+                        className={`reg-agency-form-input ${errors.email ? 'reg-agency-error' : ''}`}
                         placeholder="Nhập email liên hệ"
                         disabled={loading}
                       />
                       {errors.email && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-agency-error-message">
+                          <AlertCircleIcon className="reg-agency-error-icon" />
                           <span>{errors.email}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="website" className="form-label">
+                    <div className="reg-agency-form-group">
+                      <label htmlFor="website" className="reg-agency-form-label">
                         Website (tùy chọn)
                       </label>
                       <input
@@ -266,23 +266,23 @@ const RegisterAgency = () => {
                         name="website"
                         value={form.website}
                         onChange={handleChange}
-                        className={`form-input ${errors.website ? 'error' : ''}`}
+                        className={`reg-agency-form-input ${errors.website ? 'reg-agency-error' : ''}`}
                         placeholder="https://example.com"
                         disabled={loading}
                       />
                       {errors.website && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-agency-error-message">
+                          <AlertCircleIcon className="reg-agency-error-icon" />
                           <span>{errors.website}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="licenseFile" className="form-label">
-                        Giấy phép kinh doanh <span className="required">*</span>
+                    <div className="reg-agency-form-group">
+                      <label htmlFor="licenseFile" className="reg-agency-form-label">
+                        Giấy phép kinh doanh <span className="reg-agency-required">*</span>
                       </label>
-                      <div className="file-upload-area">
+                      <div className="reg-agency-file-upload-area">
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -290,19 +290,19 @@ const RegisterAgency = () => {
                           name="licenseFile"
                           onChange={handleFileChange}
                           accept="image/jpeg,image/png,image/jpg,application/pdf"
-                          className="file-input"
+                          className="reg-agency-file-input"
                           disabled={loading}
                         />
                         <div 
-                          className={`file-upload-box ${errors.licenseFile ? 'error' : ''}`}
+                          className={`reg-agency-file-upload-box ${errors.licenseFile ? 'reg-agency-error' : ''}`}
                           onClick={() => !loading && fileInputRef.current?.click()}
                         >
                           {licensePreview ? (
-                            <div className="file-preview">
+                            <div className="reg-agency-file-preview">
                               <img src={licensePreview} alt="Preview" />
                               <button
                                 type="button"
-                                className="remove-file"
+                                className="reg-agency-remove-file"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   setForm((prev) => ({ ...prev, licenseFile: null }))
@@ -317,16 +317,16 @@ const RegisterAgency = () => {
                               </button>
                             </div>
                           ) : (
-                            <div className="file-upload-placeholder">
-                              <UploadIcon className="upload-icon" />
+                            <div className="reg-agency-file-upload-placeholder">
+                              <UploadIcon className="reg-agency-upload-icon" />
                               <p>Tải lên giấy phép kinh doanh</p>
-                              <span className="file-hint">JPG, PNG hoặc PDF (tối đa 5MB)</span>
+                              <span className="reg-agency-file-hint">JPG, PNG hoặc PDF (tối đa 5MB)</span>
                             </div>
                           )}
                         </div>
                         {errors.licenseFile && (
-                          <div className="error-message">
-                            <AlertCircleIcon className="error-icon" />
+                          <div className="reg-agency-error-message">
+                            <AlertCircleIcon className="reg-agency-error-icon" />
                             <span>{errors.licenseFile}</span>
                           </div>
                         )}
@@ -335,40 +335,40 @@ const RegisterAgency = () => {
                   </div>
 
                   {errors.submit && (
-                    <Card className="error-alert-card">
+                    <Card className="reg-agency-error-alert-card">
                       <CardContent>
-                        <div className="error-alert">
-                          <AlertCircleIcon className="error-alert-icon" />
+                        <div className="reg-agency-error-alert">
+                          <AlertCircleIcon className="reg-agency-error-alert-icon" />
                           <span>{errors.submit}</span>
                         </div>
                       </CardContent>
                     </Card>
                   )}
 
-                  <div className="form-actions">
+                  <div className="reg-agency-form-actions">
                     <Button
                       type="submit"
                       disabled={loading}
                       variant="default"
                       size="lg"
-                      className="submit-button"
+                      className="reg-agency-submit-button"
                     >
                       {loading ? (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="spinner-small"></span>
+                          <span className="reg-agency-spinner-small"></span>
                           Đang xử lý...
                         </span>
                       ) : (
                         <>
                           Gửi yêu cầu nâng cấp
-                          <ArrowRightIcon className="button-icon" />
+                          <ArrowRightIcon className="reg-agency-button-icon" />
                         </>
                       )}
                     </Button>
                   </div>
 
-                  <div className="form-note">
-                    <FileTextIcon className="note-icon" />
+                  <div className="reg-agency-form-note">
+                    <FileTextIcon className="reg-agency-note-icon" />
                     <div>
                       <strong>Lưu ý:</strong> Sau khi gửi yêu cầu, bạn sẽ cần thanh toán phí nâng cấp 1,000,000 VNĐ. 
                       Yêu cầu của bạn sẽ được Admin xét duyệt trong vòng 1-3 ngày làm việc.

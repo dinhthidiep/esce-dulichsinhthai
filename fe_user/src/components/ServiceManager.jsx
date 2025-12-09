@@ -8,7 +8,7 @@ const ServiceManager = () => {
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [srv-mgr-error, setError] = useState("");
     const [filterName, setFilterName] = useState("");
     const [sortOrder, setSortOrder] = useState("newest");
     const [userInfo, setUserInfo] = useState(null);
@@ -33,8 +33,8 @@ const ServiceManager = () => {
                 setFilteredServices((prevFiltered) =>
                     prevFiltered.filter((s) => (s.Id || s.id) !== serviceId)
                 );
-            } catch (error) {
-                console.error("Error deleting service:", error);
+            } catch (srv-mgr-error) {
+                console.srv-mgr-error("Error deleting service:", srv-mgr-error);
                 alert("Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.");
             }
         }
@@ -78,7 +78,7 @@ const ServiceManager = () => {
             return;
         }
 
-        // Reset loading and error
+        // Reset loading and srv-mgr-error
         setLoading(true);
         setError("");
 
@@ -105,9 +105,9 @@ const ServiceManager = () => {
                     }
                 }
             } catch (e) {
-                console.error("Error loading services:", e);
+                console.srv-mgr-error("Error loading services:", e);
                 if (mounted) {
-                    // If authentication error, redirect to login
+                    // If authentication srv-mgr-error, redirect to login
                     if (e.message && e.message.includes("Authentication")) {
                         localStorage.removeItem("token");
                         localStorage.removeItem("userInfo");
@@ -133,7 +133,7 @@ const ServiceManager = () => {
     }, []); // Only load once on mount
 
     return (
-        <div className="create-tour-page">
+        <div className="srv-mgr-create-tour-page">
             {/* Header */}
             <Header
                 showMenuButton={true}
@@ -142,29 +142,29 @@ const ServiceManager = () => {
             />
 
             {/* Page Title */}
-            <section className="content-title-display-box">
-                <div className="content-title-display-name">
+            <section className="srv-mgr-content-title-display-box">
+                <div className="srv-mgr-content-title-display-name">
                     <h2>Quản lý dịch vụ</h2>
                 </div>
             </section>
 
             {/* Main Content */}
             <main
-                className={`content ${sidebarActive ? "shift" : ""}`}
+                className={`srv-mgr-content ${sidebarActive ? "srv-mgr-shift" : ""}`}
                 role="main"
             >
-                <div className="form-content">
+                <div className="srv-mgr-form-content">
                     {/* Filter Section */}
-                    <div className="service-filter-container">
-                        <div className="filter-row">
-                            <div className="filter-field">
+                    <div className="srv-mgr-service-filter-container">
+                        <div className="srv-mgr-filter-row">
+                            <div className="srv-mgr-filter-field">
                                 <label htmlFor="filter-name">
                                     Lọc theo tên:
                                 </label>
                                 <input
                                     id="filter-name"
                                     type="text"
-                                    className="filter-input"
+                                    className="srv-mgr-filter-input"
                                     placeholder="Nhập tên dịch vụ..."
                                     value={filterName}
                                     onChange={(e) =>
@@ -177,11 +177,11 @@ const ServiceManager = () => {
                                     }}
                                 />
                             </div>
-                            <div className="filter-field">
+                            <div className="srv-mgr-filter-field">
                                 <label htmlFor="sort-order">Thứ tự:</label>
                                 <select
                                     id="sort-order"
-                                    className="filter-select"
+                                    className="srv-mgr-filter-select"
                                     value={sortOrder}
                                     onChange={(e) =>
                                         setSortOrder(e.target.value)
@@ -192,7 +192,7 @@ const ServiceManager = () => {
                                 </select>
                             </div>
                             <button
-                                className="btn-search"
+                                className="srv-mgr-btn-search"
                                 onClick={handleSearch}
                             >
                                 🔍 Tìm kiếm
@@ -200,9 +200,9 @@ const ServiceManager = () => {
                         </div>
                     </div>
 
-                    <div className="create-service-header">
+                    <div className="srv-mgr-create-service-header">
                         <button
-                            className="btn-create-new"
+                            className="srv-mgr-btn-create-new"
                             onClick={() => {
                                 window.location.href = "/create-service";
                             }}
@@ -214,28 +214,28 @@ const ServiceManager = () => {
                         console.log(
                             "Render check - loading:",
                             loading,
-                            "error:",
-                            error,
+                            "srv-mgr-error:",
+                            srv-mgr-error,
                             "filteredServices.length:",
                             filteredServices.length
                         );
                         return null;
                     })()}
                     {loading && <div>Đang tải...</div>}
-                    {error && (
-                        <div className="error" role="alert">
-                            {error}
+                    {srv-mgr-error && (
+                        <div className="srv-mgr-error" role="alert">
+                            {srv-mgr-error}
                         </div>
                     )}
-                    {!loading && !error && (
-                        <div className="services-grid">
+                    {!loading && !srv-mgr-error && (
+                        <div className="srv-mgr-services-grid">
                             {(() => {
                                 console.log(
-                                    "Inside services-grid - filteredServices:",
+                                    "Inside srv-mgr-services-grid - filteredServices:",
                                     filteredServices
                                 );
                                 return filteredServices.length === 0 ? (
-                                    <div className="no-services">
+                                    <div className="srv-mgr-no-services">
                                         Không có dịch vụ nào
                                     </div>
                                 ) : (
@@ -247,21 +247,21 @@ const ServiceManager = () => {
                                         return (
                                             <div
                                                 key={s.Id || s.id}
-                                                className="service-card"
+                                                className="srv-mgr-service-card"
                                             >
-                                                <div className="service-details">
-                                                    <h3 className="service-name">
+                                                <div className="srv-mgr-service-details">
+                                                    <h3 className="srv-mgr-service-name">
                                                         {s.Name || s.name}
                                                     </h3>
                                                     {s.Description ||
                                                     s.description ? (
-                                                        <p className="service-description">
+                                                        <p className="srv-mgr-service-description">
                                                             Mô tả:{" "}
                                                             {s.Description ||
                                                                 s.description}
                                                         </p>
                                                     ) : null}
-                                                    <p className="service-date">
+                                                    <p className="srv-mgr-service-date">
                                                         Ngày tạo:{" "}
                                                         {s.Created_At ||
                                                         s.CreatedAt
@@ -273,7 +273,7 @@ const ServiceManager = () => {
                                                               )
                                                             : "N/A"}
                                                     </p>
-                                                    <p className="service-date">
+                                                    <p className="srv-mgr-service-date">
                                                         Ngày sửa:{" "}
                                                         {s.Updated_At ||
                                                         s.UpdatedAt
@@ -285,7 +285,7 @@ const ServiceManager = () => {
                                                               )
                                                             : "Không"}
                                                     </p>
-                                                    <p className="service-price">
+                                                    <p className="srv-mgr-service-price">
                                                         Giá:{" "}
                                                         {s.Price
                                                             ? s.Price.toLocaleString(
@@ -295,9 +295,9 @@ const ServiceManager = () => {
                                                         VND
                                                     </p>
                                                 </div>
-                                                <div className="service-actions">
+                                                <div className="srv-mgr-service-actions">
                                                     <button
-                                                        className="btn-edit"
+                                                        className="srv-mgr-btn-edit"
                                                         onClick={() => {
                                                             const serviceId =
                                                                 s.Id || s.id;
@@ -307,7 +307,7 @@ const ServiceManager = () => {
                                                         ✏️ Chỉnh sửa
                                                     </button>
                                                     <button
-                                                        className="btn-delete"
+                                                        className="srv-mgr-btn-delete"
                                                         onClick={() =>
                                                             handleDeleteService(
                                                                 s.Id || s.id

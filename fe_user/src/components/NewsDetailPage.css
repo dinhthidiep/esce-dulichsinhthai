@@ -1,5 +1,5 @@
 /* Placeholder styles for NewsDetailPage */
-.news-detail-page {
+.news-detail-news-detail-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -8,32 +8,32 @@
   scroll-behavior: smooth;
 }
 
-.news-detail-main {
+.news-detail-news-detail-main {
   margin-top: 80px;
   padding: 2rem 0 4rem;
   flex: 1;
 }
 
 /* Back Button */
-.news-detail-back {
+.news-detail-news-detail-back {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem 1.5rem;
 }
 
-.news-back-btn {
+.news-detail-news-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.news-back-btn .btn-icon {
+.news-detail-news-back-btn .news-detail-btn-icon {
   width: 1.25rem;
   height: 1.25rem;
 }
 
 /* Main Layout - 2 Columns */
-.news-detail-layout {
+.news-detail-news-detail-layout {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
@@ -44,7 +44,7 @@
 }
 
 /* News Article - Left Column (70%) */
-.news-detail-article {
+.news-detail-news-detail-article {
   background: white;
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -52,12 +52,12 @@
 }
 
 /* News Header */
-.news-detail-header {
+.news-detail-news-detail-header {
   padding: 2.5rem 2.5rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.news-detail-meta {
+.news-detail-news-detail-meta {
   display: flex;
   gap: 1.5rem;
   flex-wrap: wrap;
@@ -66,18 +66,18 @@
   color: #64748b;
 }
 
-.news-detail-meta-item {
+.news-detail-news-detail-meta-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.news-detail-meta-icon {
+.news-detail-news-detail-meta-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
-.news-detail-title {
+.news-detail-news-detail-title {
   font-size: 2.5rem;
   font-weight: 700;
   color: #1e293b;
@@ -86,40 +86,40 @@
 }
 
 /* News Image */
-.news-detail-image-wrapper {
+.news-detail-news-detail-image-wrapper {
   width: 100%;
   height: 500px;
   overflow: hidden;
   background: #f1f5f9;
 }
 
-.news-detail-image {
+.news-detail-news-detail-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 /* News Content */
-.news-detail-content {
+.news-detail-news-detail-content {
   padding: 2.5rem;
 }
 
-.news-content-body {
+.news-detail-news-content-body {
   font-size: 1.125rem;
   line-height: 1.8;
   color: #334155;
 }
 
-.news-content-paragraph {
+.news-detail-news-content-paragraph {
   margin: 0 0 1.5rem 0;
   text-align: justify;
 }
 
-.news-content-paragraph:last-child {
+.news-detail-news-content-paragraph:last-child {
   margin-bottom: 0;
 }
 
-.news-content-heading {
+.news-detail-news-content-heading {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1e293b;
@@ -127,17 +127,17 @@
   line-height: 1.4;
 }
 
-.news-content-heading:first-child {
+.news-detail-news-content-heading:first-child {
   margin-top: 0;
 }
 
-.news-content-bold {
+.news-detail-news-content-bold {
   font-weight: 600;
   color: #1e293b;
 }
 
 /* Error State */
-.news-detail-error {
+.news-detail-news-detail-error {
   max-width: 600px;
   margin: 4rem auto;
   padding: 3rem 2rem;
@@ -147,19 +147,19 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.news-detail-error h2 {
+.news-detail-news-detail-error h2 {
   font-size: 1.75rem;
   color: #dc2626;
   margin-bottom: 1rem;
 }
 
-.news-detail-error p {
+.news-detail-news-detail-error p {
   font-size: 1.125rem;
   color: #64748b;
   margin-bottom: 2rem;
 }
 
-.news-detail-error-actions {
+.news-detail-news-detail-error-actions {
   display: flex;
   gap: 1rem;
   justify-content: center;
@@ -167,7 +167,7 @@
 }
 
 /* Related News Sidebar - Right Column (30%) */
-.news-related-sidebar {
+.news-detail-news-related-sidebar {
   position: sticky;
   top: 100px;
   align-self: flex-start;
@@ -178,11 +178,11 @@
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-.news-related-sidebar::-webkit-scrollbar {
+.news-detail-news-related-sidebar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
-.news-related-title {
+.news-detail-news-related-title {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1e293b;
@@ -191,13 +191,13 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-.news-related-list {
+.news-detail-news-related-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.news-related-card {
+.news-detail-news-related-card {
   display: flex;
   flex-direction: column;
   background: white;
@@ -211,30 +211,30 @@
   border: 1px solid #e2e8f0;
 }
 
-.news-related-card:hover {
+.news-detail-news-related-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-.news-related-image-wrapper {
+.news-detail-news-related-image-wrapper {
   width: 100%;
   height: 150px;
   overflow: hidden;
   background: #f1f5f9;
 }
 
-.news-related-image {
+.news-detail-news-related-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.news-related-card:hover .news-related-image {
+.news-detail-news-related-card:hover .news-detail-news-related-image {
   transform: scale(1.05);
 }
 
-.news-related-content {
+.news-detail-news-related-content {
   padding: 1rem;
   flex: 1;
   display: flex;
@@ -242,7 +242,7 @@
   gap: 0.5rem;
 }
 
-.news-related-card-title {
+.news-detail-news-related-card-title {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
@@ -254,7 +254,7 @@
   overflow: hidden;
 }
 
-.news-related-meta {
+.news-detail-news-related-meta {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -263,12 +263,12 @@
   margin-top: auto;
 }
 
-.news-related-meta-icon {
+.news-detail-news-related-meta-icon {
   width: 1rem;
   height: 1rem;
 }
 
-.news-related-arrow {
+.news-detail-news-related-arrow {
   position: absolute;
   bottom: 1.25rem;
   right: 1.25rem;
@@ -279,23 +279,23 @@
   transition: all 0.3s ease;
 }
 
-.news-related-card:hover .news-related-arrow {
+.news-detail-news-related-card:hover .news-detail-news-related-arrow {
   opacity: 1;
   transform: translateX(4px);
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .news-detail-layout {
+  .news-detail-news-detail-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
 
-  .news-related-sidebar {
+  .news-detail-news-related-sidebar {
     position: static;
   }
 
-  .news-related-list {
+  .news-detail-news-related-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
@@ -303,83 +303,83 @@
 }
 
 @media (max-width: 768px) {
-  .news-detail-main {
+  .news-detail-news-detail-main {
     padding: 1.5rem 0 3rem;
   }
 
-  .news-detail-back {
+  .news-detail-news-detail-back {
     padding: 0 1rem 1rem;
   }
 
-  .news-detail-layout {
+  .news-detail-news-detail-layout {
     padding: 0 1rem;
   }
 
-  .news-detail-article {
+  .news-detail-news-detail-article {
     border-radius: 0.5rem;
   }
 
-  .news-detail-header {
+  .news-detail-news-detail-header {
     padding: 2rem 1.5rem 1.25rem;
   }
 
-  .news-detail-title {
+  .news-detail-news-detail-title {
     font-size: 1.75rem;
   }
 
-  .news-detail-image-wrapper {
+  .news-detail-news-detail-image-wrapper {
     height: 300px;
   }
 
-  .news-detail-content {
+  .news-detail-news-detail-content {
     padding: 2rem 1.5rem;
   }
 
-  .news-content-body {
+  .news-detail-news-content-body {
     font-size: 1rem;
   }
 
-  .news-content-heading {
+  .news-detail-news-content-heading {
     font-size: 1.25rem;
   }
 
-  .news-related-list {
+  .news-detail-news-related-list {
     grid-template-columns: 1fr;
   }
 
-  .news-detail-error {
+  .news-detail-news-detail-error {
     margin: 2rem auto;
     padding: 2rem 1.5rem;
   }
 
-  .news-detail-error h2 {
+  .news-detail-news-detail-error h2 {
     font-size: 1.5rem;
   }
 
-  .news-detail-error-actions {
+  .news-detail-news-detail-error-actions {
     flex-direction: column;
   }
 
-  .news-detail-error-actions button {
+  .news-detail-news-detail-error-actions button {
     width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .news-detail-title {
+  .news-detail-news-detail-title {
     font-size: 1.5rem;
   }
 
-  .news-detail-meta {
+  .news-detail-news-detail-meta {
     font-size: 0.875rem;
     gap: 1rem;
   }
 
-  .news-detail-image-wrapper {
+  .news-detail-news-detail-image-wrapper {
     height: 250px;
   }
 
-  .news-content-body {
+  .news-detail-news-content-body {
     font-size: 0.9375rem;
   }
 }

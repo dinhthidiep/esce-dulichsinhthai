@@ -429,26 +429,26 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
   };
 
   return (
-    <div className="review-management">
+    <div className="review-mgr-review-management">
       {loadingReviews ? (
         <LoadingSpinner message="Đang tải đánh giá..." />
       ) : !reviews || reviews.length === 0 ? (
-        <div className="empty-state">
-          <StarIcon className="empty-state-icon" />
+        <div className="review-mgr-empty-state">
+          <StarIcon className="review-mgr-empty-state-icon" />
           <h3>Chưa có đánh giá nào</h3>
           <p>Bạn chưa đánh giá dịch vụ nào. Hãy đánh giá sau khi sử dụng dịch vụ!</p>
         </div>
       ) : (
         <>
           {/* Filter and Sort Controls */}
-          <div className="review-filter-container">
-            <div className="filter-row">
-              <div className="filter-group">
-                <label htmlFor="review-service-name-filter" className="filter-label">Tên dịch vụ</label>
+          <div className="review-mgr-review-filter-container">
+            <div className="review-mgr-filter-row">
+              <div className="review-mgr-filter-group">
+                <label htmlFor="review-service-name-filter" className="review-mgr-filter-label">Tên dịch vụ</label>
                 <input
                   type="text"
                   id="review-service-name-filter"
-                  className="filter-select"
+                  className="review-mgr-filter-select"
                   value={reviewComboNameFilter}
                   onChange={(e) => {
                     setReviewComboNameFilter(e.target.value);
@@ -459,8 +459,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                   style={{ minWidth: '200px' }}
                 />
               </div>
-              <div className="filter-group">
-                <label htmlFor="rating-filter" className="filter-label">Lọc theo sao</label>
+              <div className="review-mgr-filter-group">
+                <label htmlFor="rating-filter" className="review-mgr-filter-label">Lọc theo sao</label>
                 <select
                   id="rating-filter"
                   value={reviewFilterRating}
@@ -469,7 +469,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                     setReviewCurrentPage(1);
                     setReviewPageInput('');
                   }}
-                  className="filter-select"
+                  className="review-mgr-filter-select"
                 >
                   <option value={0}>Tất cả</option>
                   <option value={5}>5 sao</option>
@@ -479,8 +479,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                   <option value={1}>1 sao</option>
                 </select>
               </div>
-              <div className="filter-group">
-                <label htmlFor="sort-by" className="filter-label">Sắp xếp</label>
+              <div className="review-mgr-filter-group">
+                <label htmlFor="sort-by" className="review-mgr-filter-label">Sắp xếp</label>
                 <select
                   id="sort-by"
                   value={reviewSortBy}
@@ -489,7 +489,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                     setReviewCurrentPage(1);
                     setReviewPageInput('');
                   }}
-                  className="filter-select"
+                  className="review-mgr-filter-select"
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="oldest">Cũ nhất</option>
@@ -501,10 +501,10 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
           </div>
 
           {/* Reviews List */}
-          <div className="reviews-list">
+          <div className="review-mgr-reviews-list">
             {sortedAndFilteredReviews.length === 0 ? (
-              <div className="empty-state">
-                <StarIcon className="empty-state-icon" />
+              <div className="review-mgr-empty-state">
+                <StarIcon className="review-mgr-empty-state-icon" />
                 <h3>Không tìm thấy đánh giá</h3>
                 <p>Không có đánh giá nào phù hợp với bộ lọc đã chọn.</p>
                 <Button variant="outline" onClick={() => setReviewFilterRating(0)}>
@@ -543,18 +543,18 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                     const createdAt = review.CreatedAt || review.createdAt || review.CreatedDate || review.createdDate;
                     
                     return (
-                      <div key={reviewId} className="review-card-enhanced">
-                        <div className="review-content-wrapper">
+                      <div key={reviewId} className="review-mgr-review-card-enhanced">
+                        <div className="review-mgr-review-content-wrapper">
                           {/* Main Content: Image + Info */}
-                          <div className="review-main-content">
+                          <div className="review-mgr-review-main-content">
                             {/* Service Image - Left */}
-                            <div className="review-image-container">
+                            <div className="review-mgr-review-image-container">
                               {serviceId ? (
                                 <Link to={`/services/${serviceId}`}>
                                   <img
                                     src={serviceImage}
                                     alt={serviceName}
-                                    className="review-service-image"
+                                    className="review-mgr-review-service-image"
                                     onError={(e) => {
                                       e.currentTarget.src = '/img/banahills.jpg';
                                     }}
@@ -564,7 +564,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                                 <img
                                   src={serviceImage}
                                   alt={serviceName}
-                                  className="review-service-image"
+                                  className="review-mgr-review-service-image"
                                   onError={(e) => {
                                     e.currentTarget.src = '/img/banahills.jpg';
                                   }}
@@ -573,29 +573,29 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                             </div>
 
                             {/* Service Info - Right */}
-                            <div className="review-info-container">
+                            <div className="review-mgr-review-info-container">
                               {serviceId ? (
-                                <Link to={`/services/${serviceId}`} className="review-service-link">
-                                  <h3 className="review-service-title">{serviceName}</h3>
+                                <Link to={`/services/${serviceId}`} className="review-mgr-review-service-link">
+                                  <h3 className="review-mgr-review-service-title">{serviceName}</h3>
                                 </Link>
                               ) : (
-                                <h3 className="review-service-title">{serviceName}</h3>
+                                <h3 className="review-mgr-review-service-title">{serviceName}</h3>
                               )}
                               
                               {createdAt && (
-                                <div className="review-date-row">
-                                  <CalendarIcon className="review-date-icon" />
+                                <div className="review-mgr-review-date-row">
+                                  <CalendarIcon className="review-mgr-review-date-icon" />
                                   <span>{formatDate(createdAt)}</span>
                                 </div>
                               )}
                               
                               {rating > 0 && (
-                                <div className="review-rating-row">
-                                  <div className="review-stars-inline">
+                                <div className="review-mgr-review-rating-row">
+                                  <div className="review-mgr-review-stars-inline">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <StarIcon
                                         key={star}
-                                        className="review-star-inline"
+                                        className="review-mgr-review-star-inline"
                                         filled={star <= rating}
                                       />
                                     ))}
@@ -605,28 +605,28 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                             </div>
 
                             {/* Actions Menu - Top Right */}
-                            <div className="review-menu-wrapper">
+                            <div className="review-mgr-review-menu-wrapper">
                               <button
-                                className="review-menu-button"
+                                className="review-mgr-review-menu-button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenReviewMenuId(openReviewMenuId === reviewId ? null : reviewId);
                                 }}
                                 aria-label="Tùy chọn"
                               >
-                                <MoreVerticalIcon className="review-menu-icon" />
+                                <MoreVerticalIcon className="review-mgr-review-menu-icon" />
                               </button>
                               {openReviewMenuId === reviewId && (
-                                <div className="review-menu-dropdown">
+                                <div className="review-mgr-review-menu-dropdown">
                                   <button
-                                    className="review-menu-item"
+                                    className="review-mgr-review-menu-item"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleViewReviewDetails(reviewId);
                                       setOpenReviewMenuId(null);
                                     }}
                                   >
-                                    <CommentIcon className="review-menu-item-icon" />
+                                    <CommentIcon className="review-mgr-review-menu-item-icon" />
                                     <span>Phản hồi</span>
                                   </button>
                                 </div>
@@ -635,8 +635,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                           </div>
 
                           {/* Comment Section - Below */}
-                          <div className="review-comment-wrapper">
-                            <div className="review-comment">
+                          <div className="review-mgr-review-comment-wrapper">
+                            <div className="review-mgr-review-comment">
                               {comment || 'Không có ghi chú'}
                             </div>
                           </div>
@@ -657,10 +657,10 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                 
                 {/* Pagination */}
                 {reviewTotalPages > 1 && (
-                  <div className="pagination">
+                  <div className="review-mgr-pagination">
                     <button
                       type="button"
-                      className="pagination-btn"
+                      className="review-mgr-pagination-btn"
                       onClick={() => {
                         const newPage = Math.max(1, reviewCurrentPage - 1);
                         setReviewCurrentPage(newPage);
@@ -671,13 +671,13 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                       <span>←</span> Trước
                     </button>
                     
-                    <div className="pagination-controls">
-                      <div className="pagination-numbers">
+                    <div className="review-mgr-pagination-controls">
+                      <div className="review-mgr-pagination-numbers">
                         {Array.from({ length: reviewTotalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
                             type="button"
-                            className={`pagination-number ${reviewCurrentPage === page ? 'active' : ''}`}
+                            className={`review-mgr-pagination-number ${reviewCurrentPage === page ? 'review-mgr-active' : ''}`}
                             onClick={() => {
                               setReviewCurrentPage(page);
                               setReviewPageInput('');
@@ -720,7 +720,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                     
                     <button
                       type="button"
-                      className="pagination-btn"
+                      className="review-mgr-pagination-btn"
                       onClick={() => {
                         const newPage = Math.min(reviewTotalPages, reviewCurrentPage + 1);
                         setReviewCurrentPage(newPage);

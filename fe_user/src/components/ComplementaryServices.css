@@ -1,32 +1,32 @@
-.complementary-services-wrapper {
+.comp-complementary-services-wrapper {
   width: 100%;
   max-width: 100%;
 }
 
-.services-header {
+.comp-services-header {
   margin-bottom: 1rem;
 }
 
-.services-title {
+.comp-services-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0 0 0.5rem 0;
 }
 
-.services-subtitle {
+.comp-services-subtitle {
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
   line-height: 1.5;
 }
 
-.services-subtitle strong {
+.comp-services-subtitle strong {
   color: #1e293b;
   font-weight: 600;
 }
 
-.limit-reached-alert {
+.comp-limit-reached-alert {
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -39,21 +39,21 @@
   font-size: 0.8125rem;
 }
 
-.alert-icon {
+.comp-alert-icon {
   width: 1.125rem;
   height: 1.125rem;
   color: #f59e0b;
   flex-shrink: 0;
 }
 
-.vouchers-list {
+.comp-vouchers-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.voucher-card {
+.comp-voucher-card {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -66,31 +66,31 @@
   position: relative;
 }
 
-.voucher-card:hover:not(.disabled) {
+.comp-voucher-card:hover:not(.comp-disabled) {
   border-color: #059669;
   box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
   transform: translateY(-1px);
 }
 
-.voucher-card.selected {
+.comp-voucher-card.comp-selected {
   border-color: #059669;
   background: #f0fdf4;
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
-.voucher-card.disabled {
+.comp-voucher-card.comp-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: #f8fafc;
 }
 
-.voucher-checkbox {
+.comp-voucher-checkbox {
   position: relative;
   flex-shrink: 0;
   margin-top: 0.125rem;
 }
 
-.checkbox-input {
+.comp-checkbox-input {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -98,7 +98,7 @@
   cursor: pointer;
 }
 
-.checkbox-custom {
+.comp-checkbox-custom {
   width: 1.25rem;
   height: 1.25rem;
   border: 2px solid #cbd5e1;
@@ -111,30 +111,30 @@
   cursor: pointer;
 }
 
-.checkbox-custom:hover {
+.comp-checkbox-custom:hover {
   border-color: #059669;
 }
 
-.checkbox-custom.checked {
+.comp-checkbox-custom.comp-checked {
   background: #059669;
   border-color: #059669;
 }
 
-.check-mark {
+.comp-check-mark {
   font-size: 0.875rem;
   color: #ffffff;
   font-weight: 700;
   line-height: 1;
 }
 
-.voucher-content {
+.comp-voucher-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.voucher-name {
+.comp-voucher-name {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
@@ -142,26 +142,26 @@
   line-height: 1.4;
 }
 
-.voucher-description {
+.comp-voucher-description {
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
   line-height: 1.5;
 }
 
-.voucher-value {
+.comp-voucher-value {
   font-size: 1rem;
   font-weight: 600;
   color: #059669;
   margin-top: 0.25rem;
 }
 
-.value-currency {
+.comp-value-currency {
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-.selection-summary {
+.comp-selection-summary {
   background: #f8fafc;
   border-radius: 8px;
   padding: 0.875rem 1rem;
@@ -169,7 +169,7 @@
   margin-top: 1rem;
 }
 
-.summary-info {
+.comp-summary-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -179,22 +179,22 @@
   color: #64748b;
 }
 
-.summary-info strong {
+.comp-summary-info strong {
   color: #1e293b;
   font-weight: 600;
 }
 
-.summary-info .total-value {
+.comp-summary-info .comp-total-value {
   color: #059669;
   font-weight: 500;
 }
 
-.summary-info .total-value strong {
+.comp-summary-info .comp-total-value strong {
   color: #059669;
   font-weight: 700;
 }
 
-.complementary-services-empty {
+.comp-complementary-services-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -206,33 +206,33 @@
   border: 1px dashed #cbd5e1;
 }
 
-.empty-message {
+.comp-empty-message {
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
   line-height: 1.6;
 }
 
-.empty-message a {
+.comp-empty-message a {
   color: #059669;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s;
 }
 
-.empty-message a:hover {
+.comp-empty-message a:hover {
   color: #047857;
   text-decoration: underline;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .voucher-card {
+  .comp-voucher-card {
     padding: 0.875rem;
     gap: 0.875rem;
   }
 
-  .summary-info {
+  .comp-summary-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
@@ -240,19 +240,19 @@
 }
 
 @media (max-width: 480px) {
-  .services-title {
+  .comp-services-title {
     font-size: 1.125rem;
   }
 
-  .voucher-name {
+  .comp-voucher-name {
     font-size: 0.9375rem;
   }
 
-  .voucher-description {
+  .comp-voucher-description {
     font-size: 0.8125rem;
   }
 
-  .voucher-value {
+  .comp-voucher-value {
     font-size: 0.9375rem;
   }
 }

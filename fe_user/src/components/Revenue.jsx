@@ -681,46 +681,46 @@ const Revenue = ({ embedded = false }) => {
             {/* Main Content */}
             <main
                 className={
-                    embedded ? "" : `content ${sidebarActive ? "shift" : ""}`
+                    embedded ? "" : `rev-page-content ${sidebarActive ? "shift" : ""}`
                 }
                 role="main"
             >
-                <div className="form-content revenue-content">
+                <div className="rev-page-form-content rev-page-revenue-content">
                     {/* Booking Statistics */}
-                    <div className="revenue-stats-section">
-                        <h3 className="revenue-section-title">
+                    <div className="rev-page-revenue-stats-section">
+                        <h3 className="rev-page-revenue-section-title">
                             Thống kê booking
                         </h3>
-                        <div className="revenue-stats-grid">
-                            <div className="revenue-stat-card">
-                                <div className="revenue-stat-label">
+                        <div className="rev-page-revenue-stats-grid">
+                            <div className="rev-page-revenue-stat-card">
+                                <div className="rev-page-revenue-stat-label">
                                     Tổng số booking
                                 </div>
-                                <div className="revenue-stat-value">
+                                <div className="rev-page-revenue-stat-value">
                                     {totalBookings}
                                 </div>
                             </div>
-                            <div className="revenue-stat-card">
-                                <div className="revenue-stat-label">
+                            <div className="rev-page-revenue-stat-card">
+                                <div className="rev-page-revenue-stat-label">
                                     Đã chấp nhận
                                 </div>
-                                <div className="revenue-stat-value revenue-stat-accepted">
+                                <div className="rev-page-revenue-stat-value rev-page-revenue-stat-accepted">
                                     {acceptedBookings}
                                 </div>
                             </div>
-                            <div className="revenue-stat-card">
-                                <div className="revenue-stat-label">
+                            <div className="rev-page-revenue-stat-card">
+                                <div className="rev-page-revenue-stat-label">
                                     Đã từ chối
                                 </div>
-                                <div className="revenue-stat-value revenue-stat-rejected">
+                                <div className="rev-page-revenue-stat-value rev-page-revenue-stat-rejected">
                                     {rejectedBookings}
                                 </div>
                             </div>
-                            <div className="revenue-stat-card">
-                                <div className="revenue-stat-label">
+                            <div className="rev-page-revenue-stat-card">
+                                <div className="rev-page-revenue-stat-label">
                                     Đang chờ
                                 </div>
-                                <div className="revenue-stat-value revenue-stat-pending">
+                                <div className="rev-page-revenue-stat-value rev-page-revenue-stat-pending">
                                     {pendingBookings}
                                 </div>
                             </div>
@@ -728,21 +728,21 @@ const Revenue = ({ embedded = false }) => {
                     </div>
 
                     {/* Revenue Chart Section */}
-                    <div className="revenue-chart-section">
-                        <h3 className="revenue-section-title">Doanh thu</h3>
-                        <div className="revenue-chart-container">
+                    <div className="rev-page-revenue-chart-section">
+                        <h3 className="rev-page-revenue-section-title">Doanh thu</h3>
+                        <div className="rev-page-revenue-chart-container">
                             {/* Chart View Filter */}
-                            <div className="revenue-date-filter">
-                                <div className="revenue-date-filter-group">
+                            <div className="rev-page-revenue-date-filter">
+                                <div className="rev-page-revenue-date-filter-group">
                                     <label
                                         htmlFor="chart-view-by"
-                                        className="revenue-filter-label"
+                                        className="rev-page-revenue-filter-label"
                                     >
                                         Xem theo:
                                     </label>
                                     <select
                                         id="chart-view-by"
-                                        className="revenue-filter-select"
+                                        className="rev-page-revenue-filter-select"
                                         value={chartViewBy}
                                         onChange={(e) => {
                                             setChartViewBy(e.target.value);
@@ -768,17 +768,17 @@ const Revenue = ({ embedded = false }) => {
                                     </select>
                                 </div>
                                 {chartViewBy === "month" ? (
-                                    <div className="revenue-date-filter-group">
+                                    <div className="rev-page-revenue-date-filter-group">
                                         <label
                                             htmlFor="selected-month"
-                                            className="revenue-filter-label"
+                                            className="rev-page-revenue-filter-label"
                                         >
                                             Chọn tháng:
                                         </label>
                                         <input
                                             type="month"
                                             id="selected-month"
-                                            className="revenue-filter-date"
+                                            className="rev-page-revenue-filter-date"
                                             value={selectedMonth}
                                             onChange={(e) =>
                                                 setSelectedMonth(e.target.value)
@@ -786,17 +786,17 @@ const Revenue = ({ embedded = false }) => {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="revenue-date-filter-group">
+                                    <div className="rev-page-revenue-date-filter-group">
                                         <label
                                             htmlFor="selected-year"
-                                            className="revenue-filter-label"
+                                            className="rev-page-revenue-filter-label"
                                         >
                                             Chọn năm:
                                         </label>
                                         <input
                                             type="number"
                                             id="selected-year"
-                                            className="revenue-filter-date"
+                                            className="rev-page-revenue-filter-date"
                                             min="2020"
                                             max={new Date().getFullYear()}
                                             value={selectedYear}
@@ -807,7 +807,7 @@ const Revenue = ({ embedded = false }) => {
                                     </div>
                                 )}
                             </div>
-                            <div className="revenue-chart-wrapper">
+                            <div className="rev-page-revenue-chart-wrapper">
                                 <Line
                                     key={`chart-${chartViewBy}-${chartViewBy === "month" ? selectedMonth : selectedYear}`}
                                     data={chartConfig}
@@ -818,22 +818,22 @@ const Revenue = ({ embedded = false }) => {
                     </div>
 
                     {/* Top Service Combos Section */}
-                    <div className="revenue-top-combos-section">
-                        <div className="revenue-section-header">
-                            <h3 className="revenue-section-title">
+                    <div className="rev-page-revenue-top-combos-section">
+                        <div className="rev-page-revenue-section-header">
+                            <h3 className="rev-page-revenue-section-title">
                                 Combo dịch vụ hot nhất
                             </h3>
-                            <div className="revenue-combo-filters">
-                                <div className="revenue-combo-filter">
+                            <div className="rev-page-revenue-combo-filters">
+                                <div className="rev-page-revenue-combo-filter">
                                     <label
                                         htmlFor="combo-sort-filter"
-                                        className="revenue-filter-label"
+                                        className="rev-page-revenue-filter-label"
                                     >
                                         Sắp xếp theo:
                                     </label>
                                     <select
                                         id="combo-sort-filter"
-                                        className="revenue-filter-select"
+                                        className="rev-page-revenue-filter-select"
                                         value={comboSortBy}
                                         onChange={(e) =>
                                             setComboSortBy(e.target.value)
@@ -845,16 +845,16 @@ const Revenue = ({ embedded = false }) => {
                                         </option>
                                     </select>
                                 </div>
-                                <div className="revenue-combo-filter">
+                                <div className="rev-page-revenue-combo-filter">
                                     <label
                                         htmlFor="combo-view-by"
-                                        className="revenue-filter-label"
+                                        className="rev-page-revenue-filter-label"
                                     >
                                         Xem theo:
                                     </label>
                                     <select
                                         id="combo-view-by"
-                                        className="revenue-filter-select"
+                                        className="rev-page-revenue-filter-select"
                                         value={chartViewBy}
                                         onChange={(e) =>
                                             setChartViewBy(e.target.value)
@@ -868,7 +868,7 @@ const Revenue = ({ embedded = false }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="revenue-combos-grid">
+                        <div className="rev-page-revenue-combos-grid">
                             {top3Combos.length > 0 ? (
                                 top3Combos.map((combo, index) => {
                                     const comboName =
@@ -879,39 +879,39 @@ const Revenue = ({ embedded = false }) => {
                                     return (
                                         <div
                                             key={combo.Id || combo.id || index}
-                                            className="revenue-combo-card"
+                                            className="rev-page-revenue-combo-card"
                                         >
-                                            <div className="revenue-combo-content">
+                                            <div className="rev-page-revenue-combo-content">
                                                 <div
-                                                    className={`revenue-combo-ranking revenue-ranking-${ranking}`}
+                                                    className={`rev-page-revenue-combo-ranking revenue-ranking-${ranking}`}
                                                 >
                                                     {ranking}
                                                 </div>
                                                 <img
                                                     src={comboImage}
                                                     alt={comboName}
-                                                    className="revenue-combo-image"
+                                                    className="rev-page-revenue-combo-image"
                                                     onError={(e) => {
                                                         e.target.src =
                                                             "https://firebasestorage.googleapis.com/v0/b/esce-a4b58.firebasestorage.app/o/default%2Fstock_nimg.jpg?alt=media&token=623cc75c-6625-4d18-ab1e-ff5ca18b49a1";
                                                     }}
                                                 />
-                                                <div className="revenue-combo-info">
-                                                    <div className="revenue-combo-name">
+                                                <div className="rev-page-revenue-combo-info">
+                                                    <div className="rev-page-revenue-combo-name">
                                                         {comboName}
                                                     </div>
-                                                    <div className="revenue-combo-revenue">
+                                                    <div className="rev-page-revenue-combo-revenue">
                                                         {formatCurrency(
                                                             combo.totalRevenue ||
                                                                 0
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="revenue-combo-rating">
-                                                    <span className="revenue-rating-value">
+                                                <div className="rev-page-revenue-combo-rating">
+                                                    <span className="rev-page-revenue-rating-value">
                                                         {combo.averageRating}/5
                                                     </span>
-                                                    <span className="revenue-rating-count">
+                                                    <span className="rev-page-revenue-rating-count">
                                                         {combo.reviewCount} đánh
                                                         giá
                                                     </span>
@@ -921,7 +921,7 @@ const Revenue = ({ embedded = false }) => {
                                     );
                                 })
                             ) : (
-                                <div className="revenue-no-combos">
+                                <div className="rev-page-revenue-no-combos">
                                     Chưa có combo dịch vụ nào có đánh giá
                                 </div>
                             )}

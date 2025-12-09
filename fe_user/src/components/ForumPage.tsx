@@ -113,11 +113,11 @@ interface Post {
 
 const ForumPage = () => {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'featured' | 'saved'>('featured')
+  const [activeTab, setActiveTab] = useState<'featured' | 'forum-saved'>('featured')
   const [posts, setPosts] = useState<Post[]>([])
   const [savedPosts, setSavedPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [forum-error, setError] = useState<string | null>(null)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [userReactions, setUserReactions] = useState<Record<string, number>>({}) // postId -> reactionTypeId
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
@@ -155,8 +155,8 @@ const ForumPage = () => {
   }, [])
 
   useEffect(() => {
-    if (activeTab === 'saved' && userInfo) {
-      // Khi chuyển sang tab saved, fetch từ localStorage (không preserve state)
+    if (activeTab === 'forum-saved' && userInfo) {
+      // Khi chuyển sang tab forum-saved, fetch từ localStorage (không preserve state)
       // Vì đây là lần đầu load tab, cần lấy từ nguồn dữ liệu chính xác
       fetchSavedPosts(false)
     }
@@ -168,8 +168,8 @@ const ForumPage = () => {
       try {
         const user = JSON.parse(userInfoStr) as UserInfo
         setUserInfo(user)
-      } catch (error) {
-        console.error('Error parsing userInfo:', error)
+      } catch (forum-error) {
+        console.forum-error('Error parsing userInfo:', forum-error)
       }
     }
   }
@@ -245,7 +245,7 @@ const ForumPage = () => {
     
     // Xử lý ảnh: filter và trim các giá trị rỗng, sử dụng getImageUrl để xử lý URL
     let images: string[] = []
-    const fallbackImage = '/img/banahills.jpg'
+    const fallbackImage = '/img/banahills.forum-jpg'
     
     if (post.Images && Array.isArray(post.Images) && post.Images.length > 0) {
       images = post.Images
@@ -318,7 +318,7 @@ const ForumPage = () => {
             FullName: comment.FullName || 'Người dùng',
             Content: comment.Content || '',
             Images: comment.Images && Array.isArray(comment.Images) && comment.Images.length > 0
-              ? comment.Images.map((img: string) => getImageUrl(img, '/img/banahills.jpg')).filter((img): img is string => img !== null)
+              ? comment.Images.map((img: string) => getImageUrl(img, '/img/banahills.forum-jpg')).filter((img): img is string => img !== null)
               : undefined,
             CreatedDate: comment.CreatedDate 
               ? (typeof comment.CreatedDate === 'string' 
@@ -361,7 +361,7 @@ const ForumPage = () => {
             PostCommentId: String(comment.Id),
             FullName: comment.Author?.Name || 'Người dùng',
             Content: comment.Content,
-            Images: comment.Image ? [getImageUrl(comment.Image, '/img/banahills.jpg')].filter((img): img is string => img !== null) : undefined,
+            Images: comment.Image ? [getImageUrl(comment.Image, '/img/banahills.forum-jpg')].filter((img): img is string => img !== null) : undefined,
             CreatedDate: comment.CreatedAt,
             Likes: [],
             Replies: [],
@@ -445,7 +445,7 @@ const ForumPage = () => {
       setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
       setPosts(postsWithUserStatus)
     } catch (err: any) {
-      console.error('Error fetching posts:', err)
+      console.forum-error('Error fetching posts:', err)
       setError(err.response?.data?.message || 'Không thể tải bài viết. Vui lòng thử lại sau.')
       setPosts([])
     } finally {
@@ -473,13 +473,13 @@ const ForumPage = () => {
         : getSavedPostIds()
       
       // Normalize và filter những bài đã save
-      const saved = approvedPosts
+      const forum-saved = approvedPosts
         .map((post) => normalizePost(post))
         .filter((post) => savedPostIds.includes(post.PostId || ''))
       
       // Kiểm tra user đã like chưa
       const userId = userInfo.Id || userInfo.id
-      const savedWithUserStatus = saved.map((post) => {
+      const savedWithUserStatus = forum-saved.map((post) => {
         const userReaction = post.Likes?.find(
           (like) => like.AccountId === String(userId)
         )
@@ -500,7 +500,7 @@ const ForumPage = () => {
         }
       })
       
-      // Update user reactions for saved posts
+      // Update user reactions for forum-saved posts
       savedWithUserStatus.forEach((post) => {
         const userReaction = post.Likes?.find(
           (like) => like.AccountId === String(userId)
@@ -515,31 +515,31 @@ const ForumPage = () => {
       
       setSavedPosts(savedWithUserStatus)
     } catch (err: any) {
-      console.error('Error fetching saved posts:', err)
+      console.forum-error('Error fetching forum-saved posts:', err)
       setSavedPosts([])
     }
   }
 
   const getSavedPostIds = (): string[] => {
     try {
-      const saved = localStorage.getItem('savedPostIds')
-      return saved ? JSON.parse(saved) : []
+      const forum-saved = localStorage.getItem('savedPostIds')
+      return forum-saved ? JSON.parse(forum-saved) : []
     } catch {
       return []
     }
   }
 
   const savePostId = (postId: string) => {
-    const saved = getSavedPostIds()
-    if (!saved.includes(postId)) {
-      saved.push(postId)
-      localStorage.setItem('savedPostIds', JSON.stringify(saved))
+    const forum-saved = getSavedPostIds()
+    if (!forum-saved.includes(postId)) {
+      forum-saved.push(postId)
+      localStorage.setItem('savedPostIds', JSON.stringify(forum-saved))
     }
   }
 
   const removePostId = (postId: string) => {
-    const saved = getSavedPostIds()
-    const filtered = saved.filter((id) => id !== postId)
+    const forum-saved = getSavedPostIds()
+    const filtered = forum-saved.filter((id) => id !== postId)
     localStorage.setItem('savedPostIds', JSON.stringify(filtered))
   }
 
@@ -728,20 +728,20 @@ const ForumPage = () => {
         [postId]: false,
       }))
     } catch (err: any) {
-      console.error('Error reacting to post:', err)
+      console.forum-error('Error reacting to post:', err)
       
-      // Revert optimistic update on error
+      // Revert optimistic update on forum-error
       setPosts(previousPosts)
       setSavedPosts(previousSavedPosts)
       setUserReactions(previousUserReactions)
       
       // Chỉ refresh khi có lỗi để đảm bảo đồng bộ
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
       
-      console.error('Error reacting to post:', err.response?.data?.message || err.message)
+      console.forum-error('Error reacting to post:', err.response?.data?.message || err.message)
     }
   }
 
@@ -784,7 +784,7 @@ const ForumPage = () => {
     // Validate images
     const invalidImages: string[] = []
     createPostData.Images.forEach((img, idx) => {
-      if (img.trim() && !img.trim().match(/\.(jpg|jpeg|png|gif|webp)$/i) && !img.trim().startsWith('http')) {
+      if (img.trim() && !img.trim().match(/\.(forum-jpg|jpeg|png|gif|webp)$/i) && !img.trim().startsWith('http')) {
         invalidImages.push(`Ảnh ${idx + 1}`)
       }
     })
@@ -825,10 +825,10 @@ const ForumPage = () => {
       setSavedPosts((prev) => prev.filter((post) => post.PostId !== postId))
       removePostId(postId)
     } catch (err: any) {
-      console.error('Error deleting post:', err)
-      // Revert deletion on error
+      console.forum-error('Error deleting post:', err)
+      // Revert deletion on forum-error
       await fetchPosts()
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts()
       }
     } finally {
@@ -881,11 +881,11 @@ const ForumPage = () => {
       
       // Refresh posts
       await fetchPosts()
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts()
       }
     } catch (err: any) {
-      console.error('Error updating post:', err)
+      console.forum-error('Error updating post:', err)
       setFormErrors({ submit: err.response?.data?.message || 'Không thể cập nhật bài viết. Vui lòng thử lại.' })
     } finally {
       setSubmittingPost(false)
@@ -933,7 +933,7 @@ const ForumPage = () => {
       // Refresh posts
       await fetchPosts()
     } catch (err: any) {
-      console.error('Error creating post:', err)
+      console.forum-error('Error creating post:', err)
       setFormErrors({ submit: err.response?.data?.message || 'Không thể đăng bài viết. Vui lòng thử lại.' })
     } finally {
       setSubmittingPost(false)
@@ -946,7 +946,7 @@ const ForumPage = () => {
       const reader = new FileReader()
       reader.readAsDataURL(file)
       reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (error) => reject(error)
+      reader.onerror = (forum-error) => reject(forum-error)
     })
   }
 
@@ -957,7 +957,7 @@ const ForumPage = () => {
     const newFiles: File[] = []
     const maxFiles = 10
     const maxSize = 5 * 1024 * 1024 // 5MB per file
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    const allowedTypes = ['image/jpeg', 'image/forum-jpg', 'image/png', 'image/gif', 'image/webp']
 
     for (let i = 0; i < Math.min(files.length, maxFiles - imageFiles.length); i++) {
       const file = files[i]
@@ -1047,7 +1047,7 @@ const ForumPage = () => {
 
     const postIdNum = parseInt(postId)
     if (isNaN(postIdNum)) {
-      console.error('Invalid postId:', postId)
+      console.forum-error('Invalid postId:', postId)
       return
     }
 
@@ -1057,7 +1057,7 @@ const ForumPage = () => {
     
     // Optimistic update - update UI immediately
     if (isCurrentlySaved) {
-      // Optimistically remove from saved
+      // Optimistically remove from forum-saved
       removePostId(postId)
       setPosts((prev) =>
         prev.map((post) => {
@@ -1069,7 +1069,7 @@ const ForumPage = () => {
       )
       setSavedPosts((prev) => prev.filter((post) => post.PostId !== postId))
     } else {
-      // Optimistically add to saved
+      // Optimistically add to forum-saved
       savePostId(postId)
       setPosts((prev) =>
         prev.map((post) => {
@@ -1079,8 +1079,8 @@ const ForumPage = () => {
           return post
         })
       )
-      // Nếu đang ở tab saved, thêm vào savedPosts ngay lập tức
-      if (activeTab === 'saved') {
+      // Nếu đang ở tab forum-saved, thêm vào savedPosts ngay lập tức
+      if (activeTab === 'forum-saved') {
         // Tìm post trong posts để thêm vào savedPosts
         const postToAdd = posts.find(p => p.PostId === postId)
         if (postToAdd) {
@@ -1097,15 +1097,15 @@ const ForumPage = () => {
 
     try {
       if (isCurrentlySaved) {
-        // Unsave: xóa khỏi saved
+        // Unsave: xóa khỏi forum-saved
         await axiosInstance.delete(`${API_ENDPOINTS.POST_SAVE}/unsave/${postIdNum}`)
         // Không refresh gì cả, optimistic update đã xử lý rồi
         // State đã được cập nhật đúng: localStorage đã xóa, posts đã cập nhật isSaved=false, savedPosts đã filter ra
       } else {
-        // Save: thêm vào saved
+        // Save: thêm vào forum-saved
         await axiosInstance.post(`${API_ENDPOINTS.POST_SAVE}/save/${postIdNum}`)
-        // Nếu đang ở tab saved và chưa có trong savedPosts, fetch lại
-        if (activeTab === 'saved') {
+        // Nếu đang ở tab forum-saved và chưa có trong savedPosts, fetch lại
+        if (activeTab === 'forum-saved') {
           const postExists = savedPosts.some(p => p.PostId === postId)
           if (!postExists) {
             // Fetch lại để đảm bảo có đầy đủ thông tin từ server
@@ -1114,9 +1114,9 @@ const ForumPage = () => {
         }
       }
     } catch (err: any) {
-      console.error('Error saving post:', err)
+      console.forum-error('Error saving post:', err)
       
-      // Kiểm tra error message từ backend
+      // Kiểm tra forum-error message từ backend
       const errorMessage = err.response?.data?.message || err.message || ''
       const isAlreadyUnsaved = errorMessage.includes('Bài viết chưa được lưu') || errorMessage.includes('chưa được lưu')
       const isAlreadySaved = errorMessage.includes('đã lưu bài viết này rồi') || errorMessage.includes('đã lưu')
@@ -1133,11 +1133,11 @@ const ForumPage = () => {
       if (!previousSavedState && isAlreadySaved) {
         // Không cần revert, vì post đã được lưu trong database
         // Chỉ cần đảm bảo UI đã được cập nhật đúng (đã làm ở optimistic update)
-        console.log('Post was already saved in database, keeping UI state')
+        console.log('Post was already forum-saved in database, keeping UI state')
         return
       }
       
-      // Revert optimistic update on error (các lỗi khác)
+      // Revert optimistic update on forum-error (các lỗi khác)
       if (previousSavedState) {
         // Revert unsave: restore previous state
         // Restore localStorage
@@ -1152,10 +1152,10 @@ const ForumPage = () => {
           })
         )
         // Restore savedPosts - fetch lại từ localStorage
-        if (activeTab === 'saved') {
+        if (activeTab === 'forum-saved') {
           await fetchSavedPosts(false)
         } else {
-          // Nếu không ở tab saved, chỉ cần thêm lại vào savedPosts nếu có
+          // Nếu không ở tab forum-saved, chỉ cần thêm lại vào savedPosts nếu có
           const postToRestore = posts.find(p => p.PostId === postId)
           if (postToRestore) {
             setSavedPosts((prev) => {
@@ -1167,7 +1167,7 @@ const ForumPage = () => {
           }
         }
       } else {
-        // Revert save: remove from saved
+        // Revert save: remove from forum-saved
         removePostId(postId)
         setPosts((prev) =>
           prev.map((post) => {
@@ -1233,7 +1233,7 @@ const ForumPage = () => {
       // Refresh posts để lấy comment mới từ server nhưng giữ lại isSaved state
       await fetchPosts(true)
     } catch (err: any) {
-      console.error('Error commenting:', err)
+      console.forum-error('Error commenting:', err)
       // Revert optimistic update
       await fetchPosts(true)
     } finally {
@@ -1275,7 +1275,7 @@ const ForumPage = () => {
 
       // Refresh posts
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
 
@@ -1286,7 +1286,7 @@ const ForumPage = () => {
         return newInputs
       })
     } catch (err: any) {
-      console.error('Error updating comment:', err)
+      console.forum-error('Error updating comment:', err)
       alert(err.response?.data?.message || 'Không thể cập nhật bình luận. Vui lòng thử lại.')
     }
   }
@@ -1307,11 +1307,11 @@ const ForumPage = () => {
 
       // Refresh posts
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.error('Error deleting comment:', err)
+      console.forum-error('Error deleting comment:', err)
       alert(err.response?.data?.message || 'Không thể xóa bình luận. Vui lòng thử lại.')
     } finally {
       setDeletingComment(null)
@@ -1398,14 +1398,14 @@ const ForumPage = () => {
 
       // Refresh posts để lấy reply mới từ server
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.error('Error replying to comment:', err)
+      console.forum-error('Error replying to comment:', err)
       // Revert optimistic update
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
       alert(err.response?.data?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.')
@@ -1433,11 +1433,11 @@ const ForumPage = () => {
 
       // Refresh posts
       await fetchPosts(true)
-      if (activeTab === 'saved') {
+      if (activeTab === 'forum-saved') {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.error('Error reacting to comment:', err)
+      console.forum-error('Error reacting to comment:', err)
       // Không hiển thị alert cho lỗi "đã thích rồi"
       if (!err.response?.data?.message?.includes('đã thích')) {
         alert(err.response?.data?.message || 'Không thể thả cảm xúc. Vui lòng thử lại.')
@@ -1486,70 +1486,70 @@ const ForumPage = () => {
   // Post Card Skeleton Component
   const PostCardSkeleton = () => {
     return (
-      <article className="forum-skeleton-card">
-        <div className="forum-post-header">
-          <div className="forum-post-author">
-            <div className="forum-skeleton-avatar"></div>
-            <div className="forum-post-author-info" style={{ flex: 1 }}>
-              <div className="forum-skeleton-line short"></div>
-              <div className="forum-skeleton-line" style={{ width: '40%', marginTop: '0.5rem' }}></div>
+      <article className="forum-forum-skeleton-card">
+        <div className="forum-forum-post-header">
+          <div className="forum-forum-post-author">
+            <div className="forum-forum-skeleton-avatar"></div>
+            <div className="forum-forum-post-author-info" style={{ flex: 1 }}>
+              <div className="forum-forum-skeleton-line forum-short"></div>
+              <div className="forum-forum-skeleton-line" style={{ width: '40%', marginTop: '0.5rem' }}></div>
             </div>
           </div>
         </div>
-        <div className="forum-post-content" style={{ marginTop: '1rem' }}>
-          <div className="forum-skeleton-line medium" style={{ marginBottom: '0.75rem' }}></div>
-          <div className="forum-skeleton-line" style={{ marginBottom: '0.5rem' }}></div>
-          <div className="forum-skeleton-line short"></div>
+        <div className="forum-forum-post-content" style={{ marginTop: '1rem' }}>
+          <div className="forum-forum-skeleton-line forum-medium" style={{ marginBottom: '0.75rem' }}></div>
+          <div className="forum-forum-skeleton-line" style={{ marginBottom: '0.5rem' }}></div>
+          <div className="forum-forum-skeleton-line forum-short"></div>
         </div>
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '1rem' }}>
-          <div className="forum-skeleton-line" style={{ width: '100px', height: '2rem' }}></div>
-          <div className="forum-skeleton-line" style={{ width: '100px', height: '2rem' }}></div>
-          <div className="forum-skeleton-line" style={{ width: '80px', height: '2rem' }}></div>
+          <div className="forum-forum-skeleton-line" style={{ width: '100px', height: '2rem' }}></div>
+          <div className="forum-forum-skeleton-line" style={{ width: '100px', height: '2rem' }}></div>
+          <div className="forum-forum-skeleton-line" style={{ width: '80px', height: '2rem' }}></div>
         </div>
       </article>
     )
   }
 
   return (
-    <div className="forum-page">
+    <div className="forum-forum-page">
       <Header />
 
-      <main className="forum-main">
+      <main className="forum-forum-main">
         {/* Page Header */}
-        <section className="forum-page-header">
-          <div className="forum-header-container">
-            <h1 className="forum-page-title">Diễn đàn</h1>
-            <p className="forum-page-subtitle">
+        <section className="forum-forum-page-header">
+          <div className="forum-forum-header-container">
+            <h1 className="forum-forum-page-title">Diễn đàn</h1>
+            <p className="forum-forum-page-subtitle">
               Chia sẻ và kết nối với cộng đồng
             </p>
           </div>
         </section>
 
         {/* Main Content */}
-        <section className="forum-content-section">
-          <div className="forum-content-container">
+        <section className="forum-forum-content-section">
+          <div className="forum-forum-content-container">
             {/* Tabs and Create Post Button */}
-            <div className="forum-tabs-container">
-              <div className="forum-tabs">
+            <div className="forum-forum-tabs-container">
+              <div className="forum-forum-tabs">
                 <button
-                  className={`forum-tab ${activeTab === 'featured' ? 'active' : ''}`}
+                  className={`forum-forum-tab ${activeTab === 'featured' ? 'forum-active' : ''}`}
                   onClick={() => setActiveTab('featured')}
                 >
                   Nổi bật
                 </button>
                 <button
-                  className={`forum-tab ${activeTab === 'saved' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('saved')}
+                  className={`forum-forum-tab ${activeTab === 'forum-saved' ? 'forum-active' : ''}`}
+                  onClick={() => setActiveTab('forum-saved')}
                 >
                   Bài viết yêu thích
                 </button>
               </div>
               {userInfo && (
                 <button
-                  className="forum-create-post-btn"
+                  className="forum-forum-create-post-btn"
                   onClick={() => setShowCreatePostModal(true)}
                 >
-                  <PlusIcon className="forum-create-post-icon" />
+                  <PlusIcon className="forum-forum-create-post-icon" />
                   Đăng bài
                 </button>
               )}
@@ -1557,17 +1557,17 @@ const ForumPage = () => {
 
             {/* Posts List */}
             {loading ? (
-              <div className="forum-posts-list">
+              <div className="forum-forum-posts-list">
                 {[...Array(3)].map((_, idx) => (
                   <PostCardSkeleton key={idx} />
                 ))}
               </div>
-            ) : error ? (
-              <div className="forum-error-container" role="alert">
+            ) : forum-error ? (
+              <div className="forum-forum-error-container" role="alert">
                 <h3>❌ Lỗi tải dữ liệu</h3>
-                <p className="error-message">{error}</p>
+                <p className="forum-error-message">{forum-error}</p>
                 <button
-                  className="forum-retry-btn"
+                  className="forum-forum-retry-btn"
                   onClick={() => fetchPosts(false)}
                   style={{ marginTop: '1rem' }}
                 >
@@ -1575,20 +1575,20 @@ const ForumPage = () => {
                 </button>
               </div>
             ) : displayPosts.length === 0 ? (
-              <div className="forum-empty-state">
-                <p className="empty-state-title">
-                  {activeTab === 'saved'
+              <div className="forum-forum-empty-state">
+                <p className="forum-empty-state-title">
+                  {activeTab === 'forum-saved'
                     ? 'Chưa có bài viết yêu thích nào'
                     : 'Chưa có bài viết nào'}
                 </p>
-                <p className="empty-state-description">
-                  {activeTab === 'saved'
+                <p className="forum-empty-state-description">
+                  {activeTab === 'forum-saved'
                     ? 'Lưu các bài viết bạn yêu thích để xem lại sau.'
                     : 'Hiện tại chưa có bài viết nào được đăng. Vui lòng quay lại sau.'}
                 </p>
               </div>
             ) : (
-              <div className="forum-posts-list">
+              <div className="forum-forum-posts-list">
                 {displayPosts.map((post) => (
                   <PostCard
                     key={post.PostId}
@@ -1640,14 +1640,14 @@ const ForumPage = () => {
 
       {/* Create Post Modal */}
       {showCreatePostModal && (
-        <div className="forum-modal-overlay" onClick={() => setShowCreatePostModal(false)}>
-          <div className="forum-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="forum-modal-header">
-              <h2 className="forum-modal-title">
+        <div className="forum-forum-modal-overlay" onClick={() => setShowCreatePostModal(false)}>
+          <div className="forum-forum-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="forum-forum-modal-header">
+              <h2 className="forum-forum-modal-title">
                 {editingPost ? 'Chỉnh sửa bài viết' : 'Đăng bài viết mới'}
               </h2>
               <button
-                className="forum-modal-close"
+                className="forum-forum-modal-close"
                 onClick={() => {
                   setShowCreatePostModal(false)
                   setEditingPost(null)
@@ -1665,31 +1665,31 @@ const ForumPage = () => {
               </button>
             </div>
 
-            <form onSubmit={editingPost ? handleUpdatePost : handleCreatePost} className="forum-form">
-              <div className="forum-form-group">
-                <label htmlFor="post-title" className="forum-form-label">
+            <form onSubmit={editingPost ? handleUpdatePost : handleCreatePost} className="forum-forum-form">
+              <div className="forum-forum-form-group">
+                <label htmlFor="post-title" className="forum-forum-form-label">
                   Tiêu đề (tùy chọn)
                 </label>
                 <input
                   id="post-title"
                   type="text"
-                  className="forum-form-input"
+                  className="forum-forum-form-input"
                   value={createPostData.ArticleTitle}
                   onChange={(e) => setCreatePostData({ ...createPostData, ArticleTitle: e.target.value })}
                   placeholder="Nhập tiêu đề bài viết"
                 />
               </div>
 
-              <div className="forum-form-group">
-                <label htmlFor="post-content" className="forum-form-label">
-                  Nội dung <span className="required">*</span>
-                  <span className="forum-form-char-count">
+              <div className="forum-forum-form-group">
+                <label htmlFor="post-content" className="forum-forum-form-label">
+                  Nội dung <span className="forum-required">*</span>
+                  <span className="forum-forum-form-char-count">
                     {createPostData.PostContent.length}/5000
                   </span>
                 </label>
                 <textarea
                   id="post-content"
-                  className={`forum-form-textarea ${formErrors.PostContent ? 'error' : ''}`}
+                  className={`forum-forum-form-textarea ${formErrors.PostContent ? 'forum-error' : ''}`}
                   rows={8}
                   value={createPostData.PostContent}
                   onChange={(e) => {
@@ -1704,22 +1704,22 @@ const ForumPage = () => {
                     }
                   }}
                   placeholder="Chia sẻ suy nghĩ của bạn... (tối thiểu 10 ký tự)"
-                  required
+                  forum-required
                   maxLength={5000}
                 />
                 {formErrors.PostContent && (
-                  <span className="forum-form-error-text">{formErrors.PostContent}</span>
+                  <span className="forum-forum-form-error-text">{formErrors.PostContent}</span>
                 )}
               </div>
 
-              <div className="forum-form-group">
-                <label className="forum-form-label">
+              <div className="forum-forum-form-group">
+                <label className="forum-forum-form-label">
                   Hình ảnh (tối đa 10 ảnh, mỗi ảnh tối đa 5MB)
                 </label>
                 
                 {/* Drag & Drop Area */}
                 <div
-                  className={`forum-upload-area ${isDragging ? 'dragging' : ''} ${formErrors.Images ? 'error' : ''}`}
+                  className={`forum-forum-upload-area ${isDragging ? 'forum-dragging' : ''} ${formErrors.Images ? 'forum-error' : ''}`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
@@ -1728,40 +1728,40 @@ const ForumPage = () => {
                     ref={fileInputRef}
                     type="file"
                     id="post-images"
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    accept="image/jpeg,image/forum-jpg,image/png,image/gif,image/webp"
                     multiple
-                    className="forum-file-input"
+                    className="forum-forum-file-input"
                     onChange={(e) => handleFileSelect(e.target.files)}
                   />
-                  <div className="forum-upload-content">
-                    <ImageIcon className="forum-upload-icon" />
-                    <p className="forum-upload-text">
-                      Kéo thả ảnh vào đây hoặc <span className="forum-upload-link">chọn từ máy tính</span>
+                  <div className="forum-forum-upload-content">
+                    <ImageIcon className="forum-forum-upload-icon" />
+                    <p className="forum-forum-upload-text">
+                      Kéo thả ảnh vào đây hoặc <span className="forum-forum-upload-link">chọn từ máy tính</span>
                     </p>
-                    <p className="forum-upload-hint">
+                    <p className="forum-forum-upload-hint">
                       Hỗ trợ: JPG, PNG, GIF, WEBP (tối đa 5MB/ảnh)
                     </p>
                   </div>
                 </div>
 
                 {formErrors.Images && (
-                  <span className="forum-form-error-text">{formErrors.Images}</span>
+                  <span className="forum-forum-form-error-text">{formErrors.Images}</span>
                 )}
 
                 {/* Image Preview Grid */}
                 {imagePreviewUrls.length > 0 && (
-                  <div className="forum-image-preview-grid">
+                  <div className="forum-forum-image-preview-grid">
                     {imagePreviewUrls.map((url, idx) => (
-                      <div key={idx} className="forum-image-preview-item">
+                      <div key={idx} className="forum-forum-image-preview-item">
                         <LazyImage
                           src={url}
                           alt={`Preview ${idx + 1}`}
-                          className="forum-image-preview"
-                          fallbackSrc="/img/banahills.jpg"
+                          className="forum-forum-image-preview"
+                          fallbackSrc="/img/banahills.forum-jpg"
                         />
                         <button
                           type="button"
-                          className="forum-image-remove-btn"
+                          className="forum-forum-image-remove-btn"
                           onClick={() => handleRemoveImage(idx)}
                           aria-label="Xóa ảnh"
                         >
@@ -1774,21 +1774,21 @@ const ForumPage = () => {
               </div>
               
               {formErrors.PostContent && (
-                <div className="forum-form-error-message">
+                <div className="forum-forum-form-error-message">
                   {formErrors.PostContent}
                 </div>
               )}
               
               {formErrors.submit && (
-                <div className="forum-form-error-message">
+                <div className="forum-forum-form-error-message">
                   {formErrors.submit}
                 </div>
               )}
 
-              <div className="forum-form-actions">
+              <div className="forum-forum-form-actions">
                 <button
                   type="button"
-                  className="forum-form-btn forum-form-btn-cancel"
+                  className="forum-forum-form-btn forum-forum-form-btn-cancel"
                   onClick={() => {
                     setShowCreatePostModal(false)
                     setEditingPost(null)
@@ -1806,7 +1806,7 @@ const ForumPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="forum-form-btn forum-form-btn-submit"
+                  className="forum-forum-form-btn forum-forum-form-btn-submit"
                   disabled={submittingPost}
                 >
                   {submittingPost ? (editingPost ? 'Đang cập nhật...' : 'Đang đăng...') : (editingPost ? 'Cập nhật' : 'Đăng bài')}
@@ -1977,7 +1977,7 @@ const PostCard: React.FC<PostCardProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (showPostMenu && setShowPostMenu) {
         const target = e.target as HTMLElement
-        if (!target.closest('.forum-post-menu-wrapper')) {
+        if (!target.closest('.forum-forum-post-menu-wrapper')) {
           setShowPostMenu(false)
         }
       }
@@ -1993,7 +1993,7 @@ const PostCard: React.FC<PostCardProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (setShowCommentMenu && Object.keys(showCommentMenu).length > 0) {
         const target = e.target as HTMLElement
-        if (!target.closest('.forum-comment-menu-wrapper')) {
+        if (!target.closest('.forum-forum-comment-menu-wrapper')) {
           setShowCommentMenu({})
         }
       }
@@ -2005,46 +2005,46 @@ const PostCard: React.FC<PostCardProps> = ({
   }, [showCommentMenu, setShowCommentMenu])
 
   return (
-    <article className="forum-post-card">
-      <div className="forum-post-header">
-        <div className="forum-post-author">
-          <div className="forum-post-avatar">
+    <article className="forum-forum-post-card">
+      <div className="forum-forum-post-header">
+        <div className="forum-forum-post-author">
+          <div className="forum-forum-post-avatar">
             {post.PosterName?.charAt(0).toUpperCase() || 'U'}
           </div>
-          <div className="forum-post-author-info">
-            <div className="forum-post-author-name">{post.PosterName || 'Người dùng'}</div>
-            <div className="forum-post-meta">
-              <ClockIcon className="forum-meta-icon" />
+          <div className="forum-forum-post-author-info">
+            <div className="forum-forum-post-author-name">{post.PosterName || 'Người dùng'}</div>
+            <div className="forum-forum-post-meta">
+              <ClockIcon className="forum-forum-meta-icon" />
               <span>{formatDate(post.PublicDate)}</span>
             </div>
           </div>
         </div>
         {isAuthor && (
-          <div className="forum-post-menu-wrapper">
+          <div className="forum-forum-post-menu-wrapper">
             <button
-              className="forum-post-menu-btn"
+              className="forum-forum-post-menu-btn"
               onClick={handleMenuToggle}
               aria-label="Tùy chọn"
               disabled={deletingPost}
             >
-              <MoreVerticalIcon className="forum-post-menu-icon" />
+              <MoreVerticalIcon className="forum-forum-post-menu-icon" />
             </button>
             {showPostMenu && (
-              <div className="forum-post-menu">
+              <div className="forum-forum-post-menu">
                 <button
-                  className="forum-post-menu-item"
+                  className="forum-forum-post-menu-item"
                   onClick={handleEditClick}
                   disabled={deletingPost}
                 >
-                  <EditIcon className="forum-post-menu-item-icon" />
+                  <EditIcon className="forum-forum-post-menu-item-icon" />
                   <span>Chỉnh sửa</span>
                 </button>
                 <button
-                  className="forum-post-menu-item forum-post-menu-item-danger"
+                  className="forum-forum-post-menu-item forum-forum-post-menu-item-danger"
                   onClick={handleDeleteClick}
                   disabled={deletingPost}
                 >
-                  <TrashIcon className="forum-post-menu-item-icon" />
+                  <TrashIcon className="forum-forum-post-menu-item-icon" />
                   <span>{deletingPost ? 'Đang xóa...' : 'Xóa'}</span>
                 </button>
               </div>
@@ -2053,17 +2053,17 @@ const PostCard: React.FC<PostCardProps> = ({
         )}
       </div>
 
-      <div className="forum-post-content">
+      <div className="forum-forum-post-content">
         {post.ArticleTitle && (
-          <h3 className="forum-post-title">{post.ArticleTitle}</h3>
+          <h3 className="forum-forum-post-title">{post.ArticleTitle}</h3>
         )}
-        <p className="forum-post-text">{post.PostContent}</p>
+        <p className="forum-forum-post-text">{post.PostContent}</p>
         
         {post.Images && post.Images.length > 0 && (
-          <div className="forum-post-images">
+          <div className="forum-forum-post-images">
             {(() => {
               // Lọc các ảnh hợp lệ (không phải fallback)
-              const validImages = post.Images.filter(img => img && img.trim() && img !== '/img/banahills.jpg')
+              const validImages = post.Images.filter(img => img && img.trim() && img !== '/img/banahills.forum-jpg')
               
               if (validImages.length === 0) {
                 return null
@@ -2074,24 +2074,24 @@ const PostCard: React.FC<PostCardProps> = ({
                   <LazyImage
                     src={validImages[0]}
                     alt="Post image"
-                    className="forum-post-image-single"
-                    fallbackSrc="/img/banahills.jpg"
+                    className="forum-forum-post-image-single"
+                    fallbackSrc="/img/banahills.forum-jpg"
                   />
                 )
               }
               
               return (
-                <div className="forum-post-images-grid">
+                <div className="forum-forum-post-images-grid">
                   {validImages.slice(0, 4).map((img, idx) => (
-                    <div key={idx} className="forum-post-image-wrapper">
+                    <div key={idx} className="forum-forum-post-image-wrapper">
                       <LazyImage
                         src={img}
                         alt={`Post image ${idx + 1}`}
-                        className="forum-post-image"
-                        fallbackSrc="/img/banahills.jpg"
+                        className="forum-forum-post-image"
+                        fallbackSrc="/img/banahills.forum-jpg"
                       />
                       {idx === 3 && validImages.length > 4 && (
-                        <div className="forum-post-image-overlay">
+                        <div className="forum-forum-post-image-overlay">
                           +{validImages.length - 4}
                         </div>
                       )}
@@ -2106,24 +2106,24 @@ const PostCard: React.FC<PostCardProps> = ({
 
       {/* Reaction summary - hiển thị icon cảm xúc + số lượng */}
       {reactionCount > 0 && (
-        <div className="forum-reaction-summary">
-          <div className="forum-reaction-icons">
+        <div className="forum-forum-reaction-summary">
+          <div className="forum-forum-reaction-icons">
             {reactionIcons.map((icon) => (
-              <span key={icon.id} className="forum-reaction-icon" role="img" aria-label={reactionTypes.find(r => r.id === icon.id)?.name}>
+              <span key={icon.id} className="forum-forum-reaction-icon" role="img" aria-label={reactionTypes.find(r => r.id === icon.id)?.name}>
                 {icon.emoji}
               </span>
             ))}
           </div>
-          <span className="forum-reaction-count">{reactionCount}</span>
+          <span className="forum-forum-reaction-count">{reactionCount}</span>
         </div>
       )}
 
-      <div className="forum-post-actions">
-        <div className="forum-reaction-wrapper">
+      <div className="forum-forum-post-actions">
+        <div className="forum-forum-reaction-wrapper">
           {currentReaction ? (
             // Nếu đã có reaction, click vào icon để unlike
             <button
-              className="forum-action-btn forum-reaction-btn has-reaction"
+              className="forum-forum-action-btn forum-forum-reaction-btn forum-has-reaction"
               onClick={(e) => {
                 e.stopPropagation()
                 // Unlike: click vào icon cảm xúc hiện tại
@@ -2133,7 +2133,7 @@ const PostCard: React.FC<PostCardProps> = ({
               onMouseEnter={() => userInfo && setShowReactionPicker(true)}
               onMouseLeave={() => {
                 setTimeout(() => {
-                  if (!document.querySelector('.forum-reaction-picker:hover')) {
+                  if (!document.querySelector('.forum-forum-reaction-picker:hover')) {
                     setShowReactionPicker(false)
                   }
                 }, 100)
@@ -2141,7 +2141,7 @@ const PostCard: React.FC<PostCardProps> = ({
               title={userInfo ? `Bỏ ${currentReaction.name}` : 'Bạn cần đăng nhập để bỏ cảm xúc'}
               aria-label={userInfo ? `Bỏ ${currentReaction.name}` : 'Bạn cần đăng nhập để bỏ cảm xúc'}
             >
-              <span className="forum-reaction-emoji" role="img" aria-label={currentReaction.name}>
+              <span className="forum-forum-reaction-emoji" role="img" aria-label={currentReaction.name}>
                 {currentReaction.emoji}
               </span>
               <span>Thích</span>
@@ -2149,7 +2149,7 @@ const PostCard: React.FC<PostCardProps> = ({
           ) : (
             // Nếu chưa có reaction, click để hiện picker hoặc yêu cầu đăng nhập
             <button
-              className="forum-action-btn forum-reaction-btn"
+              className="forum-forum-action-btn forum-forum-reaction-btn"
               onClick={(e) => {
                 e.stopPropagation()
                 if (userInfo) {
@@ -2163,7 +2163,7 @@ const PostCard: React.FC<PostCardProps> = ({
               onMouseEnter={() => userInfo && setShowReactionPicker(true)}
               onMouseLeave={() => {
                 setTimeout(() => {
-                  if (!document.querySelector('.forum-reaction-picker:hover')) {
+                  if (!document.querySelector('.forum-forum-reaction-picker:hover')) {
                     setShowReactionPicker(false)
                   }
                 }, 100)
@@ -2171,13 +2171,13 @@ const PostCard: React.FC<PostCardProps> = ({
               title={userInfo ? 'Bày tỏ cảm xúc' : 'Bạn cần đăng nhập để thả cảm xúc'}
               aria-label={userInfo ? 'Bày tỏ cảm xúc' : 'Bạn cần đăng nhập để thả cảm xúc'}
             >
-              <HeartIcon className="forum-action-icon" />
+              <HeartIcon className="forum-forum-action-icon" />
               <span>Thích</span>
             </button>
           )}
           {showReactionPicker && userInfo && (
             <div 
-              className="forum-reaction-picker"
+              className="forum-forum-reaction-picker"
               onMouseEnter={() => setShowReactionPicker(true)}
               onMouseLeave={() => setShowReactionPicker(false)}
               role="menu"
@@ -2186,7 +2186,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {reactionTypes.map((reaction) => (
                 <button
                   key={reaction.id}
-                  className={`forum-reaction-option ${userReactionTypeId === reaction.id ? 'active' : ''}`}
+                  className={`forum-forum-reaction-option ${userReactionTypeId === reaction.id ? 'forum-active' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     // Chỉ click mới chọn reaction
@@ -2197,31 +2197,31 @@ const PostCard: React.FC<PostCardProps> = ({
                   aria-label={reaction.name}
                   role="menuitem"
                 >
-                  <span className="forum-reaction-emoji-large" role="img" aria-label={reaction.name}>
+                  <span className="forum-forum-reaction-emoji-large" role="img" aria-label={reaction.name}>
                     {reaction.emoji}
                   </span>
-                  <span className="forum-reaction-name">{reaction.name}</span>
+                  <span className="forum-forum-reaction-name">{reaction.name}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
         <button
-          className="forum-action-btn"
+          className="forum-forum-action-btn"
           onClick={() => toggleComments(post.PostId || '')}
         >
-          <CommentIcon className="forum-action-icon" />
+          <CommentIcon className="forum-forum-action-icon" />
           <span>{commentCount} bình luận</span>
         </button>
         {userInfo && (
           <button
-            className={`forum-action-btn ${post.isSaved ? 'saved' : ''}`}
+            className={`forum-forum-action-btn ${post.isSaved ? 'forum-saved' : ''}`}
             onClick={() => {
               const currentSavedState = !!post.isSaved
               onSave(post.PostId || '', currentSavedState)
             }}
           >
-            <BookmarkIcon className="forum-action-icon" filled={!!post.isSaved} />
+            <BookmarkIcon className="forum-forum-action-icon" filled={!!post.isSaved} />
             <span>{post.isSaved ? 'Đã lưu' : 'Lưu'}</span>
           </button>
         )}
@@ -2229,13 +2229,13 @@ const PostCard: React.FC<PostCardProps> = ({
 
       {/* Comments Section */}
       {isCommentsExpanded && (
-        <div className="forum-post-comments">
+        <div className="forum-forum-post-comments">
           {/* Comment Input */}
           {userInfo && (
-            <div className="forum-comment-input-wrapper">
+            <div className="forum-forum-comment-input-wrapper">
               <input
                 type="text"
-                className="forum-comment-input"
+                className="forum-forum-comment-input"
                 placeholder="Viết bình luận..."
                 value={commentInputs[post.PostId] || ''}
                 onChange={(e) =>
@@ -2252,14 +2252,14 @@ const PostCard: React.FC<PostCardProps> = ({
                 }}
               />
               <button
-                className="forum-comment-submit-btn"
+                className="forum-forum-comment-submit-btn"
                 onClick={() => onComment(post.PostId || '')}
                 disabled={!commentInputs[post.PostId || '']?.trim() || submittingComment === post.PostId}
                 aria-label="Gửi bình luận"
               >
                 {submittingComment === post.PostId ? (
                   <>
-                    <span className="forum-comment-submit-spinner"></span>
+                    <span className="forum-forum-comment-submit-spinner"></span>
                     Đang gửi...
                   </>
                 ) : (
@@ -2270,7 +2270,7 @@ const PostCard: React.FC<PostCardProps> = ({
           )}
 
           {/* Comments List */}
-          <div className="forum-comments-list">
+          <div className="forum-forum-comments-list">
             {post.Comments && post.Comments.length > 0 ? (
               post.Comments.map((comment) => {
                 // Recursive function để render comment và replies
@@ -2284,18 +2284,18 @@ const PostCard: React.FC<PostCardProps> = ({
                   const isReply = depth > 0
 
                   return (
-                    <div key={comment.PostCommentId} className={`forum-comment-item ${isReply ? 'forum-comment-reply' : ''}`} style={{ marginLeft: depth > 0 ? `${depth * 2}rem` : '0' }}>
-                      <div className="forum-comment-avatar">
+                    <div key={comment.PostCommentId} className={`forum-forum-comment-item ${isReply ? 'forum-forum-comment-reply' : ''}`} style={{ marginLeft: depth > 0 ? `${depth * 2}rem` : '0' }}>
+                      <div className="forum-forum-comment-avatar">
                         {comment.FullName?.charAt(0).toUpperCase() || 'U'}
                       </div>
-                      <div className="forum-comment-content-wrapper">
-                        <div className="forum-comment-content">
-                          <div className="forum-comment-header">
-                            <span className="forum-comment-author">{comment.FullName}</span>
+                      <div className="forum-forum-comment-content-wrapper">
+                        <div className="forum-forum-comment-content">
+                          <div className="forum-forum-comment-header">
+                            <span className="forum-forum-comment-author">{comment.FullName}</span>
                             {isCommentAuthor && setShowCommentMenu && (
-                              <div className="forum-comment-menu-wrapper">
+                              <div className="forum-forum-comment-menu-wrapper">
                                 <button
-                                  className="forum-comment-menu-btn"
+                                  className="forum-forum-comment-menu-btn"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     setShowCommentMenu((prev) => ({
@@ -2306,12 +2306,12 @@ const PostCard: React.FC<PostCardProps> = ({
                                   aria-label="Tùy chọn"
                                   disabled={deletingComment === comment.PostCommentId}
                                 >
-                                  <MoreVerticalIcon className="forum-comment-menu-icon" />
+                                  <MoreVerticalIcon className="forum-forum-comment-menu-icon" />
                                 </button>
                                 {showCommentMenu[commentKey] && (
-                                  <div className="forum-comment-menu">
+                                  <div className="forum-forum-comment-menu">
                                     <button
-                                      className="forum-comment-menu-item"
+                                      className="forum-forum-comment-menu-item"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         if (onEditComment && comment.Content) {
@@ -2325,11 +2325,11 @@ const PostCard: React.FC<PostCardProps> = ({
                                       }}
                                       disabled={deletingComment === comment.PostCommentId}
                                     >
-                                      <EditIcon className="forum-comment-menu-item-icon" />
+                                      <EditIcon className="forum-forum-comment-menu-item-icon" />
                                       <span>Chỉnh sửa</span>
                                     </button>
                                     <button
-                                      className="forum-comment-menu-item forum-comment-menu-item-danger"
+                                      className="forum-forum-comment-menu-item forum-forum-comment-menu-item-danger"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         if (onDeleteComment && post.PostId) {
@@ -2343,7 +2343,7 @@ const PostCard: React.FC<PostCardProps> = ({
                                       }}
                                       disabled={deletingComment === comment.PostCommentId}
                                     >
-                                      <TrashIcon className="forum-comment-menu-item-icon" />
+                                      <TrashIcon className="forum-forum-comment-menu-item-icon" />
                                       <span>{deletingComment === comment.PostCommentId ? 'Đang xóa...' : 'Xóa'}</span>
                                     </button>
                                   </div>
@@ -2352,10 +2352,10 @@ const PostCard: React.FC<PostCardProps> = ({
                             )}
                           </div>
                           {isEditing ? (
-                            <div className="forum-comment-edit-wrapper">
+                            <div className="forum-forum-comment-edit-wrapper">
                               <input
                                 type="text"
-                                className="forum-comment-edit-input"
+                                className="forum-forum-comment-edit-input"
                                 value={editCommentInputs[comment.PostCommentId] || comment.Content}
                                 onChange={(e) => {
                                   if (setEditCommentInputs) {
@@ -2380,9 +2380,9 @@ const PostCard: React.FC<PostCardProps> = ({
                                 }}
                                 autoFocus
                               />
-                              <div className="forum-comment-edit-actions">
+                              <div className="forum-forum-comment-edit-actions">
                                 <button
-                                  className="forum-comment-edit-btn forum-comment-edit-btn-cancel"
+                                  className="forum-forum-comment-edit-btn forum-forum-comment-edit-btn-cancel"
                                   onClick={() => {
                                     if (setEditingCommentId) {
                                       setEditingCommentId(null)
@@ -2399,7 +2399,7 @@ const PostCard: React.FC<PostCardProps> = ({
                                   Hủy
                                 </button>
                                 <button
-                                  className="forum-comment-edit-btn forum-comment-edit-btn-save"
+                                  className="forum-forum-comment-edit-btn forum-forum-comment-edit-btn-save"
                                   onClick={() => {
                                     if (onUpdateComment && post.PostId) {
                                       onUpdateComment(post.PostId, comment.PostCommentId)
@@ -2413,16 +2413,16 @@ const PostCard: React.FC<PostCardProps> = ({
                             </div>
                           ) : (
                             <>
-                              <p className="forum-comment-text">{comment.Content}</p>
+                              <p className="forum-forum-comment-text">{comment.Content}</p>
                               {comment.Images && comment.Images.length > 0 && (
-                                <div className="forum-comment-images">
+                                <div className="forum-forum-comment-images">
                                   {comment.Images.map((img, idx) => (
                                     <LazyImage
                                       key={idx}
                                       src={img}
                                       alt={`Comment image ${idx + 1}`}
-                                      className="forum-comment-image"
-                                      fallbackSrc="/img/banahills.jpg"
+                                      className="forum-forum-comment-image"
+                                      fallbackSrc="/img/banahills.forum-jpg"
                                     />
                                   ))}
                                 </div>
@@ -2431,12 +2431,12 @@ const PostCard: React.FC<PostCardProps> = ({
                           )}
                         </div>
                         {/* Comment Actions: Thời gian, Tim, Trả lời */}
-                        <div className="forum-comment-actions">
+                        <div className="forum-forum-comment-actions">
                           {comment.CreatedDate && (
-                            <span className="forum-comment-time">{formatDate(comment.CreatedDate)}</span>
+                            <span className="forum-forum-comment-time">{formatDate(comment.CreatedDate)}</span>
                           )}
                           <button
-                            className={`forum-comment-action-btn ${hasUserReaction ? 'liked' : ''}`}
+                            className={`forum-forum-comment-action-btn ${hasUserReaction ? 'forum-liked' : ''}`}
                             onClick={(e) => {
                               e.stopPropagation()
                               if (onCommentReaction && post.PostId) {
@@ -2445,11 +2445,11 @@ const PostCard: React.FC<PostCardProps> = ({
                             }}
                             title={hasUserReaction ? 'Bỏ thích' : 'Thích'}
                           >
-                            <HeartIcon className="forum-comment-action-icon" filled={hasUserReaction} />
-                            {reactionCount > 0 && <span className="forum-comment-reaction-count">{reactionCount}</span>}
+                            <HeartIcon className="forum-forum-comment-action-icon" filled={hasUserReaction} />
+                            {reactionCount > 0 && <span className="forum-forum-comment-reaction-count">{reactionCount}</span>}
                           </button>
                           <button
-                            className="forum-comment-action-btn"
+                            className="forum-forum-comment-action-btn"
                             onClick={(e) => {
                               e.stopPropagation()
                               if (setShowReplyInputs) {
@@ -2470,10 +2470,10 @@ const PostCard: React.FC<PostCardProps> = ({
                         </div>
                         {/* Reply Input */}
                         {isReplyOpen && userInfo && setReplyInputs && (
-                          <div className="forum-comment-reply-wrapper">
+                          <div className="forum-forum-comment-reply-wrapper">
                             <input
                               type="text"
-                              className="forum-comment-reply-input"
+                              className="forum-forum-comment-reply-input"
                               placeholder="Viết phản hồi..."
                               value={replyInputs[commentKey] || ''}
                               onChange={(e) =>
@@ -2491,9 +2491,9 @@ const PostCard: React.FC<PostCardProps> = ({
                                 }
                               }}
                             />
-                            <div className="forum-comment-reply-actions">
+                            <div className="forum-forum-comment-reply-actions">
                               <button
-                                className="forum-comment-reply-btn forum-comment-reply-btn-cancel"
+                                className="forum-forum-comment-reply-btn forum-forum-comment-reply-btn-cancel"
                                 onClick={() => {
                                   if (setShowReplyInputs) {
                                     setShowReplyInputs((prev) => {
@@ -2514,7 +2514,7 @@ const PostCard: React.FC<PostCardProps> = ({
                                 Hủy
                               </button>
                               <button
-                                className="forum-comment-reply-btn forum-comment-reply-btn-submit"
+                                className="forum-forum-comment-reply-btn forum-forum-comment-reply-btn-submit"
                                 onClick={() => {
                                   if (onReplyComment && post.PostId) {
                                     onReplyComment(post.PostId, comment.PostCommentId)
@@ -2529,7 +2529,7 @@ const PostCard: React.FC<PostCardProps> = ({
                         )}
                         {/* Render Replies (nested) */}
                         {comment.Replies && comment.Replies.length > 0 && (
-                          <div className="forum-comment-replies">
+                          <div className="forum-forum-comment-replies">
                             {comment.Replies.map((reply) => renderComment(reply, depth + 1))}
                           </div>
                         )}
@@ -2541,7 +2541,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 return renderComment(comment, 0)
               })
             ) : (
-              <p className="forum-no-comments">Chưa có bình luận nào</p>
+              <p className="forum-forum-no-comments">Chưa có bình luận nào</p>
             )}
           </div>
         </div>

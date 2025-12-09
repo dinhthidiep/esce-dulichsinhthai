@@ -70,10 +70,10 @@ const UpgradePaymentPage = () => {
 
   if (loading) {
     return (
-      <div className="upgrade-payment-page">
+      <div className="upg-pay-upgrade-payment-page">
         <Header />
-        <main className="upgrade-payment-main">
-          <div className="upgrade-payment-container">
+        <main className="upg-pay-upgrade-payment-main">
+          <div className="upg-pay-upgrade-payment-container">
             <LoadingSpinner message="Đang tải thông tin thanh toán..." />
           </div>
         </main>
@@ -90,49 +90,49 @@ const UpgradePaymentPage = () => {
   const name = paymentData.businessName || paymentData.companyName || ''
 
   return (
-    <div className="upgrade-payment-page">
+    <div className="upg-pay-upgrade-payment-page">
       <Header />
-      <main className="upgrade-payment-main">
-        <div className="upgrade-payment-container">
+      <main className="upg-pay-upgrade-payment-main">
+        <div className="upg-pay-upgrade-payment-container">
           {/* Header */}
-          <div className="payment-header">
+          <div className="upg-pay-payment-header">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/upgrade-account')}
-              className="back-button"
+              className="upg-pay-back-button"
             >
-              <ArrowLeftIcon className="back-icon" />
+              <ArrowLeftIcon className="upg-pay-back-icon" />
               Quay lại
             </Button>
-            <h1 className="payment-title">Thanh toán nâng cấp tài khoản</h1>
-            <p className="payment-subtitle">
+            <h1 className="upg-pay-payment-title">Thanh toán nâng cấp tài khoản</h1>
+            <p className="upg-pay-payment-subtitle">
               Thanh toán phí nâng cấp lên {typeLabel}
             </p>
           </div>
 
-          <div className="payment-content-grid">
+          <div className="upg-pay-payment-content-grid">
             {/* Payment Info */}
-            <Card className="payment-info-card">
+            <Card className="upg-pay-payment-info-card">
               <CardContent>
-                <h2 className="info-card-title">Thông tin thanh toán</h2>
-                <div className="payment-details">
-                  <div className="detail-row">
-                    <span className="detail-label">Loại nâng cấp:</span>
-                    <span className="detail-value">Nâng cấp lên {typeLabel}</span>
+                <h2 className="upg-pay-info-card-title">Thông tin thanh toán</h2>
+                <div className="upg-pay-payment-details">
+                  <div className="upg-pay-detail-row">
+                    <span className="upg-pay-detail-label">Loại nâng cấp:</span>
+                    <span className="upg-pay-detail-value">Nâng cấp lên {typeLabel}</span>
                   </div>
                   {name && (
-                    <div className="detail-row">
-                      <span className="detail-label">
+                    <div className="upg-pay-detail-row">
+                      <span className="upg-pay-detail-label">
                         {paymentData.type === 'host' ? 'Tên doanh nghiệp:' : 'Tên công ty:'}
                       </span>
-                      <span className="detail-value">{name}</span>
+                      <span className="upg-pay-detail-value">{name}</span>
                     </div>
                   )}
-                  <div className="detail-row total-row">
-                    <span className="detail-label">Tổng tiền:</span>
-                    <span className="detail-value total-amount">
-                      {new Intl.NumberFormat('vi-VN').format(paymentData.amount)} <span className="currency">VNĐ</span>
+                  <div className="upg-pay-detail-row upg-pay-total-row">
+                    <span className="upg-pay-detail-label">Tổng tiền:</span>
+                    <span className="upg-pay-detail-value upg-pay-total-amount">
+                      {new Intl.NumberFormat('vi-VN').format(paymentData.amount)} <span className="upg-pay-currency">VNĐ</span>
                     </span>
                   </div>
                 </div>
@@ -140,62 +140,62 @@ const UpgradePaymentPage = () => {
             </Card>
 
             {/* Payment Method */}
-            <Card className="payment-method-card">
+            <Card className="upg-pay-payment-method-card">
               <CardContent>
-                <h2 className="info-card-title">Phương thức thanh toán</h2>
-                <div className="payment-methods">
+                <h2 className="upg-pay-info-card-title">Phương thức thanh toán</h2>
+                <div className="upg-pay-payment-methods">
                   <div 
-                    className={`payment-method ${selectedMethod === 'vnpay' ? 'selected' : ''}`}
+                    className={`upg-pay-payment-method ${selectedMethod === 'vnpay' ? 'upg-pay-selected' : ''}`}
                     onClick={() => setSelectedMethod('vnpay')}
                   >
-                    <div className="method-info">
-                      <CreditCardIcon className="method-icon" />
+                    <div className="upg-pay-method-info">
+                      <CreditCardIcon className="upg-pay-method-icon" />
                       <div>
-                        <div className="method-name">VNPay</div>
-                        <div className="method-description">Thanh toán qua cổng VNPay</div>
+                        <div className="upg-pay-method-name">VNPay</div>
+                        <div className="upg-pay-method-description">Thanh toán qua cổng VNPay</div>
                       </div>
                     </div>
                     {selectedMethod === 'vnpay' && (
-                      <CheckCircleIcon className="check-icon" />
+                      <CheckCircleIcon className="upg-pay-check-icon" />
                     )}
                   </div>
 
                   <div 
-                    className={`payment-method ${selectedMethod === 'momo' ? 'selected' : ''}`}
+                    className={`upg-pay-payment-method ${selectedMethod === 'momo' ? 'upg-pay-selected' : ''}`}
                     onClick={() => setSelectedMethod('momo')}
                   >
-                    <div className="method-info">
-                      <CreditCardIcon className="method-icon" />
+                    <div className="upg-pay-method-info">
+                      <CreditCardIcon className="upg-pay-method-icon" />
                       <div>
-                        <div className="method-name">MoMo</div>
-                        <div className="method-description">Ví điện tử MoMo</div>
+                        <div className="upg-pay-method-name">MoMo</div>
+                        <div className="upg-pay-method-description">Ví điện tử MoMo</div>
                       </div>
                     </div>
                     {selectedMethod === 'momo' && (
-                      <CheckCircleIcon className="check-icon" />
+                      <CheckCircleIcon className="upg-pay-check-icon" />
                     )}
                   </div>
 
                   <div 
-                    className={`payment-method ${selectedMethod === 'bank' ? 'selected' : ''}`}
+                    className={`upg-pay-payment-method ${selectedMethod === 'bank' ? 'upg-pay-selected' : ''}`}
                     onClick={() => setSelectedMethod('bank')}
                   >
-                    <div className="method-info">
-                      <CreditCardIcon className="method-icon" />
+                    <div className="upg-pay-method-info">
+                      <CreditCardIcon className="upg-pay-method-icon" />
                       <div>
-                        <div className="method-name">Chuyển khoản ngân hàng</div>
-                        <div className="method-description">Chuyển khoản trực tiếp</div>
+                        <div className="upg-pay-method-name">Chuyển khoản ngân hàng</div>
+                        <div className="upg-pay-method-description">Chuyển khoản trực tiếp</div>
                       </div>
                     </div>
                     {selectedMethod === 'bank' && (
-                      <CheckCircleIcon className="check-icon" />
+                      <CheckCircleIcon className="upg-pay-check-icon" />
                     )}
                   </div>
                 </div>
 
                 {error && (
-                  <div className="error-alert">
-                    <AlertCircleIcon className="error-icon" />
+                  <div className="upg-pay-error-alert">
+                    <AlertCircleIcon className="upg-pay-error-icon" />
                     <span>{error}</span>
                   </div>
                 )}
@@ -205,11 +205,11 @@ const UpgradePaymentPage = () => {
                   disabled={processing}
                   variant="default"
                   size="lg"
-                  className="pay-button"
+                  className="upg-pay-pay-button"
                 >
                   {processing ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className="spinner-small"></span>
+                      <span className="upg-pay-spinner-small"></span>
                       Đang xử lý...
                     </span>
                   ) : (
@@ -219,7 +219,7 @@ const UpgradePaymentPage = () => {
                   )}
                 </Button>
 
-                <div className="payment-note">
+                <div className="upg-pay-payment-note">
                   <p>• Sau khi thanh toán thành công, yêu cầu của bạn sẽ được gửi tới Admin để xét duyệt.</p>
                   <p>• Thời gian xét duyệt: 1-3 ngày làm việc.</p>
                   <p>• Nếu yêu cầu bị từ chối, bạn sẽ được hoàn lại 100% phí đã thanh toán.</p>

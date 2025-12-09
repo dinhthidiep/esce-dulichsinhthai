@@ -1,7 +1,7 @@
 /* Service Combo Management Styles */
 
 /* Filter Container */
-.service-filter-container {
+.combo-service-filter-container {
   margin-bottom: 1.5rem;
   padding: 1.25rem;
   background: white;
@@ -10,14 +10,14 @@
   border: 1px solid #e2e8f0;
 }
 
-.filter-row {
+.combo-filter-row {
   display: flex;
   gap: 1rem;
   align-items: flex-end;
   flex-wrap: wrap;
 }
 
-.filter-field {
+.combo-filter-field {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -25,14 +25,14 @@
   min-width: 150px;
 }
 
-.filter-field label {
+.combo-filter-field label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
 }
 
-.filter-input,
-.filter-select {
+.combo-filter-input,
+.combo-filter-select {
   padding: 0.625rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -44,18 +44,18 @@
   box-sizing: border-box;
 }
 
-.filter-input:focus,
-.filter-select:focus {
+.combo-filter-input:focus,
+.combo-filter-select:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.filter-select {
+.combo-filter-select {
   cursor: pointer;
 }
 
-.btn-search {
+.combo-btn-search {
   padding: 0.625rem 1.5rem;
   background: #10b981;
   color: white;
@@ -69,18 +69,18 @@
   white-space: nowrap;
 }
 
-.btn-search:hover {
+.combo-btn-search:hover {
   background: #059669;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
-.btn-search:active {
+.combo-btn-search:combo-active {
   transform: translateY(0);
 }
 
 /* Services Grid */
-.services-grid {
+.combo-services-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.25rem;
@@ -93,7 +93,7 @@
 }
 
 /* Service Combo Card */
-.servicecombo-card {
+.combo-servicecombo-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 1rem;
@@ -106,24 +106,24 @@
   gap: 1.25rem;
 }
 
-.servicecombo-card:hover {
+.combo-servicecombo-card:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border-color: #10b981;
 }
 
-.servicecombo-card:hover .service-name {
+.combo-servicecombo-card:hover .combo-service-name {
   color: #10b981;
   transition: color 0.2s ease;
 }
 
-.servicecombo-card .service-card-left {
+.combo-servicecombo-card .combo-service-card-left {
   display: flex;
   gap: 1rem;
   flex: 1;
   min-width: 0;
 }
 
-.servicecombo-card .service-image {
+.combo-servicecombo-card .combo-service-image {
   flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
@@ -139,8 +139,8 @@
   background: #f1f5f9;
 }
 
-.servicecombo-card .service-image img,
-.servicecombo-card .service-image-img {
+.combo-servicecombo-card .combo-service-image img,
+.combo-servicecombo-card .combo-service-image-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -148,16 +148,16 @@
   transition: transform 0.3s ease;
 }
 
-.servicecombo-card:hover .service-image {
+.combo-servicecombo-card:hover .combo-service-image {
   transform: scale(1.05);
 }
 
-.servicecombo-card:hover .service-image img,
-.servicecombo-card:hover .service-image-img {
+.combo-servicecombo-card:hover .combo-service-image img,
+.combo-servicecombo-card:hover .combo-service-image-img {
   transform: scale(1.05);
 }
 
-.servicecombo-card .service-details {
+.combo-servicecombo-card .combo-service-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -166,7 +166,7 @@
   overflow: hidden;
 }
 
-.servicecombo-card .service-name {
+.combo-servicecombo-card .combo-service-name {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
@@ -175,28 +175,28 @@
   transition: color 0.2s ease;
 }
 
-.service-date {
+.combo-service-date {
   margin: 0;
   font-size: 0.9rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.service-status-gray {
+.combo-service-status-gray {
   margin: 0;
   font-size: 0.9rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.service-price {
+.combo-service-price {
   margin: 0;
   font-size: 1rem;
   color: #10b981;
   font-weight: 600;
 }
 
-.service-actions {
+.combo-service-actions {
   display: flex;
   gap: 0.625rem;
   flex-wrap: wrap;
@@ -205,7 +205,7 @@
   flex-shrink: 0;
 }
 
-.service-actions button {
+.combo-service-actions button {
   width: 160px;
   padding: 0.5rem 0.75rem;
   border: none;
@@ -222,7 +222,7 @@
 }
 
 /* Pagination */
-.pagination {
+.combo-pagination {
   margin-top: 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -236,7 +236,7 @@
   position: relative;
 }
 
-.pagination-controls {
+.combo-pagination-controls {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,7 +244,7 @@
   margin: 0 auto;
 }
 
-.pagination-btn {
+.combo-pagination-btn {
   padding: 0.5rem 1rem;
   background: white;
   color: #475569;
@@ -256,23 +256,23 @@
   transition: all 0.2s ease;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.combo-pagination-btn:hover:not(:disabled) {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.pagination-btn:disabled {
+.combo-pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination-numbers {
+.combo-pagination-numbers {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.pagination-number {
+.combo-pagination-number {
   min-width: 2.5rem;
   height: 2.5rem;
   padding: 0 0.5rem;
@@ -289,77 +289,77 @@
   justify-content: center;
 }
 
-.pagination-number:hover {
+.combo-pagination-number:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.pagination-number.active {
+.combo-pagination-number.combo-active {
   background: #10b981;
   color: white;
   border-color: #10b981;
   font-weight: 600;
 }
 
-.pagination-number.active:hover {
+.combo-pagination-number.combo-active:hover {
   background: #059669;
   border-color: #059669;
 }
 
 /* Empty State */
-.empty-state {
+.combo-empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
   color: #64748b;
 }
 
-.empty-state-icon {
+.combo-empty-state-icon {
   width: 64px;
   height: 64px;
   color: #cbd5e1;
   margin: 0 auto 1rem;
 }
 
-.empty-state h3 {
+.combo-empty-state h3 {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.5rem;
 }
 
-.empty-state p {
+.combo-empty-state p {
   font-size: 0.875rem;
   margin: 0 0 1.5rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .services-grid {
+  .combo-services-grid {
     grid-template-columns: 1fr;
   }
   
-  .servicecombo-card {
+  .combo-servicecombo-card {
     flex-direction: column;
   }
   
-  .service-actions {
+  .combo-service-actions {
     flex-direction: row;
     width: 100%;
   }
   
-  .service-actions button {
+  .combo-service-actions button {
     flex: 1;
   }
   
-  .filter-row {
+  .combo-filter-row {
     flex-direction: column;
   }
   
-  .filter-field {
+  .combo-filter-field {
     width: 100%;
   }
   
-  .btn-search {
+  .combo-btn-search {
     width: 100%;
   }
 }

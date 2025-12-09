@@ -1,6 +1,6 @@
 /* Edit Service Combo Modal Styles */
 
-.edit-service-combo-modal-overlay {
+.combo-edit-edit-service-combo-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,7 +14,7 @@
     padding: 1rem;
 }
 
-.edit-service-combo-modal-content {
+.combo-edit-edit-service-combo-modal-content {
     background: white;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -27,7 +27,7 @@
     position: relative;
 }
 
-.edit-service-combo-modal-header {
+.combo-edit-edit-service-combo-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -40,14 +40,14 @@
     border-radius: 12px 12px 0 0;
 }
 
-.edit-service-combo-modal-header h2 {
+.combo-edit-edit-service-combo-modal-header h2 {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
     color: #1e293b;
 }
 
-.edit-service-combo-modal-close {
+.combo-edit-edit-service-combo-modal-close {
     background: none;
     border: none;
     cursor: pointer;
@@ -59,47 +59,47 @@
     transition: background 0.2s ease;
 }
 
-.edit-service-combo-modal-close:hover {
+.combo-edit-edit-service-combo-modal-close:hover {
     background: #f1f5f9;
 }
 
-.edit-service-combo-modal-close-icon {
+.combo-edit-edit-service-combo-modal-close-icon {
     width: 20px;
     height: 20px;
     color: #64748b;
 }
 
-.edit-service-combo-modal-body {
+.combo-edit-edit-service-combo-modal-body {
     padding: 1.5rem;
 }
 
-.edit-service-combo-disclaimer-text {
+.combo-edit-edit-service-combo-disclaimer-text {
     font-size: 0.875rem;
     color: #64748b;
     margin-bottom: 1.5rem;
     font-style: normal;
 }
 
-.edit-service-combo-required-indicator {
+.combo-edit-edit-service-combo-required-indicator {
     color: #ef4444;
 }
 
-.edit-service-combo-field {
+.combo-edit-edit-service-combo-field {
     margin-bottom: 1.5rem;
 }
 
-.edit-service-combo-field-row {
+.combo-edit-edit-service-combo-field-row {
     display: flex;
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
 
-.edit-service-combo-field-row .edit-service-combo-field {
+.combo-edit-edit-service-combo-field-row .combo-edit-edit-service-combo-field {
     flex: 1;
     margin-bottom: 0;
 }
 
-.edit-service-combo-field label {
+.combo-edit-edit-service-combo-field label {
     display: block;
     font-weight: 600;
     color: #1e293b;
@@ -107,9 +107,9 @@
     font-size: 0.875rem;
 }
 
-.edit-service-combo-field input,
-.edit-service-combo-field textarea,
-.edit-service-combo-field select {
+.combo-edit-edit-service-combo-field input,
+.combo-edit-edit-service-combo-field textarea,
+.combo-edit-edit-service-combo-field select {
     width: 100%;
     padding: 0.625rem 0.75rem;
     border: 1px solid #e2e8f0;
@@ -120,32 +120,32 @@
     box-sizing: border-box;
 }
 
-.edit-service-combo-field input:focus,
-.edit-service-combo-field textarea:focus,
-.edit-service-combo-field select:focus {
+.combo-edit-edit-service-combo-field input:focus,
+.combo-edit-edit-service-combo-field textarea:focus,
+.combo-edit-edit-service-combo-field select:focus {
     outline: none;
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.edit-service-combo-field textarea {
+.combo-edit-edit-service-combo-field textarea {
     resize: vertical;
     min-height: 100px;
 }
 
-.edit-service-combo-hint {
+.combo-edit-edit-service-combo-hint {
     font-size: 0.75rem;
     color: #64748b;
     margin-top: 0.5rem;
 }
 
-.edit-service-combo-error {
+.combo-edit-edit-service-combo-error {
     color: #ef4444;
     font-size: 0.75rem;
     margin-top: 0.5rem;
 }
 
-.edit-service-combo-img-preview {
+.combo-edit-edit-service-combo-img-preview {
     max-width: 200px;
     max-height: 200px;
     margin-top: 0.5rem;
@@ -153,18 +153,18 @@
     border-radius: 4px;
 }
 
-.edit-service-combo-section-header {
+.combo-edit-edit-service-combo-section-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
 }
 
-.edit-service-combo-section-header label {
+.combo-edit-edit-service-combo-section-header label {
     margin: 0;
 }
 
-.edit-service-combo-toggle-btn {
+.combo-edit-edit-service-combo-toggle-btn {
     background: transparent;
     border: none;
     cursor: pointer;
@@ -175,19 +175,19 @@
     transition: transform 0.2s ease;
 }
 
-.edit-service-combo-chevron-icon {
+.combo-edit-edit-service-combo-chevron-icon {
     width: 16px;
     height: 16px;
     transition: transform 0.2s ease;
 }
 
-.edit-service-combo-table-container {
+.combo-edit-edit-service-combo-table-container {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.edit-service-combo-table-filters {
+.combo-edit-edit-service-combo-table-filters {
     padding: 0.75rem;
     border-bottom: 1px solid #e2e8f0;
     background: #f8fafc;
@@ -196,14 +196,14 @@
     align-items: flex-end;
 }
 
-.edit-service-combo-filter-field {
+.combo-edit-edit-service-combo-filter-field {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.edit-service-combo-filter-field label {
+.combo-edit-edit-service-combo-filter-field label {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.875rem;
@@ -211,8 +211,8 @@
     font-weight: 500;
 }
 
-.edit-service-combo-filter-input,
-.edit-service-combo-filter-select {
+.combo-edit-edit-service-combo-filter-input,
+.combo-edit-edit-service-combo-filter-select {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #e2e8f0;
@@ -221,29 +221,29 @@
     box-sizing: border-box;
 }
 
-.edit-service-combo-filter-select {
+.combo-edit-edit-service-combo-filter-select {
     background: white;
     cursor: pointer;
 }
 
-.edit-service-combo-table-wrapper {
+.combo-edit-edit-service-combo-table-wrapper {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.edit-service-combo-table {
+.combo-edit-edit-service-combo-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.edit-service-combo-table thead {
+.combo-edit-edit-service-combo-table thead {
     position: sticky;
     top: 0;
     background: #f8fafc;
     z-index: 1;
 }
 
-.edit-service-combo-table th {
+.combo-edit-edit-service-combo-table th {
     padding: 0.5rem;
     text-align: left;
     border-bottom: 1px solid #e2e8f0;
@@ -252,20 +252,20 @@
     color: #1e293b;
 }
 
-.edit-service-combo-table td {
+.combo-edit-edit-service-combo-table td {
     padding: 0.5rem;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.875rem;
     color: #475569;
 }
 
-.edit-service-combo-empty-cell {
+.combo-edit-edit-service-combo-empty-cell {
     text-align: center;
     padding: 1rem;
     color: #64748b;
 }
 
-.edit-service-combo-quantity-input {
+.combo-edit-edit-service-combo-quantity-input {
     width: 50px !important;
     max-width: 50px !important;
     min-width: 50px !important;
@@ -278,40 +278,40 @@
     flex-shrink: 0;
 }
 
-.edit-service-combo-quantity-input:disabled {
+.combo-edit-edit-service-combo-quantity-input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Hide spinner for quantity inputs */
-.edit-service-combo-quantity-input::-webkit-outer-spin-button,
-.edit-service-combo-quantity-input::-webkit-inner-spin-button {
+.combo-edit-edit-service-combo-quantity-input::-webkit-outer-spin-button,
+.combo-edit-edit-service-combo-quantity-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.edit-service-combo-quantity-input[type="number"] {
+.combo-edit-edit-service-combo-quantity-input[type="number"] {
     -moz-appearance: textfield;
 }
 
 /* Table column widths - Services table (5 columns: Tên, Mô tả, Giá, Số lượng, Chọn) */
-.edit-service-combo-table thead tr th:nth-child(1),
-.edit-service-combo-table tbody tr td:nth-child(1) {
+.combo-edit-edit-service-combo-table thead tr th:nth-child(1),
+.combo-edit-edit-service-combo-table tbody tr td:nth-child(1) {
     min-width: 200px;
     max-width: 300px;
 }
 
-.edit-service-combo-table thead tr th:nth-child(2),
-.edit-service-combo-table tbody tr td:nth-child(2) {
+.combo-edit-edit-service-combo-table thead tr th:nth-child(2),
+.combo-edit-edit-service-combo-table tbody tr td:nth-child(2) {
     min-width: 250px;
     max-width: 400px;
 }
 
 /* Quantity column - narrow (4th column in services, 5th column in promotions) */
-.edit-service-combo-table thead tr th:nth-child(4),
-.edit-service-combo-table tbody tr td:nth-child(4),
-.edit-service-combo-table thead tr th:nth-child(5),
-.edit-service-combo-table tbody tr td:nth-child(5) {
+.combo-edit-edit-service-combo-table thead tr th:nth-child(4),
+.combo-edit-edit-service-combo-table tbody tr td:nth-child(4),
+.combo-edit-edit-service-combo-table thead tr th:nth-child(5),
+.combo-edit-edit-service-combo-table tbody tr td:nth-child(5) {
     width: 80px !important;
     min-width: 80px !important;
     max-width: 80px !important;
@@ -319,15 +319,15 @@
 }
 
 /* Checkbox column - narrow (last column) */
-.edit-service-combo-table thead tr th:last-child,
-.edit-service-combo-table tbody tr td:last-child {
+.combo-edit-edit-service-combo-table thead tr th:last-child,
+.combo-edit-edit-service-combo-table tbody tr td:last-child {
     width: 60px !important;
     min-width: 60px !important;
     max-width: 60px !important;
     text-align: center;
 }
 
-.edit-service-combo-rank-badge {
+.combo-edit-edit-service-combo-rank-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -344,37 +344,37 @@
     width: auto;
 }
 
-.edit-service-combo-rank-badge.rank-đồng,
-.edit-service-combo-rank-badge.rank-bronze {
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-đồng,
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-bronze {
     background: #cd7f32;
     color: white;
 }
 
-.edit-service-combo-rank-badge.rank-bạc,
-.edit-service-combo-rank-badge.rank-silver {
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-bạc,
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-silver {
     background: #c0c0c0;
     color: #1e293b;
 }
 
-.edit-service-combo-rank-badge.rank-vàng,
-.edit-service-combo-rank-badge.rank-gold {
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-vàng,
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-gold {
     background: #ffd700;
     color: #1e293b;
 }
 
-.edit-service-combo-rank-badge.rank-kim-cương,
-.edit-service-combo-rank-badge.rank-diamond {
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-kim-cương,
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-diamond {
     background: #0ea5e9;
     color: #0c4a6e;
 }
 
-.edit-service-combo-rank-badge.rank-tất-cả,
-.edit-service-combo-rank-badge.rank-all {
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-tất-cả,
+.combo-edit-edit-service-combo-rank-badge.combo-edit-rank-all {
     background: #e2e8f0;
     color: #1e293b;
 }
 
-.edit-service-combo-pagination {
+.combo-edit-edit-service-combo-pagination {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -384,7 +384,7 @@
     gap: 1rem;
 }
 
-.edit-service-combo-pagination-btn {
+.combo-edit-edit-service-combo-pagination-btn {
     padding: 0.5rem 1rem;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
@@ -397,18 +397,18 @@
     transition: all 0.2s ease;
 }
 
-.edit-service-combo-pagination-btn:hover:not(:disabled) {
+.combo-edit-edit-service-combo-pagination-btn:hover:not(:disabled) {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.edit-service-combo-pagination-btn:disabled {
+.combo-edit-edit-service-combo-pagination-btn:disabled {
     background: #f1f5f9;
     cursor: not-allowed;
     opacity: 0.5;
 }
 
-.edit-service-combo-pagination-numbers {
+.combo-edit-edit-service-combo-pagination-numbers {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -416,7 +416,7 @@
     justify-content: center;
 }
 
-.edit-service-combo-pagination-number {
+.combo-edit-edit-service-combo-pagination-number {
     padding: 0.375rem 0.75rem;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
@@ -429,30 +429,30 @@
     transition: all 0.2s ease;
 }
 
-.edit-service-combo-pagination-number:hover {
+.combo-edit-edit-service-combo-pagination-number:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.edit-service-combo-pagination-number.active {
+.combo-edit-edit-service-combo-pagination-number.combo-edit-active {
     background: #8b5cf6;
     color: white;
     border-color: #8b5cf6;
     font-weight: 600;
 }
 
-.edit-service-combo-pagination-jump {
+.combo-edit-edit-service-combo-pagination-jump {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.edit-service-combo-pagination-jump span {
+.combo-edit-edit-service-combo-pagination-jump span {
     font-size: 0.875rem;
     color: #64748b;
 }
 
-.edit-service-combo-pagination-input {
+.combo-edit-edit-service-combo-pagination-input {
     width: 50px !important;
     max-width: 50px !important;
     min-width: 50px !important;
@@ -465,13 +465,13 @@
 }
 
 /* Duration Inputs Styles */
-.edit-service-combo-duration-inputs {
+.combo-edit-edit-service-combo-duration-inputs {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.edit-service-combo-duration-input {
+.combo-edit-edit-service-combo-duration-input {
     width: 35px !important;
     max-width: 35px !important;
     min-width: 35px !important;
@@ -486,13 +486,13 @@
     flex-shrink: 0;
 }
 
-.edit-service-combo-duration-input:focus {
+.combo-edit-edit-service-combo-duration-input:focus {
     outline: none;
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.edit-service-combo-duration-label {
+.combo-edit-edit-service-combo-duration-label {
     font-size: 0.875rem;
     color: #475569;
     font-weight: 500;
@@ -500,17 +500,17 @@
 }
 
 /* Hide spinner for duration inputs */
-.edit-service-combo-duration-input::-webkit-outer-spin-button,
-.edit-service-combo-duration-input::-webkit-inner-spin-button {
+.combo-edit-edit-service-combo-duration-input::-webkit-outer-spin-button,
+.combo-edit-edit-service-combo-duration-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.edit-service-combo-duration-input[type="number"] {
+.combo-edit-edit-service-combo-duration-input[type="number"] {
     -moz-appearance: textfield;
 }
 
-.edit-service-combo-form-action {
+.combo-edit-edit-service-combo-form-action {
     display: flex;
     gap: 0.75rem;
     margin-top: 1.5rem;
@@ -520,8 +520,8 @@
     justify-content: flex-end;
 }
 
-.edit-service-combo-btn-primary,
-.edit-service-combo-btn-secondary {
+.combo-edit-edit-service-combo-btn-primary,
+.combo-edit-edit-service-combo-btn-secondary {
     flex: 0 0 auto;
     padding: 0.625rem 1.25rem;
     border-radius: 8px;
@@ -532,32 +532,32 @@
     border: none;
 }
 
-.edit-service-combo-btn-primary {
+.combo-edit-edit-service-combo-btn-primary {
     background: #10b981;
     color: white;
 }
 
-.edit-service-combo-btn-primary:hover:not(:disabled) {
+.combo-edit-edit-service-combo-btn-primary:hover:not(:disabled) {
     background: #059669;
 }
 
-.edit-service-combo-btn-primary:disabled {
+.combo-edit-edit-service-combo-btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.edit-service-combo-btn-secondary {
+.combo-edit-edit-service-combo-btn-secondary {
     background: white;
     color: #64748b;
     border: 1px solid #e2e8f0;
 }
 
-.edit-service-combo-btn-secondary:hover:not(:disabled) {
+.combo-edit-edit-service-combo-btn-secondary:hover:not(:disabled) {
     background: #f8fafc;
     border-color: #cbd5e1;
 }
 
-.edit-service-combo-btn-secondary:disabled {
+.combo-edit-edit-service-combo-btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

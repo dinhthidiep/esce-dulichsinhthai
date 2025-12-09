@@ -1,4 +1,4 @@
-.register-agency-page {
+.reg-agency-register-agency-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -6,23 +6,23 @@
   font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.register-agency-main {
+.reg-agency-register-agency-main {
   flex: 1;
   padding-top: 80px;
 }
 
-.register-agency-container {
+.reg-agency-register-agency-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   width: 100%;
 }
 
-.register-agency-header {
+.reg-agency-register-agency-header {
   margin-bottom: 2rem;
 }
 
-.back-button {
+.reg-agency-back-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -30,16 +30,16 @@
   color: #3b82f6;
 }
 
-.back-icon {
+.reg-agency-back-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
-.register-agency-title-section {
+.reg-agency-register-agency-title-section {
   margin-bottom: 0.5rem;
 }
 
-.register-agency-title {
+.reg-agency-register-agency-title {
   font-size: clamp(1.75rem, 4vw, 2rem);
   font-weight: 700;
   color: #1e293b;
@@ -47,7 +47,7 @@
   letter-spacing: -0.02em;
 }
 
-.register-agency-subtitle {
+.reg-agency-register-agency-subtitle {
   font-size: 1rem;
   color: #64748b;
   margin: 0;
@@ -55,19 +55,19 @@
 }
 
 /* Success Card */
-.success-card {
+.reg-agency-success-card {
   margin-bottom: 2rem;
   border: 1px solid #3b82f6;
   background: #eff6ff;
 }
 
-.success-content {
+.reg-agency-success-content {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
 }
 
-.success-icon {
+.reg-agency-success-icon {
   width: 1.5rem;
   height: 1.5rem;
   color: #3b82f6;
@@ -75,14 +75,14 @@
   margin-top: 0.125rem;
 }
 
-.success-title {
+.reg-agency-success-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1e40af;
   margin: 0 0 0.5rem 0;
 }
 
-.success-message {
+.reg-agency-success-message {
   font-size: 0.9375rem;
   color: #1e3a8a;
   margin: 0;
@@ -90,23 +90,23 @@
 }
 
 /* Form Card */
-.register-agency-form-card {
+.reg-agency-register-agency-form-card {
   margin-bottom: 2rem;
 }
 
-.register-agency-form {
+.reg-agency-register-agency-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.form-section {
+.reg-agency-form-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.section-title {
+.reg-agency-section-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
@@ -116,23 +116,23 @@
   letter-spacing: -0.01em;
 }
 
-.form-group {
+.reg-agency-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-label {
+.reg-agency-form-label {
   font-size: 0.9375rem;
   font-weight: 500;
   color: #374151;
 }
 
-.required {
+.reg-agency-required {
   color: #ef4444;
 }
 
-.form-input {
+.reg-agency-form-input {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 1.5px solid #e5e7eb;
@@ -143,22 +143,22 @@
   background: #ffffff;
 }
 
-.form-input:focus {
+.reg-agency-form-input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-.form-input.error {
+.reg-agency-form-input.reg-agency-error {
   border-color: #ef4444;
 }
 
-.form-input:disabled {
+.reg-agency-form-input:disabled {
   background: #f8fafc;
   cursor: not-allowed;
 }
 
-.error-message {
+.reg-agency-error-message {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -166,24 +166,24 @@
   font-size: 0.875rem;
 }
 
-.error-icon {
+.reg-agency-error-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
 }
 
 /* File Upload */
-.file-upload-area {
+.reg-agency-file-upload-area {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.file-input {
+.reg-agency-file-input {
   display: none;
 }
 
-.file-upload-box {
+.reg-agency-file-upload-box {
   border: 2px dashed #d1d5db;
   border-radius: 10px;
   padding: 2rem;
@@ -193,55 +193,55 @@
   background: #ffffff;
 }
 
-.file-upload-box:hover:not(:disabled) {
+.reg-agency-file-upload-box:hover:not(:disabled) {
   border-color: #3b82f6;
   background: #f8fafc;
 }
 
-.file-upload-box.error {
+.reg-agency-file-upload-box.reg-agency-error {
   border-color: #ef4444;
   background: #fef2f2;
 }
 
-.file-upload-placeholder {
+.reg-agency-file-upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
 }
 
-.upload-icon {
+.reg-agency-upload-icon {
   width: 2.5rem;
   height: 2.5rem;
   color: #64748b;
 }
 
-.file-upload-placeholder p {
+.reg-agency-file-upload-placeholder p {
   margin: 0;
   color: #374151;
   font-weight: 500;
   font-size: 0.9375rem;
 }
 
-.file-hint {
+.reg-agency-file-hint {
   font-size: 0.875rem;
   color: #64748b;
 }
 
-.file-preview {
+.reg-agency-file-preview {
   position: relative;
   display: inline-block;
   max-width: 100%;
 }
 
-.file-preview img {
+.reg-agency-file-preview img {
   max-width: 100%;
   max-height: 300px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.remove-file {
+.reg-agency-remove-file {
   position: absolute;
   top: -0.5rem;
   right: -0.5rem;
@@ -261,22 +261,22 @@
   line-height: 1;
 }
 
-.remove-file:hover {
+.reg-agency-remove-file:hover {
   background: #dc2626;
 }
 
-.remove-file:disabled {
+.reg-agency-remove-file:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* Error Alert */
-.error-alert-card {
+.reg-agency-error-alert-card {
   border: 1px solid #fecaca;
   background: #fef2f2;
 }
 
-.error-alert {
+.reg-agency-error-alert {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -284,7 +284,7 @@
   font-size: 0.9375rem;
 }
 
-.error-alert-icon {
+.reg-agency-error-alert-icon {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
@@ -292,11 +292,11 @@
 }
 
 /* Form Actions */
-.form-actions {
+.reg-agency-form-actions {
   margin-top: 0.5rem;
 }
 
-.submit-button {
+.reg-agency-submit-button {
   width: 100%;
   display: flex;
   align-items: center;
@@ -306,17 +306,17 @@
   border: none;
 }
 
-.submit-button:hover:not(:disabled) {
+.reg-agency-submit-button:hover:not(:disabled) {
   background: #2563eb;
 }
 
-.button-icon {
+.reg-agency-button-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
 /* Form Note */
-.form-note {
+.reg-agency-form-note {
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
@@ -325,7 +325,7 @@
   border-radius: 4px;
 }
 
-.note-icon {
+.reg-agency-note-icon {
   width: 1.25rem;
   height: 1.25rem;
   color: #3b82f6;
@@ -333,19 +333,19 @@
   margin-top: 0.125rem;
 }
 
-.form-note div {
+.reg-agency-form-note div {
   font-size: 0.875rem;
   color: #1e40af;
   line-height: 1.6;
   margin: 0;
 }
 
-.form-note strong {
+.reg-agency-form-note strong {
   font-weight: 600;
 }
 
 /* Small Spinner for Button */
-.spinner-small {
+.reg-agency-spinner-small {
   width: 1rem;
   height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -362,19 +362,19 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .register-agency-container {
+  .reg-agency-register-agency-container {
     padding: 1.5rem 1rem;
   }
 
-  .register-agency-title {
+  .reg-agency-register-agency-title {
     font-size: 1.75rem;
   }
 
-  .file-upload-box {
+  .reg-agency-file-upload-box {
     padding: 1.5rem;
   }
 
-  .upload-icon {
+  .reg-agency-upload-icon {
     width: 2rem;
     height: 2rem;
   }

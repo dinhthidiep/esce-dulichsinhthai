@@ -91,19 +91,19 @@ const PolicyPage = () => {
   }
 
   return (
-    <div className="policy-page">
+    <div className="policy-policy-page">
       <Header />
 
       <main>
         {/* Hero Section */}
-        <section className="policy-hero-section" id="hero">
-          <div className="policy-hero-container">
-            <div className="policy-hero-content">
-              <h1 className="policy-hero-title">
+        <section className="policy-policy-hero-section" id="hero">
+          <div className="policy-policy-hero-container">
+            <div className="policy-policy-hero-content">
+              <h1 className="policy-policy-hero-title">
                 Chính sách – Du lịch Sinh Thái
-                <span className="policy-hero-title-highlight"> Đà Nẵng</span>
+                <span className="policy-policy-hero-title-highlight"> Đà Nẵng</span>
               </h1>
-              <p className="policy-hero-description">
+              <p className="policy-policy-hero-description">
                 Chúng tôi cam kết mang đến dịch vụ du lịch sinh thái chất lượng cao với các chính sách rõ ràng,
                 minh bạch và bảo vệ quyền lợi của khách hàng.
               </p>
@@ -112,29 +112,29 @@ const PolicyPage = () => {
         </section>
 
         {/* Policy Sections */}
-        <section className="policy-sections" id="policies" aria-labelledby="policies-title">
-          <div className="section-container">
-            <div className="policy-grid">
+        <section className="policy-policy-sections" id="policies" aria-labelledby="policies-title">
+          <div className="policy-section-container">
+            <div className="policy-policy-grid">
               {policySections.map((policy, index) => {
                 const IconComponent = iconMap[policy.icon] || FileTextIcon
 
                 return (
                   <article
                     key={policy.id}
-                    className={`policy-card ${isVisible ? 'fade-in-up' : ''}`}
+                    className={`policy-policy-card ${isVisible ? 'policy-fade-in-up' : ''}`}
                     style={{ animationDelay: `${0.1 + index * 0.1}s` }}
                   >
-                    <Card className="policy-card-inner">
-                      <CardContent className="policy-content">
-                        <div className="policy-icon-wrapper" aria-hidden="true">
-                          <div className="policy-icon-bg">
-                            {IconComponent && <IconComponent className="policy-icon" />}
+                    <Card className="policy-policy-card-inner">
+                      <CardContent className="policy-policy-content">
+                        <div className="policy-policy-icon-wrapper" aria-hidden="true">
+                          <div className="policy-policy-icon-bg">
+                            {IconComponent && <IconComponent className="policy-policy-icon" />}
                           </div>
                         </div>
-                        <h3 className="policy-title">{policy.title}</h3>
-                        <ul className="policy-list">
+                        <h3 className="policy-policy-title">{policy.title}</h3>
+                        <ul className="policy-policy-list">
                           {policy.items.map((item, itemIndex) => (
-                            <li key={itemIndex} className="policy-item">
+                            <li key={itemIndex} className="policy-policy-item">
                               {item}
                             </li>
                           ))}
@@ -149,26 +149,26 @@ const PolicyPage = () => {
         </section>
 
         {/* Contact Section */}
-        <section className="policy-contact-section" id="contact" aria-labelledby="contact-title">
-          <div className="section-container">
-            <div className={`policy-contact-content ${isVisible ? 'fade-in-up' : ''}`}>
-              <h2 id="contact-title" className="policy-contact-title">
+        <section className="policy-policy-contact-section" id="contact" aria-labelledby="contact-title">
+          <div className="policy-section-container">
+            <div className={`policy-policy-contact-content ${isVisible ? 'policy-fade-in-up' : ''}`}>
+              <h2 id="contact-title" className="policy-policy-contact-title">
                 Có câu hỏi về chính sách?
               </h2>
-              <p className="policy-contact-subtitle">
+              <p className="policy-policy-contact-subtitle">
                 Nếu bạn có bất kỳ thắc mắc nào về các chính sách của chúng tôi, vui lòng liên hệ với chúng tôi
                 qua email hoặc hotline.
               </p>
-              <div className="policy-contact-info">
-                <div className="policy-contact-item">
-                  <span className="policy-contact-label">Email:</span>
-                  <a href="mailto:info@esce.vn" className="policy-contact-link">
+              <div className="policy-policy-contact-info">
+                <div className="policy-policy-contact-item">
+                  <span className="policy-policy-contact-label">Email:</span>
+                  <a href="mailto:info@esce.vn" className="policy-policy-contact-link">
                     info@esce.vn
                   </a>
                 </div>
-                <div className="policy-contact-item">
-                  <span className="policy-contact-label">Hotline:</span>
-                  <a href="tel:1900123456" className="policy-contact-link">
+                <div className="policy-policy-contact-item">
+                  <span className="policy-policy-contact-label">Hotline:</span>
+                  <a href="tel:1900123456" className="policy-policy-contact-link">
                     1900 123 456
                   </a>
                 </div>

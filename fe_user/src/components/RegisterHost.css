@@ -1,4 +1,4 @@
-.register-host-page {
+.reg-host-register-host-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -6,23 +6,23 @@
   font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.register-host-main {
+.reg-host-register-host-main {
   flex: 1;
   padding-top: 80px;
 }
 
-.register-host-container {
+.reg-host-register-host-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   width: 100%;
 }
 
-.register-host-header {
+.reg-host-register-host-header {
   margin-bottom: 2rem;
 }
 
-.back-button {
+.reg-host-back-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -30,16 +30,16 @@
   color: #059669;
 }
 
-.back-icon {
+.reg-host-back-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
-.register-host-title-section {
+.reg-host-register-host-title-section {
   margin-bottom: 0.5rem;
 }
 
-.register-host-title {
+.reg-host-register-host-title {
   font-size: clamp(1.75rem, 4vw, 2rem);
   font-weight: 700;
   color: #1e293b;
@@ -47,7 +47,7 @@
   letter-spacing: -0.02em;
 }
 
-.register-host-subtitle {
+.reg-host-register-host-subtitle {
   font-size: 1rem;
   color: #64748b;
   margin: 0;
@@ -55,19 +55,19 @@
 }
 
 /* Success Card */
-.success-card {
+.reg-host-success-card {
   margin-bottom: 2rem;
   border: 1px solid #10b981;
   background: #ecfdf5;
 }
 
-.success-content {
+.reg-host-success-content {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
 }
 
-.success-icon {
+.reg-host-success-icon {
   width: 1.5rem;
   height: 1.5rem;
   color: #059669;
@@ -75,14 +75,14 @@
   margin-top: 0.125rem;
 }
 
-.success-title {
+.reg-host-success-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #047857;
   margin: 0 0 0.5rem 0;
 }
 
-.success-message {
+.reg-host-success-message {
   font-size: 0.9375rem;
   color: #065f46;
   margin: 0;
@@ -90,23 +90,23 @@
 }
 
 /* Form Card */
-.register-host-form-card {
+.reg-host-register-host-form-card {
   margin-bottom: 2rem;
 }
 
-.register-host-form {
+.reg-host-register-host-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.form-section {
+.reg-host-form-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.section-title {
+.reg-host-section-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
@@ -116,23 +116,23 @@
   letter-spacing: -0.01em;
 }
 
-.form-group {
+.reg-host-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-label {
+.reg-host-form-label {
   font-size: 0.9375rem;
   font-weight: 500;
   color: #374151;
 }
 
-.required {
+.reg-host-required {
   color: #ef4444;
 }
 
-.form-input {
+.reg-host-form-input {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 1.5px solid #e5e7eb;
@@ -143,22 +143,22 @@
   background: #ffffff;
 }
 
-.form-input:focus {
+.reg-host-form-input:focus {
   outline: none;
   border-color: #059669;
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
 }
 
-.form-input.error {
+.reg-host-form-input.reg-host-error {
   border-color: #ef4444;
 }
 
-.form-input:disabled {
+.reg-host-form-input:disabled {
   background: #f8fafc;
   cursor: not-allowed;
 }
 
-.error-message {
+.reg-host-error-message {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -166,24 +166,24 @@
   font-size: 0.875rem;
 }
 
-.error-icon {
+.reg-host-error-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
 }
 
 /* File Upload */
-.file-upload-area {
+.reg-host-file-upload-area {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.file-input {
+.reg-host-file-input {
   display: none;
 }
 
-.file-upload-box {
+.reg-host-file-upload-box {
   border: 2px dashed #d1d5db;
   border-radius: 10px;
   padding: 2rem;
@@ -193,55 +193,55 @@
   background: #ffffff;
 }
 
-.file-upload-box:hover:not(:disabled) {
+.reg-host-file-upload-box:hover:not(:disabled) {
   border-color: #059669;
   background: #f8fafc;
 }
 
-.file-upload-box.error {
+.reg-host-file-upload-box.reg-host-error {
   border-color: #ef4444;
   background: #fef2f2;
 }
 
-.file-upload-placeholder {
+.reg-host-file-upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
 }
 
-.upload-icon {
+.reg-host-upload-icon {
   width: 2.5rem;
   height: 2.5rem;
   color: #64748b;
 }
 
-.file-upload-placeholder p {
+.reg-host-file-upload-placeholder p {
   margin: 0;
   color: #374151;
   font-weight: 500;
   font-size: 0.9375rem;
 }
 
-.file-hint {
+.reg-host-file-hint {
   font-size: 0.875rem;
   color: #64748b;
 }
 
-.file-preview {
+.reg-host-file-preview {
   position: relative;
   display: inline-block;
   max-width: 100%;
 }
 
-.file-preview img {
+.reg-host-file-preview img {
   max-width: 100%;
   max-height: 300px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.remove-file {
+.reg-host-remove-file {
   position: absolute;
   top: -0.5rem;
   right: -0.5rem;
@@ -261,22 +261,22 @@
   line-height: 1;
 }
 
-.remove-file:hover {
+.reg-host-remove-file:hover {
   background: #dc2626;
 }
 
-.remove-file:disabled {
+.reg-host-remove-file:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* Error Alert */
-.error-alert-card {
+.reg-host-error-alert-card {
   border: 1px solid #fecaca;
   background: #fef2f2;
 }
 
-.error-alert {
+.reg-host-error-alert {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -284,7 +284,7 @@
   font-size: 0.9375rem;
 }
 
-.error-alert-icon {
+.reg-host-error-alert-icon {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
@@ -292,11 +292,11 @@
 }
 
 /* Form Actions */
-.form-actions {
+.reg-host-form-actions {
   margin-top: 0.5rem;
 }
 
-.submit-button {
+.reg-host-submit-button {
   width: 100%;
   display: flex;
   align-items: center;
@@ -304,13 +304,13 @@
   gap: 0.5rem;
 }
 
-.button-icon {
+.reg-host-button-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
 /* Form Note */
-.form-note {
+.reg-host-form-note {
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
@@ -319,7 +319,7 @@
   border-radius: 4px;
 }
 
-.note-icon {
+.reg-host-note-icon {
   width: 1.25rem;
   height: 1.25rem;
   color: #3b82f6;
@@ -327,19 +327,19 @@
   margin-top: 0.125rem;
 }
 
-.form-note div {
+.reg-host-form-note div {
   font-size: 0.875rem;
   color: #1e40af;
   line-height: 1.6;
   margin: 0;
 }
 
-.form-note strong {
+.reg-host-form-note strong {
   font-weight: 600;
 }
 
 /* Small Spinner for Button */
-.spinner-small {
+.reg-host-spinner-small {
   width: 1rem;
   height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -356,19 +356,19 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .register-host-container {
+  .reg-host-register-host-container {
     padding: 1.5rem 1rem;
   }
 
-  .register-host-title {
+  .reg-host-register-host-title {
     font-size: 1.75rem;
   }
 
-  .file-upload-box {
+  .reg-host-file-upload-box {
     padding: 1.5rem;
   }
 
-  .upload-icon {
+  .reg-host-upload-icon {
     width: 2rem;
     height: 2rem;
   }

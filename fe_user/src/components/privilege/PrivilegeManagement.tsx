@@ -116,7 +116,7 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
     setPromotionPageInput('');
   }, [promotionFilterName, promotionFilterStatus, promotionSortOrder, promotions, applyPromotionFilters]);
 
-  // Calculate pagination values using useMemo - with safe defaults
+  // Calculate priv-mgr-pagination values using useMemo - with safe defaults
   const paginationData = useMemo(() => {
     const safeFiltered = Array.isArray(filteredPromotions) ? filteredPromotions : [];
     const safeItemsPerPage = promotionItemsPerPage || 5;
@@ -306,13 +306,13 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
   }));
 
   return (
-    <div className="privilege-management">
+    <div className="priv-mgr-privilege-management">
       {loadingPromotions ? (
         <LoadingSpinner message="Đang tải ưu đãi..." />
       ) : (
         <>
           {/* Filter Section */}
-          <div className="coupon-filter-container">
+          <div className="priv-mgr-coupon-filter-container">
             <div className="filter-row">
               <div className="filter-field">
                 <label htmlFor="promotion-filter-name">Lọc theo tên dịch vụ:</label>
@@ -355,15 +355,15 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
 
           {/* Promotions List */}
           {filteredPromotions.length === 0 ? (
-            <div className="empty-state">
-              <GridIcon className="empty-state-icon" />
+            <div className="priv-mgr-empty-state">
+              <GridIcon className="priv-mgr-empty-state-icon" />
               <h3>Chưa có ưu đãi nào</h3>
               <p>Không tìm thấy ưu đãi nào phù hợp với bộ lọc của bạn.</p>
             </div>
           ) : (
             <>
-              <div className="coupons-table-container">
-                <table className="coupons-table promotions-table">
+              <div className="priv-mgr-coupons-table-container">
+                <table className="priv-mgr-coupons-table promotions-table">
                   <thead>
                     <tr>
                       <th>Tên dịch vụ</th>
@@ -376,19 +376,19 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                     {paginationData.paginatedPromotions.map(promotion => {
                       return (
                         <tr key={promotion.Id || promotion.id}>
-                          <td className="promotion-service-name-cell">
+                          <td className="priv-mgr-promotion-service-name-cell">
                             {promotion.ServiceName || promotion.serviceName || 'Không có'}
                           </td>
-                          <td className="promotion-rank-cell">
-                            <span className={`rank-badge rank-${(promotion.Rank || promotion.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                          <td className="priv-mgr-promotion-rank-cell">
+                            <span className={`priv-mgr-rank-badge priv-mgr-rank-${(promotion.Rank || promotion.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
                               {promotion.Rank || promotion.rank || 'Không có'}
                             </span>
                           </td>
-                          <td className="promotion-user-type-cell">
+                          <td className="priv-mgr-promotion-user-type-cell">
                             {promotion.UserType || promotion.userType || 'Không có'}
                           </td>
-                          <td className="promotion-actions-cell">
-                            <div className="coupon-table-actions">
+                          <td className="priv-mgr-promotion-actions-cell">
+                            <div className="priv-mgr-coupon-table-actions">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -416,7 +416,7 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
 
               {/* Pagination */}
               {(!paginationData || paginationData.totalPages <= 1) ? null : (
-                <div className="pagination">
+                <div className="priv-mgr-pagination">
                   <button
                     type="button"
                     className="pagination-btn"

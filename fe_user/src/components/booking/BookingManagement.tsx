@@ -210,15 +210,15 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
     const statusLower = (status || '').toLowerCase();
     switch (statusLower) {
       case 'pending':
-        return { text: 'Đã xử lý', className: 'status-pending' };
+        return { text: 'Đã xử lý', className: 'booking-mgr-status-pending' };
       case 'confirmed':
-        return { text: 'Đã xác nhận', className: 'status-confirmed' };
+        return { text: 'Đã xác nhận', className: 'booking-mgr-status-confirmed' };
       case 'completed':
-        return { text: 'Đã hoàn thành', className: 'status-completed' };
+        return { text: 'Đã hoàn thành', className: 'booking-mgr-status-completed' };
       case 'cancelled':
-        return { text: 'Đã hủy', className: 'status-cancelled' };
+        return { text: 'Đã hủy', className: 'booking-mgr-status-cancelled' };
       default:
-        return { text: 'Đã xử lý', className: 'status-pending' };
+        return { text: 'Đã xử lý', className: 'booking-mgr-status-pending' };
     }
   };
 
@@ -300,19 +300,19 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
   };
 
   return (
-    <div className="booking-management">
+    <div className="booking-mgr-booking-management">
       {loadingBookings ? (
         <LoadingSpinner message="Đang tải danh sách booking..." />
       ) : (
         <>
           {/* Filters */}
-          <div className="booking-filter-container">
-            <div className="filter-row">
-              <div className="filter-group">
-                <label htmlFor="booking-status-filter" className="filter-label">Trạng thái</label>
+          <div className="booking-mgr-booking-filter-container">
+            <div className="booking-mgr-filter-row">
+              <div className="booking-mgr-filter-group">
+                <label htmlFor="booking-status-filter" className="booking-mgr-filter-label">Trạng thái</label>
                 <select 
                   id="booking-status-filter"
-                  className="filter-select"
+                  className="booking-mgr-filter-select"
                   value={bookingStatusFilter}
                   onChange={(e) => {
                     setBookingStatusFilter(e.target.value);
@@ -328,12 +328,12 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 </select>
               </div>
 
-              <div className="filter-group">
-                <label htmlFor="booking-service-name-filter" className="filter-label">Tên dịch vụ</label>
+              <div className="booking-mgr-filter-group">
+                <label htmlFor="booking-service-name-filter" className="booking-mgr-filter-label">Tên dịch vụ</label>
                 <input
                   type="text"
                   id="booking-service-name-filter"
-                  className="filter-select"
+                  className="booking-mgr-filter-select"
                   value={bookingServiceNameFilter}
                   onChange={(e) => {
                     setBookingServiceNameFilter(e.target.value);
@@ -345,12 +345,12 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 />
               </div>
 
-              <div className="filter-group">
-                <label htmlFor="booking-user-name-filter" className="filter-label">Tên người dùng</label>
+              <div className="booking-mgr-filter-group">
+                <label htmlFor="booking-user-name-filter" className="booking-mgr-filter-label">Tên người dùng</label>
                 <input
                   type="text"
                   id="booking-user-name-filter"
-                  className="filter-select"
+                  className="booking-mgr-filter-select"
                   value={bookingUserNameFilter}
                   onChange={(e) => {
                     setBookingUserNameFilter(e.target.value);
@@ -362,11 +362,11 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 />
               </div>
 
-              <div className="filter-group">
-                <label htmlFor="booking-sort-order" className="filter-label">Sắp xếp</label>
+              <div className="booking-mgr-filter-group">
+                <label htmlFor="booking-sort-order" className="booking-mgr-filter-label">Sắp xếp</label>
                 <select 
                   id="booking-sort-order"
-                  className="filter-select"
+                  className="booking-mgr-filter-select"
                   value={bookingSortOrder}
                   onChange={(e) => {
                     setBookingSortOrder(e.target.value);
@@ -382,13 +382,13 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
           </div>
 
           {filteredBookings.length === 0 ? (
-            <div className="empty-state">
-              <CalendarIcon className="empty-state-icon" />
+            <div className="booking-mgr-empty-state">
+              <CalendarIcon className="booking-mgr-empty-state-icon" />
               <h3>Không có booking nào</h3>
               <p>Bạn chưa có booking nào.</p>
             </div>
           ) : (
-            <div className="bookings-list">
+            <div className="booking-mgr-bookings-list">
               {paginatedBookings.map((booking) => {
                 const statusDisplay = getBookingStatusDisplay(booking.Status || booking.status);
                 const bookingId = booking.Id || booking.id;
@@ -413,43 +413,43 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 const isConfirmed = status === 'confirmed';
                 
                 return (
-                  <div key={bookingId} className="booking-card card">
-                    <div className="booking-card-content">
+                  <div key={bookingId} className="booking-mgr-booking-card card">
+                    <div className="booking-mgr-booking-card-content">
                       {/* Part 1: Main Info */}
-                      <div className="booking-card-main">
-                        <div className="booking-card-header">
-                          <div className="booking-card-left">
-                            <div className="booking-image">
+                      <div className="booking-mgr-booking-card-main">
+                        <div className="booking-mgr-booking-card-header">
+                          <div className="booking-mgr-booking-card-left">
+                            <div className="booking-mgr-booking-image">
                               <img
                                 src={serviceImage}
                                 alt={serviceName}
-                                className="booking-image-img"
+                                className="booking-mgr-booking-image-img"
                                 onError={(e) => {
                                   e.currentTarget.src = '/img/banahills.jpg';
                                 }}
                               />
                             </div>
-                            <div className="booking-info">
-                              <div className="booking-title-row">
-                                <h3 className="booking-service-name">{serviceName}</h3>
-                                <Badge className={`status-badge ${statusDisplay.className}`}>
+                            <div className="booking-mgr-booking-info">
+                              <div className="booking-mgr-booking-title-row">
+                                <h3 className="booking-mgr-booking-service-name">{serviceName}</h3>
+                                <Badge className={`booking-mgr-status-badge ${statusDisplay.className}`}>
                                   {statusDisplay.text}
                                 </Badge>
                               </div>
-                              <div className="booking-details">
-                                <div className="booking-detail-item">
-                                  <span className="booking-info-label">Người đặt:</span>
-                                  <span className="booking-info-value">{userName}</span>
+                              <div className="booking-mgr-booking-details">
+                                <div className="booking-mgr-booking-detail-item">
+                                  <span className="booking-mgr-booking-info-label">Người đặt:</span>
+                                  <span className="booking-mgr-booking-info-value">{userName}</span>
                                 </div>
                                 {bookingDate && (
-                                  <div className="booking-detail-item">
-                                    <CalendarIcon className="detail-icon" />
+                                  <div className="booking-mgr-booking-detail-item">
+                                    <CalendarIcon className="booking-mgr-detail-icon" />
                                     <span>Ngày đặt: {formatBookingDate(bookingDate)}</span>
                                   </div>
                                 )}
                                 {startDate && (
-                                  <div className="booking-detail-item">
-                                    <CalendarIcon className="detail-icon" />
+                                  <div className="booking-mgr-booking-detail-item">
+                                    <CalendarIcon className="booking-mgr-detail-icon" />
                                     <span>
                                       {formatBookingDate(startDate)}
                                       {endDate && ` - ${formatBookingDate(endDate)}`}
@@ -457,14 +457,14 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                                   </div>
                                 )}
                                 {quantity > 0 && (
-                                  <div className="booking-detail-item">
-                                    <UserIcon className="detail-icon" />
+                                  <div className="booking-mgr-booking-detail-item">
+                                    <UserIcon className="booking-mgr-detail-icon" />
                                     <span>Số người: {quantity}</span>
                                   </div>
                                 )}
                                 {totalAmount > 0 && (
-                                  <div className="booking-detail-item">
-                                    <span className="booking-price">
+                                  <div className="booking-mgr-booking-detail-item">
+                                    <span className="booking-mgr-booking-price">
                                       Tổng tiền: {formatCurrency(totalAmount)}
                                     </span>
                                   </div>
@@ -473,7 +473,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                             </div>
                           </div>
                           {isPending && (
-                            <div className="booking-card-actions">
+                            <div className="booking-mgr-booking-card-actions">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -493,7 +493,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                             </div>
                           )}
                           {isConfirmed && (
-                            <div className="booking-card-actions">
+                            <div className="booking-mgr-booking-card-actions">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -507,10 +507,10 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                         </div>
                       </div>
                       {/* Part 2: Notes */}
-                      <div className="booking-card-notes">
-                        <div className="booking-notes">
-                          <span className="booking-info-label">Ghi chú:</span>
-                          <span className="booking-info-value">{notes || 'Không có ghi chú'}</span>
+                      <div className="booking-mgr-booking-card-notes">
+                        <div className="booking-mgr-booking-notes">
+                          <span className="booking-mgr-booking-info-label">Ghi chú:</span>
+                          <span className="booking-mgr-booking-info-value">{notes || 'Không có ghi chú'}</span>
                         </div>
                       </div>
                     </div>
@@ -520,10 +520,10 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
               
               {/* Pagination */}
               {bookingTotalPages > 1 && (
-                <div className="pagination">
+                <div className="booking-mgr-pagination">
                   <button
                     type="button"
-                    className="pagination-btn"
+                    className="booking-mgr-pagination-btn"
                     onClick={() => {
                       const newPage = Math.max(1, bookingCurrentPage - 1);
                       setBookingCurrentPage(newPage);
@@ -534,13 +534,13 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                     <span>←</span> Trước
                   </button>
                   
-                  <div className="pagination-controls">
-                    <div className="pagination-numbers">
+                  <div className="booking-mgr-pagination-controls">
+                    <div className="booking-mgr-pagination-numbers">
                       {Array.from({ length: bookingTotalPages }, (_, i) => i + 1).map(page => (
                         <button
                           key={page}
                           type="button"
-                          className={`pagination-number ${bookingCurrentPage === page ? 'active' : ''}`}
+                          className={`booking-mgr-pagination-number ${bookingCurrentPage === page ? 'booking-mgr-active' : ''}`}
                           onClick={() => {
                             setBookingCurrentPage(page);
                             setBookingPageInput('');
@@ -583,7 +583,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                   
                   <button
                     type="button"
-                    className="pagination-btn"
+                    className="booking-mgr-pagination-btn"
                     onClick={() => {
                       const newPage = Math.min(bookingTotalPages, bookingCurrentPage + 1);
                       setBookingCurrentPage(newPage);

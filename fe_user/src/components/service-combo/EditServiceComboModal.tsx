@@ -195,29 +195,29 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
   const currentPageCoupons = filteredCoupons.slice(couponsStartIndex, couponsEndIndex);
 
   return (
-    <div className="edit-service-combo-modal-overlay" onClick={onClose}>
-      <div className="edit-service-combo-modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="edit-service-combo-modal-header">
+    <div className="combo-edit-edit-service-combo-modal-overlay" onClick={onClose}>
+      <div className="combo-edit-edit-service-combo-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="combo-edit-edit-service-combo-modal-header">
           <h2>Chỉnh sửa combo dịch vụ</h2>
-          <button className="edit-service-combo-modal-close" onClick={onClose}>
-            <XIcon className="edit-service-combo-modal-close-icon" />
+          <button className="combo-edit-edit-service-combo-modal-close" onClick={onClose}>
+            <XIcon className="combo-edit-edit-service-combo-modal-close-icon" />
           </button>
         </div>
-        <div className="edit-service-combo-modal-body">
+        <div className="combo-edit-edit-service-combo-modal-body">
           {loading ? (
             <LoadingSpinner message="Đang tải dữ liệu..." />
           ) : (
             <>
-              <div className="edit-service-combo-disclaimer-text">
-                (<span className="edit-service-combo-required-indicator">*</span>) bắt buộc
+              <div className="combo-edit-edit-service-combo-disclaimer-text">
+                (<span className="combo-edit-edit-service-combo-required-indicator">*</span>) bắt buộc
               </div>
               
               <form onSubmit={onSubmit} noValidate>
                 {/* Name Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-name">
                     Nhập tên combo dịch vụ (Service Combo Name)
-                    <span className="edit-service-combo-required-indicator">*</span>
+                    <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                   </label>
                   <input
                     id="edit-service-combo-name"
@@ -230,14 +230,14 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                     onChange={onInputChange}
                     autoComplete="off"
                   />
-                  {errors.name && <div className="edit-service-combo-error">{errors.name}</div>}
+                  {errors.name && <div className="combo-edit-edit-service-combo-error">{errors.name}</div>}
                 </div>
 
                 {/* Address Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-address">
                     Địa chỉ (Address)
-                    <span className="edit-service-combo-required-indicator">*</span>
+                    <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                   </label>
                   <input
                     id="edit-service-combo-address"
@@ -250,11 +250,11 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                     onChange={onInputChange}
                     autoComplete="off"
                   />
-                  {errors.address && <div className="edit-service-combo-error">{errors.address}</div>}
+                  {errors.address && <div className="combo-edit-edit-service-combo-error">{errors.address}</div>}
                 </div>
 
                 {/* Description Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-description">Mô tả về combo dịch vụ (Service Combo Description)</label>
                   <textarea
                     id="edit-service-combo-description"
@@ -265,17 +265,17 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                     onChange={onInputChange}
                     rows={4}
                   />
-                  <div className="edit-service-combo-hint">
+                  <div className="combo-edit-edit-service-combo-hint">
                     Còn lại: <span>{1000 - formData.description.length}</span> ký tự
                   </div>
                 </div>
 
                 {/* Start Date and End Date Fields */}
-                <div className="edit-service-combo-field-row">
-                  <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field-row">
+                  <div className="combo-edit-edit-service-combo-field">
                     <label htmlFor="edit-service-combo-startDate">
                       Ngày triển khai
-                      <span className="edit-service-combo-required-indicator">*</span>
+                      <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                     </label>
                     <input
                       id="edit-service-combo-startDate"
@@ -285,13 +285,13 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       value={formData.startDate}
                       onChange={onInputChange}
                     />
-                    {errors.startDate && <div className="edit-service-combo-error">{errors.startDate}</div>}
+                    {errors.startDate && <div className="combo-edit-edit-service-combo-error">{errors.startDate}</div>}
                   </div>
 
-                  <div className="edit-service-combo-field">
+                  <div className="combo-edit-edit-service-combo-field">
                     <label htmlFor="edit-service-combo-endDate">
                       Ngày kết thúc
-                      <span className="edit-service-combo-required-indicator">*</span>
+                      <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                     </label>
                     <input
                       id="edit-service-combo-endDate"
@@ -302,17 +302,17 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       onChange={onInputChange}
                       min={formData.startDate || undefined}
                     />
-                    {errors.endDate && <div className="edit-service-combo-error">{errors.endDate}</div>}
+                    {errors.endDate && <div className="combo-edit-edit-service-combo-error">{errors.endDate}</div>}
                   </div>
                 </div>
 
                 {/* Duration Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label>
                     Thời hạn
-                    <span className="edit-service-combo-required-indicator">*</span>
+                    <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                   </label>
-                  <div className="edit-service-combo-duration-inputs">
+                  <div className="combo-edit-edit-service-combo-duration-inputs">
                     <input
                       id="edit-service-combo-numberOfDays"
                       name="numberOfDays"
@@ -325,9 +325,9 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       value={formData.numberOfDays}
                       onChange={onInputChange}
                       inputMode="numeric"
-                      className="edit-service-combo-duration-input"
+                      className="combo-edit-edit-service-combo-duration-input"
                     />
-                    <span className="edit-service-combo-duration-label">ngày</span>
+                    <span className="combo-edit-edit-service-combo-duration-label">ngày</span>
                     <input
                       id="edit-service-combo-numberOfNights"
                       name="numberOfNights"
@@ -340,20 +340,20 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       value={formData.numberOfNights}
                       onChange={onInputChange}
                       inputMode="numeric"
-                      className="edit-service-combo-duration-input"
+                      className="combo-edit-edit-service-combo-duration-input"
                     />
-                    <span className="edit-service-combo-duration-label">đêm</span>
+                    <span className="combo-edit-edit-service-combo-duration-label">đêm</span>
                   </div>
-                  {errors.numberOfDays && <div className="edit-service-combo-error">{errors.numberOfDays}</div>}
-                  {errors.numberOfNights && <div className="edit-service-combo-error">{errors.numberOfNights}</div>}
+                  {errors.numberOfDays && <div className="combo-edit-edit-service-combo-error">{errors.numberOfDays}</div>}
+                  {errors.numberOfNights && <div className="combo-edit-edit-service-combo-error">{errors.numberOfNights}</div>}
                 </div>
 
                 {/* Price and Available Slots Fields */}
-                <div className="edit-service-combo-field-row">
-                  <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field-row">
+                  <div className="combo-edit-edit-service-combo-field">
                     <label htmlFor="edit-service-combo-price">
                       Giá (Price)
-                      <span className="edit-service-combo-required-indicator">*</span>
+                      <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                     </label>
                     <input
                       id="edit-service-combo-price"
@@ -367,13 +367,13 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       onChange={onInputChange}
                       inputMode="decimal"
                     />
-                    {errors.price && <div className="edit-service-combo-error">{errors.price}</div>}
+                    {errors.price && <div className="combo-edit-edit-service-combo-error">{errors.price}</div>}
                   </div>
 
-                  <div className="edit-service-combo-field">
+                  <div className="combo-edit-edit-service-combo-field">
                     <label htmlFor="edit-service-combo-availableSlots">
                       Số chỗ trống (Available Slots)
-                      <span className="edit-service-combo-required-indicator">*</span>
+                      <span className="combo-edit-edit-service-combo-required-indicator">*</span>
                     </label>
                     <input
                       id="edit-service-combo-availableSlots"
@@ -386,12 +386,12 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       onChange={onInputChange}
                       inputMode="numeric"
                     />
-                    {errors.availableSlots && <div className="edit-service-combo-error">{errors.availableSlots}</div>}
+                    {errors.availableSlots && <div className="combo-edit-edit-service-combo-error">{errors.availableSlots}</div>}
                   </div>
                 </div>
 
                 {/* Status Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-status">Trạng thái (Status)</label>
                   <select
                     id="edit-service-combo-status"
@@ -406,7 +406,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                 </div>
 
                 {/* Cancellation Policy Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-cancellationPolicy">Chính sách hủy (Cancellation Policy)</label>
                   <textarea
                     id="edit-service-combo-cancellationPolicy"
@@ -417,13 +417,13 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                     onChange={onInputChange}
                     rows={3}
                   />
-                  <div className="edit-service-combo-hint">
+                  <div className="combo-edit-edit-service-combo-hint">
                     Còn lại: <span>{1000 - formData.cancellationPolicy.length}</span> ký tự
                   </div>
                 </div>
 
                 {/* Image Upload Field */}
-                <div className="edit-service-combo-field">
+                <div className="combo-edit-edit-service-combo-field">
                   <label htmlFor="edit-service-combo-image">Chọn ảnh (Image)</label>
                   <input
                     id="edit-service-combo-image"
@@ -432,13 +432,13 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                     accept="image/*"
                     onChange={onImageChange}
                   />
-                  <div className="edit-service-combo-hint">
+                  <div className="combo-edit-edit-service-combo-hint">
                     Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)
                   </div>
                   {imagePreview && (
                     <img
                       src={imagePreview}
-                      className="edit-service-combo-img-preview"
+                      className="combo-edit-edit-service-combo-img-preview"
                       alt="Xem trước ảnh"
                       loading="lazy"
                     />
@@ -446,16 +446,16 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                 </div>
 
                 {/* Services Section */}
-                <div className="edit-service-combo-field">
-                  <div className="edit-service-combo-section-header">
+                <div className="combo-edit-edit-service-combo-field">
+                  <div className="combo-edit-edit-service-combo-section-header">
                     <label>Dịch vụ tính phí</label>
                     <button
                       type="button"
                       onClick={onToggleServicesTable}
-                      className="edit-service-combo-toggle-btn"
+                      className="combo-edit-edit-service-combo-toggle-btn"
                     >
                       <ChevronDownIcon 
-                        className="edit-service-combo-chevron-icon"
+                        className="combo-edit-edit-service-combo-chevron-icon"
                         style={{ 
                           transform: isServicesTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                           transition: 'transform 0.2s ease'
@@ -465,10 +465,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                   </div>
                   
                   {isServicesTableOpen && (
-                    <div className="edit-service-combo-table-container">
+                    <div className="combo-edit-edit-service-combo-table-container">
                       {/* Filters */}
-                      <div className="edit-service-combo-table-filters">
-                        <div className="edit-service-combo-filter-field">
+                      <div className="combo-edit-edit-service-combo-table-filters">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Tên dịch vụ:</label>
                           <input
                             type="text"
@@ -478,10 +478,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onServicesPageChange(1);
                             }}
                             placeholder="Nhập tên dịch vụ..."
-                            className="edit-service-combo-filter-input"
+                            className="combo-edit-edit-service-combo-filter-input"
                           />
                         </div>
-                        <div className="edit-service-combo-filter-field">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Giá (VND):</label>
                           <input
                             type="text"
@@ -494,13 +494,13 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               }
                             }}
                             placeholder="Nhập giá..."
-                            className="edit-service-combo-filter-input"
+                            className="combo-edit-edit-service-combo-filter-input"
                           />
                         </div>
                       </div>
                       
-                      <div className="edit-service-combo-table-wrapper">
-                        <table className="edit-service-combo-table">
+                      <div className="combo-edit-edit-service-combo-table-wrapper">
+                        <table className="combo-edit-edit-service-combo-table">
                           <thead>
                             <tr>
                               <th>Tên</th>
@@ -513,7 +513,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                           <tbody>
                             {filteredServices.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="edit-service-combo-empty-cell">
+                                <td colSpan={5} className="combo-edit-edit-service-combo-empty-cell">
                                   Không có dịch vụ nào
                                 </td>
                               </tr>
@@ -535,7 +535,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                         value={quantity}
                                         onChange={(e) => onServiceQuantityChange(serviceId, e.target.value)}
                                         disabled={!isSelected}
-                                        className="edit-service-combo-quantity-input"
+                                        className="combo-edit-edit-service-combo-quantity-input"
                                       />
                                     </td>
                                     <td>
@@ -554,7 +554,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       </div>
                       
                       {servicesTotalPages > 0 && (
-                        <div className="edit-service-combo-pagination">
+                        <div className="combo-edit-edit-service-combo-pagination">
                           <button
                             type="button"
                             onClick={() => {
@@ -563,12 +563,12 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onServicesPageInputChange('');
                             }}
                             disabled={servicesPage === 1}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             <span>←</span> Trước
                           </button>
                           
-                          <div className="edit-service-combo-pagination-numbers">
+                          <div className="combo-edit-edit-service-combo-pagination-numbers">
                             {Array.from({ length: servicesTotalPages }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
@@ -577,14 +577,14 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                   onServicesPageChange(page);
                                   onServicesPageInputChange('');
                                 }}
-                                className={`edit-service-combo-pagination-number ${servicesPage === page ? 'active' : ''}`}
+                                className={`combo-edit-edit-service-combo-pagination-number ${servicesPage === page ? 'combo-edit-active' : ''}`}
                               >
                                 {page}
                               </button>
                             ))}
                           </div>
                           
-                          <div className="edit-service-combo-pagination-jump">
+                          <div className="combo-edit-edit-service-combo-pagination-jump">
                             <span>Đến trang:</span>
                             <input
                               type="text"
@@ -601,7 +601,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                 }
                               }}
                               placeholder={servicesPage.toString()}
-                              className="edit-service-combo-pagination-input"
+                              className="combo-edit-edit-service-combo-pagination-input"
                               inputMode="numeric"
                             />
                           </div>
@@ -614,7 +614,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onServicesPageInputChange('');
                             }}
                             disabled={servicesPage === servicesTotalPages}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             Sau <span>→</span>
                           </button>
@@ -625,16 +625,16 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                 </div>
 
                 {/* Promotions Section */}
-                <div className="edit-service-combo-field">
-                  <div className="edit-service-combo-section-header">
+                <div className="combo-edit-edit-service-combo-field">
+                  <div className="combo-edit-edit-service-combo-section-header">
                     <label>Ưu đãi</label>
                     <button
                       type="button"
                       onClick={onTogglePromotionsTable}
-                      className="edit-service-combo-toggle-btn"
+                      className="combo-edit-edit-service-combo-toggle-btn"
                     >
                       <ChevronDownIcon 
-                        className="edit-service-combo-chevron-icon"
+                        className="combo-edit-edit-service-combo-chevron-icon"
                         style={{ 
                           transform: isPromotionsTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                           transition: 'transform 0.2s ease'
@@ -644,10 +644,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                   </div>
                   
                   {isPromotionsTableOpen && (
-                    <div className="edit-service-combo-table-container">
+                    <div className="combo-edit-edit-service-combo-table-container">
                       {/* Filters */}
-                      <div className="edit-service-combo-table-filters">
-                        <div className="edit-service-combo-filter-field">
+                      <div className="combo-edit-edit-service-combo-table-filters">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Tên ưu đãi:</label>
                           <input
                             type="text"
@@ -657,10 +657,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onPromotionsPageChange(1);
                             }}
                             placeholder="Nhập tên ưu đãi..."
-                            className="edit-service-combo-filter-input"
+                            className="combo-edit-edit-service-combo-filter-input"
                           />
                         </div>
-                        <div className="edit-service-combo-filter-field">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Hạng:</label>
                           <select
                             value={promotionFilterRank}
@@ -668,7 +668,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onPromotionFilterRankChange(e.target.value);
                               onPromotionsPageChange(1);
                             }}
-                            className="edit-service-combo-filter-select"
+                            className="combo-edit-edit-service-combo-filter-select"
                           >
                             <option value="all">Tất cả</option>
                             <option value="Đồng">Đồng</option>
@@ -678,8 +678,8 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                         </div>
                       </div>
                       
-                      <div className="edit-service-combo-table-wrapper">
-                        <table className="edit-service-combo-table">
+                      <div className="combo-edit-edit-service-combo-table-wrapper">
+                        <table className="combo-edit-edit-service-combo-table">
                           <thead>
                             <tr>
                               <th>Tên ưu đãi</th>
@@ -692,7 +692,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                           <tbody>
                             {filteredPromotions.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="edit-service-combo-empty-cell">
+                                <td colSpan={5} className="combo-edit-edit-service-combo-empty-cell">
                                   Không có ưu đãi nào
                                 </td>
                               </tr>
@@ -705,7 +705,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                   <tr key={promotionId}>
                                     <td>{promotion.ServiceName || promotion.serviceName || 'N/A'}</td>
                                     <td>
-                                      <span className={`edit-service-combo-rank-badge rank-${(promotion.Rank || promotion.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                                      <span className={`combo-edit-edit-service-combo-rank-badge combo-edit-rank-${(promotion.Rank || promotion.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
                                         {promotion.Rank || promotion.rank || 'N/A'}
                                       </span>
                                     </td>
@@ -718,7 +718,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                         value={quantity}
                                         onChange={(e) => onPromotionQuantityChange(promotionId, e.target.value)}
                                         disabled={!isSelected}
-                                        className="edit-service-combo-quantity-input"
+                                        className="combo-edit-edit-service-combo-quantity-input"
                                       />
                                     </td>
                                     <td>
@@ -737,7 +737,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       </div>
                       
                       {promotionsTotalPages > 0 && (
-                        <div className="edit-service-combo-pagination">
+                        <div className="combo-edit-edit-service-combo-pagination">
                           <button
                             type="button"
                             onClick={() => {
@@ -746,12 +746,12 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onPromotionsPageInputChange('');
                             }}
                             disabled={promotionsPage === 1}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             <span>←</span> Trước
                           </button>
                           
-                          <div className="edit-service-combo-pagination-numbers">
+                          <div className="combo-edit-edit-service-combo-pagination-numbers">
                             {Array.from({ length: promotionsTotalPages }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
@@ -760,14 +760,14 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                   onPromotionsPageChange(page);
                                   onPromotionsPageInputChange('');
                                 }}
-                                className={`edit-service-combo-pagination-number ${promotionsPage === page ? 'active' : ''}`}
+                                className={`combo-edit-edit-service-combo-pagination-number ${promotionsPage === page ? 'combo-edit-active' : ''}`}
                               >
                                 {page}
                               </button>
                             ))}
                           </div>
                           
-                          <div className="edit-service-combo-pagination-jump">
+                          <div className="combo-edit-edit-service-combo-pagination-jump">
                             <span>Đến trang:</span>
                             <input
                               type="text"
@@ -784,7 +784,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                 }
                               }}
                               placeholder={promotionsPage.toString()}
-                              className="edit-service-combo-pagination-input"
+                              className="combo-edit-edit-service-combo-pagination-input"
                               inputMode="numeric"
                             />
                           </div>
@@ -797,7 +797,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onPromotionsPageInputChange('');
                             }}
                             disabled={promotionsPage === promotionsTotalPages}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             Sau <span>→</span>
                           </button>
@@ -808,16 +808,16 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                 </div>
 
                 {/* Coupons Section */}
-                <div className="edit-service-combo-field">
-                  <div className="edit-service-combo-section-header">
+                <div className="combo-edit-edit-service-combo-field">
+                  <div className="combo-edit-edit-service-combo-section-header">
                     <label>Mã giảm giá</label>
                     <button
                       type="button"
                       onClick={onToggleCouponsTable}
-                      className="edit-service-combo-toggle-btn"
+                      className="combo-edit-edit-service-combo-toggle-btn"
                     >
                       <ChevronDownIcon 
-                        className="edit-service-combo-chevron-icon"
+                        className="combo-edit-edit-service-combo-chevron-icon"
                         style={{ 
                           transform: isCouponsTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                           transition: 'transform 0.2s ease'
@@ -827,10 +827,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                   </div>
                   
                   {isCouponsTableOpen && (
-                    <div className="edit-service-combo-table-container">
+                    <div className="combo-edit-edit-service-combo-table-container">
                       {/* Filters */}
-                      <div className="edit-service-combo-table-filters">
-                        <div className="edit-service-combo-filter-field">
+                      <div className="combo-edit-edit-service-combo-table-filters">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Mã:</label>
                           <input
                             type="text"
@@ -840,10 +840,10 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onCouponsPageChange(1);
                             }}
                             placeholder="Nhập mã giảm giá..."
-                            className="edit-service-combo-filter-input"
+                            className="combo-edit-edit-service-combo-filter-input"
                           />
                         </div>
-                        <div className="edit-service-combo-filter-field">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Hạng:</label>
                           <select
                             value={couponFilterRank}
@@ -851,7 +851,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onCouponFilterRankChange(e.target.value);
                               onCouponsPageChange(1);
                             }}
-                            className="edit-service-combo-filter-select"
+                            className="combo-edit-edit-service-combo-filter-select"
                           >
                             <option value="all">Tất cả</option>
                             <option value="Đồng">Đồng</option>
@@ -860,7 +860,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                             <option value="Tất cả">Tất cả</option>
                           </select>
                         </div>
-                        <div className="edit-service-combo-filter-field">
+                        <div className="combo-edit-edit-service-combo-filter-field">
                           <label>Loại người dùng:</label>
                           <select
                             value={couponFilterUserType}
@@ -868,7 +868,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onCouponFilterUserTypeChange(e.target.value);
                               onCouponsPageChange(1);
                             }}
-                            className="edit-service-combo-filter-select"
+                            className="combo-edit-edit-service-combo-filter-select"
                           >
                             <option value="all">Tất cả</option>
                             <option value="Khách hàng">Khách hàng</option>
@@ -877,8 +877,8 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                         </div>
                       </div>
                       
-                      <div className="edit-service-combo-table-wrapper">
-                        <table className="edit-service-combo-table">
+                      <div className="combo-edit-edit-service-combo-table-wrapper">
+                        <table className="combo-edit-edit-service-combo-table">
                           <thead>
                             <tr>
                               <th>Mã</th>
@@ -890,7 +890,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                           <tbody>
                             {filteredCoupons.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="edit-service-combo-empty-cell">
+                                <td colSpan={4} className="combo-edit-edit-service-combo-empty-cell">
                                   Không có mã giảm giá nào
                                 </td>
                               </tr>
@@ -902,7 +902,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                   <tr key={couponId}>
                                     <td>{coupon.Code || coupon.code || 'N/A'}</td>
                                     <td>
-                                      <span className={`edit-service-combo-rank-badge rank-${(coupon.Rank || coupon.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                                      <span className={`combo-edit-edit-service-combo-rank-badge combo-edit-rank-${(coupon.Rank || coupon.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
                                         {coupon.Rank || coupon.rank || 'N/A'}
                                       </span>
                                     </td>
@@ -923,7 +923,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                       </div>
                       
                       {couponsTotalPages > 0 && (
-                        <div className="edit-service-combo-pagination">
+                        <div className="combo-edit-edit-service-combo-pagination">
                           <button
                             type="button"
                             onClick={() => {
@@ -932,12 +932,12 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onCouponsPageInputChange('');
                             }}
                             disabled={couponsPage === 1}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             <span>←</span> Trước
                           </button>
                           
-                          <div className="edit-service-combo-pagination-numbers">
+                          <div className="combo-edit-edit-service-combo-pagination-numbers">
                             {Array.from({ length: couponsTotalPages }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
@@ -946,14 +946,14 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                   onCouponsPageChange(page);
                                   onCouponsPageInputChange('');
                                 }}
-                                className={`edit-service-combo-pagination-number ${couponsPage === page ? 'active' : ''}`}
+                                className={`combo-edit-edit-service-combo-pagination-number ${couponsPage === page ? 'combo-edit-active' : ''}`}
                               >
                                 {page}
                               </button>
                             ))}
                           </div>
                           
-                          <div className="edit-service-combo-pagination-jump">
+                          <div className="combo-edit-edit-service-combo-pagination-jump">
                             <span>Đến trang:</span>
                             <input
                               type="text"
@@ -970,7 +970,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                                 }
                               }}
                               placeholder={couponsPage.toString()}
-                              className="edit-service-combo-pagination-input"
+                              className="combo-edit-edit-service-combo-pagination-input"
                               inputMode="numeric"
                             />
                           </div>
@@ -983,7 +983,7 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                               onCouponsPageInputChange('');
                             }}
                             disabled={couponsPage === couponsTotalPages}
-                            className="edit-service-combo-pagination-btn"
+                            className="combo-edit-edit-service-combo-pagination-btn"
                           >
                             Sau <span>→</span>
                           </button>
@@ -994,11 +994,11 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                 </div>
 
                 {/* Form Actions */}
-                <div className="edit-service-combo-form-action">
-                  <button type="submit" className="edit-service-combo-btn-primary" disabled={isSubmitting}>
+                <div className="combo-edit-edit-service-combo-form-action">
+                  <button type="submit" className="combo-edit-edit-service-combo-btn-primary" disabled={isSubmitting}>
                     {isSubmitting ? 'Đang xử lý...' : 'Cập nhật combo'}
                   </button>
-                  <button type="button" className="edit-service-combo-btn-secondary" onClick={onClose}>
+                  <button type="button" className="combo-edit-edit-service-combo-btn-secondary" onClick={onClose}>
                     Hủy
                   </button>
                 </div>

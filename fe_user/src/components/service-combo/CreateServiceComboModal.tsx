@@ -192,25 +192,25 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   const currentPageCoupons = filteredCoupons.slice(couponsStartIndex, couponsEndIndex);
 
   return (
-    <div className="create-service-combo-modal-overlay" onClick={onClose}>
-      <div className="create-service-combo-modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="create-service-combo-modal-header">
+    <div className="combo-create-create-service-combo-modal-overlay" onClick={onClose}>
+      <div className="combo-create-create-service-combo-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="combo-create-create-service-combo-modal-header">
           <h2>Tạo gói dịch vụ mới</h2>
-          <button className="create-service-combo-modal-close" onClick={onClose}>
-            <XIcon className="create-service-combo-modal-close-icon" />
+          <button className="combo-create-create-service-combo-modal-close" onClick={onClose}>
+            <XIcon className="combo-create-create-service-combo-modal-close-icon" />
           </button>
         </div>
-        <div className="create-service-combo-modal-body">
-          <div className="create-service-combo-disclaimer-text">
-            (<span className="create-service-combo-required-indicator">*</span>) bắt buộc
+        <div className="combo-create-create-service-combo-modal-body">
+          <div className="combo-create-create-service-combo-disclaimer-text">
+            (<span className="combo-create-create-service-combo-required-indicator">*</span>) bắt buộc
           </div>
           
           <form onSubmit={onSubmit} noValidate>
             {/* Name Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label htmlFor="create-service-combo-name">
                 Nhập tên combo dịch vụ (Service Combo Name)
-                <span className="create-service-combo-required-indicator">*</span>
+                <span className="combo-create-create-service-combo-required-indicator">*</span>
               </label>
               <input
                 id="create-service-combo-name"
@@ -223,14 +223,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                 onChange={onInputChange}
                 autoComplete="off"
               />
-              {errors.name && <div className="create-service-combo-error">{errors.name}</div>}
+              {errors.name && <div className="combo-create-create-service-combo-error">{errors.name}</div>}
             </div>
 
             {/* Address Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label htmlFor="create-service-combo-address">
                 Địa chỉ (Address)
-                <span className="create-service-combo-required-indicator">*</span>
+                <span className="combo-create-create-service-combo-required-indicator">*</span>
               </label>
               <input
                 id="create-service-combo-address"
@@ -243,11 +243,11 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                 onChange={onInputChange}
                 autoComplete="off"
               />
-              {errors.address && <div className="create-service-combo-error">{errors.address}</div>}
+              {errors.address && <div className="combo-create-create-service-combo-error">{errors.address}</div>}
             </div>
 
             {/* Description Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label htmlFor="create-service-combo-description">Mô tả về combo dịch vụ (Service Combo Description)</label>
               <textarea
                 id="create-service-combo-description"
@@ -258,17 +258,17 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                 onChange={onInputChange}
                 rows={4}
               />
-              <div className="create-service-combo-hint">
+              <div className="combo-create-create-service-combo-hint">
                 Còn lại: <span>{1000 - formData.description.length}</span> ký tự
               </div>
             </div>
 
             {/* Start Date and End Date Fields */}
-            <div className="create-service-combo-field-row">
-              <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field-row">
+              <div className="combo-create-create-service-combo-field">
                 <label htmlFor="create-service-combo-startDate">
                   Ngày triển khai
-                  <span className="create-service-combo-required-indicator">*</span>
+                  <span className="combo-create-create-service-combo-required-indicator">*</span>
                 </label>
                 <input
                   id="create-service-combo-startDate"
@@ -278,13 +278,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   value={formData.startDate}
                   onChange={onInputChange}
                 />
-                {errors.startDate && <div className="create-service-combo-error">{errors.startDate}</div>}
+                {errors.startDate && <div className="combo-create-create-service-combo-error">{errors.startDate}</div>}
               </div>
 
-              <div className="create-service-combo-field">
+              <div className="combo-create-create-service-combo-field">
                 <label htmlFor="create-service-combo-endDate">
                   Ngày kết thúc
-                  <span className="create-service-combo-required-indicator">*</span>
+                  <span className="combo-create-create-service-combo-required-indicator">*</span>
                 </label>
                 <input
                   id="create-service-combo-endDate"
@@ -295,17 +295,17 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   onChange={onInputChange}
                   min={formData.startDate || undefined}
                 />
-                {errors.endDate && <div className="create-service-combo-error">{errors.endDate}</div>}
+                {errors.endDate && <div className="combo-create-create-service-combo-error">{errors.endDate}</div>}
               </div>
             </div>
 
             {/* Duration Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label>
                 Thời hạn
-                <span className="create-service-combo-required-indicator">*</span>
+                <span className="combo-create-create-service-combo-required-indicator">*</span>
               </label>
-              <div className="create-service-combo-duration-inputs">
+              <div className="combo-create-create-service-combo-duration-inputs">
                 <input
                   id="create-service-combo-numberOfDays"
                   name="numberOfDays"
@@ -318,9 +318,9 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   value={formData.numberOfDays}
                   onChange={onInputChange}
                   inputMode="numeric"
-                  className="create-service-combo-duration-input"
+                  className="combo-create-create-service-combo-duration-input"
                 />
-                <span className="create-service-combo-duration-label">ngày</span>
+                <span className="combo-create-create-service-combo-duration-label">ngày</span>
                 <input
                   id="create-service-combo-numberOfNights"
                   name="numberOfNights"
@@ -333,20 +333,20 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   value={formData.numberOfNights}
                   onChange={onInputChange}
                   inputMode="numeric"
-                  className="create-service-combo-duration-input"
+                  className="combo-create-create-service-combo-duration-input"
                 />
-                <span className="create-service-combo-duration-label">đêm</span>
+                <span className="combo-create-create-service-combo-duration-label">đêm</span>
               </div>
-              {errors.numberOfDays && <div className="create-service-combo-error">{errors.numberOfDays}</div>}
-              {errors.numberOfNights && <div className="create-service-combo-error">{errors.numberOfNights}</div>}
+              {errors.numberOfDays && <div className="combo-create-create-service-combo-error">{errors.numberOfDays}</div>}
+              {errors.numberOfNights && <div className="combo-create-create-service-combo-error">{errors.numberOfNights}</div>}
             </div>
 
             {/* Price and Available Slots Fields */}
-            <div className="create-service-combo-field-row">
-              <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field-row">
+              <div className="combo-create-create-service-combo-field">
                 <label htmlFor="create-service-combo-price">
                   Giá (Price)
-                  <span className="create-service-combo-required-indicator">*</span>
+                  <span className="combo-create-create-service-combo-required-indicator">*</span>
                 </label>
                 <input
                   id="create-service-combo-price"
@@ -360,13 +360,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   onChange={onInputChange}
                   inputMode="decimal"
                 />
-                {errors.price && <div className="create-service-combo-error">{errors.price}</div>}
+                {errors.price && <div className="combo-create-create-service-combo-error">{errors.price}</div>}
               </div>
 
-              <div className="create-service-combo-field">
+              <div className="combo-create-create-service-combo-field">
                 <label htmlFor="create-service-combo-availableSlots">
                   Số chỗ trống (Available Slots)
-                  <span className="create-service-combo-required-indicator">*</span>
+                  <span className="combo-create-create-service-combo-required-indicator">*</span>
                 </label>
                 <input
                   id="create-service-combo-availableSlots"
@@ -379,12 +379,12 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   onChange={onInputChange}
                   inputMode="numeric"
                 />
-                {errors.availableSlots && <div className="create-service-combo-error">{errors.availableSlots}</div>}
+                {errors.availableSlots && <div className="combo-create-create-service-combo-error">{errors.availableSlots}</div>}
               </div>
             </div>
 
             {/* Cancellation Policy Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label htmlFor="create-service-combo-cancellationPolicy">Chính sách hủy (Cancellation Policy)</label>
               <textarea
                 id="create-service-combo-cancellationPolicy"
@@ -395,13 +395,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                 onChange={onInputChange}
                 rows={3}
               />
-              <div className="create-service-combo-hint">
+              <div className="combo-create-create-service-combo-hint">
                 Còn lại: <span>{1000 - formData.cancellationPolicy.length}</span> ký tự
               </div>
             </div>
 
             {/* Image Upload Field */}
-            <div className="create-service-combo-field">
+            <div className="combo-create-create-service-combo-field">
               <label htmlFor="create-service-combo-image">Chọn ảnh (Image)</label>
               <input
                 id="create-service-combo-image"
@@ -410,13 +410,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                 accept="image/*"
                 onChange={onImageChange}
               />
-              <div className="create-service-combo-hint">
+              <div className="combo-create-create-service-combo-hint">
                 Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)
               </div>
               {imagePreview && (
                 <img
                   src={imagePreview}
-                  className="create-service-combo-img-preview"
+                  className="combo-create-create-service-combo-img-preview"
                   alt="Xem trước ảnh"
                   loading="lazy"
                 />
@@ -424,16 +424,16 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
             </div>
 
             {/* Services Section */}
-            <div className="create-service-combo-field">
-              <div className="create-service-combo-section-header">
+            <div className="combo-create-create-service-combo-field">
+              <div className="combo-create-create-service-combo-section-header">
                 <label>Dịch vụ tính phí</label>
                 <button
                   type="button"
                   onClick={onToggleServicesTable}
-                  className="create-service-combo-toggle-btn"
+                  className="combo-create-create-service-combo-toggle-btn"
                 >
                   <ChevronDownIcon 
-                    className="create-service-combo-chevron-icon"
+                    className="combo-create-create-service-combo-chevron-icon"
                     style={{ 
                       transform: isServicesTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease'
@@ -443,10 +443,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               </div>
               
               {isServicesTableOpen && (
-                <div className="create-service-combo-table-container">
+                <div className="combo-create-create-service-combo-table-container">
                   {/* Filters */}
-                  <div className="create-service-combo-table-filters">
-                    <div className="create-service-combo-filter-field">
+                  <div className="combo-create-create-service-combo-table-filters">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Tên dịch vụ:</label>
                       <input
                         type="text"
@@ -456,10 +456,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onServicesPageChange(1);
                         }}
                         placeholder="Nhập tên dịch vụ..."
-                        className="create-service-combo-filter-input"
+                        className="combo-create-create-service-combo-filter-input"
                       />
                     </div>
-                    <div className="create-service-combo-filter-field">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Giá (VND):</label>
                       <input
                         type="text"
@@ -472,13 +472,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           }
                         }}
                         placeholder="Nhập giá..."
-                        className="create-service-combo-filter-input"
+                        className="combo-create-create-service-combo-filter-input"
                       />
                     </div>
                   </div>
                   
-                  <div className="create-service-combo-table-wrapper">
-                    <table className="create-service-combo-table">
+                  <div className="combo-create-create-service-combo-table-wrapper">
+                    <table className="combo-create-create-service-combo-table">
                       <thead>
                         <tr>
                           <th>Tên</th>
@@ -491,7 +491,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <tbody>
                         {filteredServices.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="create-service-combo-empty-cell">
+                            <td colSpan={5} className="combo-create-create-service-combo-empty-cell">
                               Không có dịch vụ nào
                             </td>
                           </tr>
@@ -513,7 +513,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                                     value={quantity}
                                     onChange={(e) => onServiceQuantityChange(serviceId, e.target.value)}
                                     disabled={!isSelected}
-                                    className="create-service-combo-quantity-input"
+                                    className="combo-create-create-service-combo-quantity-input"
                                   />
                                 </td>
                                 <td>
@@ -532,7 +532,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   </div>
                   
                   {servicesTotalPages > 0 && (
-                    <div className="create-service-combo-pagination">
+                    <div className="combo-create-create-service-combo-pagination">
                       <button
                         type="button"
                         onClick={() => {
@@ -541,12 +541,12 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onServicesPageInputChange('');
                         }}
                         disabled={servicesPage === 1}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         <span>←</span> Trước
                       </button>
                       
-                      <div className="create-service-combo-pagination-numbers">
+                      <div className="combo-create-create-service-combo-pagination-numbers">
                         {Array.from({ length: servicesTotalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
@@ -555,14 +555,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               onServicesPageChange(page);
                               onServicesPageInputChange('');
                             }}
-                            className={`create-service-combo-pagination-number ${servicesPage === page ? 'active' : ''}`}
+                            className={`combo-create-create-service-combo-pagination-number ${servicesPage === page ? 'combo-create-active' : ''}`}
                           >
                             {page}
                           </button>
                         ))}
                       </div>
                       
-                      <div className="create-service-combo-pagination-jump">
+                      <div className="combo-create-create-service-combo-pagination-jump">
                         <span>Đến trang:</span>
                         <input
                           type="text"
@@ -579,7 +579,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                             }
                           }}
                           placeholder={servicesPage.toString()}
-                          className="create-service-combo-pagination-input"
+                          className="combo-create-create-service-combo-pagination-input"
                           inputMode="numeric"
                         />
                       </div>
@@ -592,7 +592,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onServicesPageInputChange('');
                         }}
                         disabled={servicesPage === servicesTotalPages}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         Sau <span>→</span>
                       </button>
@@ -603,16 +603,16 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
             </div>
 
             {/* Promotions Section */}
-            <div className="create-service-combo-field">
-              <div className="create-service-combo-section-header">
+            <div className="combo-create-create-service-combo-field">
+              <div className="combo-create-create-service-combo-section-header">
                 <label>Ưu đãi</label>
                 <button
                   type="button"
                   onClick={onTogglePromotionsTable}
-                  className="create-service-combo-toggle-btn"
+                  className="combo-create-create-service-combo-toggle-btn"
                 >
                   <ChevronDownIcon 
-                    className="create-service-combo-chevron-icon"
+                    className="combo-create-create-service-combo-chevron-icon"
                     style={{ 
                       transform: isPromotionsTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease'
@@ -622,10 +622,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               </div>
               
               {isPromotionsTableOpen && (
-                <div className="create-service-combo-table-container">
+                <div className="combo-create-create-service-combo-table-container">
                   {/* Filters */}
-                  <div className="create-service-combo-table-filters">
-                    <div className="create-service-combo-filter-field">
+                  <div className="combo-create-create-service-combo-table-filters">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Tên ưu đãi:</label>
                       <input
                         type="text"
@@ -635,10 +635,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onPromotionsPageChange(1);
                         }}
                         placeholder="Nhập tên ưu đãi..."
-                        className="create-service-combo-filter-input"
+                        className="combo-create-create-service-combo-filter-input"
                       />
                     </div>
-                    <div className="create-service-combo-filter-field">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Hạng:</label>
                       <select
                         value={promotionFilterRank}
@@ -646,7 +646,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onPromotionFilterRankChange(e.target.value);
                           onPromotionsPageChange(1);
                         }}
-                        className="create-service-combo-filter-select"
+                        className="combo-create-create-service-combo-filter-select"
                       >
                         <option value="all">Tất cả</option>
                         <option value="Đồng">Đồng</option>
@@ -656,8 +656,8 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                     </div>
                   </div>
                   
-                  <div className="create-service-combo-table-wrapper">
-                    <table className="create-service-combo-table">
+                  <div className="combo-create-create-service-combo-table-wrapper">
+                    <table className="combo-create-create-service-combo-table">
                       <thead>
                         <tr>
                           <th>Tên ưu đãi</th>
@@ -670,7 +670,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <tbody>
                         {filteredPromotions.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="create-service-combo-empty-cell">
+                            <td colSpan={5} className="combo-create-create-service-combo-empty-cell">
                               Không có ưu đãi nào
                             </td>
                           </tr>
@@ -683,7 +683,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               <tr key={promotionId}>
                                 <td>{promotion.ServiceName || promotion.serviceName || 'N/A'}</td>
                                 <td>
-                                  <span className={`create-service-combo-rank-badge rank-${(promotion.Rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                                  <span className={`combo-create-create-service-combo-rank-badge combo-create-rank-${(promotion.Rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
                                     {promotion.Rank || promotion.rank || 'N/A'}
                                   </span>
                                 </td>
@@ -696,7 +696,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                                     value={quantity}
                                     onChange={(e) => onPromotionQuantityChange(promotionId, e.target.value)}
                                     disabled={!isSelected}
-                                    className="create-service-combo-quantity-input"
+                                    className="combo-create-create-service-combo-quantity-input"
                                   />
                                 </td>
                                 <td>
@@ -715,7 +715,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   </div>
                   
                   {promotionsTotalPages > 0 && (
-                    <div className="create-service-combo-pagination">
+                    <div className="combo-create-create-service-combo-pagination">
                       <button
                         type="button"
                         onClick={() => {
@@ -724,12 +724,12 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onPromotionsPageInputChange('');
                         }}
                         disabled={promotionsPage === 1}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         <span>←</span> Trước
                       </button>
                       
-                      <div className="create-service-combo-pagination-numbers">
+                      <div className="combo-create-create-service-combo-pagination-numbers">
                         {Array.from({ length: promotionsTotalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
@@ -738,14 +738,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               onPromotionsPageChange(page);
                               onPromotionsPageInputChange('');
                             }}
-                            className={`create-service-combo-pagination-number ${promotionsPage === page ? 'active' : ''}`}
+                            className={`combo-create-create-service-combo-pagination-number ${promotionsPage === page ? 'combo-create-active' : ''}`}
                           >
                             {page}
                           </button>
                         ))}
                       </div>
                       
-                      <div className="create-service-combo-pagination-jump">
+                      <div className="combo-create-create-service-combo-pagination-jump">
                         <span>Đến trang:</span>
                         <input
                           type="text"
@@ -762,7 +762,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                             }
                           }}
                           placeholder={promotionsPage.toString()}
-                          className="create-service-combo-pagination-input"
+                          className="combo-create-create-service-combo-pagination-input"
                           inputMode="numeric"
                         />
                       </div>
@@ -775,7 +775,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onPromotionsPageInputChange('');
                         }}
                         disabled={promotionsPage === promotionsTotalPages}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         Sau <span>→</span>
                       </button>
@@ -786,16 +786,16 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
             </div>
 
             {/* Coupons Section */}
-            <div className="create-service-combo-field">
-              <div className="create-service-combo-section-header">
+            <div className="combo-create-create-service-combo-field">
+              <div className="combo-create-create-service-combo-section-header">
                 <label>Mã giảm giá</label>
                 <button
                   type="button"
                   onClick={onToggleCouponsTable}
-                  className="create-service-combo-toggle-btn"
+                  className="combo-create-create-service-combo-toggle-btn"
                 >
                   <ChevronDownIcon 
-                    className="create-service-combo-chevron-icon"
+                    className="combo-create-create-service-combo-chevron-icon"
                     style={{ 
                       transform: isCouponsTableOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease'
@@ -805,10 +805,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               </div>
               
               {isCouponsTableOpen && (
-                <div className="create-service-combo-table-container">
+                <div className="combo-create-create-service-combo-table-container">
                   {/* Filters */}
-                  <div className="create-service-combo-table-filters">
-                    <div className="create-service-combo-filter-field">
+                  <div className="combo-create-create-service-combo-table-filters">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Mã:</label>
                       <input
                         type="text"
@@ -818,10 +818,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onCouponsPageChange(1);
                         }}
                         placeholder="Nhập mã giảm giá..."
-                        className="create-service-combo-filter-input"
+                        className="combo-create-create-service-combo-filter-input"
                       />
                     </div>
-                    <div className="create-service-combo-filter-field">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Hạng:</label>
                       <select
                         value={couponFilterRank}
@@ -829,7 +829,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onCouponFilterRankChange(e.target.value);
                           onCouponsPageChange(1);
                         }}
-                        className="create-service-combo-filter-select"
+                        className="combo-create-create-service-combo-filter-select"
                       >
                         <option value="all">Tất cả</option>
                         <option value="Đồng">Đồng</option>
@@ -838,7 +838,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                         <option value="Tất cả">Tất cả</option>
                       </select>
                     </div>
-                    <div className="create-service-combo-filter-field">
+                    <div className="combo-create-create-service-combo-filter-field">
                       <label>Loại người dùng:</label>
                       <select
                         value={couponFilterUserType}
@@ -846,7 +846,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onCouponFilterUserTypeChange(e.target.value);
                           onCouponsPageChange(1);
                         }}
-                        className="create-service-combo-filter-select"
+                        className="combo-create-create-service-combo-filter-select"
                       >
                         <option value="all">Tất cả</option>
                         <option value="Khách hàng">Khách hàng</option>
@@ -855,8 +855,8 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                     </div>
                   </div>
                   
-                  <div className="create-service-combo-table-wrapper">
-                    <table className="create-service-combo-table">
+                  <div className="combo-create-create-service-combo-table-wrapper">
+                    <table className="combo-create-create-service-combo-table">
                       <thead>
                         <tr>
                           <th>Mã</th>
@@ -868,7 +868,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <tbody>
                         {filteredCoupons.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="create-service-combo-empty-cell">
+                            <td colSpan={4} className="combo-create-create-service-combo-empty-cell">
                               Không có mã giảm giá nào
                             </td>
                           </tr>
@@ -880,7 +880,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               <tr key={couponId}>
                                 <td>{coupon.Code || coupon.code || 'N/A'}</td>
                                 <td>
-                                  <span className={`create-service-combo-rank-badge rank-${(coupon.Rank || coupon.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                                  <span className={`combo-create-create-service-combo-rank-badge combo-create-rank-${(coupon.Rank || coupon.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
                                     {coupon.Rank || coupon.rank || 'N/A'}
                                   </span>
                                 </td>
@@ -901,7 +901,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   </div>
                   
                   {couponsTotalPages > 0 && (
-                    <div className="create-service-combo-pagination">
+                    <div className="combo-create-create-service-combo-pagination">
                       <button
                         type="button"
                         onClick={() => {
@@ -910,12 +910,12 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onCouponsPageInputChange('');
                         }}
                         disabled={couponsPage === 1}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         <span>←</span> Trước
                       </button>
                       
-                      <div className="create-service-combo-pagination-numbers">
+                      <div className="combo-create-create-service-combo-pagination-numbers">
                         {Array.from({ length: couponsTotalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
@@ -924,14 +924,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               onCouponsPageChange(page);
                               onCouponsPageInputChange('');
                             }}
-                            className={`create-service-combo-pagination-number ${couponsPage === page ? 'active' : ''}`}
+                            className={`combo-create-create-service-combo-pagination-number ${couponsPage === page ? 'combo-create-active' : ''}`}
                           >
                             {page}
                           </button>
                         ))}
                       </div>
                       
-                      <div className="create-service-combo-pagination-jump">
+                      <div className="combo-create-create-service-combo-pagination-jump">
                         <span>Đến trang:</span>
                         <input
                           type="text"
@@ -948,7 +948,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                             }
                           }}
                           placeholder={couponsPage.toString()}
-                          className="create-service-combo-pagination-input"
+                          className="combo-create-create-service-combo-pagination-input"
                           inputMode="numeric"
                         />
                       </div>
@@ -961,7 +961,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           onCouponsPageInputChange('');
                         }}
                         disabled={couponsPage === couponsTotalPages}
-                        className="create-service-combo-pagination-btn"
+                        className="combo-create-create-service-combo-pagination-btn"
                       >
                         Sau <span>→</span>
                       </button>
@@ -972,11 +972,11 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
             </div>
 
             {/* Form Actions */}
-            <div className="create-service-combo-form-action">
-              <button type="submit" className="create-service-combo-btn-primary" disabled={isSubmitting}>
+            <div className="combo-create-create-service-combo-form-action">
+              <button type="submit" className="combo-create-create-service-combo-btn-primary" disabled={isSubmitting}>
                 {isSubmitting ? 'Đang xử lý...' : 'Tạo'}
               </button>
-              <button type="button" className="create-service-combo-btn-secondary" onClick={onClose}>
+              <button type="button" className="combo-create-create-service-combo-btn-secondary" onClick={onClose}>
                 Hủy
               </button>
             </div>

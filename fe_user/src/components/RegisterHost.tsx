@@ -144,9 +144,9 @@ const RegisterHost = () => {
           paymentMethod: 'free'
         }
       })
-    } catch (error: any) {
+    } catch (reg-host-error: any) {
       setErrors({
-        submit: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+        submit: reg-host-error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
       })
     } finally {
       setLoading(false)
@@ -154,39 +154,39 @@ const RegisterHost = () => {
   }
 
   return (
-    <div className="register-host-page">
+    <div className="reg-host-register-host-page">
       <Header />
-      <main className="register-host-main">
-        <div className="register-host-container">
+      <main className="reg-host-register-host-main">
+        <div className="reg-host-register-host-container">
           {/* Header */}
-          <div className="register-host-header">
+          <div className="reg-host-register-host-header">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/upgrade-account')}
-              className="back-button"
+              className="reg-host-back-button"
             >
-              <ArrowLeftIcon className="back-icon" />
+              <ArrowLeftIcon className="reg-host-back-icon" />
               Quay lại
             </Button>
-            <div className="register-host-title-section">
-              <h1 className="register-host-title">Đăng ký trở thành Host</h1>
-              <p className="register-host-subtitle">
+            <div className="reg-host-register-host-title-section">
+              <h1 className="reg-host-register-host-title">Đăng ký trở thành Host</h1>
+              <p className="reg-host-register-host-subtitle">
                 Điền thông tin để nâng cấp tài khoản của bạn lên Host
               </p>
             </div>
           </div>
 
           {/* Form */}
-          <Card className="register-host-form-card">
+          <Card className="reg-host-register-host-form-card">
               <CardContent>
-                <form onSubmit={handleSubmit} className="register-host-form">
-                  <div className="form-section">
-                    <h2 className="section-title">Thông tin doanh nghiệp</h2>
+                <form onSubmit={handleSubmit} className="reg-host-register-host-form">
+                  <div className="reg-host-form-section">
+                    <h2 className="reg-host-section-title">Thông tin doanh nghiệp</h2>
                     
-                    <div className="form-group">
-                      <label htmlFor="businessName" className="form-label">
-                        Tên doanh nghiệp <span className="required">*</span>
+                    <div className="reg-host-form-group">
+                      <label htmlFor="businessName" className="reg-host-form-label">
+                        Tên doanh nghiệp <span className="reg-host-required">*</span>
                       </label>
                       <input
                         type="text"
@@ -194,21 +194,21 @@ const RegisterHost = () => {
                         name="businessName"
                         value={form.businessName}
                         onChange={handleChange}
-                        className={`form-input ${errors.businessName ? 'error' : ''}`}
+                        className={`reg-host-form-input ${errors.businessName ? 'reg-host-error' : ''}`}
                         placeholder="Nhập tên doanh nghiệp của bạn"
                         disabled={loading}
                       />
                       {errors.businessName && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-host-error-message">
+                          <AlertCircleIcon className="reg-host-error-icon" />
                           <span>{errors.businessName}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="phone" className="form-label">
-                        Số điện thoại <span className="required">*</span>
+                    <div className="reg-host-form-group">
+                      <label htmlFor="phone" className="reg-host-form-label">
+                        Số điện thoại <span className="reg-host-required">*</span>
                       </label>
                       <input
                         type="tel"
@@ -216,21 +216,21 @@ const RegisterHost = () => {
                         name="phone"
                         value={form.phone}
                         onChange={handleChange}
-                        className={`form-input ${errors.phone ? 'error' : ''}`}
+                        className={`reg-host-form-input ${errors.phone ? 'reg-host-error' : ''}`}
                         placeholder="Nhập số điện thoại"
                         disabled={loading}
                       />
                       {errors.phone && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-host-error-message">
+                          <AlertCircleIcon className="reg-host-error-icon" />
                           <span>{errors.phone}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="email" className="form-label">
-                        Email <span className="required">*</span>
+                    <div className="reg-host-form-group">
+                      <label htmlFor="email" className="reg-host-form-label">
+                        Email <span className="reg-host-required">*</span>
                       </label>
                       <input
                         type="email"
@@ -238,23 +238,23 @@ const RegisterHost = () => {
                         name="email"
                         value={form.email}
                         onChange={handleChange}
-                        className={`form-input ${errors.email ? 'error' : ''}`}
+                        className={`reg-host-form-input ${errors.email ? 'reg-host-error' : ''}`}
                         placeholder="Nhập email liên hệ"
                         disabled={loading}
                       />
                       {errors.email && (
-                        <div className="error-message">
-                          <AlertCircleIcon className="error-icon" />
+                        <div className="reg-host-error-message">
+                          <AlertCircleIcon className="reg-host-error-icon" />
                           <span>{errors.email}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="businessLicenseFile" className="form-label">
-                        Giấy phép kinh doanh <span className="required">*</span>
+                    <div className="reg-host-form-group">
+                      <label htmlFor="businessLicenseFile" className="reg-host-form-label">
+                        Giấy phép kinh doanh <span className="reg-host-required">*</span>
                       </label>
-                      <div className="file-upload-area">
+                      <div className="reg-host-file-upload-area">
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -262,19 +262,19 @@ const RegisterHost = () => {
                           name="businessLicenseFile"
                           onChange={handleFileChange}
                           accept="image/jpeg,image/png,image/jpg,application/pdf"
-                          className="file-input"
+                          className="reg-host-file-input"
                           disabled={loading}
                         />
                         <div 
-                          className={`file-upload-box ${errors.businessLicenseFile ? 'error' : ''}`}
+                          className={`reg-host-file-upload-box ${errors.businessLicenseFile ? 'reg-host-error' : ''}`}
                           onClick={() => !loading && fileInputRef.current?.click()}
                         >
                           {licensePreview ? (
-                            <div className="file-preview">
+                            <div className="reg-host-file-preview">
                               <img src={licensePreview} alt="Preview" />
                               <button
                                 type="button"
-                                className="remove-file"
+                                className="reg-host-remove-file"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   setForm((prev) => ({ ...prev, businessLicenseFile: null }))
@@ -289,16 +289,16 @@ const RegisterHost = () => {
                               </button>
                             </div>
                           ) : (
-                            <div className="file-upload-placeholder">
-                              <UploadIcon className="upload-icon" />
+                            <div className="reg-host-file-upload-placeholder">
+                              <UploadIcon className="reg-host-upload-icon" />
                               <p>Tải lên giấy phép kinh doanh</p>
-                              <span className="file-hint">JPG, PNG hoặc PDF (tối đa 5MB)</span>
+                              <span className="reg-host-file-hint">JPG, PNG hoặc PDF (tối đa 5MB)</span>
                             </div>
                           )}
                         </div>
                         {errors.businessLicenseFile && (
-                          <div className="error-message">
-                            <AlertCircleIcon className="error-icon" />
+                          <div className="reg-host-error-message">
+                            <AlertCircleIcon className="reg-host-error-icon" />
                             <span>{errors.businessLicenseFile}</span>
                           </div>
                         )}
@@ -307,40 +307,40 @@ const RegisterHost = () => {
                   </div>
 
                   {errors.submit && (
-                    <Card className="error-alert-card">
+                    <Card className="reg-host-error-alert-card">
                       <CardContent>
-                        <div className="error-alert">
-                          <AlertCircleIcon className="error-alert-icon" />
+                        <div className="reg-host-error-alert">
+                          <AlertCircleIcon className="reg-host-error-alert-icon" />
                           <span>{errors.submit}</span>
                         </div>
                       </CardContent>
                     </Card>
                   )}
 
-                  <div className="form-actions">
+                  <div className="reg-host-form-actions">
                     <Button
                       type="submit"
                       disabled={loading}
                       variant="default"
                       size="lg"
-                      className="submit-button"
+                      className="reg-host-submit-button"
                     >
                       {loading ? (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="spinner-small"></span>
+                          <span className="reg-host-spinner-small"></span>
                           Đang xử lý...
                         </span>
                       ) : (
                         <>
                           Gửi yêu cầu nâng cấp
-                          <ArrowRightIcon className="button-icon" />
+                          <ArrowRightIcon className="reg-host-button-icon" />
                         </>
                       )}
                     </Button>
                   </div>
 
-                  <div className="form-note">
-                    <FileTextIcon className="note-icon" />
+                  <div className="reg-host-form-note">
+                    <FileTextIcon className="reg-host-note-icon" />
                     <div>
                       <strong>Lưu ý:</strong> Nâng cấp tài khoản Host là miễn phí. Tuy nhiên, khi bạn bán dịch vụ, sẽ có một khoản phí 10% của giá trị đơn dịch vụ được trả cho admin của hệ thống. 
                       Yêu cầu của bạn sẽ được Admin xét duyệt trong vòng 1-3 ngày làm việc.

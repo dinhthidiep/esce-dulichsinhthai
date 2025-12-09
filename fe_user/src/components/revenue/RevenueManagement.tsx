@@ -323,7 +323,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
   }, []);
 
   return (
-    <div className="revenue-management">
+    <div className="revenue-mgr-revenue-management">
       {/* Revenue Sub-tabs */}
       <div className="service-view-toggle">
         <button
@@ -341,17 +341,17 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
       </div>
       
       {revenueSubTab === 'revenue' ? (
-        <div className="revenue-content">
+        <div className="revenue-mgr-revenue-content">
           {/* Revenue Chart Section */}
-          <div className="revenue-chart-section">
-            <div className="revenue-chart-container">
+          <div className="revenue-mgr-revenue-chart-section">
+            <div className="revenue-mgr-revenue-chart-container">
               {/* Chart View Filter */}
-              <div className="revenue-date-filter">
-                <div className="revenue-date-filter-group">
-                  <label htmlFor="chart-view-by" className="revenue-filter-label">Xem theo</label>
+              <div className="revenue-mgr-revenue-date-filter">
+                <div className="revenue-mgr-revenue-date-filter-group">
+                  <label htmlFor="chart-view-by" className="revenue-mgr-revenue-filter-label">Xem theo</label>
                   <select
                     id="chart-view-by"
-                    className="revenue-filter-select"
+                    className="revenue-mgr-revenue-filter-select"
                     value={chartViewBy}
                     onChange={(e) => {
                       setChartViewBy(e.target.value);
@@ -371,11 +371,11 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
                 </div>
                 {chartViewBy === 'month' ? (
                   <>
-                    <div className="revenue-date-filter-group">
-                      <label htmlFor="selected-month" className="revenue-filter-label">Tháng</label>
+                    <div className="revenue-mgr-revenue-date-filter-group">
+                      <label htmlFor="selected-month" className="revenue-mgr-revenue-filter-label">Tháng</label>
                       <select
                         id="selected-month"
-                        className="revenue-filter-select"
+                        className="revenue-mgr-revenue-filter-select"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
                       >
@@ -393,12 +393,12 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
                         <option value="12">Tháng 12</option>
                       </select>
                     </div>
-                    <div className="revenue-date-filter-group">
-                      <label htmlFor="selected-month-year" className="revenue-filter-label">Năm</label>
+                    <div className="revenue-mgr-revenue-date-filter-group">
+                      <label htmlFor="selected-month-year" className="revenue-mgr-revenue-filter-label">Năm</label>
                       <input
                         type="number"
                         id="selected-month-year"
-                        className="revenue-filter-date"
+                        className="revenue-mgr-revenue-filter-date"
                         min="2020"
                         max={new Date().getFullYear()}
                         value={selectedMonthYear}
@@ -407,12 +407,12 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
                     </div>
                   </>
                 ) : (
-                  <div className="revenue-date-filter-group">
-                    <label htmlFor="selected-year" className="revenue-filter-label">Chọn năm</label>
+                  <div className="revenue-mgr-revenue-date-filter-group">
+                    <label htmlFor="selected-year" className="revenue-mgr-revenue-filter-label">Chọn năm</label>
                     <input
                       type="number"
                       id="selected-year"
-                      className="revenue-filter-date"
+                      className="revenue-mgr-revenue-filter-date"
                       min="2020"
                       max={new Date().getFullYear()}
                       value={selectedYear}
@@ -421,7 +421,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
                   </div>
                 )}
               </div>
-              <div className="revenue-chart-wrapper">
+              <div className="revenue-mgr-revenue-chart-wrapper">
                 <Line 
                   key={`chart-${chartViewBy}-${chartViewBy === 'month' ? `${selectedMonthYear}-${selectedMonth}` : selectedYear}`}
                   data={chartConfig} 
@@ -432,45 +432,45 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
           </div>
         </div>
       ) : (
-        <div className="revenue-content">
+        <div className="revenue-mgr-revenue-content">
           {/* Booking Statistics */}
-          <div className="revenue-stats-section">
-            <h3 className="revenue-section-title">Thống kê booking</h3>
-            <div className="revenue-stats-grid">
-              <div className="revenue-stat-card">
-                <div className="revenue-stat-label">Tổng số booking</div>
-                <div className="revenue-stat-value">{mockBookingsForStats.length}</div>
+          <div className="revenue-mgr-revenue-stats-section">
+            <h3 className="revenue-mgr-revenue-section-title">Thống kê booking</h3>
+            <div className="revenue-mgr-revenue-stats-grid">
+              <div className="revenue-mgr-revenue-stat-card">
+                <div className="revenue-mgr-revenue-stat-label">Tổng số booking</div>
+                <div className="revenue-mgr-revenue-stat-value">{mockBookingsForStats.length}</div>
               </div>
-              <div className="revenue-stat-card">
-                <div className="revenue-stat-label">Đã hoàn thành</div>
-                <div className="revenue-stat-value revenue-stat-completed">
+              <div className="revenue-mgr-revenue-stat-card">
+                <div className="revenue-mgr-revenue-stat-label">Đã hoàn thành</div>
+                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-completed">
                   {mockBookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'completed';
                   }).length}
                 </div>
               </div>
-              <div className="revenue-stat-card">
-                <div className="revenue-stat-label">Đã chấp nhận</div>
-                <div className="revenue-stat-value revenue-stat-accepted">
+              <div className="revenue-mgr-revenue-stat-card">
+                <div className="revenue-mgr-revenue-stat-label">Đã chấp nhận</div>
+                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-accepted">
                   {mockBookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'confirmed';
                   }).length}
                 </div>
               </div>
-              <div className="revenue-stat-card">
-                <div className="revenue-stat-label">Đã từ chối</div>
-                <div className="revenue-stat-value revenue-stat-rejected">
+              <div className="revenue-mgr-revenue-stat-card">
+                <div className="revenue-mgr-revenue-stat-label">Đã từ chối</div>
+                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-rejected">
                   {mockBookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'cancelled';
                   }).length}
                 </div>
               </div>
-              <div className="revenue-stat-card">
-                <div className="revenue-stat-label">Đã xử lý</div>
-                <div className="revenue-stat-value revenue-stat-pending">
+              <div className="revenue-mgr-revenue-stat-card">
+                <div className="revenue-mgr-revenue-stat-label">Đã xử lý</div>
+                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-pending">
                   {mockBookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'pending';

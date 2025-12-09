@@ -1,35 +1,35 @@
-.payos-test-page {
+.payos-payos-test-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
   font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.payos-test-main {
+.payos-payos-test-main {
   margin-top: 65px;
   padding: 3rem 0 4rem;
   min-height: calc(100vh - 65px);
 }
 
-.payos-test-container {
+.payos-payos-test-container {
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 2rem;
 }
 
 /* Header */
-.test-header {
+.payos-test-header {
   text-align: center;
   margin-bottom: 2.5rem;
 }
 
-.test-title {
+.payos-test-title {
   font-size: 2.5rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0 0 1rem 0;
 }
 
-.test-subtitle {
+.payos-test-subtitle {
   font-size: 1.125rem;
   color: #64748b;
   margin: 0;
@@ -40,17 +40,17 @@
 }
 
 /* Content */
-.test-content {
+.payos-test-content {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
 /* Cards */
-.test-form-card,
-.test-steps-card,
-.test-result-card,
-.test-info-card {
+.payos-test-form-card,
+.payos-test-steps-card,
+.payos-test-result-card,
+.payos-test-info-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -58,7 +58,7 @@
   overflow: hidden;
 }
 
-.card-title {
+.payos-card-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e293b;
@@ -68,11 +68,11 @@
 }
 
 /* Form */
-.form-group {
+.payos-form-group {
   margin-bottom: 1.5rem;
 }
 
-.form-label {
+.payos-form-label {
   display: block;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -80,8 +80,8 @@
   margin-bottom: 0.5rem;
 }
 
-.form-input,
-.form-select {
+.payos-form-input,
+.payos-form-select {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
@@ -92,25 +92,25 @@
   transition: all 0.2s ease;
 }
 
-.form-input:focus,
-.form-select:focus {
+.payos-form-input:focus,
+.payos-form-select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-hint {
+.payos-form-hint {
   font-size: 0.875rem;
   color: #64748b;
   margin-top: 0.5rem;
   margin-bottom: 0;
 }
 
-.form-actions {
+.payos-form-actions {
   margin-top: 2rem;
 }
 
-.test-button {
+.payos-test-button {
   width: 100%;
   padding: 1rem 2rem;
   font-size: 1.125rem;
@@ -121,12 +121,12 @@
   gap: 0.75rem;
 }
 
-.button-icon {
+.payos-button-icon {
   width: 20px;
   height: 20px;
 }
 
-.button-icon.spinning {
+.payos-button-icon.payos-spinning {
   animation: spin 1s linear infinite;
 }
 
@@ -140,13 +140,13 @@
 }
 
 /* Steps */
-.steps-list {
+.payos-steps-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.step-item {
+.payos-step-item {
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
@@ -158,12 +158,12 @@
   transition: all 0.3s ease;
 }
 
-.step-item.completed {
+.payos-step-item.payos-completed {
   background: #ecfdf5;
   border-color: #10b981;
 }
 
-.step-number {
+.payos-step-number {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -178,30 +178,30 @@
   transition: all 0.3s ease;
 }
 
-.step-item.completed .step-number {
+.payos-step-item.payos-completed .payos-step-number {
   background: #10b981;
   color: white;
 }
 
-.step-content {
+.payos-step-content {
   flex: 1;
 }
 
-.step-title {
+.payos-step-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.5rem 0;
 }
 
-.step-description {
+.payos-step-description {
   font-size: 0.9375rem;
   color: #64748b;
   margin: 0;
   line-height: 1.6;
 }
 
-.step-loader {
+.payos-step-loader {
   width: 20px;
   height: 20px;
   border: 3px solid #e5e7eb;
@@ -212,16 +212,16 @@
 }
 
 /* Result Card */
-.test-result-card {
+.payos-test-result-card {
   animation: slideInUp 0.5s ease-out;
 }
 
-.test-result-card.success {
+.payos-test-result-card.payos-success {
   border-color: #10b981;
   background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
 }
 
-.test-result-card.failed {
+.payos-test-result-card.payos-failed {
   border-color: #dc2626;
   background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
 }
@@ -237,7 +237,7 @@
   }
 }
 
-.result-header {
+.payos-result-header {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -246,35 +246,35 @@
   border-bottom: 2px solid #e5e7eb;
 }
 
-.result-icon {
+.payos-result-icon {
   width: 48px;
   height: 48px;
   flex-shrink: 0;
 }
 
-.result-icon.success-icon {
+.payos-result-icon.payos-success-icon {
   color: #10b981;
 }
 
-.result-icon.failed-icon {
+.payos-result-icon.payos-failed-icon {
   color: #dc2626;
 }
 
-.result-title {
+.payos-result-title {
   font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 
-.result-details {
+.payos-result-details {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.detail-row {
+.payos-detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -284,42 +284,42 @@
   border-left: 3px solid #e5e7eb;
 }
 
-.detail-label {
+.payos-detail-label {
   font-size: 0.9375rem;
   font-weight: 600;
   color: #64748b;
 }
 
-.detail-value {
+.payos-detail-value {
   font-size: 0.9375rem;
   font-weight: 500;
   color: #1e293b;
 }
 
-.status-badge {
+.payos-status-badge {
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 600;
 }
 
-.status-badge.status-success {
+.payos-status-badge.payos-status-success {
   background: #ecfdf5;
   color: #059669;
 }
 
-.status-badge.status-failed {
+.payos-status-badge.payos-status-failed {
   background: #fef2f2;
   color: #dc2626;
 }
 
-.result-actions {
+.payos-result-actions {
   display: flex;
   gap: 1rem;
 }
 
-.view-result-button,
-.retry-button {
+.payos-view-result-button,
+.payos-retry-button {
   flex: 1;
   padding: 0.875rem 1.5rem;
   display: flex;
@@ -328,44 +328,44 @@
   gap: 0.5rem;
 }
 
-.view-result-button {
+.payos-view-result-button {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
 }
 
-.view-result-button:hover {
+.payos-view-result-button:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 /* Info Card */
-.test-info-card {
+.payos-test-info-card {
   background: #f0f9ff;
   border-color: #bae6fd;
 }
 
-.info-header {
+.payos-info-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.info-icon {
+.payos-info-icon {
   width: 24px;
   height: 24px;
   color: #0284c7;
   flex-shrink: 0;
 }
 
-.info-title {
+.payos-info-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #0c4a6e;
   margin: 0;
 }
 
-.info-list {
+.payos-info-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -374,7 +374,7 @@
   gap: 0.75rem;
 }
 
-.info-list li {
+.payos-info-list li {
   font-size: 0.9375rem;
   color: #075985;
   line-height: 1.6;
@@ -382,7 +382,7 @@
   position: relative;
 }
 
-.info-list li::before {
+.payos-info-list li::before {
   content: '•';
   position: absolute;
   left: 0;
@@ -392,27 +392,27 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .payos-test-main {
+  .payos-payos-test-main {
     padding: 2rem 0 3rem;
   }
 
-  .payos-test-container {
+  .payos-payos-test-container {
     padding: 0 1rem;
   }
 
-  .test-title {
+  .payos-test-title {
     font-size: 2rem;
   }
 
-  .test-subtitle {
+  .payos-test-subtitle {
     font-size: 1rem;
   }
 
-  .result-actions {
+  .payos-result-actions {
     flex-direction: column;
   }
 
-  .detail-row {
+  .payos-detail-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;

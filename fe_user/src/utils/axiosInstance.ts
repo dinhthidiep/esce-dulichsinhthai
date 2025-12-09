@@ -1,18 +1,9 @@
 import axios from 'axios'
 import { API_BASE_URL } from '~/config/api'
-import { mockAxiosInstance } from '~/mockdata/mockService'
-
-// Sử dụng mock service thay vì real API
-// Chuyển sang mockdata để thiết kế frontend mà không cần backend
-const USE_MOCK_DATA = true
 
 // Log API_BASE_URL để debug (chỉ log một lần)
 if (import.meta.env.DEV && !(window as any).__AXIOS_INSTANCE_LOGGED) {
-  if (USE_MOCK_DATA) {
-    console.log('🎭 [axiosInstance] Đang sử dụng MOCK DATA - không kết nối backend')
-  } else {
-    console.log('🔧 [axiosInstance] API_BASE_URL:', API_BASE_URL)
-  }
+  console.log('🔧 [axiosInstance] API_BASE_URL:', API_BASE_URL)
   ;(window as any).__AXIOS_INSTANCE_LOGGED = true
 }
 
@@ -33,26 +24,6 @@ const realAxiosInstance = axios.create({
 // Helper function để lấy token từ localStorage hoặc sessionStorage
 const getToken = () => {
   return localStorage.getItem('token') || sessionStorage.getItem('token')
-}
-
-// Request interceptor để tự động thêm token vào header
-// Áp dụng cho cả real và mock instance
-if (USE_MOCK_DATA) {
-  // Mock instance không cần interceptors vì đã xử lý trong mock service
-  // Nhưng vẫn thêm để đảm bảo tương thích
-  mockAxiosInstance.interceptors.request.use(
-    (config) => {
-      const token = getToken()
-      if (token) {
-        config.headers = config.headers || ({} as any)
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    },
-    (error) => {
-      return Promise.reject(error)
-    }
-  )
 }
 
 realAxiosInstance.interceptors.request.use(
@@ -78,38 +49,6 @@ realAxiosInstance.interceptors.request.use(
   }
 )
 
-
-// Response interceptor để xử lý lỗi 401/403
-// Áp dụng cho cả real và mock instance
-if (USE_MOCK_DATA) {
-  mockAxiosInstance.interceptors.response.use(
-    (response) => {
-      if (import.meta.env.DEV) {
-        console.log('✅ [axiosInstance] Response:', {
-          status: response.status,
-          url: response.config.url,
-          data: response.data,
-        })
-      }
-      return response
-    },
-    (error: any) => {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('userInfo')
-        sessionStorage.removeItem('token')
-        sessionStorage.removeItem('userInfo')
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-          const publicPaths = ['/', '/services', '/services/', '/about']
-          if (!publicPaths.includes(window.location.pathname)) {
-            window.location.href = '/login'
-          }
-        }
-      }
-      return Promise.reject(error)
-    }
-  )
-}
 
 realAxiosInstance.interceptors.response.use(
   (response) => {
@@ -171,9 +110,6 @@ realAxiosInstance.interceptors.response.use(
   }
 )
 
-// Sử dụng mock instance nếu USE_MOCK_DATA = true
-const axiosInstance = USE_MOCK_DATA ? mockAxiosInstance : realAxiosInstance
-
-export default axiosInstance
+export default realAxiosInstance
 
 

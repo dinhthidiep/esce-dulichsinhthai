@@ -213,19 +213,19 @@ const Chatbox = () => {
   }
 
   return (
-    <div className="chatbox-container">
+    <div className="chat-chatbox-container">
       {isOpen && (
-        <div className="chatbox-window">
-          <div className="chatbox-header">
-            <div className="chatbox-header-info">
-              <div className="chatbox-avatar">🤖</div>
+        <div className="chat-chatbox-window">
+          <div className="chat-chatbox-header">
+            <div className="chat-chatbox-header-info">
+              <div className="chat-chatbox-avatar">🤖</div>
               <div>
-                <div className="chatbox-title">Trợ lý AI ESCE</div>
-                <div className="chatbox-subtitle">Thường phản hồi ngay</div>
+                <div className="chat-chatbox-title">Trợ lý AI ESCE</div>
+                <div className="chat-chatbox-subtitle">Thường phản hồi ngay</div>
               </div>
             </div>
             <button
-              className="chatbox-close-btn"
+              className="chat-chatbox-close-btn"
               onClick={() => setIsOpen(false)}
               aria-label="Đóng chatbox"
             >
@@ -245,20 +245,20 @@ const Chatbox = () => {
             </button>
           </div>
 
-          <div className="chatbox-messages">
+          <div className="chat-chatbox-messages">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`chatbox-message ${message.isUser ? 'user' : 'ai'}`}
+                className={`chat-chatbox-message ${message.isUser ? 'chat-user' : 'chat-ai'}`}
               >
-                <div className="chatbox-message-content">
+                <div className="chat-chatbox-message-content">
                   {formatMessage(message.text)}
                 </div>
               </div>
             ))}
             {isTyping && (
-              <div className="chatbox-message ai">
-                <div className="chatbox-message-content typing">
+              <div className="chat-chatbox-message chat-ai">
+                <div className="chat-chatbox-message-content chat-typing">
                   <span></span>
                   <span></span>
                   <span></span>
@@ -268,17 +268,17 @@ const Chatbox = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="chatbox-input-container">
+          <div className="chat-chatbox-input-container">
             <input
               type="text"
-              className="chatbox-input"
+              className="chat-chatbox-input"
               placeholder="Nhập câu hỏi của bạn..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
             />
             <button
-              className="chatbox-send-btn"
+              className="chat-chatbox-send-btn"
               onClick={handleSendMessage}
               disabled={!inputValue.trim()}
               aria-label="Gửi tin nhắn"
@@ -302,7 +302,7 @@ const Chatbox = () => {
       )}
 
       <button
-        className="chatbox-toggle-btn"
+        className="chat-chatbox-toggle-btn"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? 'Đóng chatbox' : 'Mở chatbox'}
       >

@@ -1,26 +1,26 @@
-/* Force visibility for content areas */
-.content {
+/* Force visibility for rev-page-content areas */
+.rev-page-content {
   z-index: 1 !important;
   position: relative !important;
   overflow: visible !important;
   min-height: 500px; /* Ensure it has height */
 }
 
-.form-content {
+.rev-page-form-content {
   z-index: 1 !important;
   position: relative !important;
   overflow: visible !important;
   min-height: 400px; /* Ensure it has height */
 }
 
-.reviews-list {
+.rev-page-reviews-list {
   display: grid !important;
   visibility: visible !important;
   opacity: 1 !important;
   min-height: 200px; /* Ensure it has height */
 }
 
-.review-card {
+.rev-page-review-card {
   display: flex !important;
   flex-direction: column !important;
   visibility: visible !important;
@@ -29,7 +29,7 @@
 }
 
 /* Review Filters */
-.review-filters {
+.rev-page-review-filters {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -40,13 +40,13 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.filter-row {
+.rev-page-filter-row {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
-.filter-group {
+.rev-page-filter-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -54,15 +54,15 @@
   flex: 1;
 }
 
-.filter-label {
+.rev-page-filter-label {
   font-weight: 600;
   color: #333;
   font-size: 0.9rem;
   text-align: left;
 }
 
-.filter-select,
-.filter-input {
+.rev-page-filter-select,
+.rev-page-filter-input {
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -71,19 +71,19 @@
   box-sizing: border-box;
 }
 
-.filter-input {
+.rev-page-filter-input {
   min-width: 200px;
 }
 
 /* Reviews List */
-.reviews-list {
+.rev-page-reviews-list {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 1rem;
 }
 
-.review-card {
+.rev-page-review-card {
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
@@ -91,11 +91,11 @@
   transition: box-shadow 0.3s ease;
 }
 
-.review-card:hover {
+.rev-page-review-card:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.review-header {
+.rev-page-review-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -104,67 +104,67 @@
   border-bottom: 1px solid #eee;
 }
 
-.review-user-info {
+.rev-page-review-user-info {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-.review-avatar {
+.rev-page-review-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.review-user-details {
+.rev-page-review-user-details {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.review-user-name {
+.rev-page-review-user-name {
   font-weight: 600;
   color: #333;
 }
 
-.review-date {
+.rev-page-review-date {
   font-size: 0.85rem;
   color: #666;
 }
 
-.review-rating {
+.rev-page-review-rating {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.star {
+.rev-page-star {
   font-size: 1.2rem;
 }
 
-.star.filled {
+.rev-page-star.rev-page-filled {
   filter: grayscale(0%);
-  color: #ffc107; /* Yellow color for filled stars */
+  color: #ffc107; /* Yellow color for rev-page-filled stars */
 }
 
-.star.greyed {
+.rev-page-star.rev-page-greyed {
   filter: grayscale(100%);
   opacity: 0.5;
   color: #999; /* Grey color for 0 rating */
 }
 
-.star.empty {
+.rev-page-star.rev-page-empty {
   filter: grayscale(100%);
   opacity: 0.3;
 }
 
-.rating-value {
+.rev-page-rating-value {
   font-weight: 600;
   color: #333;
 }
 
-.review-combo-info {
+.rev-page-review-combo-info {
   margin-bottom: 1rem;
   padding: 0.5rem;
   background: #f5f5f5;
@@ -172,7 +172,7 @@
   font-size: 0.9rem;
 }
 
-.review-comment {
+.rev-page-review-comment {
   margin-bottom: 1rem;
   padding: 1rem;
   background: #fafafa;
@@ -182,7 +182,7 @@
   min-height: 60px;
 }
 
-.review-reply-section {
+.rev-page-review-reply-section {
   margin-bottom: 1rem;
   padding: 1rem;
   background: #e8f5e9;
@@ -190,28 +190,28 @@
   border-left: 3px solid #4caf50;
 }
 
-.review-reply-label {
+.rev-page-review-reply-label {
   font-weight: 600;
   color: #2e7d32;
   margin-bottom: 0.5rem;
 }
 
-.review-reply-content {
+.rev-page-review-reply-content {
   color: #333;
   line-height: 1.6;
   margin-bottom: 0.5rem;
 }
 
-.review-reply-date {
+.rev-page-review-reply-date {
   font-size: 0.85rem;
   color: #666;
 }
 
-.review-status {
+.rev-page-review-status {
   margin-bottom: 1rem;
 }
 
-.status-badge {
+.rev-page-status-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -219,17 +219,17 @@
   font-weight: 600;
 }
 
-.status-badge.replied {
+.rev-page-status-badge.rev-page-replied {
   background: #c8e6c9;
   color: #2e7d32;
 }
 
-.status-badge.not-replied {
+.rev-page-status-badge.rev-page-not-replied {
   background: #ffcdd2;
   color: #c62828;
 }
 
-.review-detail-btn {
+.rev-page-review-detail-btn {
   width: 100%;
   padding: 0.75rem;
   background: #008e05;
@@ -241,12 +241,12 @@
   transition: background 0.3s ease;
 }
 
-.review-detail-btn:hover {
+.rev-page-review-detail-btn:hover {
   background: #006b04;
 }
 
 /* Review Detail Modal */
-.review-detail-modal-overlay {
+.rev-page-review-detail-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -260,7 +260,7 @@
   padding: 2rem;
 }
 
-.review-detail-modal {
+.rev-page-review-detail-modal {
   background: white;
   border-radius: 8px;
   max-width: 800px;
@@ -270,7 +270,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.review-detail-header {
+.rev-page-review-detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -282,12 +282,12 @@
   z-index: 10;
 }
 
-.review-detail-header h3 {
+.rev-page-review-detail-header h3 {
   margin: 0;
   color: #333;
 }
 
-.close-btn {
+.rev-page-close-btn {
   background: none;
   border: none;
   font-size: 2rem;
@@ -303,63 +303,63 @@
   transition: background 0.3s ease;
 }
 
-.close-btn:hover {
+.rev-page-close-btn:hover {
   background: #f5f5f5;
 }
 
-.review-detail-content {
+.rev-page-review-detail-content {
   padding: 1.5rem;
 }
 
-.review-detail-section {
+.rev-page-review-detail-section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #eee;
 }
 
-.review-detail-section:last-child {
+.rev-page-review-detail-section:last-child {
   border-bottom: none;
 }
 
-.review-detail-section h4 {
+.rev-page-review-detail-section h4 {
   margin: 0 0 1rem 0;
   color: #333;
   font-size: 1.1rem;
 }
 
-.review-detail-user {
+.rev-page-review-detail-user {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-.review-detail-avatar {
+.rev-page-review-detail-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.review-rating-row {
+.rev-page-review-rating-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   align-items: center;
 }
 
-.review-rating-item {
+.rev-page-review-rating-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.review-detail-rating {
+.rev-page-review-detail-rating {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.review-detail-comment {
+.rev-page-review-detail-comment {
   padding: 1rem;
   background: #fafafa;
   border-radius: 4px;
@@ -367,7 +367,7 @@
   color: #333;
 }
 
-.review-detail-reply {
+.rev-page-review-detail-reply {
   padding: 1rem;
   background: #e8f5e9;
   border-radius: 4px;
@@ -376,13 +376,13 @@
   margin-bottom: 1rem;
 }
 
-.review-detail-reply-date {
+.rev-page-review-detail-reply-date {
   font-size: 0.85rem;
   color: #666;
   margin-bottom: 1rem;
 }
 
-.review-reply-textarea {
+.rev-page-review-reply-textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
@@ -393,12 +393,12 @@
   margin-bottom: 1rem;
 }
 
-.review-reply-textarea:focus {
+.rev-page-review-reply-textarea:focus {
   outline: none;
   border-color: #008e05;
 }
 
-.review-submit-reply-btn {
+.rev-page-review-submit-reply-btn {
   padding: 0.75rem 1.5rem;
   background: #008e05;
   color: white;
@@ -409,16 +409,16 @@
   transition: background 0.3s ease;
 }
 
-.review-submit-reply-btn:hover:not(:disabled) {
+.rev-page-review-submit-reply-btn:hover:not(:disabled) {
   background: #006b04;
 }
 
-.review-submit-reply-btn:disabled {
+.rev-page-review-submit-reply-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
 
-.review-delete-reply-btn {
+.rev-page-review-delete-reply-btn {
   padding: 0.75rem 1.5rem;
   background: #d32f2f;
   color: white;
@@ -429,16 +429,16 @@
   transition: background 0.3s ease;
 }
 
-.review-delete-reply-btn:hover:not(:disabled) {
+.rev-page-review-delete-reply-btn:hover:not(:disabled) {
   background: #b71c1c;
 }
 
-.review-delete-reply-btn:disabled {
+.rev-page-review-delete-reply-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
 
-.no-reviews {
+.rev-page-no-reviews {
   text-align: center;
   padding: 3rem;
   color: #666;
@@ -447,19 +447,19 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .reviews-list {
+  .rev-page-reviews-list {
     grid-template-columns: 1fr;
   }
 
-  .review-filters {
+  .rev-page-review-filters {
     flex-direction: column;
   }
 
-  .filter-group {
+  .rev-page-filter-group {
     width: 100%;
   }
 
-  .review-detail-modal {
+  .rev-page-review-detail-modal {
     max-width: 100%;
     margin: 1rem;
   }

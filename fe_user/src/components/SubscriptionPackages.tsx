@@ -150,15 +150,15 @@ const SubscriptionPackages = () => {
     : null
 
   return (
-    <div className="subscription-packages-page">
+    <div className="sub-subscription-packages-page">
       <Header />
-      <main className="subscription-packages-main">
-        <div className="subscription-packages-container">
+      <main className="sub-subscription-packages-main">
+        <div className="sub-subscription-packages-container">
           {/* Hero Section */}
-          <section className="packages-hero">
-            <div className="packages-hero-content">
-              <h1 className="packages-hero-title">Hệ thống cấp độ thành viên</h1>
-              <p className="packages-hero-subtitle">
+          <section className="sub-packages-hero">
+            <div className="sub-packages-hero-content">
+              <h1 className="sub-packages-hero-title">Hệ thống cấp độ thành viên</h1>
+              <p className="sub-packages-hero-subtitle">
                 Chi tiêu càng nhiều, bạn càng nhận được nhiều ưu đãi và quyền lợi đặc biệt
               </p>
             </div>
@@ -166,9 +166,9 @@ const SubscriptionPackages = () => {
 
           {/* Current Level Status */}
           {userId && !levelLoading && (
-            <section className="current-level-section">
-              <Card className="current-level-card">
-                <CardContent className="level-progress-card-content">
+            <section className="sub-current-level-section">
+              <Card className="sub-current-level-card">
+                <CardContent className="sub-level-progress-card-content">
                   <LevelProgressBar
                     totalSpent={totalSpent}
                     level={currentUserLevel}
@@ -183,9 +183,9 @@ const SubscriptionPackages = () => {
           )}
 
           {/* Levels Grid */}
-          <section className="packages-section">
-            <h2 className="section-title">Các cấp độ thành viên</h2>
-            <div className="packages-grid">
+          <section className="sub-packages-section">
+            <h2 className="sub-section-title">Các cấp độ thành viên</h2>
+            <div className="sub-packages-grid">
               {levels.map((levelInfo) => {
                 const isCurrentLevel = userId && currentLevelNumber === levelInfo.level
                 const isUnlocked = userId && currentLevelNumber >= levelInfo.level
@@ -194,41 +194,41 @@ const SubscriptionPackages = () => {
                 return (
                   <Card 
                     key={levelInfo.level} 
-                    className={`package-card level-card ${isCurrentLevel ? 'current' : ''} ${isLocked ? 'locked' : ''}`}
+                    className={`sub-package-card level-card ${isCurrentLevel ? 'sub-current' : ''} ${isLocked ? 'sub-locked' : ''}`}
                   >
                     {isCurrentLevel && (
-                      <div className="popular-badge-wrapper">
+                      <div className="sub-popular-badge-wrapper">
                         <Badge variant="primary">Cấp độ hiện tại</Badge>
                       </div>
                     )}
                     
                     <div 
-                      className="package-header"
+                      className="sub-package-header"
                       style={{ background: levelInfo.gradient }}
                     >
-                      <div className="level-icon-large">{levelInfo.icon}</div>
-                      <h2 className="package-name">{levelInfo.name}</h2>
-                      <p className="level-number">Level {levelInfo.level}</p>
+                      <div className="sub-level-icon-large">{levelInfo.icon}</div>
+                      <h2 className="sub-package-name">{levelInfo.name}</h2>
+                      <p className="sub-level-number">Level {levelInfo.level}</p>
                     </div>
 
-                    <CardContent className="package-body">
-                      <div className="package-price">
-                        <span className="price-label">Mốc chi tiêu</span>
-                        <span className="price-amount">{getLevelRange(levelInfo)}</span>
+                    <CardContent className="sub-package-body">
+                      <div className="sub-package-price">
+                        <span className="sub-price-label">Mốc chi tiêu</span>
+                        <span className="sub-price-amount">{getLevelRange(levelInfo)}</span>
                       </div>
 
-                      <ul className="package-features">
+                      <ul className="sub-package-features">
                         {levelInfo.benefits.map((benefit, index) => (
-                          <li key={index} className="feature-item">
-                            <CheckCircleIcon className="feature-icon" />
+                          <li key={index} className="sub-feature-item">
+                            <CheckCircleIcon className="sub-feature-icon" />
                             <span>{benefit}</span>
                           </li>
                         ))}
                       </ul>
 
                       {isLocked && (
-                        <div className="locked-overlay">
-                          <p className="locked-text">
+                        <div className="sub-locked-overlay">
+                          <p className="sub-locked-text">
                             Cần chi tiêu thêm {formatPrice(levelInfo.minAmount - totalSpent)} VNĐ để mở khóa
                           </p>
                         </div>
@@ -239,7 +239,7 @@ const SubscriptionPackages = () => {
                           onClick={() => navigate('/login')}
                           variant="outline"
                           size="lg"
-                          className="subscribe-button"
+                          className="sub-subscribe-button"
                         >
                           Đăng nhập để xem
                         </Button>
@@ -252,41 +252,41 @@ const SubscriptionPackages = () => {
           </section>
 
           {/* How It Works Section */}
-          <section className="how-it-works-section">
-            <h2 className="section-title">Cách hoạt động</h2>
-            <div className="how-it-works-grid">
-              <Card className="how-it-works-card">
+          <section className="sub-how-it-works-section">
+            <h2 className="sub-section-title">Cách hoạt động</h2>
+            <div className="sub-how-it-works-grid">
+              <Card className="sub-how-it-works-card">
                 <CardContent>
-                  <div className="step-number">1</div>
-                  <h3 className="step-title">Đặt dịch vụ</h3>
-                  <p className="step-description">
+                  <div className="sub-step-number">1</div>
+                  <h3 className="sub-step-title">Đặt dịch vụ</h3>
+                  <p className="sub-step-description">
                     Bắt đầu hành trình của bạn bằng cách đặt các dịch vụ du lịch trên nền tảng
                   </p>
                 </CardContent>
               </Card>
-              <Card className="how-it-works-card">
+              <Card className="sub-how-it-works-card">
                 <CardContent>
-                  <div className="step-number">2</div>
-                  <h3 className="step-title">Tích lũy chi tiêu</h3>
-                  <p className="step-description">
+                  <div className="sub-step-number">2</div>
+                  <h3 className="sub-step-title">Tích lũy chi tiêu</h3>
+                  <p className="sub-step-description">
                     Mỗi lần thanh toán dịch vụ, số tiền sẽ được cộng vào tổng chi tiêu của bạn
                   </p>
                 </CardContent>
               </Card>
-              <Card className="how-it-works-card">
+              <Card className="sub-how-it-works-card">
                 <CardContent>
-                  <div className="step-number">3</div>
-                  <h3 className="step-title">Tự động nâng cấp</h3>
-                  <p className="step-description">
+                  <div className="sub-step-number">3</div>
+                  <h3 className="sub-step-title">Tự động nâng cấp</h3>
+                  <p className="sub-step-description">
                     Khi đạt mốc chi tiêu, bạn sẽ tự động được nâng cấp lên level cao hơn
                   </p>
                 </CardContent>
               </Card>
-              <Card className="how-it-works-card">
+              <Card className="sub-how-it-works-card">
                 <CardContent>
-                  <div className="step-number">4</div>
-                  <h3 className="step-title">Nhận ưu đãi</h3>
-                  <p className="step-description">
+                  <div className="sub-step-number">4</div>
+                  <h3 className="sub-step-title">Nhận ưu đãi</h3>
+                  <p className="sub-step-description">
                     Tận hưởng các ưu đãi và quyền lợi đặc biệt dành riêng cho cấp độ của bạn
                   </p>
                 </CardContent>
@@ -295,29 +295,29 @@ const SubscriptionPackages = () => {
           </section>
 
           {/* FAQ Section */}
-          <section className="packages-faq-section">
-            <h2 className="faq-section-title">Câu hỏi thường gặp</h2>
-            <div className="faq-grid">
-              <Card className="faq-card">
+          <section className="sub-packages-faq-section">
+            <h2 className="sub-faq-section-title">Câu hỏi thường gặp</h2>
+            <div className="sub-faq-grid">
+              <Card className="sub-faq-card">
                 <CardContent>
-                  <h3 className="faq-question">Làm thế nào để nâng cấp level?</h3>
-                  <p className="faq-answer">
+                  <h3 className="sub-faq-question">Làm thế nào để nâng cấp level?</h3>
+                  <p className="sub-faq-answer">
                     Bạn chỉ cần đặt và thanh toán các dịch vụ du lịch. Khi tổng chi tiêu đạt mốc của level tiếp theo, bạn sẽ tự động được nâng cấp.
                   </p>
                 </CardContent>
               </Card>
-              <Card className="faq-card">
+              <Card className="sub-faq-card">
                 <CardContent>
-                  <h3 className="faq-question">Level có bị giảm không?</h3>
-                  <p className="faq-answer">
+                  <h3 className="sub-faq-question">Level có bị giảm không?</h3>
+                  <p className="sub-faq-answer">
                     Không, level của bạn sẽ không bao giờ bị giảm. Một khi đã đạt được level, bạn sẽ giữ nguyên level đó vĩnh viễn.
                   </p>
                 </CardContent>
               </Card>
-              <Card className="faq-card">
+              <Card className="sub-faq-card">
                 <CardContent>
-                  <h3 className="faq-question">Tổng chi tiêu được tính như thế nào?</h3>
-                  <p className="faq-answer">
+                  <h3 className="sub-faq-question">Tổng chi tiêu được tính như thế nào?</h3>
+                  <p className="sub-faq-answer">
                     Tổng chi tiêu được tính từ tất cả các đơn đặt dịch vụ đã thanh toán thành công của bạn trên nền tảng.
                   </p>
                 </CardContent>

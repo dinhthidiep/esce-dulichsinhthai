@@ -345,7 +345,7 @@ const ServiceDetail = () => {
           })
           .slice(0, 4)
           .map(s => {
-            // Xử lý trường hợp có nhiều ảnh phân cách bởi dấu phẩy - lấy ảnh đầu tiên cho card
+            // Xử lý trường hợp có nhiều ảnh phân cách bởi dấu phẩy - lấy ảnh đầu tiên cho sd-card
             let imagePath = s.Image || s.image || '';
             if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
               imagePath = imagePath.split(',')[0].trim();
@@ -787,7 +787,7 @@ const ServiceDetail = () => {
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (openMenuId && !event.target.closest('.review-menu-container')) {
+      if (openMenuId && !event.target.closest('.sd-review-menu-container')) {
         setOpenMenuId(null);
       }
     };
@@ -811,9 +811,9 @@ const ServiceDetail = () => {
 
   if (loading) {
     return (
-      <div className="service-detail-page">
+      <div className="sd-service-detail-page">
         <Header />
-        <main className="service-detail-main">
+        <main className="sd-service-detail-main">
           <LoadingSpinner message="Đang tải thông tin dịch vụ..." />
         </main>
       </div>
@@ -822,15 +822,15 @@ const ServiceDetail = () => {
 
   if (error || !service) {
     return (
-      <div className="service-detail-page">
+      <div className="sd-service-detail-page">
         <Header />
-        <main className="service-detail-main">
-          <div className="service-detail-container">
-            <div className="error-container" role="alert">
-              <h2 className="error-title">Không tìm thấy dịch vụ</h2>
-              <p className="error-message">{error || 'Dịch vụ không tồn tại'}</p>
+        <main className="sd-service-detail-main">
+          <div className="sd-service-detail-container">
+            <div className="sd-error-container" role="alert">
+              <h2 className="sd-error-title">Không tìm thấy dịch vụ</h2>
+              <p className="sd-error-message">{error || 'Dịch vụ không tồn tại'}</p>
               <Button variant="default" onClick={() => navigate('/services')}>
-                <ArrowLeftIcon className="button-icon" />
+                <ArrowLeftIcon className="sd-button-icon" />
                 Quay lại danh sách
               </Button>
             </div>
@@ -851,49 +851,49 @@ const ServiceDetail = () => {
   const rating = averageRating > 0 ? averageRating : 4.5; // Fallback rating
 
   return (
-    <div className="service-detail-page">
+    <div className="sd-service-detail-page">
       <Header />
       
-      <main className="service-detail-main">
+      <main className="sd-service-detail-main">
         {/* Hero Section with Image Carousel */}
-        <section className="service-hero-section">
-          <div className="service-hero-background">
+        <section className="sd-service-hero-section">
+          <div className="sd-service-hero-background">
             <ImageCarousel
               images={serviceImages}
               autoPlayInterval={4000}
               fallbackImage={baNaHillImage}
             />
-            <div className="service-hero-overlay"></div>
+            <div className="sd-service-hero-overlay"></div>
           </div>
-          <div className="service-hero-content">
+          <div className="sd-service-hero-content">
             <Button 
               variant="outline" 
               onClick={() => navigate(-1)}
-              className="back-button-hero"
+              className="sd-back-button-hero"
             >
-              <ArrowLeftIcon className="button-icon" />
+              <ArrowLeftIcon className="sd-button-icon" />
               Quay lại
             </Button>
-            <div className="service-hero-info">
-              <h1 className="service-hero-title">{serviceName}</h1>
-              <div className="service-hero-meta">
+            <div className="sd-service-hero-info">
+              <h1 className="sd-service-hero-title">{serviceName}</h1>
+              <div className="sd-service-hero-meta">
                 {serviceAddress && (
-                  <div className="hero-meta-item">
-                    <MapPinIcon className="hero-meta-icon" />
+                  <div className="sd-hero-meta-item">
+                    <MapPinIcon className="sd-hero-meta-icon" />
                     <span>{serviceAddress}</span>
                   </div>
                 )}
                 {!ratingLoading && rating > 0 && (
-                  <div className="hero-meta-item">
-                    <div className="hero-rating">
-                      <StarIcon className="hero-star-icon" filled={true} />
-                      <span className="hero-rating-value">{rating.toFixed(1)}</span>
+                  <div className="sd-hero-meta-item">
+                    <div className="sd-hero-rating">
+                      <StarIcon className="sd-hero-star-icon" filled={true} />
+                      <span className="sd-hero-rating-value">{rating.toFixed(1)}</span>
                     </div>
                   </div>
                 )}
                 <Badge 
-                  variant={statusBadge.variant as 'success' | 'default' | 'primary' | 'secondary' | 'danger' | 'warning'} 
-                  className="hero-status-badge"
+                  variant={statusBadge.variant as 'success' | 'default' | 'primary' | 'secondary' | 'sd-danger' | 'sd-warning'} 
+                  className="sd-hero-status-badge"
                   style={{ backgroundColor: statusBadge.color === '#047857' ? '#d1fae5' : statusBadge.color === '#dc2626' ? '#fee2e2' : '#f1f5f9', color: statusBadge.color }}
                 >
                   {statusBadge.text}
@@ -903,20 +903,20 @@ const ServiceDetail = () => {
           </div>
         </section>
 
-        <div className="service-detail-container">
+        <div className="sd-service-detail-container">
           {/* Main Content Grid */}
-          <div className="service-detail-content">
+          <div className="sd-service-detail-content">
             {/* Left Column - Main Content */}
-            <div className="service-detail-left">
+            <div className="sd-service-detail-left">
               {/* Description Section */}
-              <Card className="description-card">
+              <Card className="sd-description-card">
                 <CardContent>
-                  <h2 className="section-title">Mô tả dịch vụ</h2>
-                  <div className="description-content">
+                  <h2 className="sd-section-title">Mô tả dịch vụ</h2>
+                  <div className="sd-description-content">
                     {serviceDescription ? (
-                      <p className="description-text">{serviceDescription}</p>
+                      <p className="sd-description-text">{serviceDescription}</p>
                     ) : (
-                      <p className="description-text description-empty">
+                      <p className="sd-description-text sd-description-empty">
                         Chưa có mô tả cho dịch vụ này.
                       </p>
                     )}
@@ -925,44 +925,44 @@ const ServiceDetail = () => {
               </Card>
 
               {/* Highlights Section */}
-              <Card className="highlights-card">
+              <Card className="sd-highlights-card">
                 <CardContent>
-                  <h2 className="section-title">Đặc điểm nổi bật</h2>
-                  <div className="highlights-grid">
-                    <div className="highlight-item">
-                      <div className="highlight-icon-wrapper">
-                        <CheckCircleIcon className="highlight-icon" />
+                  <h2 className="sd-section-title">Đặc điểm nổi bật</h2>
+                  <div className="sd-highlights-grid">
+                    <div className="sd-highlight-item">
+                      <div className="sd-highlight-icon-wrapper">
+                        <CheckCircleIcon className="sd-highlight-icon" />
                       </div>
-                      <div className="highlight-content">
-                        <h3 className="highlight-title">Dịch vụ chất lượng cao</h3>
-                        <p className="highlight-description">Được quản lý và kiểm duyệt bởi hệ thống ESCE</p>
-                      </div>
-                    </div>
-                    <div className="highlight-item">
-                      <div className="highlight-icon-wrapper">
-                        <ShieldCheckIcon className="highlight-icon" />
-                      </div>
-                      <div className="highlight-content">
-                        <h3 className="highlight-title">Thanh toán an toàn</h3>
-                        <p className="highlight-description">Hệ thống thanh toán được bảo mật và an toàn</p>
+                      <div className="sd-highlight-content">
+                        <h3 className="sd-highlight-title">Dịch vụ chất lượng cao</h3>
+                        <p className="sd-highlight-description">Được quản lý và kiểm duyệt bởi hệ thống ESCE</p>
                       </div>
                     </div>
-                    <div className="highlight-item">
-                      <div className="highlight-icon-wrapper">
-                        <UsersIcon className="highlight-icon" />
+                    <div className="sd-highlight-item">
+                      <div className="sd-highlight-icon-wrapper">
+                        <ShieldCheckIcon className="sd-highlight-icon" />
                       </div>
-                      <div className="highlight-content">
-                        <h3 className="highlight-title">Đặt dịch vụ theo nhóm</h3>
-                        <p className="highlight-description">Tiết kiệm chi phí khi đặt theo nhóm</p>
+                      <div className="sd-highlight-content">
+                        <h3 className="sd-highlight-title">Thanh toán an toàn</h3>
+                        <p className="sd-highlight-description">Hệ thống thanh toán được bảo mật và an toàn</p>
                       </div>
                     </div>
-                    <div className="highlight-item">
-                      <div className="highlight-icon-wrapper">
-                        <ClockIcon className="highlight-icon" />
+                    <div className="sd-highlight-item">
+                      <div className="sd-highlight-icon-wrapper">
+                        <UsersIcon className="sd-highlight-icon" />
                       </div>
-                      <div className="highlight-content">
-                        <h3 className="highlight-title">Hỗ trợ 24/7</h3>
-                        <p className="highlight-description">Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn</p>
+                      <div className="sd-highlight-content">
+                        <h3 className="sd-highlight-title">Đặt dịch vụ theo nhóm</h3>
+                        <p className="sd-highlight-description">Tiết kiệm chi phí khi đặt theo nhóm</p>
+                      </div>
+                    </div>
+                    <div className="sd-highlight-item">
+                      <div className="sd-highlight-icon-wrapper">
+                        <ClockIcon className="sd-highlight-icon" />
+                      </div>
+                      <div className="sd-highlight-content">
+                        <h3 className="sd-highlight-title">Hỗ trợ 24/7</h3>
+                        <p className="sd-highlight-description">Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn</p>
                       </div>
                     </div>
                   </div>
@@ -970,26 +970,26 @@ const ServiceDetail = () => {
               </Card>
 
               {/* Service Information and Cancellation Policy - Two Column Layout */}
-              <div className="info-policy-grid">
+              <div className="sd-info-policy-grid">
                 {/* Left Column - Service Information */}
-                <Card className="service-info-card-detail">
+                <Card className="sd-service-info-card-detail">
                   <CardContent>
-                    <h2 className="section-title">Thông tin chi tiết</h2>
-                    <div className="detail-info-list">
+                    <h2 className="sd-section-title">Thông tin chi tiết</h2>
+                    <div className="sd-detail-info-list">
                       {serviceAddress && (
-                        <div className="detail-info-item">
-                          <MapPinIcon className="detail-info-icon" />
-                          <div className="detail-info-content">
-                            <span className="detail-info-label">ĐỊA CHỈ</span>
-                            <span className="detail-info-value">{serviceAddress}</span>
+                        <div className="sd-detail-info-item">
+                          <MapPinIcon className="sd-detail-info-icon" />
+                          <div className="sd-detail-info-content">
+                            <span className="sd-detail-info-label">ĐỊA CHỈ</span>
+                            <span className="sd-detail-info-value">{serviceAddress}</span>
                           </div>
                         </div>
                       )}
-                      <div className="detail-info-item">
-                        <ClockIcon className="detail-info-icon" />
-                        <div className="detail-info-content">
-                          <span className="detail-info-label">SỐ CHỖ CÒN LẠI</span>
-                          <span className="detail-info-value">
+                      <div className="sd-detail-info-item">
+                        <ClockIcon className="sd-detail-info-icon" />
+                        <div className="sd-detail-info-content">
+                          <span className="sd-detail-info-label">SỐ CHỖ CÒN LẠI</span>
+                          <span className="sd-detail-info-value">
                              {availableSlots > 0 ? `${availableSlots} chỗ` : 'Đã hết chỗ'}
                           </span>
                         </div>
@@ -999,49 +999,49 @@ const ServiceDetail = () => {
                 </Card>
 
                 {/* Right Column - Cancellation Policy */}
-                <Card className="policy-card-detail">
+                <Card className="sd-policy-card-detail">
                   <CardContent>
-                    <h2 className="section-title">Chính sách hủy</h2>
-                    <div className="policy-detail-list">
-                      <div className="policy-detail-item policy-item-48h-before">
-                        <svg className="policy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <h2 className="sd-section-title">Chính sách hủy</h2>
+                    <div className="sd-policy-detail-list">
+                      <div className="sd-policy-detail-item policy-item-48h-before">
+                        <svg className="sd-policy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"/>
                           <polyline points="12 6 12 12 16 14"/>
                         </svg>
-                        <span className="policy-detail-text">Hủy trước 48h được hoàn 90%</span>
+                        <span className="sd-policy-detail-text">Hủy trước 48h được hoàn 90%</span>
                       </div>
-                      <div className="policy-detail-item policy-item-48h-within">
-                        <svg className="policy-icon warning" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <div className="sd-policy-detail-item policy-item-48h-within">
+                        <svg className="sd-policy-icon sd-warning" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
                           <path d="M12 9v4"/>
                           <path d="M12 17h.01"/>
                         </svg>
-                        <span className="policy-detail-text">Hủy trong vòng 48h hoàn 50%</span>
+                        <span className="sd-policy-detail-text">Hủy trong vòng 48h hoàn 50%</span>
                       </div>
-                      <div className="policy-detail-item policy-item-24h-within">
-                        <svg className="policy-icon danger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <div className="sd-policy-detail-item policy-item-24h-within">
+                        <svg className="sd-policy-icon sd-danger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"/>
                           <line x1="15" y1="9" x2="9" y2="15"/>
                           <line x1="9" y1="9" x2="15" y2="15"/>
                         </svg>
-                        <span className="policy-detail-text">Hủy trong vòng 24h không hoàn tiền</span>
+                        <span className="sd-policy-detail-text">Hủy trong vòng 24h không hoàn tiền</span>
                       </div>
                     </div>
-                    <div className="policy-note">
-                      <span className="policy-note-text">* Thời gian tính từ lúc check-in</span>
+                    <div className="sd-policy-note">
+                      <span className="sd-policy-note-text">* Thời gian tính từ lúc check-in</span>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Reviews Section */}
-              <Card className="reviews-card">
+              <Card className="sd-reviews-card">
                 <CardContent>
-                  <div className="reviews-header">
-                    <div className="reviews-header-left">
-                      <h2 className="section-title">Đánh giá từ khách hàng</h2>
+                  <div className="sd-reviews-header">
+                    <div className="sd-reviews-header-left">
+                      <h2 className="sd-section-title">Đánh giá từ khách hàng</h2>
                       {reviews.length > 0 && (
-                        <span className="reviews-count">({reviews.length} đánh giá)</span>
+                        <span className="sd-reviews-count">({reviews.length} đánh giá)</span>
                       )}
                     </div>
                     {canReview && !showReviewForm && (
@@ -1056,9 +1056,9 @@ const ServiceDetail = () => {
                           }
                           setShowReviewForm(true);
                         }}
-                        className="write-review-btn"
+                        className="sd-write-review-btn"
                       >
-                        <StarIcon className="button-icon" />
+                        <StarIcon className="sd-button-icon" />
                         Viết đánh giá
                       </Button>
                     )}
@@ -1066,38 +1066,38 @@ const ServiceDetail = () => {
 
                   {/* Rating Summary */}
                   {!loadingReviews && reviews.length > 0 && (
-                    <div className="rating-summary-section">
-                      <div className="rating-summary-main">
-                        <div className="rating-overall">
-                          <div className="rating-overall-value">
+                    <div className="sd-rating-summary-section">
+                      <div className="sd-rating-summary-main">
+                        <div className="sd-rating-overall">
+                          <div className="sd-rating-overall-value">
                             {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
                           </div>
-                          <div className="rating-overall-stars">
+                          <div className="sd-rating-overall-stars">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <StarIcon
                                 key={star}
-                                className="rating-overall-star"
+                                className="sd-rating-overall-star"
                                 filled={star <= Math.round(averageRating)}
                               />
                             ))}
                           </div>
-                          <div className="rating-overall-label">
+                          <div className="sd-rating-overall-label">
                             {reviews.length} {reviews.length === 1 ? 'đánh giá' : 'đánh giá'}
                           </div>
                         </div>
-                        <div className="rating-distribution">
+                        <div className="sd-rating-distribution">
                           {[5, 4, 3, 2, 1].map((star) => {
                             const count = ratingDistribution[star] || 0;
                             const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
                             return (
-                              <div key={star} className="rating-distribution-item">
-                                <div className="distribution-star">
-                                  <span className="distribution-star-number">{star}</span>
-                                  <StarIcon className="distribution-star-icon" filled={true} />
+                              <div key={star} className="sd-rating-distribution-item">
+                                <div className="sd-distribution-star">
+                                  <span className="sd-distribution-star-number">{star}</span>
+                                  <StarIcon className="sd-distribution-star-icon" filled={true} />
                                 </div>
-                                <div className="distribution-bar-wrapper">
+                                <div className="sd-distribution-bar-wrapper">
                                   <div 
-                                    className="distribution-bar"
+                                    className="sd-distribution-bar"
                                     style={{ width: `${percentage}%` }}
                                   />
                                 </div>
@@ -1111,11 +1111,11 @@ const ServiceDetail = () => {
 
                   {/* Review Form */}
                   {showReviewForm && (
-                    <div className="review-form-container">
-                      <div className="review-form-header">
-                        <h3 className="review-form-title">Viết đánh giá của bạn</h3>
+                    <div className="sd-review-form-container">
+                      <div className="sd-review-form-header">
+                        <h3 className="sd-review-form-title">Viết đánh giá của bạn</h3>
                         <button
-                          className="review-form-close"
+                          className="sd-review-form-close"
                           onClick={() => {
                             setShowReviewForm(false);
                             setReviewForm({ rating: 5, comment: '' });
@@ -1125,21 +1125,21 @@ const ServiceDetail = () => {
                           ×
                         </button>
                       </div>
-                      <div className="review-form-rating">
+                      <div className="sd-review-form-rating">
                         <label>Đánh giá của bạn:</label>
-                        <div className="star-rating-input">
+                        <div className="sd-star-rating-input">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
                               key={star}
                               type="button"
-                              className={`star-button ${star <= reviewForm.rating ? 'active' : ''}`}
+                              className={`sd-star-button ${star <= reviewForm.rating ? 'sd-active' : ''}`}
                               onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                               aria-label={`${star} sao`}
                             >
-                              <StarIcon className="star-icon" filled={star <= reviewForm.rating} />
+                              <StarIcon className="sd-star-icon" filled={star <= reviewForm.rating} />
                             </button>
                           ))}
-                          <span className="rating-text">
+                          <span className="sd-rating-text">
                             {reviewForm.rating === 5 && 'Tuyệt vời'}
                             {reviewForm.rating === 4 && 'Rất tốt'}
                             {reviewForm.rating === 3 && 'Tốt'}
@@ -1148,21 +1148,21 @@ const ServiceDetail = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="review-form-comment">
-                        <label htmlFor="review-comment">Nhận xét chi tiết:</label>
+                      <div className="sd-review-form-comment">
+                        <label htmlFor="sd-review-comment">Nhận xét chi tiết:</label>
                         <textarea
-                          id="review-comment"
+                          id="sd-review-comment"
                           rows={5}
                           value={reviewForm.comment}
                           onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                           placeholder="Chia sẻ trải nghiệm của bạn về dịch vụ này. Điều gì bạn thích nhất? Có điều gì cần cải thiện không?"
                           maxLength={MAX_COMMENT_LENGTH}
                         />
-                        <div className="char-count-wrapper">
-                          <span className="char-count">{reviewForm.comment.length}/{MAX_COMMENT_LENGTH} ký tự</span>
+                        <div className="sd-char-count-wrapper">
+                          <span className="sd-char-count">{reviewForm.comment.length}/{MAX_COMMENT_LENGTH} ký tự</span>
                         </div>
                       </div>
-                      <div className="review-form-actions">
+                      <div className="sd-review-form-actions">
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -1185,13 +1185,13 @@ const ServiceDetail = () => {
 
                   {/* Sort and Filter Controls */}
                   {!loadingReviews && reviews.length > 0 && (
-                    <div className="reviews-controls">
-                      <div className="reviews-sort">
-                        <label htmlFor="sort-select">Sắp xếp:</label>
-                        <div className="sort-select-wrapper">
+                    <div className="sd-reviews-controls">
+                      <div className="sd-reviews-sort">
+                        <label htmlFor="sd-sort-select">Sắp xếp:</label>
+                        <div className="sd-sort-select-wrapper">
                           <select
-                            id="sort-select"
-                            className="sort-select"
+                            id="sd-sort-select"
+                            className="sd-sort-select"
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
                           >
@@ -1200,15 +1200,15 @@ const ServiceDetail = () => {
                             <option value="highest">Điểm cao nhất</option>
                             <option value="lowest">Điểm thấp nhất</option>
                           </select>
-                          <ChevronDownIcon className="sort-chevron" />
+                          <ChevronDownIcon className="sd-sort-chevron" />
                         </div>
                       </div>
-                      <div className="reviews-filter">
-                        <label htmlFor="filter-select">Lọc theo sao:</label>
-                        <div className="filter-select-wrapper">
+                      <div className="sd-reviews-filter">
+                        <label htmlFor="sd-filter-select">Lọc theo sao:</label>
+                        <div className="sd-filter-select-wrapper">
                           <select
-                            id="filter-select"
-                            className="filter-select"
+                            id="sd-filter-select"
+                            className="sd-filter-select"
                             value={filterRating}
                             onChange={(e) => setFilterRating(parseInt(e.target.value))}
                           >
@@ -1219,7 +1219,7 @@ const ServiceDetail = () => {
                             <option value="2">2 sao</option>
                             <option value="1">1 sao</option>
                           </select>
-                          <ChevronDownIcon className="filter-chevron" />
+                          <ChevronDownIcon className="sd-filter-chevron" />
                         </div>
                       </div>
                     </div>
@@ -1229,12 +1229,12 @@ const ServiceDetail = () => {
                   {loadingReviews ? (
                     <LoadingSpinner message="Đang tải đánh giá..." />
                   ) : reviews.length === 0 ? (
-                    <div className="reviews-empty">
-                      <div className="reviews-empty-icon-wrapper">
-                        <StarIcon className="reviews-empty-icon" />
+                    <div className="sd-reviews-empty">
+                      <div className="sd-reviews-empty-icon-wrapper">
+                        <StarIcon className="sd-reviews-empty-icon" />
                       </div>
-                      <h3 className="reviews-empty-title">Chưa có đánh giá nào</h3>
-                      <p className="reviews-empty-text">Hãy là người đầu tiên đánh giá dịch vụ này!</p>
+                      <h3 className="sd-reviews-empty-title">Chưa có đánh giá nào</h3>
+                      <p className="sd-reviews-empty-text">Hãy là người đầu tiên đánh giá dịch vụ này!</p>
                       {canReview && (
                         <Button
                           variant="default"
@@ -1246,30 +1246,30 @@ const ServiceDetail = () => {
                             }
                             setShowReviewForm(true);
                           }}
-                          className="write-review-empty-btn"
+                          className="sd-write-review-empty-btn"
                         >
-                          <StarIcon className="button-icon" />
+                          <StarIcon className="sd-button-icon" />
                           Viết đánh giá đầu tiên
                         </Button>
                       )}
                     </div>
                   ) : sortedAndFilteredReviews.length === 0 ? (
-                    <div className="reviews-empty">
-                      <div className="reviews-empty-icon-wrapper">
-                        <StarIcon className="reviews-empty-icon" />
+                    <div className="sd-reviews-empty">
+                      <div className="sd-reviews-empty-icon-wrapper">
+                        <StarIcon className="sd-reviews-empty-icon" />
                       </div>
-                      <h3 className="reviews-empty-title">Không tìm thấy đánh giá</h3>
-                      <p className="reviews-empty-text">Không có đánh giá nào phù hợp với bộ lọc của bạn.</p>
+                      <h3 className="sd-reviews-empty-title">Không tìm thấy đánh giá</h3>
+                      <p className="sd-reviews-empty-text">Không có đánh giá nào phù hợp với bộ lọc của bạn.</p>
                       <Button
                         variant="outline"
                         onClick={() => setFilterRating(0)}
-                        className="reset-filter-btn"
+                        className="sd-reset-filter-btn"
                       >
                         Xóa bộ lọc
                       </Button>
                     </div>
                   ) : (
-                    <div className="reviews-list">
+                    <div className="sd-reviews-list">
                       {sortedAndFilteredReviews.map((review) => {
                         const reviewId = review.Id || review.id;
                         const user = review.User || review.user;
@@ -1287,24 +1287,24 @@ const ServiceDetail = () => {
                         const isEditing = editingReviewId === reviewId;
                           
                         return (
-                          <div key={reviewId} className="review-item">
+                          <div key={reviewId} className="sd-review-item">
                             {isEditing ? (
-                              <div className="review-edit-form">
-                                <div className="review-form-rating">
+                              <div className="sd-review-edit-form">
+                                <div className="sd-review-form-rating">
                                   <label>Đánh giá:</label>
-                                  <div className="star-rating-input">
+                                  <div className="sd-star-rating-input">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <button
                                         key={star}
                                         type="button"
-                                        className={`star-button ${star <= editForm.rating ? 'active' : ''}`}
+                                        className={`sd-star-button ${star <= editForm.rating ? 'sd-active' : ''}`}
                                         onClick={() => setEditForm({ ...editForm, rating: star })}
                                         aria-label={`${star} sao`}
                                       >
-                                        <StarIcon className="star-icon" filled={star <= editForm.rating} />
+                                        <StarIcon className="sd-star-icon" filled={star <= editForm.rating} />
                                       </button>
                                     ))}
-                                    <span className="rating-text">
+                                    <span className="sd-rating-text">
                                       {editForm.rating === 5 && 'Tuyệt vời'}
                                       {editForm.rating === 4 && 'Rất tốt'}
                                       {editForm.rating === 3 && 'Tốt'}
@@ -1313,7 +1313,7 @@ const ServiceDetail = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="review-form-comment">
+                                <div className="sd-review-form-comment">
                                   <label htmlFor={`edit-comment-${reviewId}`}>Nhận xét:</label>
                                   <textarea
                                     id={`edit-comment-${reviewId}`}
@@ -1323,11 +1323,11 @@ const ServiceDetail = () => {
                                     placeholder="Chia sẻ trải nghiệm của bạn về dịch vụ này..."
                                     maxLength={MAX_COMMENT_LENGTH}
                                   />
-                                  <div className="char-count-wrapper">
-                                    <span className="char-count">{editForm.comment.length}/{MAX_COMMENT_LENGTH} ký tự</span>
+                                  <div className="sd-char-count-wrapper">
+                                    <span className="sd-char-count">{editForm.comment.length}/{MAX_COMMENT_LENGTH} ký tự</span>
                                   </div>
                                 </div>
-                                <div className="review-form-actions">
+                                <div className="sd-review-form-actions">
                                   <Button
                                     variant="outline"
                                     onClick={() => {
@@ -1348,27 +1348,27 @@ const ServiceDetail = () => {
                               </div>
                             ) : (
                               <>
-                                <div className="review-item-header">
-                                  <div className="review-user">
-                                    <div className="review-avatar">
+                                <div className="sd-review-item-header">
+                                  <div className="sd-review-user">
+                                    <div className="sd-review-avatar">
                                       {userAvatar ? (
                                         <img src={userAvatar} alt={userName} />
                                       ) : (
                                         <span>{userName.charAt(0).toUpperCase()}</span>
                                       )}
                                     </div>
-                                    <div className="review-user-info">
-                                      <div className="review-user-name">{userName}</div>
-                                      <div className="review-date-row">
-                                        <CalendarIcon className="review-date-icon" />
+                                    <div className="sd-review-user-info">
+                                      <div className="sd-review-user-name">{userName}</div>
+                                      <div className="sd-review-date-row">
+                                        <CalendarIcon className="sd-review-date-icon" />
                                         <span>{formatDate(createdAt)}</span>
                                       </div>
-                                      <div className="review-rating-row">
-                                        <div className="review-stars">
+                                      <div className="sd-review-rating-row">
+                                        <div className="sd-review-stars">
                                           {[1, 2, 3, 4, 5].map((star) => (
                                             <StarIcon
                                               key={star}
-                                              className="review-star"
+                                              className="sd-review-star"
                                               filled={star <= rating}
                                             />
                                           ))}
@@ -1377,38 +1377,38 @@ const ServiceDetail = () => {
                                     </div>
                                   </div>
                                   {isOwnReview && (
-                                    <div className="review-menu-container">
+                                    <div className="sd-review-menu-container">
                                       <button
-                                        className="review-menu-button"
+                                        className="sd-review-menu-button"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setOpenMenuId(openMenuId === reviewId ? null : reviewId);
                                         }}
                                         aria-label="Tùy chọn"
                                       >
-                                        <MoreVerticalIcon className="review-menu-icon" />
+                                        <MoreVerticalIcon className="sd-review-menu-icon" />
                                       </button>
                                       {openMenuId === reviewId && (
-                                        <div className="review-menu-dropdown">
+                                        <div className="sd-review-menu-dropdown">
                                           <button
-                                            className="review-menu-item"
+                                            className="sd-review-menu-item"
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               handleEditReview(review);
                                             }}
                                           >
-                                            <EditIcon className="review-menu-item-icon" />
+                                            <EditIcon className="sd-review-menu-item-icon" />
                                             <span>Chỉnh sửa</span>
                                           </button>
                                           <button
-                                            className="review-menu-item review-menu-item-delete"
+                                            className="sd-review-menu-item sd-review-menu-item-delete"
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               handleDeleteReview(reviewId);
                                             }}
                                             disabled={deletingReviewId === reviewId}
                                           >
-                                            <TrashIcon className="review-menu-item-icon" />
+                                            <TrashIcon className="sd-review-menu-item-icon" />
                                             <span>{deletingReviewId === reviewId ? 'Đang xóa...' : 'Xóa'}</span>
                                           </button>
                                         </div>
@@ -1417,7 +1417,7 @@ const ServiceDetail = () => {
                                   )}
                                 </div>
                                 {comment && (
-                                  <div className="review-comment">
+                                  <div className="sd-review-comment">
                                     <p>{comment}</p>
                                   </div>
                                 )}
@@ -1433,43 +1433,43 @@ const ServiceDetail = () => {
 
               {/* Similar Services Section */}
               {similarServices.length > 0 && (
-                <div className="similar-services-section">
-                  <h2 className="similar-services-title">Các dịch vụ tương tự</h2>
-                  <div className="similar-services-grid">
+                <div className="sd-similar-services-section">
+                  <h2 className="sd-similar-services-title">Các dịch vụ tương tự</h2>
+                  <div className="sd-similar-services-grid">
                     {similarServices.map((similarService) => (
                       <Link
                         key={similarService.id}
                         to={`/services/${similarService.id}`}
-                        className="similar-service-card-link"
+                        className="sd-similar-service-card-link"
                       >
-                        <Card className="similar-service-card">
-                          <div className="similar-service-image-wrapper">
+                        <Card className="sd-similar-service-card">
+                          <div className="sd-similar-service-image-wrapper">
                             <LazyImage
                               src={similarService.image}
                               alt={similarService.name}
-                              className="similar-service-image"
+                              className="sd-similar-service-image"
                               fallbackSrc={baNaHillImage}
                             />
                             {similarService.availableSlots > 0 && (
                               <Badge 
                                 variant="success" 
-                                className="similar-service-badge"
+                                className="sd-similar-service-badge"
                               >
                                 Còn {similarService.availableSlots} chỗ
                               </Badge>
                             )}
                           </div>
-                          <CardContent className="similar-service-content">
-                            <h3 className="similar-service-name">{similarService.name}</h3>
+                          <CardContent className="sd-similar-service-content">
+                            <h3 className="sd-similar-service-name">{similarService.name}</h3>
                             {similarService.address && (
-                              <div className="similar-service-address">
-                                <MapPinIcon className="similar-service-address-icon" />
+                              <div className="sd-similar-service-address">
+                                <MapPinIcon className="sd-similar-service-address-icon" />
                                 <span>{similarService.address}</span>
                               </div>
                             )}
-                            <div className="similar-service-price">
+                            <div className="sd-similar-service-price">
                               {formatPrice(similarService.price)}
-                              <span className="similar-service-price-unit">/ người</span>
+                              <span className="sd-similar-service-price-unit">/ người</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -1481,30 +1481,30 @@ const ServiceDetail = () => {
             </div>
 
             {/* Right Column - Booking Card (Sticky) */}
-            <div className="service-detail-right">
-              <Card className="booking-card">
+            <div className="sd-service-detail-right">
+              <Card className="sd-booking-card">
                 <CardContent>
-                  <div className="booking-header">
-                    <div className="booking-price-section">
-                      <span className="booking-price-label">Giá dịch vụ</span>
-                      <div className="booking-price-value-wrapper">
-                        <span className="booking-price-value">{formatPrice(servicePrice)}</span>
-                        <span className="booking-price-unit">/ người</span>
+                  <div className="sd-booking-header">
+                    <div className="sd-booking-price-section">
+                      <span className="sd-booking-price-label">Giá dịch vụ</span>
+                      <div className="sd-booking-price-value-wrapper">
+                        <span className="sd-booking-price-value">{formatPrice(servicePrice)}</span>
+                        <span className="sd-booking-price-unit">/ người</span>
                       </div>
                     </div>
                     {availableSlots > 0 && (
-                      <div className="booking-slots-info">
-                        <UsersIcon className="booking-slots-icon" />
+                      <div className="sd-booking-slots-info">
+                        <UsersIcon className="sd-booking-slots-icon" />
                         <span>Còn {availableSlots} chỗ</span>
                       </div>
                     )}
                   </div>
                   
-                  <div className="booking-section">
+                  <div className="sd-booking-section">
                     <Button 
                       variant="default" 
                       size="lg" 
-                      className="booking-button"
+                      className="sd-booking-button"
                       disabled={status.toLowerCase() !== 'open' || availableSlots === 0}
                       onClick={() => {
                         // Debug log
@@ -1556,7 +1556,7 @@ const ServiceDetail = () => {
                         ? 'Dịch vụ đã đóng'
                         : 'Hết chỗ'}
                     </Button>
-                    <p className="booking-note">
+                    <p className="sd-booking-note">
                       {status.toLowerCase() === 'open' && availableSlots > 0
                         ? 'Bạn sẽ được chuyển đến trang đặt dịch vụ để hoàn tất thanh toán'
                         : 'Dịch vụ hiện không khả dụng'}
@@ -1565,11 +1565,11 @@ const ServiceDetail = () => {
 
                   {/* Rating Summary */}
                   {!ratingLoading && rating > 0 && (
-                    <div className="booking-rating-summary">
-                      <div className="rating-summary-header">
-                        <StarIcon className="rating-summary-star" filled={true} />
-                        <span className="rating-summary-value">{rating.toFixed(1)}</span>
-                        <span className="rating-summary-label">Đánh giá trung bình</span>
+                    <div className="sd-booking-rating-summary">
+                      <div className="sd-rating-summary-header">
+                        <StarIcon className="sd-rating-summary-star" filled={true} />
+                        <span className="sd-rating-summary-value">{rating.toFixed(1)}</span>
+                        <span className="sd-rating-summary-label">Đánh giá trung bình</span>
                       </div>
                     </div>
                   )}

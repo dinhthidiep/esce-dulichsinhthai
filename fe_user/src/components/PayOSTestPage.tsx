@@ -20,7 +20,7 @@ interface PaymentTestData {
   amount: number
   description: string
   paymentMethod: 'payos' | 'vnpay' | 'momo'
-  status: 'pending' | 'processing' | 'success' | 'failed'
+  status: 'pending' | 'processing' | 'payos-success' | 'payos-failed'
 }
 
 const PayOSTestPage = () => {
@@ -59,7 +59,7 @@ const PayOSTestPage = () => {
 
     // Random kết quả: 70% thành công, 30% thất bại
     const isSuccess = Math.random() > 0.3
-    const newStatus = isSuccess ? 'success' : 'failed'
+    const newStatus = isSuccess ? 'payos-success' : 'payos-failed'
     
     setTestData(prev => ({
       ...prev,
@@ -79,7 +79,7 @@ const PayOSTestPage = () => {
   }
 
   const handleNavigateToResult = () => {
-    if (testData.status === 'success') {
+    if (testData.status === 'payos-success') {
       navigate(`/payment-success/${testData.bookingId}`)
     } else {
       navigate(`/payment-failure/${testData.bookingId}`)
@@ -87,62 +87,62 @@ const PayOSTestPage = () => {
   }
 
   return (
-    <div className="payos-test-page">
+    <div className="payos-payos-test-page">
       <Header />
-      <main className="payos-test-main">
-        <div className="payos-test-container">
-          <div className="test-header">
-            <h1 className="test-title">🧪 Test PayOS Payment</h1>
-            <p className="test-subtitle">
+      <main className="payos-payos-test-main">
+        <div className="payos-payos-test-container">
+          <div className="payos-test-header">
+            <h1 className="payos-test-title">🧪 Test PayOS Payment</h1>
+            <p className="payos-test-subtitle">
               Trang test để mô phỏng quá trình thanh toán PayOS. Bạn có thể điều chỉnh các thông tin và test các kịch bản khác nhau.
             </p>
           </div>
 
-          <div className="test-content">
+          <div className="payos-test-content">
             {/* Input Form */}
-            <Card className="test-form-card">
+            <Card className="payos-test-form-card">
               <CardContent>
-                <h2 className="card-title">Thông tin thanh toán</h2>
+                <h2 className="payos-card-title">Thông tin thanh toán</h2>
                 
-                <div className="form-group">
-                  <label className="form-label">Booking ID</label>
+                <div className="payos-form-group">
+                  <label className="payos-form-label">Booking ID</label>
                   <input
                     type="number"
-                    className="form-input"
+                    className="payos-form-input"
                     value={testData.bookingId}
                     onChange={(e) => handleInputChange('bookingId', parseInt(e.target.value) || 1)}
                     min="1"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Số tiền (VNĐ)</label>
+                <div className="payos-form-group">
+                  <label className="payos-form-label">Số tiền (VNĐ)</label>
                   <input
                     type="number"
-                    className="form-input"
+                    className="payos-form-input"
                     value={testData.amount}
                     onChange={(e) => handleInputChange('amount', parseInt(e.target.value) || 0)}
                     min="0"
                     step="1000"
                   />
-                  <p className="form-hint">Số tiền: {formatPrice(testData.amount)}</p>
+                  <p className="payos-form-hint">Số tiền: {formatPrice(testData.amount)}</p>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Mô tả</label>
+                <div className="payos-form-group">
+                  <label className="payos-form-label">Mô tả</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className="payos-form-input"
                     value={testData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Mô tả giao dịch"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Phương thức thanh toán</label>
+                <div className="payos-form-group">
+                  <label className="payos-form-label">Phương thức thanh toán</label>
                   <select
-                    className="form-select"
+                    className="payos-form-select"
                     value={testData.paymentMethod}
                     onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'payos' | 'vnpay' | 'momo')}
                   >
@@ -152,22 +152,22 @@ const PayOSTestPage = () => {
                   </select>
                 </div>
 
-                <div className="form-actions">
+                <div className="payos-form-actions">
                   <Button
                     variant="default"
                     size="lg"
                     onClick={simulatePayment}
                     disabled={isProcessing || testData.amount <= 0}
-                    className="test-button"
+                    className="payos-test-button"
                   >
                     {isProcessing ? (
                       <>
-                        <RefreshCwIcon className="button-icon spinning" />
+                        <RefreshCwIcon className="payos-button-icon payos-spinning" />
                         Đang xử lý thanh toán...
                       </>
                     ) : (
                       <>
-                        <CreditCardIcon className="button-icon" />
+                        <CreditCardIcon className="payos-button-icon" />
                         Test Thanh toán
                       </>
                     )}
@@ -177,41 +177,41 @@ const PayOSTestPage = () => {
             </Card>
 
             {/* Payment Flow Steps */}
-            <Card className="test-steps-card">
+            <Card className="payos-test-steps-card">
               <CardContent>
-                <h2 className="card-title">Quy trình thanh toán PayOS</h2>
-                <div className="steps-list">
-                  <div className={`step-item ${isProcessing || showResult ? 'completed' : ''}`}>
-                    <div className="step-number">1</div>
-                    <div className="step-content">
-                      <h3 className="step-title">Tạo Payment Intent</h3>
-                      <p className="step-description">
+                <h2 className="payos-card-title">Quy trình thanh toán PayOS</h2>
+                <div className="payos-steps-list">
+                  <div className={`payos-step-item ${isProcessing || showResult ? 'payos-completed' : ''}`}>
+                    <div className="payos-step-number">1</div>
+                    <div className="payos-step-content">
+                      <h3 className="payos-step-title">Tạo Payment Intent</h3>
+                      <p className="payos-step-description">
                         Gửi yêu cầu tạo payment intent đến backend
                       </p>
                     </div>
-                    {isProcessing && <div className="step-loader"></div>}
+                    {isProcessing && <div className="payos-step-loader"></div>}
                   </div>
 
-                  <div className={`step-item ${(isProcessing && testData.status !== 'pending') || showResult ? 'completed' : ''}`}>
-                    <div className="step-number">2</div>
-                    <div className="step-content">
-                      <h3 className="step-title">Chuyển đến PayOS Checkout</h3>
-                      <p className="step-description">
+                  <div className={`payos-step-item ${(isProcessing && testData.status !== 'pending') || showResult ? 'payos-completed' : ''}`}>
+                    <div className="payos-step-number">2</div>
+                    <div className="payos-step-content">
+                      <h3 className="payos-step-title">Chuyển đến PayOS Checkout</h3>
+                      <p className="payos-step-description">
                         Redirect đến trang thanh toán PayOS
                       </p>
                     </div>
-                    {isProcessing && testData.status !== 'pending' && <div className="step-loader"></div>}
+                    {isProcessing && testData.status !== 'pending' && <div className="payos-step-loader"></div>}
                   </div>
 
-                  <div className={`step-item ${showResult ? 'completed' : ''}`}>
-                    <div className="step-number">3</div>
-                    <div className="step-content">
-                      <h3 className="step-title">Xử lý thanh toán</h3>
-                      <p className="step-description">
+                  <div className={`payos-step-item ${showResult ? 'payos-completed' : ''}`}>
+                    <div className="payos-step-number">3</div>
+                    <div className="payos-step-content">
+                      <h3 className="payos-step-title">Xử lý thanh toán</h3>
+                      <p className="payos-step-description">
                         PayOS xử lý và trả kết quả về
                       </p>
                     </div>
-                    {isProcessing && showResult && <div className="step-loader"></div>}
+                    {isProcessing && showResult && <div className="payos-step-loader"></div>}
                   </div>
                 </div>
               </CardContent>
@@ -219,60 +219,60 @@ const PayOSTestPage = () => {
 
             {/* Result Display */}
             {showResult && (
-              <Card className={`test-result-card ${testData.status === 'success' ? 'success' : 'failed'}`}>
+              <Card className={`payos-test-result-card ${testData.status === 'payos-success' ? 'payos-success' : 'payos-failed'}`}>
                 <CardContent>
-                  <div className="result-header">
-                    {testData.status === 'success' ? (
-                      <CheckCircleIcon className="result-icon success-icon" />
+                  <div className="payos-result-header">
+                    {testData.status === 'payos-success' ? (
+                      <CheckCircleIcon className="payos-result-icon payos-success-icon" />
                     ) : (
-                      <XCircleIcon className="result-icon failed-icon" />
+                      <XCircleIcon className="payos-result-icon payos-failed-icon" />
                     )}
-                    <h2 className="result-title">
-                      {testData.status === 'success' ? 'Thanh toán thành công!' : 'Thanh toán thất bại!'}
+                    <h2 className="payos-result-title">
+                      {testData.status === 'payos-success' ? 'Thanh toán thành công!' : 'Thanh toán thất bại!'}
                     </h2>
                   </div>
 
-                  <div className="result-details">
-                    <div className="detail-row">
-                      <span className="detail-label">Booking ID:</span>
-                      <span className="detail-value">#{testData.bookingId}</span>
+                  <div className="payos-result-details">
+                    <div className="payos-detail-row">
+                      <span className="payos-detail-label">Booking ID:</span>
+                      <span className="payos-detail-value">#{testData.bookingId}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Số tiền:</span>
-                      <span className="detail-value">{formatPrice(testData.amount)}</span>
+                    <div className="payos-detail-row">
+                      <span className="payos-detail-label">Số tiền:</span>
+                      <span className="payos-detail-value">{formatPrice(testData.amount)}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Phương thức:</span>
-                      <span className="detail-value">{testData.paymentMethod.toUpperCase()}</span>
+                    <div className="payos-detail-row">
+                      <span className="payos-detail-label">Phương thức:</span>
+                      <span className="payos-detail-value">{testData.paymentMethod.toUpperCase()}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Mô tả:</span>
-                      <span className="detail-value">{testData.description}</span>
+                    <div className="payos-detail-row">
+                      <span className="payos-detail-label">Mô tả:</span>
+                      <span className="payos-detail-value">{testData.description}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Trạng thái:</span>
-                      <span className={`detail-value status-badge status-${testData.status}`}>
-                        {testData.status === 'success' ? 'Thành công' : 'Thất bại'}
+                    <div className="payos-detail-row">
+                      <span className="payos-detail-label">Trạng thái:</span>
+                      <span className={`payos-detail-value payos-status-badge status-${testData.status}`}>
+                        {testData.status === 'payos-success' ? 'Thành công' : 'Thất bại'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="result-actions">
+                  <div className="payos-result-actions">
                     <Button
                       variant="default"
                       size="lg"
                       onClick={handleNavigateToResult}
-                      className="view-result-button"
+                      className="payos-view-result-button"
                     >
-                      {testData.status === 'success' ? (
+                      {testData.status === 'payos-success' ? (
                         <>
                           Xem trang thành công
-                          <ArrowRightIcon className="button-icon" />
+                          <ArrowRightIcon className="payos-button-icon" />
                         </>
                       ) : (
                         <>
                           Xem trang thất bại
-                          <ArrowRightIcon className="button-icon" />
+                          <ArrowRightIcon className="payos-button-icon" />
                         </>
                       )}
                     </Button>
@@ -280,9 +280,9 @@ const PayOSTestPage = () => {
                       variant="outline"
                       size="lg"
                       onClick={handleRetry}
-                      className="retry-button"
+                      className="payos-retry-button"
                     >
-                      <RefreshCwIcon className="button-icon" />
+                      <RefreshCwIcon className="payos-button-icon" />
                       Test lại
                     </Button>
                   </div>
@@ -291,13 +291,13 @@ const PayOSTestPage = () => {
             )}
 
             {/* Info Box */}
-            <Card className="test-info-card">
+            <Card className="payos-test-info-card">
               <CardContent>
-                <div className="info-header">
-                  <AlertCircleIcon className="info-icon" />
-                  <h3 className="info-title">Lưu ý khi test</h3>
+                <div className="payos-info-header">
+                  <AlertCircleIcon className="payos-info-icon" />
+                  <h3 className="payos-info-title">Lưu ý khi test</h3>
                 </div>
-                <ul className="info-list">
+                <ul className="payos-info-list">
                   <li>Trang này chỉ mô phỏng quá trình thanh toán PayOS, không thực sự kết nối đến PayOS.</li>
                   <li>Kết quả thanh toán được random: 70% thành công, 30% thất bại.</li>
                   <li>Bạn có thể điều chỉnh Booking ID, số tiền và các thông tin khác để test.</li>

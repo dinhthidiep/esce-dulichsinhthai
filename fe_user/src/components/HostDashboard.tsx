@@ -79,7 +79,7 @@ const HostDashboard = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [host-error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -109,7 +109,7 @@ const HostDashboard = () => {
   
   // Service Rank Rules states
   const [serviceRankRules, setServiceRankRules] = useState([
-    // Sample data for testing - 25 items for pagination
+    // Sample data for testing - 25 items for host-pagination
     { RuleID: 1, ServiceID: 1, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Tour du lịch sinh thái khám phá bán đảo Sơn Trà và tham quan các điểm đến nổi tiếng tại Đà Nẵng' },
     { RuleID: 2, ServiceID: 1, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Dịch vụ tổ chức sự kiện và hội nghị chuyên nghiệp với đầy đủ trang thiết bị hiện đại' },
     { RuleID: 3, ServiceID: 2, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Tour tham quan Đà Nẵng' },
@@ -191,8 +191,8 @@ const HostDashboard = () => {
         }
       }
       return null;
-    } catch (error) {
-      console.error('Error getting user ID:', error);
+    } catch (host-error) {
+      console.host-error('Error getting user ID:', host-error);
       return null;
     }
   }, []);
@@ -253,7 +253,7 @@ const HostDashboard = () => {
         // Lưu original data để so sánh thay đổi
         originalFormDataRef.current = JSON.stringify(initialFormData);
       } catch (err) {
-        console.error(' Lỗi khi tải thông tin user:', err);
+        console.host-error(' Lỗi khi tải thông tin user:', err);
         if (err.response?.status === 401 || err.response?.status === 403) {
           setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.');
           navigate('/login', { state: { returnUrl: '/profile' } });
@@ -282,7 +282,7 @@ const HostDashboard = () => {
 
 
 
-  // Load coupons when coupons tab is active
+  // Load coupons when coupons tab is host-active
 
 
 
@@ -334,7 +334,7 @@ const HostDashboard = () => {
       [name]: value
     }));
 
-    // Clear error when user starts typing
+    // Clear host-error when user starts typing
     if (applyPromotionErrors[name]) {
       setApplyPromotionErrors(prev => ({
         ...prev,
@@ -427,9 +427,9 @@ const HostDashboard = () => {
         userType: ''
       });
       setApplyPromotionErrors({});
-    } catch (error) {
-      console.error('Error applying promotion:', error);
-      setError(error.message || 'Có lỗi xảy ra khi áp dụng ưu đãi. Vui lòng thử lại.');
+    } catch (host-error) {
+      console.host-error('Error applying promotion:', host-error);
+      setError(host-error.message || 'Có lỗi xảy ra khi áp dụng ưu đãi. Vui lòng thử lại.');
       setTimeout(() => setError(null), 5000);
     } finally {
       setIsApplyingPromotion(false);
@@ -447,7 +447,7 @@ const HostDashboard = () => {
     setApplyPromotionErrors({});
   };
 
-  // Validate individual field
+  // Validate individual host-field
   const validateField = (name, value) => {
     const errors: { [key: string]: string } = { ...fieldErrors };
     
@@ -546,8 +546,8 @@ const HostDashboard = () => {
       setSuccess(null);
     }
     
-    // Clear error message khi bắt đầu nhập
-    if (error && !error.includes('không có quyền')) {
+    // Clear host-error message khi bắt đầu nhập
+    if (host-error && !host-error.includes('không có quyền')) {
       setError(null);
     }
   };
@@ -557,7 +557,7 @@ const HostDashboard = () => {
     setError(null);
     setSuccess(null);
     setFieldErrors({});
-    // Focus vào field đầu tiên
+    // Focus vào host-field đầu tiên
     setTimeout(() => {
       const nameInput = document.getElementById('name');
       if (nameInput) {
@@ -618,7 +618,7 @@ const HostDashboard = () => {
       setSuccess(null);
       setFieldErrors({});
 
-      // Validate all required fields
+      // Validate all host-required fields
       validateField('name', formData.name);
       validateField('phone', formData.phone);
       validateField('address', formData.address);
@@ -685,8 +685,8 @@ const HostDashboard = () => {
         setFieldErrors(newErrors);
         setError('Vui lòng kiểm tra lại thông tin đã nhập');
         setSaving(false);
-        // Scroll to first error
-        const firstErrorField = document.querySelector('.form-input[aria-invalid="true"]');
+        // Scroll to first host-error
+        const firstErrorField = document.querySelector('.host-form-input[aria-invalid="true"]');
         if (firstErrorField) {
           firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
           (firstErrorField as HTMLElement).focus();
@@ -713,7 +713,7 @@ const HostDashboard = () => {
       }
 
       // Build payload exactly matching UpdateProfileDto
-      // Backend requires: Name, Phone, Gender, Address, DOB (all required)
+      // Backend requires: Name, Phone, Gender, Address, DOB (all host-required)
       // Lấy giá trị từ formData, nếu không có thì lấy từ userInfo hiện tại
       // Nếu cả hai đều không có, gửi null (không phải empty string) để backend không báo lỗi validation
       const getValue = (formValue: string | undefined, userValue: any) => {
@@ -786,7 +786,7 @@ const HostDashboard = () => {
           // Trigger custom event để Header tự động cập nhật
           window.dispatchEvent(new CustomEvent('userStorageChange'));
         } catch (err) {
-          console.error('Error updating localStorage:', err);
+          console.host-error('Error updating localStorage:', err);
         }
       }
 
@@ -807,19 +807,19 @@ const HostDashboard = () => {
       // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      console.error(' HostDashboard.handleSave: Lỗi khi cập nhật thông tin:', err);
-      console.error('   Error type:', err.constructor.name);
-      console.error('   Response status:', err.response?.status);
-      console.error('   Response data:', JSON.stringify(err.response?.data, null, 2));
-      console.error('   Response headers:', err.response?.headers);
-      console.error('   Error message:', err.message);
+      console.host-error(' HostDashboard.handleSave: Lỗi khi cập nhật thông tin:', err);
+      console.host-error('   Error type:', err.constructor.name);
+      console.host-error('   Response status:', err.response?.status);
+      console.host-error('   Response data:', JSON.stringify(err.response?.data, null, 2));
+      console.host-error('   Response headers:', err.response?.headers);
+      console.host-error('   Error message:', err.message);
       
       if (err.response?.status === 401 || err.response?.status === 403) {
         const errorMsg = 'Bạn không có quyền cập nhật thông tin. Vui lòng đăng nhập lại.';
         setError(errorMsg);
         navigate('/login', { state: { returnUrl: '/profile' } });
       } else if (err.response?.status === 400) {
-        // Backend trả về BadRequest với object { message, error, innerException }
+        // Backend trả về BadRequest với object { message, host-error, innerException }
         // Hoặc có thể là string trong một số trường hợp cũ
         let errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
         
@@ -957,22 +957,22 @@ const HostDashboard = () => {
     return (
       <>
         <Header />
-        <main className="hostdashboard-main">
+        <main className="host-hostdashboard-main">
           <LoadingSpinner message="Đang tải thông tin cá nhân..." />
         </main>
       </>
     );
   }
 
-  if (error && !userInfo) {
+  if (host-error && !userInfo) {
     return (
       <>
         <Header />
-        <main className="hostdashboard-main">
-          <div className="profile-container">
-            <div className="error-container">
+        <main className="host-hostdashboard-main">
+          <div className="host-profile-container">
+            <div className="host-error-container">
               <h2>Không thể tải thông tin</h2>
-              <p>{error}</p>
+              <p>{host-error}</p>
               <Button variant="default" onClick={() => navigate('/')}>
                 Về trang chủ
               </Button>
@@ -1019,8 +1019,8 @@ const HostDashboard = () => {
   return (
     <>
       <Header />
-      <main className="hostdashboard-main">
-        <div className="profile-container">
+      <main className="host-hostdashboard-main">
+        <div className="host-profile-container">
           {/* Sidebar */}
           <HostSidebar
             activeTab={activeTab}
@@ -1032,14 +1032,14 @@ const HostDashboard = () => {
           />
 
           {/* Main Content */}
-          <div className="hostdashboard-content">
-            <div className="profile-content-header">
-              <h1 className="profile-title">{getTabTitle()}</h1>
+          <div className="host-hostdashboard-content">
+            <div className="host-profile-content-header">
+              <h1 className="host-profile-title">{getTabTitle()}</h1>
               {activeTab === 'services' && (
                 <Button 
                   variant="default" 
                   onClick={() => servicesManagementRef.current?.openCreateModal()}
-                  className="edit-button"
+                  className="host-edit-button"
                 >
                   Tạo mới
                 </Button>
@@ -1050,7 +1050,7 @@ const HostDashboard = () => {
                     <Button 
                       variant="default" 
                       onClick={() => setIsApplyPromotionModalOpen(true)}
-                      className="edit-button btn-apply-promotion"
+                      className="host-edit-button host-btn-apply-promotion"
                     >
                       Áp dụng ưu đãi
                     </Button>
@@ -1058,7 +1058,7 @@ const HostDashboard = () => {
                     <Button 
                       variant="default" 
                       onClick={() => couponManagementRef.current?.openCreateModal()}
-                      className="edit-button"
+                      className="host-edit-button"
                     >
                       Tạo mới
                     </Button>
@@ -1069,7 +1069,7 @@ const HostDashboard = () => {
                 <Button 
                   variant="default" 
                   onClick={() => serviceComboManagementRef.current?.openCreateModal()}
-                  className="edit-button"
+                  className="host-edit-button"
                 >
                   Tạo combo mới
                 </Button>
@@ -1078,27 +1078,27 @@ const HostDashboard = () => {
                 <Button 
                   variant="default" 
                   onClick={() => privilegeManagementRef.current?.openCreateModal()}
-                  className="edit-button"
+                  className="host-edit-button"
                 >
                   Tạo ưu đãi
                 </Button>
               )}
             </div>
 
-            {error && (
-              <div className="alert alert-error" role="alert">
-                <AlertCircleIcon className="alert-icon" />
-                <div className="alert-content">
+            {host-error && (
+              <div className="host-alert host-alert-error" role="host-alert">
+                <AlertCircleIcon className="host-alert-icon" />
+                <div className="host-alert-content">
                   <strong>Lỗi</strong>
-                  <p>{error}</p>
+                  <p>{host-error}</p>
                 </div>
               </div>
             )}
 
             {success && (
-              <div className="alert alert-success" role="alert">
-                <CheckCircleIcon className="alert-icon" />
-                <div className="alert-content">
+              <div className="host-alert host-alert-success" role="host-alert">
+                <CheckCircleIcon className="host-alert-icon" />
+                <div className="host-alert-content">
                   <strong>Thành công</strong>
                   <p>{success}</p>
                 </div>
@@ -1107,21 +1107,21 @@ const HostDashboard = () => {
 
             {/* Personal Info Tab - Removed */}
             {false && activeTab === 'personal' && (
-            <div className="profile-form-compact">
+            <div className="host-profile-form-compact">
               {/* Avatar Section - Top - Chỉ hiện khi đang chỉnh sửa */}
               {isEditing && (
-                <div className="avatar-section-compact">
-                  <div className="avatar-wrapper-compact">
-                    <div className="avatar-preview-compact">
+                <div className="host-avatar-section-compact">
+                  <div className="host-avatar-wrapper-compact">
+                    <div className="host-avatar-preview-compact">
                       {formData.avatar ? (
                         <img src={formData.avatar} alt="Avatar" />
                       ) : (
-                        <div className="avatar-placeholder-compact">
+                        <div className="host-avatar-placeholder-compact">
                           {formData.name ? formData.name.substring(0, 2).toUpperCase() : 'U'}
                         </div>
                       )}
                     </div>
-                    <label htmlFor="avatar-upload" className="avatar-change-button">
+                    <label htmlFor="avatar-upload" className="host-avatar-change-button">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="4"/>
@@ -1139,7 +1139,7 @@ const HostDashboard = () => {
                     />
                   </div>
                   {(fieldErrors as { [key: string]: string }).avatar && (
-                    <span className="field-error" role="alert">
+                    <span className="host-field-error" role="host-alert">
                       {(fieldErrors as { [key: string]: string }).avatar}
                     </span>
                   )}
@@ -1147,38 +1147,38 @@ const HostDashboard = () => {
               )}
 
               {/* Form Fields - 2 Columns Layout */}
-              <div className="profile-fields-grid">
+              <div className="host-profile-fields-grid">
                 {/* Left Column */}
-                <div className="profile-fields-column">
-                  <div className="form-field-compact">
-                    <label htmlFor="name" className="form-label-compact">
-                      <UserIcon className="field-icon" />
-                      Họ và tên <span className="required">*</span>
+                <div className="host-profile-fields-column">
+                  <div className="host-form-field-compact">
+                    <label htmlFor="name" className="host-form-label-compact">
+                      <UserIcon className="host-field-icon" />
+                      Họ và tên <span className="host-required">*</span>
                     </label>
                     <input
                       type="text"
                       id="name"
                       name="name"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).name ? 'input-error' : ''}`}
+                      className={`host-form-input-compact ${(fieldErrors as { [key: string]: string }).name ? 'host-input-error' : ''}`}
                       value={formData.name}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('name', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      host-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).name}
                       aria-describedby={(fieldErrors as { [key: string]: string }).name ? 'name-error' : undefined}
                       placeholder="Nhập họ và tên của bạn"
                     />
                     {(fieldErrors as { [key: string]: string }).name && (
-                      <span id="name-error" className="field-error" role="alert">
+                      <span id="name-error" className="host-field-error" role="host-alert">
                         {(fieldErrors as { [key: string]: string }).name}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="phone" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="host-form-field-compact">
+                    <label htmlFor="phone" className="host-form-label-compact">
+                      <svg className="host-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                       </svg>
                       Số điện thoại
@@ -1187,37 +1187,37 @@ const HostDashboard = () => {
                       type="tel"
                       id="phone"
                       name="phone"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).phone ? 'input-error' : ''}`}
+                      className={`host-form-input-compact ${(fieldErrors as { [key: string]: string }).phone ? 'host-input-error' : ''}`}
                       value={formData.phone}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('phone', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      host-required
                       placeholder="0901234567"
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).phone}
                       aria-describedby={(fieldErrors as { [key: string]: string }).phone ? 'phone-error' : undefined}
                     />
                     {(fieldErrors as { [key: string]: string }).phone && (
-                      <span id="phone-error" className="field-error" role="alert">
+                      <span id="phone-error" className="host-field-error" role="host-alert">
                         {(fieldErrors as { [key: string]: string }).phone}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="gender" className="form-label-compact">
-                      <UserIcon className="field-icon" />
+                  <div className="host-form-field-compact">
+                    <label htmlFor="gender" className="host-form-label-compact">
+                      <UserIcon className="host-field-icon" />
                       Giới tính
                     </label>
                     <select
                       id="gender"
                       name="gender"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).gender ? 'input-error' : ''}`}
+                      className={`host-form-input-compact ${(fieldErrors as { [key: string]: string }).gender ? 'host-input-error' : ''}`}
                       value={formData.gender}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('gender', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      host-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).gender}
                       aria-describedby={(fieldErrors as { [key: string]: string }).gender ? 'gender-error' : undefined}
                     >
@@ -1227,15 +1227,15 @@ const HostDashboard = () => {
                       <option value="Khác">Khác</option>
                     </select>
                     {(fieldErrors as { [key: string]: string }).gender && (
-                      <span id="gender-error" className="field-error" role="alert">
+                      <span id="gender-error" className="host-field-error" role="host-alert">
                         {(fieldErrors as { [key: string]: string }).gender}
                       </span>
                     )}
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="address" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="host-form-field-compact">
+                    <label htmlFor="address" className="host-form-label-compact">
+                      <svg className="host-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                         <circle cx="12" cy="10" r="3"/>
                       </svg>
@@ -1245,18 +1245,18 @@ const HostDashboard = () => {
                       type="text"
                       id="address"
                       name="address"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).address ? 'input-error' : ''}`}
+                      className={`host-form-input-compact ${(fieldErrors as { [key: string]: string }).address ? 'host-input-error' : ''}`}
                       value={formData.address}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('address', e.target.value)}
-                      required
+                      host-required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).address}
                       aria-describedby={(fieldErrors as { [key: string]: string }).address ? 'address-error' : undefined}
                       disabled={!isEditing}
                       placeholder="123 Đường ABC, Quận 1, TP.HCM"
                     />
                     {(fieldErrors as { [key: string]: string }).address && (
-                      <span id="address-error" className="field-error" role="alert">
+                      <span id="address-error" className="host-field-error" role="host-alert">
                         {(fieldErrors as { [key: string]: string }).address}
                       </span>
                     )}
@@ -1264,10 +1264,10 @@ const HostDashboard = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="profile-fields-column">
-                  <div className="form-field-compact">
-                    <label htmlFor="email" className="form-label-compact">
-                      <svg className="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="host-profile-fields-column">
+                  <div className="host-form-field-compact">
+                    <label htmlFor="email" className="host-form-label-compact">
+                      <svg className="host-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                         <polyline points="22,6 12,13 2,6"/>
                       </svg>
@@ -1277,23 +1277,23 @@ const HostDashboard = () => {
                       type="email"
                       id="email"
                       name="email"
-                      className="form-input-compact"
+                      className="host-form-input-compact"
                       value={formData.email}
                       disabled
                       readOnly
                     />
                   </div>
 
-                  <div className="form-field-compact">
-                    <label htmlFor="dob" className="form-label-compact">
-                      <CalendarIcon className="field-icon" />
+                  <div className="host-form-field-compact">
+                    <label htmlFor="dob" className="host-form-label-compact">
+                      <CalendarIcon className="host-field-icon" />
                       Ngày sinh
                     </label>
                     <input
                       type="date"
                       id="dob"
                       name="dob"
-                      className={`form-input-compact ${(fieldErrors as { [key: string]: string }).dob ? 'input-error' : ''}`}
+                      className={`host-form-input-compact ${(fieldErrors as { [key: string]: string }).dob ? 'host-input-error' : ''}`}
                       value={formData.dob}
                       onChange={handleInputChange}
                       onFocus={(e) => {
@@ -1304,7 +1304,7 @@ const HostDashboard = () => {
                       }}
                       onBlur={(e) => validateField('dob', e.target.value)}
                       disabled={!isEditing}
-                      required
+                      host-required
                       max={(() => {
                         // Max date là 18 năm trước từ hôm nay
                         const today = new Date();
@@ -1316,7 +1316,7 @@ const HostDashboard = () => {
                       aria-describedby={(fieldErrors as { [key: string]: string }).dob ? 'dob-error' : undefined}
                     />
                     {(fieldErrors as { [key: string]: string }).dob && (
-                      <span id="dob-error" className="field-error" role="alert">
+                      <span id="dob-error" className="host-field-error" role="host-alert">
                         {(fieldErrors as { [key: string]: string }).dob}
                       </span>
                     )}
@@ -1328,7 +1328,7 @@ const HostDashboard = () => {
 
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <ReviewManagement
                   onSuccess={(message) => {
                     setSuccess(message);
@@ -1359,9 +1359,9 @@ const HostDashboard = () => {
             )}
 
             {activeTab === 'notifications' && (
-              <div className="tab-content">
-                <div className="empty-state">
-                  <BellIcon className="empty-state-icon" />
+              <div className="host-tab-content">
+                <div className="host-empty-state">
+                  <BellIcon className="host-empty-state-icon" />
                   <h3>Chức năng đang phát triển</h3>
                   <p>Chức năng thông báo đang được phát triển. Vui lòng quay lại sau!</p>
                 </div>
@@ -1370,7 +1370,7 @@ const HostDashboard = () => {
 
             {/* Promotions Tab */}
             {activeTab === 'promotions' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <PrivilegeManagement
                   ref={privilegeManagementRef}
                   onSuccess={(message) => {
@@ -1387,7 +1387,7 @@ const HostDashboard = () => {
 
             {/* Coupons Tab */}
             {activeTab === 'coupons' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <CouponManagement
                   ref={couponManagementRef}
                   onSuccess={(message) => {
@@ -1408,7 +1408,7 @@ const HostDashboard = () => {
 
             {/* Service Combos Tab */}
             {activeTab === 'service-combos' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <ServiceComboManagement
                   ref={serviceComboManagementRef}
                   onSuccess={(message) => {
@@ -1425,7 +1425,7 @@ const HostDashboard = () => {
 
             {/* Bookings Tab */}
             {activeTab === 'bookings' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <BookingManagement
                   onSuccess={(message) => {
                     setSuccess(message);
@@ -1442,7 +1442,7 @@ const HostDashboard = () => {
 
             {/* Revenue Tab */}
             {activeTab === 'revenue' && (
-              <div className="tab-content">
+              <div className="host-tab-content">
                 <RevenueManagement
                   onSuccess={(message) => {
                     setSuccess(message);
@@ -1458,9 +1458,9 @@ const HostDashboard = () => {
 
             {/* Settings Tab */}
             {activeTab === 'settings' && (
-              <div className="tab-content">
-                <div className="empty-state">
-                  <SettingsIcon className="empty-state-icon" />
+              <div className="host-tab-content">
+                <div className="host-empty-state">
+                  <SettingsIcon className="host-empty-state-icon" />
                   <h3>Chức năng đang phát triển</h3>
                   <p>Chức năng cài đặt đang được phát triển. Vui lòng quay lại sau!</p>
                 </div>
@@ -1473,34 +1473,34 @@ const HostDashboard = () => {
 
       {/* Apply Promotion Modal */}
       {isApplyPromotionModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseApplyPromotionModal}>
-          <div className="modal-content create-service-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="host-modal-overlay" onClick={handleCloseApplyPromotionModal}>
+          <div className="host-modal-content host-create-service-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="host-modal-header">
               <h2>Áp dụng</h2>
-              <button className="modal-close" onClick={handleCloseApplyPromotionModal}>
-                <XIcon className="modal-close-icon" />
+              <button className="host-modal-close" onClick={handleCloseApplyPromotionModal}>
+                <XIcon className="host-modal-close-icon" />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="disclaimer-text">
-                (<span className="required-indicator">*</span>) bắt buộc
+            <div className="host-modal-body">
+              <div className="host-disclaimer-text">
+                (<span className="host-required-indicator">*</span>) bắt buộc
               </div>
               
               <form onSubmit={handleApplyPromotionSubmit} noValidate>
                 {/* Service/Coupon Selection Field */}
                 {activeTab === 'services' ? (
-                  <div className="field">
+                  <div className="host-field">
                     <label htmlFor="apply-promotion-service">
                       Chọn dịch vụ
-                      <span className="required-indicator">*</span>
+                      <span className="host-required-indicator">*</span>
                     </label>
                     <select
                       id="apply-promotion-service"
                       name="serviceId"
                       value={applyPromotionFormData.serviceId}
                       onChange={handleApplyPromotionInputChange}
-                      className="field-select"
-                      required
+                      className="host-field-select"
+                      host-required
                     >
                       <option value="">-- Chọn dịch vụ --</option>
                       {(() => {
@@ -1518,21 +1518,21 @@ const HostDashboard = () => {
                         ));
                       })()}
                     </select>
-                    {applyPromotionErrors.serviceId && <div className="error">{applyPromotionErrors.serviceId}</div>}
+                    {applyPromotionErrors.serviceId && <div className="host-error">{applyPromotionErrors.serviceId}</div>}
                   </div>
                 ) : (
-                  <div className="field">
+                  <div className="host-field">
                     <label htmlFor="apply-promotion-coupon">
                       Chọn mã giảm giá
-                      <span className="required-indicator">*</span>
+                      <span className="host-required-indicator">*</span>
                     </label>
                     <select
                       id="apply-promotion-coupon"
                       name="couponId"
                       value={applyPromotionFormData.couponId}
                       onChange={handleApplyPromotionInputChange}
-                      className="field-select"
-                      required
+                      className="host-field-select"
+                      host-required
                     >
                       <option value="">-- Chọn coupon --</option>
                       {(() => {
@@ -1552,23 +1552,23 @@ const HostDashboard = () => {
                         ));
                       })()}
                     </select>
-                    {applyPromotionErrors.couponId && <div className="error">{applyPromotionErrors.couponId}</div>}
+                    {applyPromotionErrors.couponId && <div className="host-error">{applyPromotionErrors.couponId}</div>}
                   </div>
                 )}
 
                 {/* Rank Selection Field */}
-                <div className="field">
+                <div className="host-field">
                   <label htmlFor="apply-promotion-rank">
                     Chọn hạng
-                    <span className="required-indicator">*</span>
+                    <span className="host-required-indicator">*</span>
                   </label>
                   <select
                     id="apply-promotion-rank"
                     name="rankId"
                     value={applyPromotionFormData.rankId}
                     onChange={handleApplyPromotionInputChange}
-                    className="field-select"
-                    required
+                    className="host-field-select"
+                    host-required
                   >
                     <option value="">-- Chọn hạng --</option>
                     <option value="Đồng">Đồng</option>
@@ -1576,36 +1576,36 @@ const HostDashboard = () => {
                     <option value="Vàng">Vàng</option>
                     <option value="Tất cả">Tất cả</option>
                   </select>
-                  {applyPromotionErrors.rankId && <div className="error">{applyPromotionErrors.rankId}</div>}
+                  {applyPromotionErrors.rankId && <div className="host-error">{applyPromotionErrors.rankId}</div>}
                 </div>
 
                 {/* User Type Field */}
-                <div className="field">
+                <div className="host-field">
                   <label htmlFor="apply-promotion-userType">
                     Loại người dùng
-                    <span className="required-indicator">*</span>
+                    <span className="host-required-indicator">*</span>
                   </label>
                   <select
                     id="apply-promotion-userType"
                     name="userType"
                     value={applyPromotionFormData.userType}
                     onChange={handleApplyPromotionInputChange}
-                    className="field-select"
-                    required
+                    className="host-field-select"
+                    host-required
                   >
                     <option value="">-- Chọn loại người dùng --</option>
                     <option value="Khách hàng">Khách hàng</option>
                     <option value="Công ty">Công ty</option>
                   </select>
-                  {applyPromotionErrors.userType && <div className="error">{applyPromotionErrors.userType}</div>}
+                  {applyPromotionErrors.userType && <div className="host-error">{applyPromotionErrors.userType}</div>}
                 </div>
 
                 {/* Form Actions */}
-                <div className="form-action">
-                  <button type="submit" className="primary" disabled={isApplyingPromotion || !applyPromotionFormData.serviceId || !applyPromotionFormData.rankId || !applyPromotionFormData.userType}>
+                <div className="host-form-action">
+                  <button type="submit" className="host-primary" disabled={isApplyingPromotion || !applyPromotionFormData.serviceId || !applyPromotionFormData.rankId || !applyPromotionFormData.userType}>
                     {isApplyingPromotion ? 'Đang xử lý...' : 'Áp dụng'}
                   </button>
-                  <button type="button" className="secondary" onClick={handleCloseApplyPromotionModal} disabled={isApplyingPromotion}>
+                  <button type="button" className="host-secondary" onClick={handleCloseApplyPromotionModal} disabled={isApplyingPromotion}>
                     Hủy
                   </button>
                 </div>

@@ -10,7 +10,7 @@ import { ArrowLeftIcon, CheckCircleIcon, AlertCircleIcon, CreditCardIcon } from 
 import { formatPrice } from '~/lib/utils'
 import { API_ENDPOINTS } from '~/config/api'
 import * as couponService from '~/services/couponService'
-import type { MembershipTier } from '~/mockdata/index'
+import type { MembershipTier } from '~/types/membership'
 import './PaymentPage.css'
 
 interface BookingData {
@@ -591,9 +591,9 @@ const PaymentPage = () => {
 
   if (loading) {
     return (
-      <div className="payment-page">
+      <div className="pay-payment-page">
         <Header />
-        <main className="payment-main">
+        <main className="pay-payment-main">
           <LoadingSpinner message="Đang tải thông tin thanh toán..." />
         </main>
       </div>
@@ -602,15 +602,15 @@ const PaymentPage = () => {
 
   if (error || !booking) {
     return (
-      <div className="payment-page">
+      <div className="pay-payment-page">
         <Header />
-        <main className="payment-main">
-          <div className="payment-container">
-            <div className="error-container" role="alert">
-              <h2 className="error-title">Không thể tải thông tin thanh toán</h2>
-              <p className="error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
+        <main className="pay-payment-main">
+          <div className="pay-payment-container">
+            <div className="pay-error-container" role="pay-alert">
+              <h2 className="pay-error-title">Không thể tải thông tin thanh toán</h2>
+              <p className="pay-error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
               <Button variant="default" onClick={() => navigate('/services')}>
-                <ArrowLeftIcon className="button-icon" />
+                <ArrowLeftIcon className="pay-button-icon" />
                 Quay lại danh sách dịch vụ
               </Button>
             </div>
@@ -644,13 +644,13 @@ const PaymentPage = () => {
   const hasDiscount = discountAmount > 0 && originalTotal > totalAmount
 
   return (
-    <div className="payment-page">
+    <div className="pay-payment-page">
       <Header />
 
-      <main className="payment-main">
-        <div className="payment-container">
+      <main className="pay-payment-main">
+        <div className="pay-payment-container">
           {/* Header */}
-          <div className="payment-header">
+          <div className="pay-payment-header">
             <Button
               variant="outline"
               onClick={() => {
@@ -662,30 +662,30 @@ const PaymentPage = () => {
                   navigate(returnUrl as string || '/')
                 }
               }}
-              className="back-button"
+              className="pay-back-button"
             >
-              <ArrowLeftIcon className="button-icon" />
+              <ArrowLeftIcon className="pay-button-icon" />
               Quay lại
             </Button>
-            <h1 className="payment-page-title">Thanh toán</h1>
+            <h1 className="pay-payment-page-title">Thanh toán</h1>
           </div>
 
-          <div className="payment-content">
+          <div className="pay-payment-content">
             {/* Left Column - Payment Info */}
             <div className="payment-left">
-              <Card className="payment-info-card">
+              <Card className="pay-payment-info-card">
                 <CardContent>
-                  <h2 className="card-title">Thông tin đặt dịch vụ</h2>
+                  <h2 className="pay-card-title">Thông tin đặt dịch vụ</h2>
 
-                  <div className="payment-info">
-                    <div className="info-row">
-                      <span className="info-label">Mã đặt dịch vụ</span>
-                      <span className="info-value">#{bookingIdValue}</span>
+                  <div className="pay-payment-info">
+                    <div className="pay-info-row">
+                      <span className="pay-info-label">Mã đặt dịch vụ</span>
+                      <span className="pay-info-value">#{bookingIdValue}</span>
                     </div>
 
-                    <div className="info-row">
-                      <span className="info-label">Trạng thái</span>
-                      <span className={`info-value status-badge status-${bookingStatus.toLowerCase()}`}>
+                    <div className="pay-info-row">
+                      <span className="pay-info-label">Trạng thái</span>
+                      <span className={`pay-info-value pay-status-badge status-${bookingStatus.toLowerCase()}`}>
                         {bookingStatus === 'pending'
                           ? 'Chờ xác nhận'
                           : bookingStatus === 'confirmed'
@@ -701,27 +701,27 @@ const PaymentPage = () => {
                     </div>
 
                     {booking.StartDate && (
-                      <div className="info-row">
-                        <span className="info-label">Ngày bắt đầu</span>
-                        <span className="info-value">
+                      <div className="pay-info-row">
+                        <span className="pay-info-label">Ngày bắt đầu</span>
+                        <span className="pay-info-value">
                           {new Date((booking.StartDate || booking.startDate) as string).toLocaleDateString('vi-VN')}
                         </span>
                       </div>
                     )}
 
                     {booking.EndDate && (
-                      <div className="info-row">
-                        <span className="info-label">Ngày kết thúc</span>
-                        <span className="info-value">
+                      <div className="pay-info-row">
+                        <span className="pay-info-label">Ngày kết thúc</span>
+                        <span className="pay-info-value">
                           {new Date((booking.EndDate || booking.endDate) as string).toLocaleDateString('vi-VN')}
                         </span>
                       </div>
                     )}
 
                     {booking.Quantity && (
-                      <div className="info-row">
-                        <span className="info-label">Số lượng</span>
-                        <span className="info-value">
+                      <div className="pay-info-row">
+                        <span className="pay-info-label">Số lượng</span>
+                        <span className="pay-info-value">
                           {(booking.Quantity || booking.quantity) as number} người
                         </span>
                       </div>
@@ -733,9 +733,9 @@ const PaymentPage = () => {
                       const notesWithoutIds = notes.replace(/\n?\[ADDITIONAL_SERVICES_IDS:[^\]]+\]/g, '').trim()
                       
                       return (
-                        <div className="info-row">
-                          <span className="info-label">Ghi chú</span>
-                          <div className="info-value" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                        <div className="pay-info-row">
+                          <span className="pay-info-label">Ghi chú</span>
+                          <div className="pay-info-value" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
                             {notesWithoutIds}
                           </div>
                         </div>
@@ -760,40 +760,40 @@ const PaymentPage = () => {
 
             {/* Right Column - Payment Summary */}
             <div className="payment-right">
-              <Card className="payment-summary-card">
+              <Card className="pay-payment-summary-card">
                 <CardContent>
-                  <h2 className="card-title">Tóm tắt thanh toán</h2>
+                  <h2 className="pay-card-title">Tóm tắt thanh toán</h2>
 
-                  <div className="payment-summary-content">
-                    <div className="summary-row">
-                      <span className="summary-label">Tổng tiền</span>
-                      <span className="summary-value">{formatPrice(hasDiscount ? originalTotal : totalAmount)}</span>
+                  <div className="pay-payment-summary-content">
+                    <div className="pay-summary-row">
+                      <span className="pay-summary-label">Tổng tiền</span>
+                      <span className="pay-summary-value">{formatPrice(hasDiscount ? originalTotal : totalAmount)}</span>
                     </div>
 
                     {hasDiscount && (
                       <>
-                        <div className="summary-divider"></div>
-                        <div className="summary-row" style={{ color: '#22c55e' }}>
-                          <span className="summary-label">Giảm giá</span>
-                          <span className="summary-value" style={{ color: '#22c55e', fontWeight: '600' }}>
+                        <div className="pay-summary-divider"></div>
+                        <div className="pay-summary-row" style={{ color: '#22c55e' }}>
+                          <span className="pay-summary-label">Giảm giá</span>
+                          <span className="pay-summary-value" style={{ color: '#22c55e', fontWeight: '600' }}>
                             -{formatPrice(discountAmount)}
                           </span>
                         </div>
                       </>
                     )}
 
-                    <div className="summary-divider"></div>
-                    <div className="summary-row summary-row-total">
-                      <span className="summary-label">Thành tiền</span>
-                      <span className="summary-value summary-total">{formatPrice(finalTotal)}</span>
+                    <div className="pay-summary-divider"></div>
+                    <div className="pay-summary-row summary-row-total">
+                      <span className="pay-summary-label">Thành tiền</span>
+                      <span className="pay-summary-value pay-summary-total">{formatPrice(finalTotal)}</span>
                     </div>
 
                     {paymentStatus && (paymentStatus.Amount || paymentStatus.amount || 0) > 0 && (
                       <>
-                        <div className="summary-divider"></div>
-                        <div className="summary-row">
-                          <span className="summary-label">Số tiền đã thanh toán</span>
-                          <span className="summary-value">
+                        <div className="pay-summary-divider"></div>
+                        <div className="pay-summary-row">
+                          <span className="pay-summary-label">Số tiền đã thanh toán</span>
+                          <span className="pay-summary-value">
                             {formatPrice((paymentStatus.Amount || paymentStatus.amount || 0) as number)}
                           </span>
                         </div>
@@ -802,9 +802,9 @@ const PaymentPage = () => {
                   </div>
 
                   {error && (
-                    <div className="alert alert-error">
-                      <AlertCircleIcon className="alert-icon" />
-                      <div className="alert-content">
+                    <div className="pay-alert pay-alert-error">
+                      <AlertCircleIcon className="pay-alert-icon" />
+                      <div className="pay-alert-content">
                         <strong>Lỗi</strong>
                         <p style={{ whiteSpace: 'pre-line' }}>{error}</p>
                       </div>
@@ -812,9 +812,9 @@ const PaymentPage = () => {
                   )}
 
                   {isPaid || bookingStatusLower === 'confirmed' || bookingStatusLower === 'completed' ? (
-                    <div className="payment-success-box">
-                      <CheckCircleIcon className="success-icon" />
-                      <div className="success-content">
+                    <div className="pay-payment-success-box">
+                      <CheckCircleIcon className="pay-success-icon" />
+                      <div className="pay-success-content">
                         <strong>Thanh toán thành công!</strong>
                         <p>Đơn đặt dịch vụ của bạn đã được thanh toán thành công.</p>
                       </div>
@@ -822,28 +822,28 @@ const PaymentPage = () => {
                         <Button 
                           variant="default" 
                           onClick={() => navigate(`/payment-success/${bookingIdValue}`)} 
-                          className="success-button"
+                          className="pay-success-button"
                         >
                           Xem chi tiết thanh toán
                         </Button>
-                        <Button variant="outline" onClick={() => navigate('/')} className="success-button">
+                        <Button variant="outline" onClick={() => navigate('/')} className="pay-success-button">
                           Về trang chủ
                         </Button>
                       </div>
                     </div>
                   ) : bookingStatusLower === 'cancelled' ? (
-                    <div className="payment-cancelled-box">
-                      <AlertCircleIcon className="cancelled-icon" />
-                      <div className="cancelled-content">
+                    <div className="pay-payment-cancelled-box">
+                      <AlertCircleIcon className="pay-cancelled-icon" />
+                      <div className="pay-cancelled-content">
                         <strong>Đơn đặt dịch vụ đã bị hủy</strong>
                         <p>Đơn đặt dịch vụ này đã bị hủy và không thể thanh toán.</p>
                       </div>
-                      <Button variant="default" onClick={() => navigate('/services')} className="cancelled-button">
+                      <Button variant="default" onClick={() => navigate('/services')} className="pay-cancelled-button">
                         Xem dịch vụ khác
                       </Button>
                     </div>
                   ) : (
-                    <div className="payment-actions">
+                    <div className="pay-payment-actions">
                       <Button
                         variant="default"
                         size="lg"
@@ -855,20 +855,20 @@ const PaymentPage = () => {
                           'Đang xử lý...'
                         ) : (
                           <>
-                            <CreditCardIcon className="button-icon" />
+                            <CreditCardIcon className="pay-button-icon" />
                             Thanh toán ngay
                           </>
                         )}
                       </Button>
 
-                      <p className="payment-hint">
+                      <p className="pay-payment-hint">
                         Bạn sẽ được chuyển đến trang thanh toán PayOS để hoàn tất giao dịch
                       </p>
                     </div>
                   )}
 
-                  <div className="payment-info-box">
-                    <div className="info-box-content">
+                  <div className="pay-payment-info-box">
+                    <div className="pay-info-box-content">
                       <strong>Thông tin quan trọng</strong>
                       <ul>
                         <li>Thanh toán được xử lý an toàn qua PayOS</li>

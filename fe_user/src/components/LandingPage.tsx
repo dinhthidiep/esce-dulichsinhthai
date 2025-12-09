@@ -667,10 +667,10 @@ const LandingPage = () => {
             {loading ? (
               <div className="services-grid">
                 {[...Array(6)].map((_, index) => (
-                  <div key={index} className="service-card-skeleton">
-                    <Card className="service-card-inner">
-                      <div className="service-image-wrapper" style={{ backgroundColor: '#f1f5f9', height: '220px' }}></div>
-                      <CardContent className="service-content">
+                  <div key={index} className="lp-service-card-skeleton">
+                    <Card className="lp-service-card-inner">
+                      <div className="lp-service-image-wrapper" style={{ backgroundColor: '#f1f5f9', height: '220px' }}></div>
+                      <CardContent className="lp-service-content">
                         <div
                           style={{
                             height: '24px',
@@ -916,36 +916,36 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, index, isVisible }) 
 
   return (
     <article
-      className={`service-card ${isVisible ? 'fade-in-up' : ''}`}
+      className={`lp-service-card ${isVisible ? 'fade-in-up' : ''}`}
       style={{ 
         animationDelay: `${0.3 + index * 0.1}s`,
         opacity: isVisible ? 1 : 0
       }}
     >
-      <Card className="service-card-inner">
-        <div className="service-image-wrapper">
+      <Card className="lp-service-card-inner">
+        <div className="lp-service-image-wrapper">
           <LazyImage
             src={imageSrc}
             alt={service?.name || 'Service'}
-            className="service-image"
+            className="lp-service-image"
             fallbackSrc={baNaHillImage}
           />
 
           {service.discountPercent && (
-            <Badge variant="danger" className="service-badge">
+            <Badge variant="danger" className="lp-service-badge">
               Giảm {service.discountPercent}%
             </Badge>
           )}
           {service.availableSlots !== undefined && service.availableSlots > 0 && (
-            <Badge variant="success" className="service-badge service-badge-slots">
+            <Badge variant="success" className="lp-service-badge lp-service-badge-slots">
               Còn {service.availableSlots} chỗ
             </Badge>
           )}
         </div>
-        <CardContent className="service-content">
-          <h3 className="service-name">{service.name}</h3>
-          {service.address && <p className="service-address">{service.address}</p>}
-          <div className="service-rating">
+        <CardContent className="lp-service-content">
+          <h3 className="lp-service-name">{service.name}</h3>
+          {service.address && <p className="lp-service-address">{service.address}</p>}
+          <div className="lp-service-rating">
             <div className="stars" aria-label={`Đánh giá ${service.rating || 0} sao`}>
               {(() => {
                 const rating = service.rating !== undefined && service.rating !== null ? service.rating : 0
@@ -970,15 +970,15 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, index, isVisible }) 
             </div>
             <span className="rating-text">({(service.rating !== undefined && service.rating !== null ? service.rating : 0).toFixed(1)})</span>
           </div>
-          <div className="service-price-wrapper">
+          <div className="lp-service-price-wrapper">
             <div>
-              <span className="service-price">{formatPrice(service.priceFrom)}</span>
+              <span className="lp-service-price">{formatPrice(service.priceFrom)}</span>
               {service.originalPrice && (
-                <span className="service-price-old">{formatPrice(service.originalPrice)}</span>
+                <span className="lp-service-price-old">{formatPrice(service.originalPrice)}</span>
               )}
             </div>
           </div>
-          <Button className="service-button" asChild>
+          <Button className="lp-service-button" asChild>
             <Link to={`/services/${service.id}`} aria-label={`Xem chi tiết ${service.name}`}>
               Xem chi tiết
             </Link>

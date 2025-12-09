@@ -315,54 +315,54 @@ const ServicesPage = () => {
   }
 
   return (
-    <div className="services-page">
+    <div className="svc-services-page">
       <Header />
 
-      <main className="services-main">
+      <main className="svc-services-main">
         {/* Page Header */}
-        <section className="services-page-header">
-          <div className="services-header-container">
-            <h1 className="services-page-title">Khám phá các tour du lịch</h1>
-            <p className="services-page-subtitle">
+        <section className="svc-services-page-header">
+          <div className="svc-services-header-container">
+            <h1 className="svc-services-page-title">Khám phá các tour du lịch</h1>
+            <p className="svc-services-page-subtitle">
               Tìm kiếm và đặt tour du lịch sinh thái phù hợp với bạn
             </p>
           </div>
         </section>
 
         {/* Main Content with Sidebar */}
-        <section className="services-content-section">
+        <section className="svc-services-content-section">
           {/* Mobile Filter Button */}
           <button
-            className="mobile-filter-button"
+            className="svc-mobile-filter-button"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             aria-label="Mở bộ lọc"
             aria-expanded={showMobileFilters}
           >
-            <FilterIcon className="mobile-filter-icon" />
+            <FilterIcon className="svc-mobile-filter-icon" />
             <span>Bộ lọc</span>
             {filteredAndSortedServices.length !== allServices.length && (
-              <span className="filter-badge">{allServices.length - filteredAndSortedServices.length}</span>
+              <span className="svc-filter-badge">{allServices.length - filteredAndSortedServices.length}</span>
             )}
           </button>
 
           {/* Mobile Filter Overlay */}
           {showMobileFilters && (
             <div
-              className="mobile-filter-overlay"
+              className="svc-mobile-filter-overlay"
               onClick={() => setShowMobileFilters(false)}
               aria-hidden="true"
             />
           )}
 
-          <div className="services-content-container">
+          <div className="svc-services-content-container">
             {/* Left Sidebar - Filters */}
-            <aside className={`services-sidebar ${showMobileFilters ? 'mobile-open' : ''}`}>
-              <div className="sidebar-header">
-                <FilterIcon className="filter-icon" />
-                <h2 className="sidebar-title">Bộ lọc</h2>
+            <aside className={`svc-services-sidebar ${showMobileFilters ? 'svc-mobile-open' : ''}`}>
+              <div className="svc-sidebar-header">
+                <FilterIcon className="svc-filter-icon" />
+                <h2 className="svc-sidebar-title">Bộ lọc</h2>
                 {/* Mobile Close Button */}
                 <button
-                  className="mobile-filter-close"
+                  className="svc-mobile-filter-close"
                   onClick={() => setShowMobileFilters(false)}
                   aria-label="Đóng bộ lọc"
                 >
@@ -371,10 +371,10 @@ const ServicesPage = () => {
               </div>
 
               {/* Price Range */}
-              <div className="filter-section">
-                <h3 className="filter-section-title">Chọn mức giá</h3>
-                <div className="filter-radio-group">
-                  <label className="filter-radio-option">
+              <div className="svc-filter-section">
+                <h3 className="svc-filter-section-title">Chọn mức giá</h3>
+                <div className="svc-filter-radio-group">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -384,7 +384,7 @@ const ServicesPage = () => {
                     />
                     <span>Tất cả</span>
                   </label>
-                  <label className="filter-radio-option">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -394,7 +394,7 @@ const ServicesPage = () => {
                     />
                     <span>Giá dưới 500.000đ</span>
                   </label>
-                  <label className="filter-radio-option">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -404,7 +404,7 @@ const ServicesPage = () => {
                     />
                     <span>500.000đ - 1 triệu</span>
                   </label>
-                  <label className="filter-radio-option">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -414,7 +414,7 @@ const ServicesPage = () => {
                     />
                     <span>1 - 2 triệu</span>
                   </label>
-                  <label className="filter-radio-option">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -424,7 +424,7 @@ const ServicesPage = () => {
                     />
                     <span>2 - 3 triệu</span>
                   </label>
-                  <label className="filter-radio-option">
+                  <label className="svc-filter-radio-option">
                     <input
                       type="radio"
                       name="price-range"
@@ -440,27 +440,27 @@ const ServicesPage = () => {
             </aside>
 
             {/* Right Content - Tour Listings */}
-            <div className="services-main-content">
+            <div className="svc-services-main-content">
               {/* Results Header */}
-              <div className="results-header">
-                <div className="results-header-left">
-                  <div className="results-search-box">
-                    <SearchIcon className="results-search-icon" />
+              <div className="svc-results-header">
+                <div className="svc-results-header-left">
+                  <div className="svc-results-search-box">
+                    <SearchIcon className="svc-results-search-icon" />
                     <input
                       type="text"
-                      className="results-search-input"
+                      className="svc-results-search-input"
                       placeholder="Tìm tour, địa điểm, mô tả..."
                       value={searchName}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchName(e.target.value)}
                       aria-label="Tìm kiếm tour du lịch"
                     />
                   </div>
-                  <div className="results-count">{filteredAndSortedServices.length} kết quả</div>
+                  <div className="svc-results-count">{filteredAndSortedServices.length} kết quả</div>
                 </div>
-                <div className="results-controls">
-                  <div className="sort-dropdown">
+                <div className="svc-results-controls">
+                  <div className="svc-sort-dropdown">
                     <select
-                      className="sort-select"
+                      className="svc-sort-select"
                       value={sortBy}
                       onChange={(e: ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortBy)}
                     >
@@ -469,18 +469,18 @@ const ServicesPage = () => {
                       <option value="price-high">Giá: Cao đến thấp</option>
                       <option value="name">Tên: A-Z</option>
                     </select>
-                    <ChevronDownIcon className="sort-chevron" />
+                    <ChevronDownIcon className="svc-sort-chevron" />
                   </div>
-                  <div className="view-toggle">
+                  <div className="svc-view-toggle">
                     <button
-                      className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                      className={`svc-view-btn ${viewMode === 'grid' ? 'svc-active' : ''}`}
                       onClick={() => setViewMode('grid')}
                       aria-label="Xem dạng lưới"
                     >
                       <GridIcon />
                     </button>
                     <button
-                      className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                      className={`svc-view-btn ${viewMode === 'list' ? 'svc-active' : ''}`}
                       onClick={() => setViewMode('list')}
                       aria-label="Xem dạng danh sách"
                     >
@@ -493,7 +493,7 @@ const ServicesPage = () => {
               {/* Toggle between Service and ServiceCombo */}
               <div className="service-type-toggle" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
                 <button
-                  className={`toggle-btn ${showServices ? 'active' : ''}`}
+                  className={`toggle-btn ${showServices ? 'svc-active' : ''}`}
                   onClick={() => setShowServices(true)}
                   style={{
                     padding: '0.5rem 1rem',
@@ -508,7 +508,7 @@ const ServicesPage = () => {
                   Dịch vụ đơn lẻ
                 </button>
                 <button
-                  className={`toggle-btn ${!showServices ? 'active' : ''}`}
+                  className={`toggle-btn ${!showServices ? 'svc-active' : ''}`}
                   onClick={() => setShowServices(false)}
                   style={{
                     padding: '0.5rem 1rem',
@@ -528,7 +528,7 @@ const ServicesPage = () => {
               {(showServices ? servicesLoading : toursLoading) ? (
                 <LoadingSpinner message="Đang tải danh sách dịch vụ..." />
               ) : (showServices ? servicesError : toursError) ? (
-                <div className="error-container" role="alert" style={{ 
+                <div className="svc-error-container" role="alert" style={{ 
                   padding: '2rem', 
                   textAlign: 'center',
                   backgroundColor: '#fee2e2',
@@ -537,7 +537,7 @@ const ServicesPage = () => {
                   margin: '2rem 0'
                 }}>
                   <h3 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>❌ Lỗi tải dữ liệu</h3>
-                  <p className="error-message" style={{ color: '#991b1b', whiteSpace: 'pre-line' }}>
+                  <p className="svc-error-message" style={{ color: '#991b1b', whiteSpace: 'pre-line' }}>
                     {showServices ? servicesError : toursError}
                   </p>
                   <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
@@ -564,9 +564,9 @@ const ServicesPage = () => {
                   </button>
                 </div>
               ) : filteredAndSortedServices.length === 0 ? (
-                <div className="empty-state">
-                  <p className="empty-state-title">Không tìm thấy tour nào</p>
-                  <p className="empty-state-description">
+                <div className="svc-empty-state">
+                  <p className="svc-empty-state-title">Không tìm thấy tour nào</p>
+                  <p className="svc-empty-state-description">
                     {searchName || selectedPriceRange !== 'all'
                       ? 'Không có tour nào phù hợp với bộ lọc của bạn. Vui lòng thử lại.'
                       : allServices.length === 0
@@ -587,7 +587,7 @@ const ServicesPage = () => {
                   )}
                 </div>
               ) : (
-                <div className={`tours-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+                <div className={`svc-tours-grid ${viewMode === 'list' ? 'svc-list-view' : ''}`}>
                   {filteredAndSortedServices.map((tour, index) => (
                     <TourCard
                       key={tour.id}
@@ -623,22 +623,22 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
 
   return (
     <article
-      className={`tour-card ${isVisible ? 'fade-in-up' : ''}`}
+      className={`svc-tour-card ${isVisible ? 'svc-fade-in-up' : ''}`}
       style={{ animationDelay: `${0.1 + index * 0.05}s` }}
     >
-      <Link to={`/services/${tour.id}`} className="tour-card-link">
-        <Card className="tour-card-inner">
-          <div className="tour-image-wrapper">
+      <Link to={`/services/${tour.id}`} className="svc-tour-card-link">
+        <Card className="svc-tour-card-inner">
+          <div className="svc-tour-image-wrapper">
             <LazyImage
               src={tour.image}
               alt={tour.name}
-              className="tour-image"
+              className="svc-tour-image"
               fallbackSrc={baNaHillImage}
             />
 
             {/* Favorite Button */}
             <button
-              className={`favorite-btn ${isFavorite ? 'active' : ''}`}
+              className={`svc-favorite-btn ${isFavorite ? 'svc-active' : ''}`}
               onClick={handleFavoriteClick}
               aria-label={isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
             >
@@ -647,24 +647,24 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
 
             {/* Discount Badge */}
             {discountPercent && discountPercent > 0 && (
-              <Badge variant="danger" className="tour-discount-badge">
+              <Badge variant="danger" className="svc-tour-discount-badge">
                 -{discountPercent}%
               </Badge>
             )}
           </div>
 
-          <CardContent className="tour-content">
-            <h3 className="tour-name">{tour.name}</h3>
+          <CardContent className="svc-tour-content">
+            <h3 className="svc-tour-name">{tour.name}</h3>
 
-            <div className="tour-location-duration">
-              <MapPinIcon className="location-icon" />
+            <div className="svc-tour-location-duration">
+              <MapPinIcon className="svc-location-icon" />
               <span>{tour.address}</span>
-              <ClockIcon className="clock-icon" />
+              <ClockIcon className="svc-clock-icon" />
               <span>1 ngày</span>
             </div>
 
-            <div className="tour-rating">
-              <div className="stars" aria-label={`Đánh giá ${tour.rating} sao`}>
+            <div className="svc-tour-rating">
+              <div className="svc-stars" aria-label={`Đánh giá ${tour.rating} sao`}>
                 {(() => {
                   const rating = tour.rating || 0
                   const fullStars = Math.floor(rating)
@@ -678,7 +678,7 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
                   ].map((type, i) => (
                     <StarIcon
                       key={i}
-                      className="star-icon"
+                      className="svc-star-icon"
                       filled={type === 'full'}
                       half={type === 'half'}
                       aria-hidden="true"
@@ -686,14 +686,14 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
                   ))
                 })()}
               </div>
-              <span className="rating-value">({tour.rating > 0 ? tour.rating.toFixed(1) : '0.0'})</span>
+              <span className="svc-rating-value">({tour.rating > 0 ? tour.rating.toFixed(1) : '0.0'})</span>
             </div>
 
-            <div className="tour-price-section">
-              <span className="tour-price">{formatPrice(tour.price)}</span>
+            <div className="svc-tour-price-section">
+              <span className="svc-tour-price">{formatPrice(tour.price)}</span>
             </div>
 
-            <div className="tour-detail-btn">Chi tiết</div>
+            <div className="svc-tour-detail-btn">Chi tiết</div>
           </CardContent>
         </Card>
       </Link>

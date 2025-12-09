@@ -38,7 +38,7 @@ const LoginForm = () => {
       ...prev,
       [name]: value,
     }))
-    // Clear error when user starts typing
+    // Clear login-error when user starts typing
     if (errors[name as keyof Errors]) {
       setErrors((prev) => ({
         ...prev,
@@ -141,9 +141,9 @@ const LoginForm = () => {
         // Chuyển hướng đến trang landing page
         navigate('/', { replace: true })
       }
-    } catch (error) {
-      console.error('Login error:', error)
-      const errorMessage = (error as Error).message || 'Đăng nhập thất bại. Vui lòng thử lại!'
+    } catch (login-error) {
+      console.login-error('Login login-error:', login-error)
+      const errorMessage = (login-error as Error).message || 'Đăng nhập thất bại. Vui lòng thử lại!'
       setGeneralError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -162,10 +162,10 @@ const LoginForm = () => {
         // Here you would typically send the user data to your backend
         // to create/login the user account
       } else {
-        alert(`Đăng nhập Google thất bại: ${result.error}`)
+        alert(`Đăng nhập Google thất bại: ${result.login-error}`)
       }
-    } catch (error) {
-      console.error('Google Login Error:', error)
+    } catch (login-error) {
+      console.login-error('Google Login Error:', login-error)
       alert('Có lỗi xảy ra khi đăng nhập Google. Vui lòng thử lại!')
     } finally {
       setIsGoogleLoading(false)
@@ -173,20 +173,20 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="brand">
-          <h2 className="brand-name">ESCE</h2>
-          <p className="brand-sub">Du lịch sinh thái</p>
+    <div className="login-login-container">
+      <div className="login-login-card">
+        <div className="login-brand">
+          <h2 className="login-brand-name">ESCE</h2>
+          <p className="login-brand-sub">Du lịch sinh thái</p>
         </div>
 
-        <h3 className="title">Đăng nhập</h3>
-        <p className="subtitle">Nhập thông tin tài khoản để đăng nhập</p>
+        <h3 className="login-title">Đăng nhập</h3>
+        <p className="login-subtitle">Nhập thông tin tài khoản để đăng nhập</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
+        <form onSubmit={handleSubmit} className="login-login-form">
+          <div className="login-form-group">
             <label htmlFor="email">Email</label>
-            <div className="input-wrapper">
+            <div className="login-input-wrapper">
               <input
                 type="email"
                 id="email"
@@ -194,15 +194,15 @@ const LoginForm = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="nhập email của bạn"
-                className={errors.email ? 'error' : ''}
+                className={errors.email ? 'login-error' : ''}
               />
             </div>
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && <span className="login-error-message">{errors.email}</span>}
           </div>
 
-          <div className="form-group">
+          <div className="login-form-group">
             <label htmlFor="password">Mật khẩu</label>
-            <div className="input-wrapper with-toggle">
+            <div className="login-input-wrapper with-toggle">
               <input
                 type="password"
                 id="password"
@@ -210,16 +210,16 @@ const LoginForm = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="nhập mật khẩu"
-                className={errors.password ? 'error' : ''}
+                className={errors.password ? 'login-error' : ''}
               />
-              <span className="toggle-icon" aria-hidden></span>
+              <span className="login-toggle-icon" aria-hidden></span>
             </div>
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && <span className="login-error-message">{errors.password}</span>}
           </div>
 
           {generalError && (
             <div
-              className="error-message general-error"
+              className="login-error-message general-error"
               style={{
                 marginBottom: '1rem',
                 padding: '0.75rem',
@@ -233,21 +233,21 @@ const LoginForm = () => {
             </div>
           )}
 
-          <div className="form-options">
-            <label className="remember-me">
+          <div className="login-form-options">
+            <label className="login-remember-me">
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
-              <span className="checkmark"></span>
+              <span className="login-checkmark"></span>
               Ghi nhớ đăng nhập
             </label>
-            <a href="/forgot-password" className="forgot-password">
+            <a href="/login-forgot-password" className="login-forgot-password">
               Quên mật khẩu?
             </a>
           </div>
 
-          <button type="submit" className={`login-button ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
+          <button type="submit" className={`login-login-button ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
             {isLoading ? (
               <>
-                <div className="spinner"></div>
+                <div className="login-spinner"></div>
                 Đang đăng nhập...
               </>
             ) : (
@@ -256,25 +256,25 @@ const LoginForm = () => {
           </button>
         </form>
 
-        <div className="divider">
+        <div className="login-divider">
           <span>HOẶC</span>
         </div>
 
-        <button className="google-button" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
+        <button className="login-google-button" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
           {isGoogleLoading ? (
             <>
-              <div className="spinner"></div>
+              <div className="login-spinner"></div>
               Đang đăng nhập...
             </>
           ) : (
             <>
-              <span className="g-icon">G</span>
+              <span className="login-g-icon">G</span>
               Đăng nhập bằng Google
             </>
           )}
         </button>
 
-        <div className="signup-link">
+        <div className="login-signup-link">
           <p>
             Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
           </p>

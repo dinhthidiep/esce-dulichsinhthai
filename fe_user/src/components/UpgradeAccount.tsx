@@ -85,51 +85,51 @@ const UpgradeAccount = () => {
   ]
 
   return (
-    <div className="upgrade-account-page">
+    <div className="upg-upgrade-account-page">
       <Header />
-      <main className="upgrade-account-main">
+      <main className="upg-upgrade-account-main">
         {/* Hero Section */}
-        <section className="upgrade-page-header">
-          <div className="upgrade-header-container">
-            <h1 className="upgrade-page-title">Nâng cấp tài khoản</h1>
-            <p className="upgrade-page-subtitle">
+        <section className="upg-upgrade-page-header">
+          <div className="upg-upgrade-header-container">
+            <h1 className="upg-upgrade-page-title">Nâng cấp tài khoản</h1>
+            <p className="upg-upgrade-page-subtitle">
               Mở rộng khả năng của bạn - Chọn gói nâng cấp phù hợp để phát triển doanh nghiệp du lịch
             </p>
           </div>
         </section>
 
-        <div className="upgrade-account-container">
+        <div className="upg-upgrade-account-container">
           {/* Upgrade Options */}
-          <section className="upgrade-options-section">
-            <div className="upgrade-cards-grid">
+          <section className="upg-upgrade-options-section">
+            <div className="upg-upgrade-cards-grid">
               {upgradeOptions.map((option) => (
-                <Card key={option.id} className="upgrade-card">
+                <Card key={option.id} className="upg-upgrade-card">
                   {option.badge && (
-                    <div className="upgrade-card-badge">
-                      <Badge variant="warning" className="popular-badge">{option.badge}</Badge>
+                    <div className="upg-upgrade-card-badge">
+                      <Badge variant="warning" className="upg-popular-badge">{option.badge}</Badge>
                     </div>
                   )}
                   <div 
-                    className="upgrade-card-header"
+                    className="upg-upgrade-card-header"
                     style={{ background: option.gradient }}
                   >
-                    <h2 className="upgrade-card-title">{option.title}</h2>
+                    <h2 className="upg-upgrade-card-title">{option.title}</h2>
                   </div>
                   
-                  <CardContent className="upgrade-card-body">
-                    <p className="upgrade-card-description">{option.description}</p>
+                  <CardContent className="upg-upgrade-card-body">
+                    <p className="upg-upgrade-card-description">{option.description}</p>
                     
-                    <div className="upgrade-price">
-                      <span className="price-amount">
-                        {option.price} {option.price !== 'Miễn phí' && <span className="price-currency">VNĐ</span>}
+                    <div className="upg-upgrade-price">
+                      <span className="upg-price-amount">
+                        {option.price} {option.price !== 'Miễn phí' && <span className="upg-price-currency">VNĐ</span>}
                       </span>
-                      <span className="price-note">{option.priceNote}</span>
+                      <span className="upg-price-note">{option.priceNote}</span>
                     </div>
 
-                    <ul className="upgrade-features">
+                    <ul className="upg-upgrade-features">
                       {option.features.map((feature, index) => (
-                        <li key={index} className="feature-item">
-                          <CheckCircleIcon className="feature-icon" />
+                        <li key={index} className="upg-feature-item">
+                          <CheckCircleIcon className="upg-feature-icon" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -139,11 +139,11 @@ const UpgradeAccount = () => {
                       onClick={() => option.id === 'host' ? navigate('/register-host') : navigate('/register-agency')}
                       variant="default"
                       size="lg"
-                      className="upgrade-button"
+                      className="upg-upgrade-button"
                       style={{ background: option.gradient, border: 'none' }}
                     >
                       Chọn gói này
-                      <ArrowRightIcon className="button-icon" />
+                      <ArrowRightIcon className="upg-button-icon" />
                     </Button>
                   </CardContent>
                 </Card>
@@ -152,19 +152,19 @@ const UpgradeAccount = () => {
           </section>
 
           {/* Info Section */}
-          <section className="upgrade-info-section">
-            <h2 className="info-section-title">Lưu ý quan trọng</h2>
-            <div className="info-cards-grid">
+          <section className="upg-upgrade-info-section">
+            <h2 className="upg-info-section-title">Lưu ý quan trọng</h2>
+            <div className="upg-info-cards-grid">
               {infoItems.map((item, index) => {
                 const IconComponent = item.icon
                 return (
-                  <Card key={index} className="info-card">
+                  <Card key={index} className="upg-info-card">
                     <CardContent>
-                      <div className="info-card-icon">
+                      <div className="upg-info-card-icon">
                         <IconComponent />
                       </div>
-                      <h3 className="info-card-title">{item.title}</h3>
-                      <p className="info-card-description">{item.description}</p>
+                      <h3 className="upg-info-card-title">{item.title}</h3>
+                      <p className="upg-info-card-description">{item.description}</p>
                     </CardContent>
                   </Card>
                 )

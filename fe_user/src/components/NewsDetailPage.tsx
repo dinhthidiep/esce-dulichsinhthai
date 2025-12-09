@@ -155,7 +155,7 @@ const NewsDetailPage = () => {
       if (paragraph.trim().startsWith('**') && paragraph.trim().endsWith('**')) {
         const headingText = paragraph.trim().replace(/\*\*/g, '')
         return (
-          <h3 key={index} className="news-content-heading">
+          <h3 key={index} className="news-detail-news-content-heading">
             {headingText}
           </h3>
         )
@@ -166,10 +166,10 @@ const NewsDetailPage = () => {
       if (headingMatch) {
         const parts = paragraph.split(/\*\*(.+?)\*\*/)
         return (
-          <p key={index} className="news-content-paragraph">
+          <p key={index} className="news-detail-news-content-paragraph">
             {parts.map((part, i) => {
               if (headingMatch[1] === part) {
-                return <strong key={i} className="news-content-bold">{part}</strong>
+                return <strong key={i} className="news-detail-news-content-bold">{part}</strong>
               }
               return <span key={i}>{part}</span>
             })}
@@ -178,7 +178,7 @@ const NewsDetailPage = () => {
       }
       
       return (
-        <p key={index} className="news-content-paragraph">
+        <p key={index} className="news-detail-news-content-paragraph">
           {paragraph.trim()}
         </p>
       )
@@ -187,9 +187,9 @@ const NewsDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="news-detail-page">
+      <div className="news-detail-news-detail-page">
         <Header />
-        <div className="news-detail-main">
+        <div className="news-detail-news-detail-main">
           <LoadingSpinner message="Đang tải tin tức..." />
         </div>
       </div>
@@ -198,15 +198,15 @@ const NewsDetailPage = () => {
 
   if (error || !news) {
     return (
-      <div className="news-detail-page">
+      <div className="news-detail-news-detail-page">
         <Header />
-        <div className="news-detail-main">
-          <div className="news-detail-error">
+        <div className="news-detail-news-detail-main">
+          <div className="news-detail-news-detail-error">
             <h2>❌ Không tìm thấy tin tức</h2>
             <p>{error || 'Tin tức không tồn tại hoặc đã bị xóa.'}</p>
-            <div className="news-detail-error-actions">
+            <div className="news-detail-news-detail-error-actions">
               <Button variant="outline" onClick={() => navigate('/news')}>
-                <ArrowLeftIcon className="btn-icon" />
+                <ArrowLeftIcon className="news-detail-btn-icon" />
                 Quay lại danh sách
               </Button>
               <Button variant="primary" onClick={() => navigate('/')}>
@@ -222,53 +222,53 @@ const NewsDetailPage = () => {
   const newsImage = news.image || defaultNewsImage
 
   return (
-    <div className="news-detail-page">
+    <div className="news-detail-news-detail-page">
       <Header />
 
-      <main className="news-detail-main">
+      <main className="news-detail-news-detail-main">
         {/* Back Button */}
-        <div className="news-detail-back">
-          <Button variant="outline" onClick={() => navigate('/news')} className="news-back-btn">
-            <ArrowLeftIcon className="btn-icon" />
+        <div className="news-detail-news-detail-back">
+          <Button variant="outline" onClick={() => navigate('/news')} className="news-detail-news-back-btn">
+            <ArrowLeftIcon className="news-detail-btn-icon" />
             Quay lại danh sách
           </Button>
         </div>
 
         {/* Main Content Layout - 2 Columns */}
-        <div className="news-detail-layout">
+        <div className="news-detail-news-detail-layout">
           {/* Left Column - Main Content (70%) */}
-          <article className="news-detail-article">
+          <article className="news-detail-news-detail-article">
             {/* News Header */}
-            <header className="news-detail-header">
-              <div className="news-detail-meta">
-                <div className="news-detail-meta-item">
-                  <CalendarIcon className="news-detail-meta-icon" />
+            <header className="news-detail-news-detail-header">
+              <div className="news-detail-news-detail-meta">
+                <div className="news-detail-news-detail-meta-item">
+                  <CalendarIcon className="news-detail-news-detail-meta-icon" />
                   <span>{formatDate(news.createdAt || news.updatedAt || '')}</span>
                 </div>
                 {news.author && (
-                  <div className="news-detail-meta-item">
-                    <UserIcon className="news-detail-meta-icon" />
+                  <div className="news-detail-news-detail-meta-item">
+                    <UserIcon className="news-detail-news-detail-meta-icon" />
                     <span>{news.author}</span>
                   </div>
                 )}
               </div>
 
-              <h1 className="news-detail-title">{news.title}</h1>
+              <h1 className="news-detail-news-detail-title">{news.title}</h1>
             </header>
 
             {/* News Image */}
-            <div className="news-detail-image-wrapper">
+            <div className="news-detail-news-detail-image-wrapper">
               <LazyImage
                 src={newsImage}
                 alt={news.title}
-                className="news-detail-image"
+                className="news-detail-news-detail-image"
                 fallbackSrc={defaultNewsImage}
               />
             </div>
 
             {/* News Content */}
-            <div className="news-detail-content">
-              <div className="news-content-body">
+            <div className="news-detail-news-detail-content">
+              <div className="news-detail-news-content-body">
                 {formatContent(news.content)}
               </div>
             </div>
@@ -276,27 +276,27 @@ const NewsDetailPage = () => {
 
           {/* Right Column - Related News (30%) */}
           {relatedNews.length > 0 && (
-            <aside className="news-related-sidebar">
-              <h2 className="news-related-title">Tin tức liên quan</h2>
-              <div className="news-related-list">
+            <aside className="news-detail-news-related-sidebar">
+              <h2 className="news-detail-news-related-title">Tin tức liên quan</h2>
+              <div className="news-detail-news-related-list">
                 {relatedNews.map((item) => (
                   <Link
                     key={item.id}
                     to={`/news/${item.id}`}
-                    className="news-related-card"
+                    className="news-detail-news-related-card"
                   >
-                    <div className="news-related-image-wrapper">
+                    <div className="news-detail-news-related-image-wrapper">
                       <LazyImage
                         src={item.image || defaultNewsImage}
                         alt={item.title}
-                        className="news-related-image"
+                        className="news-detail-news-related-image"
                         fallbackSrc={defaultNewsImage}
                       />
                     </div>
-                    <div className="news-related-content">
-                      <h3 className="news-related-card-title">{item.title}</h3>
-                      <div className="news-related-meta">
-                        <CalendarIcon className="news-related-meta-icon" />
+                    <div className="news-detail-news-related-content">
+                      <h3 className="news-detail-news-related-card-title">{item.title}</h3>
+                      <div className="news-detail-news-related-meta">
+                        <CalendarIcon className="news-detail-news-related-meta-icon" />
                         <span>
                           {new Date(item.createdAt || item.updatedAt || '').toLocaleDateString('vi-VN')}
                         </span>

@@ -1,4 +1,4 @@
-.upgrade-payment-page {
+.upg-pay-upgrade-payment-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -6,23 +6,23 @@
   font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.upgrade-payment-main {
+.upg-pay-upgrade-payment-main {
   flex: 1;
   padding-top: 80px;
 }
 
-.upgrade-payment-container {
+.upg-pay-upgrade-payment-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   width: 100%;
 }
 
-.payment-header {
+.upg-pay-payment-header {
   margin-bottom: 2rem;
 }
 
-.back-button {
+.upg-pay-back-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -30,12 +30,12 @@
   color: #059669;
 }
 
-.back-icon {
+.upg-pay-back-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
-.payment-title {
+.upg-pay-payment-title {
   font-size: clamp(1.75rem, 4vw, 2rem);
   font-weight: 700;
   color: #1e293b;
@@ -43,26 +43,26 @@
   letter-spacing: -0.02em;
 }
 
-.payment-subtitle {
+.upg-pay-payment-subtitle {
   font-size: 1rem;
   color: #64748b;
   margin: 0;
   line-height: 1.5;
 }
 
-.payment-content-grid {
+.upg-pay-payment-content-grid {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 2rem;
   margin-top: 2rem;
 }
 
-.payment-info-card,
-.payment-method-card {
+.upg-pay-payment-info-card,
+.upg-pay-payment-method-card {
   height: fit-content;
 }
 
-.info-card-title {
+.upg-pay-info-card-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
@@ -72,13 +72,13 @@
   letter-spacing: -0.01em;
 }
 
-.payment-details {
+.upg-pay-payment-details {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.detail-row {
+.upg-pay-detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -86,47 +86,47 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.detail-row:last-child {
+.upg-pay-detail-row:last-child {
   border-bottom: none;
 }
 
-.detail-label {
+.upg-pay-detail-label {
   font-size: 0.9375rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.detail-value {
+.upg-pay-detail-value {
   font-size: 0.9375rem;
   color: #1e293b;
   font-weight: 600;
 }
 
-.total-row {
+.upg-pay-total-row {
   margin-top: 0.5rem;
   padding-top: 1rem;
   border-top: 2px solid #e2e8f0;
 }
 
-.total-amount {
+.upg-pay-total-amount {
   font-size: 1.5rem;
   font-weight: 700;
   color: #059669;
 }
 
-.currency {
+.upg-pay-currency {
   font-size: 1rem;
   font-weight: 700;
 }
 
-.payment-methods {
+.upg-pay-payment-methods {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
-.payment-method {
+.upg-pay-payment-method {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -138,48 +138,48 @@
   background: #ffffff;
 }
 
-.payment-method:hover {
+.upg-pay-payment-method:hover {
   border-color: #059669;
   background: #f8fafc;
 }
 
-.payment-method.selected {
+.upg-pay-payment-method.upg-pay-selected {
   border-color: #059669;
   background: #ecfdf5;
 }
 
-.method-info {
+.upg-pay-method-info {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.method-icon {
+.upg-pay-method-icon {
   width: 2rem;
   height: 2rem;
   color: #059669;
 }
 
-.method-name {
+.upg-pay-method-name {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 0.25rem;
 }
 
-.method-description {
+.upg-pay-method-description {
   font-size: 0.875rem;
   color: #64748b;
 }
 
-.check-icon {
+.upg-pay-check-icon {
   width: 1.5rem;
   height: 1.5rem;
   color: #059669;
   flex-shrink: 0;
 }
 
-.error-alert {
+.upg-pay-error-alert {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -192,14 +192,14 @@
   margin-bottom: 1.5rem;
 }
 
-.error-icon {
+.upg-pay-error-icon {
   width: 1.25rem;
   height: 1.25rem;
   color: #dc2626;
   flex-shrink: 0;
 }
 
-.pay-button {
+.upg-pay-pay-button {
   width: 100%;
   margin-bottom: 1.5rem;
   display: flex;
@@ -208,7 +208,7 @@
   gap: 0.5rem;
 }
 
-.spinner-small {
+.upg-pay-spinner-small {
   width: 1rem;
   height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -223,36 +223,36 @@
   }
 }
 
-.payment-note {
+.upg-pay-payment-note {
   padding: 1rem;
   background: #f0f9ff;
   border-left: 4px solid #3b82f6;
   border-radius: 4px;
 }
 
-.payment-note p {
+.upg-pay-payment-note p {
   margin: 0.5rem 0;
   font-size: 0.875rem;
   color: #1e40af;
   line-height: 1.6;
 }
 
-.payment-note p:first-child {
+.upg-pay-payment-note p:first-child {
   margin-top: 0;
 }
 
-.payment-note p:last-child {
+.upg-pay-payment-note p:last-child {
   margin-bottom: 0;
 }
 
 /* Responsive */
 @media (max-width: 968px) {
-  .payment-content-grid {
+  .upg-pay-payment-content-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
-  .upgrade-payment-container {
+  .upg-pay-upgrade-payment-container {
     padding: 1.5rem 1rem;
   }
 }

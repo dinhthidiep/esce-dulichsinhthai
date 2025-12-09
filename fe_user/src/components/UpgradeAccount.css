@@ -1,4 +1,4 @@
-.upgrade-account-page {
+.upg-upgrade-account-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -6,12 +6,12 @@
   font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.upgrade-account-main {
+.upg-upgrade-account-main {
   flex: 1;
   padding-top: 0;
 }
 
-.upgrade-account-container {
+.upg-upgrade-account-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 1.5rem;
@@ -19,13 +19,13 @@
 }
 
 /* Page Header Section */
-.upgrade-page-header {
+.upg-upgrade-page-header {
   position: relative;
   min-height: 25vh;
   margin-top: 80px;
   display: flex;
   align-items: center;
-  background-image: url('/img/manhinh.jpg');
+  background-image: url('/img/manhinh.upg-jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -36,14 +36,14 @@
 
 /* Optimize background-attachment for mobile */
 @media (max-width: 968px) {
-  .upgrade-page-header {
+  .upg-upgrade-page-header {
     background-attachment: scroll;
     min-height: 23vh;
   }
 }
 
 /* Overlay với gradient mờ */
-.upgrade-page-header::before {
+.upg-upgrade-page-header::before {
   content: '';
   position: absolute;
   top: 0;
@@ -60,7 +60,7 @@
 }
 
 /* Thêm lớp overlay phụ để tăng độ tương phản */
-.upgrade-page-header::after {
+.upg-upgrade-page-header::after {
   content: '';
   position: absolute;
   top: 0;
@@ -75,7 +75,7 @@
   z-index: 2;
 }
 
-.upgrade-header-container {
+.upg-upgrade-header-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
@@ -84,7 +84,7 @@
   z-index: 3;
 }
 
-.upgrade-page-title {
+.upg-upgrade-page-title {
   font-size: clamp(2rem, 5vw + 1rem, 2.5rem);
   font-weight: 800;
   color: #ffffff;
@@ -94,7 +94,7 @@
   letter-spacing: -0.02em;
 }
 
-.upgrade-page-subtitle {
+.upg-upgrade-page-subtitle {
   font-size: clamp(1rem, 2vw, 1.125rem);
   color: rgba(255, 255, 255, 0.95);
   margin: 0;
@@ -103,11 +103,11 @@
 }
 
 /* Upgrade Options Section */
-.upgrade-options-section {
+.upg-upgrade-options-section {
   padding: 2rem 0 4rem;
 }
 
-.upgrade-cards-grid {
+.upg-upgrade-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
@@ -115,7 +115,7 @@
   margin: 0 auto;
 }
 
-.upgrade-card {
+.upg-upgrade-card {
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -124,19 +124,19 @@
   height: 100%;
 }
 
-.upgrade-card:hover {
+.upg-upgrade-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.upgrade-card-badge {
+.upg-upgrade-card-badge {
   position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 10;
 }
 
-.popular-badge {
+.upg-popular-badge {
   background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%) !important;
   color: white !important;
   box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
@@ -147,7 +147,7 @@
   padding: 0.5rem 0.875rem;
 }
 
-.upgrade-card-header {
+.upg-upgrade-card-header {
   padding: 1.75rem 1.5rem;
   color: white;
   text-align: center;
@@ -155,7 +155,7 @@
   flex-shrink: 0;
 }
 
-.upgrade-card-title {
+.upg-upgrade-card-title {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
@@ -163,7 +163,7 @@
   letter-spacing: -0.01em;
 }
 
-.upgrade-card-body {
+.upg-upgrade-card-body {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -171,14 +171,14 @@
   flex: 1;
 }
 
-.upgrade-card-description {
+.upg-upgrade-card-description {
   color: #64748b;
   font-size: 0.9375rem;
   line-height: 1.6;
   margin: 0;
 }
 
-.upgrade-price {
+.upg-upgrade-price {
   text-align: center;
   padding: 1.25rem;
   background: #f8fafc;
@@ -186,7 +186,7 @@
   border: 1px solid #e5e7eb;
 }
 
-.price-amount {
+.upg-price-amount {
   display: block;
   font-size: 1.75rem;
   font-weight: 700;
@@ -195,18 +195,18 @@
   letter-spacing: -0.02em;
 }
 
-.price-currency {
+.upg-price-currency {
   font-size: 1rem;
   font-weight: 700;
 }
 
-.price-note {
+.upg-price-note {
   display: block;
   font-size: 0.875rem;
   color: #64748b;
 }
 
-.upgrade-features {
+.upg-upgrade-features {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -216,7 +216,7 @@
   flex-grow: 1;
 }
 
-.feature-item {
+.upg-feature-item {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
@@ -225,7 +225,7 @@
   line-height: 1.5;
 }
 
-.feature-icon {
+.upg-feature-icon {
   width: 1.25rem;
   height: 1.25rem;
   color: #059669;
@@ -233,7 +233,7 @@
   margin-top: 0.125rem;
 }
 
-.upgrade-button {
+.upg-upgrade-button {
   width: 100%;
   margin-top: auto;
   display: flex;
@@ -242,18 +242,18 @@
   gap: 0.5rem;
 }
 
-.button-icon {
+.upg-button-icon {
   width: 1.125rem;
   height: 1.125rem;
 }
 
 /* Info Section */
-.upgrade-info-section {
+.upg-upgrade-info-section {
   padding: 3rem 0 4rem;
   border-top: 1px solid #e2e8f0;
 }
 
-.info-section-title {
+.upg-info-section-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e293b;
@@ -262,7 +262,7 @@
   letter-spacing: -0.01em;
 }
 
-.info-cards-grid {
+.upg-info-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
@@ -270,17 +270,17 @@
   margin: 0 auto;
 }
 
-.info-card {
+.upg-info-card {
   text-align: center;
   transition: all 0.3s ease;
 }
 
-.info-card:hover {
+.upg-info-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.info-card-icon {
+.upg-info-card-icon {
   width: 3rem;
   height: 3rem;
   margin: 0 auto 1rem;
@@ -292,19 +292,19 @@
   color: #059669;
 }
 
-.info-card-icon svg {
+.upg-info-card-icon svg {
   width: 1.5rem;
   height: 1.5rem;
 }
 
-.info-card-title {
+.upg-info-card-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.75rem 0;
 }
 
-.info-card-description {
+.upg-info-card-description {
   font-size: 0.875rem;
   color: #64748b;
   line-height: 1.6;
@@ -313,25 +313,25 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .upgrade-account-container {
+  .upg-upgrade-account-container {
     padding: 0 1rem;
   }
 
 
-  .upgrade-cards-grid {
+  .upg-upgrade-cards-grid {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
 
-  .upgrade-options-section {
+  .upg-upgrade-options-section {
     padding: 1.5rem 0 3rem;
   }
 
-  .upgrade-info-section {
+  .upg-upgrade-info-section {
     padding: 2rem 0 3rem;
   }
 
-  .info-cards-grid {
+  .upg-info-cards-grid {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }

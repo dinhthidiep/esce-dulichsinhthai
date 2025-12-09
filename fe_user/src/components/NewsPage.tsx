@@ -22,7 +22,7 @@ import { API_ENDPOINTS } from '~/config/api'
 import './NewsPage.css'
 
 // Sử dụng đường dẫn public URL thay vì import
-const defaultNewsImage = '/img/banahills.jpg'
+const defaultNewsImage = '/img/banahills.news-jpg'
 
 interface UserInfo {
   Id?: number
@@ -254,31 +254,31 @@ const NewsPage = () => {
   }
 
   return (
-    <div className="news-page">
+    <div className="news-news-page">
       <Header />
 
-      <main className="news-main">
+      <main className="news-news-main">
         {/* Page Header */}
-        <section className="news-page-header">
-          <div className="news-header-container">
-            <h1 className="news-page-title">Thông báo hệ thống</h1>
-            <p className="news-page-subtitle">
+        <section className="news-news-page-header">
+          <div className="news-news-header-container">
+            <h1 className="news-news-page-title">Thông báo hệ thống</h1>
+            <p className="news-news-page-subtitle">
               Cập nhật về bảo trì, nâng cấp và các thông báo quan trọng của hệ thống
             </p>
           </div>
         </section>
 
         {/* Main Content */}
-        <section className="news-content-section">
-          <div className="news-content-container">
+        <section className="news-news-content-section">
+          <div className="news-news-content-container">
             {/* Controls Bar */}
-            <div className="news-controls">
+            <div className="news-news-controls">
               {/* Search */}
-              <div className="news-search-box">
-                <SearchIcon className="news-search-icon" />
+              <div className="news-news-search-box">
+                <SearchIcon className="news-news-search-icon" />
                 <input
                   type="text"
-                  className="news-search-input"
+                  className="news-news-search-input"
                   placeholder="Tìm kiếm tin tức..."
                   value={searchQuery}
                   onChange={(e) => {
@@ -295,7 +295,7 @@ const NewsPage = () => {
                   variant="primary"
                   size="md"
                   onClick={() => setShowCreateModal(true)}
-                  className="news-create-btn"
+                  className="news-news-create-btn"
                 >
                   <PlusIcon className="btn-icon" />
                   Đăng tin tức
@@ -307,19 +307,19 @@ const NewsPage = () => {
             {loading ? (
               <LoadingSpinner message="Đang tải tin tức..." />
             ) : error ? (
-              <div className="news-error-container" role="alert">
+              <div className="news-news-error-container" role="alert">
                 <h3>❌ Lỗi tải dữ liệu</h3>
-                <p className="error-message">{error}</p>
+                <p className="news-error-message">{error}</p>
                 <Button variant="outline" onClick={fetchNews} style={{ marginTop: '1rem' }}>
                   Thử lại
                 </Button>
               </div>
             ) : filteredNews.length === 0 ? (
-              <div className="news-empty-state">
-                <p className="empty-state-title">
+              <div className="news-news-empty-state">
+                <p className="news-empty-state-title">
                   {searchQuery ? 'Không tìm thấy tin tức nào' : 'Chưa có tin tức nào'}
                 </p>
-                <p className="empty-state-description">
+                <p className="news-empty-state-description">
                   {searchQuery
                     ? 'Không có tin tức nào phù hợp với từ khóa tìm kiếm của bạn.'
                     : 'Hiện tại chưa có tin tức nào được đăng. Vui lòng quay lại sau.'}
@@ -336,7 +336,7 @@ const NewsPage = () => {
               </div>
             ) : (
               <>
-                <div className="news-grid">
+                <div className="news-news-grid">
                   {paginatedNews.map((news, index) => (
                     <NewsCard
                       key={news.id}
@@ -352,20 +352,20 @@ const NewsPage = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="news-pagination">
+                  <div className="news-news-pagination">
                     <button
-                      className="pagination-btn"
+                      className="news-pagination-btn"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
                       aria-label="Trang trước"
                     >
                       <ChevronLeftIcon />
                     </button>
-                    <div className="pagination-info">
+                    <div className="news-pagination-info">
                       Trang {currentPage} / {totalPages}
                     </div>
                     <button
-                      className="pagination-btn"
+                      className="news-pagination-btn"
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
                       aria-label="Trang sau"
@@ -382,12 +382,12 @@ const NewsPage = () => {
 
       {/* Create News Modal */}
       {showCreateModal && (
-        <div className="news-modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="news-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="news-modal-header">
-              <h2 className="news-modal-title">Đăng tin tức mới</h2>
+        <div className="news-news-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="news-news-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="news-news-modal-header">
+              <h2 className="news-news-modal-title">Đăng tin tức mới</h2>
               <button
-                className="news-modal-close"
+                className="news-news-modal-close"
                 onClick={() => setShowCreateModal(false)}
                 aria-label="Đóng"
               >
@@ -395,35 +395,35 @@ const NewsPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateNews} className="news-form">
+            <form onSubmit={handleCreateNews} className="news-news-form">
               {formError && (
-                <div className="news-form-error" role="alert">
+                <div className="news-news-form-error" role="alert">
                   {formError}
                 </div>
               )}
 
-              <div className="news-form-group">
-                <label htmlFor="news-title" className="news-form-label">
-                  Tiêu đề <span className="required">*</span>
+              <div className="news-news-form-group">
+                <label htmlFor="news-news-title" className="news-news-form-label">
+                  Tiêu đề <span className="news-required">*</span>
                 </label>
                 <input
-                  id="news-title"
+                  id="news-news-title"
                   type="text"
-                  className="news-form-input"
+                  className="news-news-form-input"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Nhập tiêu đề tin tức"
-                  required
+                  news-required
                 />
               </div>
 
-              <div className="news-form-group">
-                <label htmlFor="news-summary" className="news-form-label">
+              <div className="news-news-form-group">
+                <label htmlFor="news-news-summary" className="news-news-form-label">
                   Tóm tắt
                 </label>
                 <textarea
-                  id="news-summary"
-                  className="news-form-textarea"
+                  id="news-news-summary"
+                  className="news-news-form-textarea"
                   rows={3}
                   value={formData.summary}
                   onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
@@ -431,36 +431,36 @@ const NewsPage = () => {
                 />
               </div>
 
-              <div className="news-form-group">
-                <label htmlFor="news-content" className="news-form-label">
-                  Nội dung <span className="required">*</span>
+              <div className="news-news-form-group">
+                <label htmlFor="news-news-content" className="news-news-form-label">
+                  Nội dung <span className="news-required">*</span>
                 </label>
                 <textarea
-                  id="news-content"
-                  className="news-form-textarea"
+                  id="news-news-content"
+                  className="news-news-form-textarea"
                   rows={8}
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="Nhập nội dung tin tức"
-                  required
+                  news-required
                 />
               </div>
 
-              <div className="news-form-group">
-                <label htmlFor="news-image" className="news-form-label">
+              <div className="news-news-form-group">
+                <label htmlFor="news-news-image" className="news-news-form-label">
                   URL ảnh
                 </label>
                 <input
-                  id="news-image"
+                  id="news-news-image"
                   type="text"
-                  className="news-form-input"
+                  className="news-news-form-input"
                   value={formData.image}
                   onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                   placeholder="Nhập URL ảnh (tùy chọn)"
                 />
               </div>
 
-              <div className="news-form-actions">
+              <div className="news-news-form-actions">
                 <Button
                   type="button"
                   variant="outline"
@@ -501,20 +501,20 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, index, isVisible, isAdmin, on
 
   return (
     <article
-      className={`news-card ${isVisible ? 'fade-in-up' : ''}`}
+      className={`news-news-card ${isVisible ? 'news-fade-in-up' : ''}`}
       style={{ animationDelay: `${0.1 + index * 0.05}s` }}
     >
-      <Card className="news-card-inner">
-        <div className="news-image-wrapper">
+      <Card className="news-news-card-inner">
+        <div className="news-news-image-wrapper">
           <LazyImage
             src={newsImage}
             alt={news.title}
-            className="news-image"
+            className="news-news-image"
             fallbackSrc={defaultNewsImage}
           />
           {isAdmin && (
             <button
-              className="news-delete-btn"
+              className="news-news-delete-btn"
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -527,26 +527,26 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, index, isVisible, isAdmin, on
           )}
         </div>
 
-        <CardContent className="news-content">
-          <div className="news-meta">
-            <div className="news-meta-item">
-              <CalendarIcon className="news-meta-icon" />
+        <CardContent className="news-news-content">
+          <div className="news-news-meta">
+            <div className="news-news-meta-item">
+              <CalendarIcon className="news-news-meta-icon" />
               <span>{formatDate(news.createdAt || news.updatedAt || '')}</span>
             </div>
             {news.author && (
-              <div className="news-meta-item">
-                <UserIcon className="news-meta-icon" />
+              <div className="news-news-meta-item">
+                <UserIcon className="news-news-meta-icon" />
                 <span>{news.author}</span>
               </div>
             )}
           </div>
 
-          <h3 className="news-title">{news.title}</h3>
+          <h3 className="news-news-title">{news.title}</h3>
 
-          <div className="news-footer">
-            <Link to={`/news/${news.id}`} className="news-read-more">
+          <div className="news-news-footer">
+            <Link to={`/news/${news.id}`} className="news-news-read-more">
               Đọc thêm
-              <ArrowRightIcon className="news-read-more-icon" />
+              <ArrowRightIcon className="news-news-read-more-icon" />
             </Link>
           </div>
         </CardContent>

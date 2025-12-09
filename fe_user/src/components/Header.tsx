@@ -80,7 +80,7 @@ const Header = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
-      if (!target.closest('.user-menu-container') && !target.closest('.notification-bell-container')) {
+      if (!target.closest('.header-user-menu-container') && !target.closest('.notification-bell-container')) {
         setIsUserMenuOpen(false)
         setIsNotificationOpen(false)
       }
@@ -151,68 +151,68 @@ const Header = () => {
   }
 
   return (
-    <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="header-container">
+    <header-header className={`header-header ${isScrolled ? 'header-scrolled' : ''}`}>
+      <div className="header-header-container">
         {/* Logo */}
-        <Link to="/" className="logo-section">
-          <img src="/img/logo_esce.png" alt="ESCE Logo" className="logo" />
-          <div className="logo-text">
-            <div className="logo-text-main">Du Lịch Sinh thái</div>
-            <div className="logo-text-sub">Đà Nẵng</div>
+        <Link to="/" className="header-logo-section">
+          <img src="/img/logo_esce.png" alt="ESCE Logo" className="header-logo" />
+          <div className="header-logo-text">
+            <div className="header-logo-text-main">Du Lịch Sinh thái</div>
+            <div className="header-logo-text-sub">Đà Nẵng</div>
           </div>
         </Link>
 
         {/* Navigation */}
-        <nav className="header-nav">
+        <nav className="header-header-nav">
           <Link 
             to="/" 
-            className={`nav-link ${isActive('/') && location.pathname !== '/services' && location.pathname !== '/forum' && location.pathname !== '/news' && location.pathname !== '/policy' ? 'active' : ''}`}
+            className={`header-nav-link ${isActive('/') && location.pathname !== '/services' && location.pathname !== '/forum' && location.pathname !== '/news' && location.pathname !== '/policy' ? 'header-active' : ''}`}
           >
             Trang chủ
           </Link>
           <Link 
             to="/services" 
-            className={`nav-link ${isActive('/services') ? 'active' : ''}`}
+            className={`header-nav-link ${isActive('/services') ? 'header-active' : ''}`}
           >
             Dịch vụ
           </Link>
           <Link 
             to="/forum" 
-            className={`nav-link ${isActive('/forum') ? 'active' : ''}`}
+            className={`header-nav-link ${isActive('/forum') ? 'header-active' : ''}`}
           >
             Diễn đàn
           </Link>
           <Link 
             to="/news" 
-            className={`nav-link ${isActive('/news') ? 'active' : ''}`}
+            className={`header-nav-link ${isActive('/news') ? 'header-active' : ''}`}
           >
             Tin tức
           </Link>
           <Link 
             to="/policy" 
-            className={`nav-link ${isActive('/policy') ? 'active' : ''}`}
+            className={`header-nav-link ${isActive('/policy') ? 'header-active' : ''}`}
           >
             Chính sách
           </Link>
         </nav>
 
         {/* Actions */}
-        <div className="header-actions">
+        <div className="header-header-actions">
           {isLoggedIn ? (
             <>
               {/* Notification Bell */}
               <div className="notification-bell-container" style={{ position: 'relative' }}>
                 <button
-                  className="notification-bell"
+                  className="header-notification-bell"
                   onClick={() => {
                     setIsNotificationOpen(!isNotificationOpen)
                     setIsUserMenuOpen(false)
                   }}
                   aria-label="Thông báo"
                 >
-                  <BellIcon className="bell-icon" />
+                  <BellIcon className="header-bell-icon" />
                   {unreadCount > 0 && (
-                    <span className="notification-badge">{unreadCount}</span>
+                    <span className="header-notification-badge">{unreadCount}</span>
                   )}
                 </button>
                 {isNotificationOpen && (
@@ -224,53 +224,53 @@ const Header = () => {
               </div>
 
               {/* User Menu */}
-              <div className="user-menu-container" style={{ position: 'relative' }}>
+              <div className="header-user-menu-container" style={{ position: 'relative' }}>
                 <button
-                  className="user-menu-trigger"
+                  className="header-user-menu-trigger"
                   onClick={() => {
                     setIsUserMenuOpen(!isUserMenuOpen)
                     setIsNotificationOpen(false)
                   }}
                   aria-label="Menu người dùng"
                 >
-                  <div className="user-avatar">
+                  <div className="header-user-avatar">
                     {typeof getUserAvatar() === 'string' && getUserAvatar().startsWith('http') ? (
                       <img 
                         src={getUserAvatar()} 
                         alt="Avatar" 
-                        className="user-avatar-img"
+                        className="header-user-avatar-img"
                       />
                     ) : (
-                      <span className="user-avatar-initials">{getUserAvatar()}</span>
+                      <span className="header-user-avatar-initials">{getUserAvatar()}</span>
                     )}
                   </div>
-                  <div className="user-info-inline">
-                    <span className="user-name-inline">
+                  <div className="header-user-info-inline">
+                    <span className="header-user-name-inline">
                       {userInfo?.Name || userInfo?.name || 'Người dùng'}
                     </span>
-                    <span className="user-role-inline">
+                    <span className="header-user-role-inline">
                       {getRoleName()}
                     </span>
                   </div>
                   <ChevronDownIcon 
-                    className={`user-menu-chevron ${isUserMenuOpen ? 'open' : ''}`}
+                    className={`header-user-menu-chevron ${isUserMenuOpen ? 'header-open' : ''}`}
                   />
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="user-menu-dropdown">
+                  <div className="header-user-menu-dropdown">
                     <Link
                       to="/profile"
-                      className="user-menu-item"
+                      className="header-user-menu-item"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <UserIcon style={{ width: '18px', height: '18px' }} />
                       <span>Hồ sơ của tôi</span>
                     </Link>
-                    <div className="user-menu-divider" />
+                    <div className="header-user-menu-divider" />
                     <Link
                       to="/subscription-packages"
-                      className="user-menu-item"
+                      className="header-user-menu-item"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <StarIcon style={{ width: '18px', height: '18px' }} />
@@ -278,15 +278,15 @@ const Header = () => {
                     </Link>
                     <Link
                       to="/upgrade"
-                      className="user-menu-item user-menu-item-upgrade"
+                      className="header-user-menu-item header-user-menu-item-upgrade"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <CrownIcon style={{ width: '18px', height: '18px' }} />
                       <span>Nâng cấp tài khoản</span>
                     </Link>
-                    <div className="user-menu-divider" />
+                    <div className="header-user-menu-divider" />
                     <button
-                      className="user-menu-item user-menu-item-logout"
+                      className="header-user-menu-item header-user-menu-item-logout"
                       onClick={handleLogout}
                     >
                       <LogOutIcon style={{ width: '18px', height: '18px' }} />
@@ -298,17 +298,17 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link to="/login" className="btn-login">
+              <Link to="/login" className="header-btn-login">
                 Đăng nhập
               </Link>
-              <Link to="/register" className="btn-register">
+              <Link to="/register" className="header-btn-register">
                 Đăng ký
               </Link>
             </>
           )}
         </div>
       </div>
-    </header>
+    </header-header>
   )
 }
 

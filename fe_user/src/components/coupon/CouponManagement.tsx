@@ -230,7 +230,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         const isActive = c.IsActive || c.isActive;
         const isActiveBool = isActive === true || isActive === 1 || isActive === 'true' || isActive === '1';
         
-        if (statusFilter === 'active') {
+        if (statusFilter === 'coupon-active') {
           return isActiveBool;
         } else if (statusFilter === 'expired') {
           return !isActiveBool;
@@ -285,8 +285,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         if (onSuccess) {
           onSuccess('Coupon đã được xóa thành công!');
         }
-      } catch (error) {
-        console.error('Error deleting coupon:', error);
+      } catch (coupon-error) {
+        console.coupon-error('Error deleting coupon:', coupon-error);
         if (onError) {
           onError('Có lỗi xảy ra khi xóa coupon. Vui lòng thử lại.');
         }
@@ -297,9 +297,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   // Helper functions
   const getCouponStatusDisplay = (isActive) => {
     if (isActive === true || isActive === 1 || isActive === 'true' || isActive === '1') {
-      return { text: 'Hoạt động', className: 'status-confirmed' };
+      return { text: 'Hoạt động', className: 'coupon-status-confirmed' };
     } else {
-      return { text: 'Hết hạn', className: 'status-expired' };
+      return { text: 'Hết hạn', className: 'coupon-status-expired' };
     }
   };
 
@@ -476,9 +476,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     const newErrors = {};
     Object.keys(createCouponFormData).forEach(key => {
       if (key !== 'discountType') {
-        const error = validateCreateCouponField(key, createCouponFormData[key]);
-        if (error) {
-          newErrors[key] = error;
+        const coupon-error = validateCreateCouponField(key, createCouponFormData[key]);
+        if (coupon-error) {
+          newErrors[key] = coupon-error;
         }
       }
     });
@@ -683,9 +683,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     const newErrors = {};
     Object.keys(editCouponFormData).forEach(key => {
       if (key !== 'discountType' && key !== 'isActive') {
-        const error = validateEditCouponField(key, editCouponFormData[key]);
-        if (error) {
-          newErrors[key] = error;
+        const coupon-error = validateEditCouponField(key, editCouponFormData[key]);
+        if (coupon-error) {
+          newErrors[key] = coupon-error;
         }
       }
     });
@@ -751,9 +751,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     <div className="coupon-management">
       <>
           {/* Toggle Buttons */}
-          <div className="coupon-toggle-buttons">
+          <div className="coupon-coupon-toggle-buttons">
             <button
-              className={`toggle-btn ${!showCouponPromotionsList ? 'active' : ''}`}
+              className={`coupon-toggle-btn ${!showCouponPromotionsList ? 'coupon-active' : ''}`}
               onClick={() => {
                 setShowCouponPromotionsList(false);
                 if (onToggleChange) {
@@ -764,7 +764,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
               Danh sách mã giảm giá
             </button>
             <button
-              className={`toggle-btn ${showCouponPromotionsList ? 'active' : ''}`}
+              className={`coupon-toggle-btn ${showCouponPromotionsList ? 'coupon-active' : ''}`}
               onClick={() => {
                 setShowCouponPromotionsList(true);
                 if (onToggleChange) {
@@ -779,14 +779,14 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
           {!showCouponPromotionsList ? (
             <>
               {/* Filter Section */}
-              <div className="coupon-filter-container">
-                <div className="filter-row">
-                  <div className="filter-field">
+              <div className="coupon-coupon-filter-container">
+                <div className="coupon-filter-row">
+                  <div className="coupon-filter-field">
                     <label htmlFor="coupon-filter-name">Lọc theo mã/ mô tả:</label>
                     <input
                       id="coupon-filter-name"
                       type="text"
-                      className="filter-input"
+                      className="coupon-filter-input"
                       placeholder="Nhập mã coupon hoặc mô tả..."
                       value={couponFilterName}
                       onChange={(e) => setCouponFilterName(e.target.value)}
@@ -797,24 +797,24 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                       }}
                     />
                   </div>
-                  <div className="filter-field">
+                  <div className="coupon-filter-field">
                     <label htmlFor="coupon-filter-status">Trạng thái:</label>
                     <select
                       id="coupon-filter-status"
-                      className="filter-select"
+                      className="coupon-filter-select"
                       value={couponFilterStatus}
                       onChange={(e) => setCouponFilterStatus(e.target.value)}
                     >
                       <option value="all">Tất cả</option>
-                      <option value="active">Hoạt động</option>
+                      <option value="coupon-active">Hoạt động</option>
                       <option value="expired">Hết hạn</option>
                     </select>
                   </div>
-                  <div className="filter-field">
+                  <div className="coupon-filter-field">
                     <label htmlFor="coupon-sort-order">Thứ tự:</label>
                     <select
                       id="coupon-sort-order"
-                      className="filter-select"
+                      className="coupon-filter-select"
                       value={couponSortOrder}
                       onChange={(e) => {
                         setCouponSortOrder(e.target.value);
@@ -827,7 +827,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                       <option value="oldest">Cũ nhất</option>
                     </select>
                   </div>
-                  <button className="btn-search" onClick={handleCouponSearch}>
+                  <button className="coupon-btn-search" onClick={handleCouponSearch}>
                     Tìm kiếm
                   </button>
                 </div>
@@ -835,8 +835,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
 
               {/* Coupons List */}
               {filteredCoupons.length === 0 ? (
-                <div className="empty-state">
-                  <GridIcon className="empty-state-icon" />
+                <div className="coupon-empty-state">
+                  <GridIcon className="coupon-empty-state-icon" />
                   <h3>Chưa có coupon nào</h3>
                   <p>Bạn chưa tạo coupon nào. Hãy tạo coupon mới để bắt đầu!</p>
                   <Button variant="default" onClick={() => setIsCreateCouponModalOpen(true)}>
@@ -845,8 +845,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                 </div>
               ) : (
                 <>
-                  <div className="coupons-table-container">
-                    <table className="coupons-table">
+                  <div className="coupon-coupons-table-container">
+                    <table className="coupon-coupons-table">
                       <thead>
                         <tr>
                           <th>Mã giảm giá</th>
@@ -867,9 +867,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                           if (currentPageCoupons.length === 0) {
                             return (
                               <tr>
-                                <td colSpan={6} className="empty-state-cell">
-                                  <div className="empty-state">
-                                    <GridIcon className="empty-state-icon" />
+                                <td colSpan={6} className="coupon-empty-state-cell">
+                                  <div className="coupon-empty-state">
+                                    <GridIcon className="coupon-empty-state-icon" />
                                     <h3>Chưa có coupon nào</h3>
                                     <p>Bạn chưa tạo coupon nào. Hãy tạo coupon mới để bắt đầu!</p>
                                   </div>
@@ -883,25 +883,25 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                             
                             return (
                               <tr key={coupon.Id || coupon.id}>
-                                <td className="coupon-code-cell">
+                                <td className="coupon-coupon-code-cell">
                                   <strong>{coupon.Code || coupon.code}</strong>
                                 </td>
-                                <td className="coupon-description-cell">
+                                <td className="coupon-coupon-description-cell">
                                   {coupon.Description || coupon.description || 'Không có'}
                                 </td>
-                                <td className="coupon-discount-cell">
+                                <td className="coupon-coupon-discount-cell">
                                   {formatDiscount(coupon)}
                                 </td>
-                                <td className="coupon-date-cell">
+                                <td className="coupon-coupon-date-cell">
                                   {formatDateRange(coupon)}
                                 </td>
-                                <td className="coupon-status-cell">
-                                  <Badge className={`status-badge ${statusDisplay.className}`}>
+                                <td className="coupon-coupon-status-cell">
+                                  <Badge className={`coupon-status-badge ${statusDisplay.className}`}>
                                     {statusDisplay.text}
                                   </Badge>
                                 </td>
-                                <td className="coupon-actions-cell">
-                                  <div className="coupon-table-actions">
+                                <td className="coupon-coupon-actions-cell">
+                                  <div className="coupon-coupon-table-actions">
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -934,10 +934,10 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                     if (totalPages <= 1) return null;
 
                     return (
-                      <div className="pagination">
+                      <div className="coupon-pagination">
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="coupon-pagination-btn"
                           onClick={() => {
                             const newPage = Math.max(1, couponCurrentPage - 1);
                             setCouponCurrentPage(newPage);
@@ -948,13 +948,13 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                           <span>←</span> Trước
                         </button>
                         
-                        <div className="pagination-controls">
-                          <div className="pagination-numbers">
+                        <div className="coupon-pagination-controls">
+                          <div className="coupon-pagination-numbers">
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
                                 type="button"
-                                className={`pagination-number ${couponCurrentPage === page ? 'active' : ''}`}
+                                className={`coupon-pagination-number ${couponCurrentPage === page ? 'coupon-active' : ''}`}
                                 onClick={() => {
                                   setCouponCurrentPage(page);
                                   setCouponPageInput('');
@@ -997,7 +997,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                         
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="coupon-pagination-btn"
                           onClick={() => {
                             const newPage = Math.min(totalPages, couponCurrentPage + 1);
                             setCouponCurrentPage(newPage);
@@ -1015,10 +1015,10 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
             </>
           ) : (
             /* Promotions List in Coupon Tab */
-            <div className="promotions-list">
+            <div className="coupon-promotions-list">
               {couponRankRules.length === 0 ? (
-                <div className="empty-state">
-                  <GridIcon className="empty-state-icon" />
+                <div className="coupon-empty-state">
+                  <GridIcon className="coupon-empty-state-icon" />
                   <h3>Chưa có ưu đãi nào</h3>
                   <p>Bạn chưa áp dụng ưu đãi cho coupon nào. Hãy tạo ưu đãi mới để bắt đầu!</p>
                   {onApplyPromotionClick && (
@@ -1029,8 +1029,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                 </div>
               ) : (
                 <>
-                  <div className="promotions-table">
-                    <table className="promotions-table-content">
+                  <div className="coupon-promotions-table">
+                    <table className="coupon-promotions-table-content">
                       <thead>
                         <tr>
                           <th>Mã giảm giá</th>
@@ -1056,22 +1056,22 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                             
                             return (
                               <tr key={ruleId}>
-                                <td className="service-name-cell">
-                                  <span className="service-name-text" title={couponCode}>
+                                <td className="coupon-service-name-cell">
+                                  <span className="coupon-service-name-text" title={couponCode}>
                                     {couponCode}
                                   </span>
                                 </td>
                                 <td>
-                                  <span className={`rank-badge rank-${rankId.toLowerCase().replace(/\s+/g, '-')}`}>
+                                  <span className={`coupon-rank-badge coupon-rank-${rankId.toLowerCase().replace(/\s+/g, '-')}`}>
                                     {rankId || 'Không có'}
                                   </span>
                                 </td>
-                                <td className="user-type-cell">
+                                <td className="coupon-user-type-cell">
                                   {userType || 'Không có'}
                                 </td>
                                 <td>
                                   <button
-                                    className="btn-delete-rule"
+                                    className="coupon-btn-delete-rule"
                                     onClick={() => {
                                       setCouponRankRules(prev => prev.filter((r: any) => (r.RuleID || r.ruleId || r.id) !== ruleId));
                                       const newTotalPages = Math.ceil((couponRankRules.length - 1) / couponPromotionItemsPerPage);
@@ -1097,10 +1097,10 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                     if (totalPages <= 1) return null;
                     
                     return (
-                      <div className="pagination">
+                      <div className="coupon-pagination">
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="coupon-pagination-btn"
                           onClick={() => {
                             const newPage = Math.max(1, couponPromotionCurrentPage - 1);
                             setCouponPromotionCurrentPage(newPage);
@@ -1111,13 +1111,13 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                           <span>←</span> Trước
                         </button>
                         
-                        <div className="pagination-controls">
-                          <div className="pagination-numbers">
+                        <div className="coupon-pagination-controls">
+                          <div className="coupon-pagination-numbers">
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                               <button
                                 key={page}
                                 type="button"
-                                className={`pagination-number ${couponPromotionCurrentPage === page ? 'active' : ''}`}
+                                className={`coupon-pagination-number ${couponPromotionCurrentPage === page ? 'coupon-active' : ''}`}
                                 onClick={() => {
                                   setCouponPromotionCurrentPage(page);
                                   setCouponPromotionPageInput('');
@@ -1160,7 +1160,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                         
                         <button
                           type="button"
-                          className="pagination-btn"
+                          className="coupon-pagination-btn"
                           onClick={() => {
                             const newPage = Math.min(totalPages, couponPromotionCurrentPage + 1);
                             setCouponPromotionCurrentPage(newPage);
