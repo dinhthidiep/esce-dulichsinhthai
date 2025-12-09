@@ -413,7 +413,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 const isConfirmed = status === 'confirmed';
                 
                 return (
-                  <div key={bookingId} className="booking-mgr-booking-card card">
+                  <div key={bookingId} className="booking-mgr-booking-card ui-card">
                     <div className="booking-mgr-booking-card-content">
                       {/* Part 1: Main Info */}
                       <div className="booking-mgr-booking-card-main">

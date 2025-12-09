@@ -141,9 +141,9 @@ const LoginForm = () => {
         // Chuyển hướng đến trang landing page
         navigate('/', { replace: true })
       }
-    } catch (login-error) {
-      console.login-error('Login login-error:', login-error)
-      const errorMessage = (login-error as Error).message || 'Đăng nhập thất bại. Vui lòng thử lại!'
+    } catch (error) {
+      console.error('Login error:', error)
+      const errorMessage = (error as Error).message || 'Đăng nhập thất bại. Vui lòng thử lại!'
       setGeneralError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -162,10 +162,10 @@ const LoginForm = () => {
         // Here you would typically send the user data to your backend
         // to create/login the user account
       } else {
-        alert(`Đăng nhập Google thất bại: ${result.login-error}`)
+        alert(`Đăng nhập Google thất bại: ${result.error}`)
       }
-    } catch (login-error) {
-      console.login-error('Google Login Error:', login-error)
+    } catch (error) {
+      console.error('Google Login Error:', error)
       alert('Có lỗi xảy ra khi đăng nhập Google. Vui lòng thử lại!')
     } finally {
       setIsGoogleLoading(false)

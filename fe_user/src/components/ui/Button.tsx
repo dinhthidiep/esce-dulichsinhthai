@@ -20,7 +20,9 @@ const Button = ({
   asChild,
   ...props
 }: ButtonProps) => {
-  const buttonClasses = `btn btn-${variant} btn-${size} ${className}`.trim()
+  const variantClass = `ui-button-${variant}`
+  const sizeClass = `ui-button-${size}`
+  const buttonClasses = ['ui-button', variantClass, sizeClass, className].filter(Boolean).join(' ')
 
   if (asChild && props.to) {
     return (

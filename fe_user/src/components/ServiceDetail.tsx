@@ -803,7 +803,7 @@ const ServiceDetail = () => {
     if (statusLower === 'open') {
       return { text: 'Có sẵn', variant: 'success', color: '#047857' };
     } else if (statusLower === 'closed') {
-      return { text: 'Đã đóng', variant: 'destructive', color: '#dc2626' };
+      return { text: 'Đã đóng', variant: 'danger', color: '#dc2626' };
     } else {
       return { text: 'Đã hủy', variant: 'default', color: '#64748b' };
     }
@@ -892,7 +892,7 @@ const ServiceDetail = () => {
                   </div>
                 )}
                 <Badge 
-                  variant={statusBadge.variant as 'success' | 'default' | 'primary' | 'secondary' | 'sd-danger' | 'sd-warning'} 
+                  variant={statusBadge.variant as 'success' | 'default' | 'primary' | 'secondary' | 'danger' | 'warning'} 
                   className="sd-hero-status-badge"
                   style={{ backgroundColor: statusBadge.color === '#047857' ? '#d1fae5' : statusBadge.color === '#dc2626' ? '#fee2e2' : '#f1f5f9', color: statusBadge.color }}
                 >

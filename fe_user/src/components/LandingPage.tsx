@@ -874,7 +874,7 @@ const LandingPage = () => {
               <div className="cta-buttons">
                 <Link
                   to="/services"
-                  className="btn btn-default btn-lg cta-button-primary"
+                  className="ui-button ui-button-default ui-button-lg cta-button-primary"
                   aria-label="Khám phá các dịch vụ du lịch ngay"
                 >
                   Khám phá dịch vụ ngay
@@ -882,7 +882,7 @@ const LandingPage = () => {
                 </Link>
                 <Link
                   to="/about"
-                  className="btn btn-outline btn-lg cta-button-secondary"
+                  className="ui-button ui-button-outline ui-button-lg cta-button-secondary"
                   aria-label="Tìm hiểu thêm về ESCE"
                 >
                   Tìm hiểu thêm

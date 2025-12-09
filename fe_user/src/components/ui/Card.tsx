@@ -8,7 +8,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card = ({ children, className = '', ...props }: CardProps) => {
   return (
-    <div className={`card ${className}`.trim()} {...props}>
+    <div className={`ui-card ${className}`.trim()} {...props}>
       {children}
     </div>
   )
@@ -21,7 +21,7 @@ interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const CardContent = ({ children, className = '', ...props }: CardContentProps) => {
   return (
-    <div className={`card-content ${className}`.trim()} {...props}>
+    <div className={`ui-card-content ${className}`.trim()} {...props}>
       {children}
     </div>
   )

@@ -1548,8 +1548,8 @@ const ProfilePage = () => {
                       const serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
                       
                       return (
-                        <div key={bookingId} className="profile-booking-card card">
-                          <div className="card-content">
+                        <div key={bookingId} className="profile-booking-card ui-card">
+                          <div className="ui-card-content">
                             <div className="profile-booking-card-content">
                               <div className="profile-booking-card-left">
                                 <div className="profile-booking-image">
@@ -1941,8 +1941,8 @@ const ProfilePage = () => {
                       } catch (err) {
                         console.error(' ProfilePage: Lỗi khi render review:', err, review);
                         return (
-                          <div key={`error-${index}`} className="profile-review-card card">
-                            <div className="card-content">
+                          <div key={`error-${index}`} className="profile-review-card ui-card">
+                            <div className="ui-card-content">
                               <p>Lỗi khi hiển thị đánh giá này</p>
                             </div>
                           </div>

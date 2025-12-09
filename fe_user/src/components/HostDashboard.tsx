@@ -79,7 +79,7 @@ const HostDashboard = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [host-error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -191,8 +191,8 @@ const HostDashboard = () => {
         }
       }
       return null;
-    } catch (host-error) {
-      console.host-error('Error getting user ID:', host-error);
+    } catch (err) {
+      console.error('Error getting user ID:', err);
       return null;
     }
   }, []);
@@ -253,7 +253,7 @@ const HostDashboard = () => {
         // Lưu original data để so sánh thay đổi
         originalFormDataRef.current = JSON.stringify(initialFormData);
       } catch (err) {
-        console.host-error(' Lỗi khi tải thông tin user:', err);
+        console.error(' Lỗi khi tải thông tin user:', err);
         if (err.response?.status === 401 || err.response?.status === 403) {
           setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.');
           navigate('/login', { state: { returnUrl: '/profile' } });
@@ -427,9 +427,9 @@ const HostDashboard = () => {
         userType: ''
       });
       setApplyPromotionErrors({});
-    } catch (host-error) {
-      console.host-error('Error applying promotion:', host-error);
-      setError(host-error.message || 'Có lỗi xảy ra khi áp dụng ưu đãi. Vui lòng thử lại.');
+    } catch (err) {
+      console.error('Error applying promotion:', err);
+      setError((err as Error).message || 'Có lỗi xảy ra khi áp dụng ưu đãi. Vui lòng thử lại.');
       setTimeout(() => setError(null), 5000);
     } finally {
       setIsApplyingPromotion(false);
@@ -546,8 +546,8 @@ const HostDashboard = () => {
       setSuccess(null);
     }
     
-    // Clear host-error message khi bắt đầu nhập
-    if (host-error && !host-error.includes('không có quyền')) {
+    // Clear error message khi bắt đầu nhập
+    if (error && !error.includes('không có quyền')) {
       setError(null);
     }
   };
@@ -786,7 +786,7 @@ const HostDashboard = () => {
           // Trigger custom event để Header tự động cập nhật
           window.dispatchEvent(new CustomEvent('userStorageChange'));
         } catch (err) {
-          console.host-error('Error updating localStorage:', err);
+          console.error('Error updating localStorage:', err);
         }
       }
 
@@ -807,19 +807,19 @@ const HostDashboard = () => {
       // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      console.host-error(' HostDashboard.handleSave: Lỗi khi cập nhật thông tin:', err);
-      console.host-error('   Error type:', err.constructor.name);
-      console.host-error('   Response status:', err.response?.status);
-      console.host-error('   Response data:', JSON.stringify(err.response?.data, null, 2));
-      console.host-error('   Response headers:', err.response?.headers);
-      console.host-error('   Error message:', err.message);
+      console.error(' HostDashboard.handleSave: Lỗi khi cập nhật thông tin:', err);
+      console.error('   Error type:', err.constructor.name);
+      console.error('   Response status:', err.response?.status);
+      console.error('   Response data:', JSON.stringify(err.response?.data, null, 2));
+      console.error('   Response headers:', err.response?.headers);
+      console.error('   Error message:', err.message);
       
       if (err.response?.status === 401 || err.response?.status === 403) {
         const errorMsg = 'Bạn không có quyền cập nhật thông tin. Vui lòng đăng nhập lại.';
         setError(errorMsg);
         navigate('/login', { state: { returnUrl: '/profile' } });
       } else if (err.response?.status === 400) {
-        // Backend trả về BadRequest với object { message, host-error, innerException }
+        // Backend trả về BadRequest với object { message, error, innerException }
         // Hoặc có thể là string trong một số trường hợp cũ
         let errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
         
@@ -964,7 +964,7 @@ const HostDashboard = () => {
     );
   }
 
-  if (host-error && !userInfo) {
+  if (error && !userInfo) {
     return (
       <>
         <Header />
@@ -972,7 +972,7 @@ const HostDashboard = () => {
           <div className="host-profile-container">
             <div className="host-error-container">
               <h2>Không thể tải thông tin</h2>
-              <p>{host-error}</p>
+              <p>{error}</p>
               <Button variant="default" onClick={() => navigate('/')}>
                 Về trang chủ
               </Button>
@@ -1085,12 +1085,12 @@ const HostDashboard = () => {
               )}
             </div>
 
-            {host-error && (
+            {error && (
               <div className="host-alert host-alert-error" role="host-alert">
                 <AlertCircleIcon className="host-alert-icon" />
                 <div className="host-alert-content">
                   <strong>Lỗi</strong>
-                  <p>{host-error}</p>
+                  <p>{error}</p>
                 </div>
               </div>
             )}

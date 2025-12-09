@@ -151,7 +151,7 @@ const Header = () => {
   }
 
   return (
-    <header-header className={`header-header ${isScrolled ? 'header-scrolled' : ''}`}>
+    <header className={`header-header ${isScrolled ? 'header-scrolled' : ''}`}>
       <div className="header-header-container">
         {/* Logo */}
         <Link to="/" className="header-logo-section">
@@ -308,7 +308,7 @@ const Header = () => {
           )}
         </div>
       </div>
-    </header-header>
+    </header>
   )
 }
 

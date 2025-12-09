@@ -144,9 +144,9 @@ const RegisterHost = () => {
           paymentMethod: 'free'
         }
       })
-    } catch (reg-host-error: any) {
+    } catch (error: any) {
       setErrors({
-        submit: reg-host-error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+        submit: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
       })
     } finally {
       setLoading(false)

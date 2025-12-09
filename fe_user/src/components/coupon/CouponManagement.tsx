@@ -285,8 +285,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         if (onSuccess) {
           onSuccess('Coupon đã được xóa thành công!');
         }
-      } catch (coupon-error) {
-        console.coupon-error('Error deleting coupon:', coupon-error);
+      } catch (err) {
+        console.error('Error deleting coupon:', err);
         if (onError) {
           onError('Có lỗi xảy ra khi xóa coupon. Vui lòng thử lại.');
         }
@@ -476,9 +476,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     const newErrors = {};
     Object.keys(createCouponFormData).forEach(key => {
       if (key !== 'discountType') {
-        const coupon-error = validateCreateCouponField(key, createCouponFormData[key]);
-        if (coupon-error) {
-          newErrors[key] = coupon-error;
+        const fieldError = validateCreateCouponField(key, createCouponFormData[key]);
+        if (fieldError) {
+          newErrors[key] = fieldError;
         }
       }
     });
@@ -683,9 +683,9 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     const newErrors = {};
     Object.keys(editCouponFormData).forEach(key => {
       if (key !== 'discountType' && key !== 'isActive') {
-        const coupon-error = validateEditCouponField(key, editCouponFormData[key]);
-        if (coupon-error) {
-          newErrors[key] = coupon-error;
+        const fieldError = validateEditCouponField(key, editCouponFormData[key]);
+        if (fieldError) {
+          newErrors[key] = fieldError;
         }
       }
     });

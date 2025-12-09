@@ -8,7 +8,7 @@ const ServiceManager = () => {
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [srv-mgr-error, setError] = useState("");
+    const [error, setError] = useState("");
     const [filterName, setFilterName] = useState("");
     const [sortOrder, setSortOrder] = useState("newest");
     const [userInfo, setUserInfo] = useState(null);
@@ -33,8 +33,8 @@ const ServiceManager = () => {
                 setFilteredServices((prevFiltered) =>
                     prevFiltered.filter((s) => (s.Id || s.id) !== serviceId)
                 );
-            } catch (srv-mgr-error) {
-                console.srv-mgr-error("Error deleting service:", srv-mgr-error);
+            } catch (err) {
+                console.error("Error deleting service:", err);
                 alert("Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.");
             }
         }
@@ -78,7 +78,7 @@ const ServiceManager = () => {
             return;
         }
 
-        // Reset loading and srv-mgr-error
+        // Reset loading and error
         setLoading(true);
         setError("");
 
@@ -105,9 +105,9 @@ const ServiceManager = () => {
                     }
                 }
             } catch (e) {
-                console.srv-mgr-error("Error loading services:", e);
+                console.error("Error loading services:", e);
                 if (mounted) {
-                    // If authentication srv-mgr-error, redirect to login
+                    // If authentication error, redirect to login
                     if (e.message && e.message.includes("Authentication")) {
                         localStorage.removeItem("token");
                         localStorage.removeItem("userInfo");
@@ -211,23 +211,16 @@ const ServiceManager = () => {
                         </button>
                     </div>
                     {(() => {
-                        console.log(
-                            "Render check - loading:",
-                            loading,
-                            "srv-mgr-error:",
-                            srv-mgr-error,
-                            "filteredServices.length:",
-                            filteredServices.length
-                        );
+                        console.log("Render check - loading:", loading, "error:", error, "filteredServices.length:", filteredServices.length);
                         return null;
                     })()}
                     {loading && <div>Đang tải...</div>}
-                    {srv-mgr-error && (
+                    {error && (
                         <div className="srv-mgr-error" role="alert">
-                            {srv-mgr-error}
+                            {error}
                         </div>
                     )}
-                    {!loading && !srv-mgr-error && (
+                    {!loading && !error && (
                         <div className="srv-mgr-services-grid">
                             {(() => {
                                 console.log(

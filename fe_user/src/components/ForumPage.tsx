@@ -117,7 +117,7 @@ const ForumPage = () => {
   const [posts, setPosts] = useState<Post[]>([])
   const [savedPosts, setSavedPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [forum-error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [userReactions, setUserReactions] = useState<Record<string, number>>({}) // postId -> reactionTypeId
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
@@ -168,8 +168,8 @@ const ForumPage = () => {
       try {
         const user = JSON.parse(userInfoStr) as UserInfo
         setUserInfo(user)
-      } catch (forum-error) {
-        console.forum-error('Error parsing userInfo:', forum-error)
+      } catch (err) {
+        console.error('Error parsing userInfo:', err)
       }
     }
   }
@@ -445,7 +445,7 @@ const ForumPage = () => {
       setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
       setPosts(postsWithUserStatus)
     } catch (err: any) {
-      console.forum-error('Error fetching posts:', err)
+      console.error('Error fetching posts:', err)
       setError(err.response?.data?.message || 'Không thể tải bài viết. Vui lòng thử lại sau.')
       setPosts([])
     } finally {
@@ -473,13 +473,13 @@ const ForumPage = () => {
         : getSavedPostIds()
       
       // Normalize và filter những bài đã save
-      const forum-saved = approvedPosts
+      const savedApprovedPosts = approvedPosts
         .map((post) => normalizePost(post))
         .filter((post) => savedPostIds.includes(post.PostId || ''))
       
       // Kiểm tra user đã like chưa
       const userId = userInfo.Id || userInfo.id
-      const savedWithUserStatus = forum-saved.map((post) => {
+      const savedWithUserStatus = savedApprovedPosts.map((post) => {
         const userReaction = post.Likes?.find(
           (like) => like.AccountId === String(userId)
         )
@@ -515,31 +515,31 @@ const ForumPage = () => {
       
       setSavedPosts(savedWithUserStatus)
     } catch (err: any) {
-      console.forum-error('Error fetching forum-saved posts:', err)
+      console.error('Error fetching forum-saved posts:', err)
       setSavedPosts([])
     }
   }
 
   const getSavedPostIds = (): string[] => {
     try {
-      const forum-saved = localStorage.getItem('savedPostIds')
-      return forum-saved ? JSON.parse(forum-saved) : []
+      const forumSaved = localStorage.getItem('savedPostIds')
+      return forumSaved ? JSON.parse(forumSaved) : []
     } catch {
       return []
     }
   }
 
   const savePostId = (postId: string) => {
-    const forum-saved = getSavedPostIds()
-    if (!forum-saved.includes(postId)) {
-      forum-saved.push(postId)
-      localStorage.setItem('savedPostIds', JSON.stringify(forum-saved))
+    const forumSaved = getSavedPostIds()
+    if (!forumSaved.includes(postId)) {
+      forumSaved.push(postId)
+      localStorage.setItem('savedPostIds', JSON.stringify(forumSaved))
     }
   }
 
   const removePostId = (postId: string) => {
-    const forum-saved = getSavedPostIds()
-    const filtered = forum-saved.filter((id) => id !== postId)
+    const forumSaved = getSavedPostIds()
+    const filtered = forumSaved.filter((id) => id !== postId)
     localStorage.setItem('savedPostIds', JSON.stringify(filtered))
   }
 
@@ -728,9 +728,9 @@ const ForumPage = () => {
         [postId]: false,
       }))
     } catch (err: any) {
-      console.forum-error('Error reacting to post:', err)
+      console.error('Error reacting to post:', err)
       
-      // Revert optimistic update on forum-error
+      // Revert optimistic update on error
       setPosts(previousPosts)
       setSavedPosts(previousSavedPosts)
       setUserReactions(previousUserReactions)
@@ -741,7 +741,7 @@ const ForumPage = () => {
         await fetchSavedPosts(true)
       }
       
-      console.forum-error('Error reacting to post:', err.response?.data?.message || err.message)
+      console.error('Error reacting to post:', err.response?.data?.message || err.message)
     }
   }
 
@@ -825,8 +825,8 @@ const ForumPage = () => {
       setSavedPosts((prev) => prev.filter((post) => post.PostId !== postId))
       removePostId(postId)
     } catch (err: any) {
-      console.forum-error('Error deleting post:', err)
-      // Revert deletion on forum-error
+      console.error('Error deleting post:', err)
+      // Revert deletion on error
       await fetchPosts()
       if (activeTab === 'forum-saved') {
         await fetchSavedPosts()
@@ -885,7 +885,7 @@ const ForumPage = () => {
         await fetchSavedPosts()
       }
     } catch (err: any) {
-      console.forum-error('Error updating post:', err)
+      console.error('Error updating post:', err)
       setFormErrors({ submit: err.response?.data?.message || 'Không thể cập nhật bài viết. Vui lòng thử lại.' })
     } finally {
       setSubmittingPost(false)
@@ -933,7 +933,7 @@ const ForumPage = () => {
       // Refresh posts
       await fetchPosts()
     } catch (err: any) {
-      console.forum-error('Error creating post:', err)
+      console.error('Error creating post:', err)
       setFormErrors({ submit: err.response?.data?.message || 'Không thể đăng bài viết. Vui lòng thử lại.' })
     } finally {
       setSubmittingPost(false)
@@ -946,7 +946,7 @@ const ForumPage = () => {
       const reader = new FileReader()
       reader.readAsDataURL(file)
       reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (forum-error) => reject(forum-error)
+      reader.onerror = (err) => reject(err)
     })
   }
 
@@ -1047,7 +1047,7 @@ const ForumPage = () => {
 
     const postIdNum = parseInt(postId)
     if (isNaN(postIdNum)) {
-      console.forum-error('Invalid postId:', postId)
+      console.error('Invalid postId:', postId)
       return
     }
 
@@ -1114,9 +1114,9 @@ const ForumPage = () => {
         }
       }
     } catch (err: any) {
-      console.forum-error('Error saving post:', err)
+      console.error('Error saving post:', err)
       
-      // Kiểm tra forum-error message từ backend
+      // Kiểm tra error message từ backend
       const errorMessage = err.response?.data?.message || err.message || ''
       const isAlreadyUnsaved = errorMessage.includes('Bài viết chưa được lưu') || errorMessage.includes('chưa được lưu')
       const isAlreadySaved = errorMessage.includes('đã lưu bài viết này rồi') || errorMessage.includes('đã lưu')
@@ -1233,7 +1233,7 @@ const ForumPage = () => {
       // Refresh posts để lấy comment mới từ server nhưng giữ lại isSaved state
       await fetchPosts(true)
     } catch (err: any) {
-      console.forum-error('Error commenting:', err)
+      console.error('Error commenting:', err)
       // Revert optimistic update
       await fetchPosts(true)
     } finally {
@@ -1286,7 +1286,7 @@ const ForumPage = () => {
         return newInputs
       })
     } catch (err: any) {
-      console.forum-error('Error updating comment:', err)
+      console.error('Error updating comment:', err)
       alert(err.response?.data?.message || 'Không thể cập nhật bình luận. Vui lòng thử lại.')
     }
   }
@@ -1311,7 +1311,7 @@ const ForumPage = () => {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.forum-error('Error deleting comment:', err)
+      console.error('Error deleting comment:', err)
       alert(err.response?.data?.message || 'Không thể xóa bình luận. Vui lòng thử lại.')
     } finally {
       setDeletingComment(null)
@@ -1402,7 +1402,7 @@ const ForumPage = () => {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.forum-error('Error replying to comment:', err)
+      console.error('Error replying to comment:', err)
       // Revert optimistic update
       await fetchPosts(true)
       if (activeTab === 'forum-saved') {
@@ -1437,7 +1437,7 @@ const ForumPage = () => {
         await fetchSavedPosts(true)
       }
     } catch (err: any) {
-      console.forum-error('Error reacting to comment:', err)
+      console.error('Error reacting to comment:', err)
       // Không hiển thị alert cho lỗi "đã thích rồi"
       if (!err.response?.data?.message?.includes('đã thích')) {
         alert(err.response?.data?.message || 'Không thể thả cảm xúc. Vui lòng thử lại.')
@@ -1562,10 +1562,10 @@ const ForumPage = () => {
                   <PostCardSkeleton key={idx} />
                 ))}
               </div>
-            ) : forum-error ? (
+            ) : error ? (
               <div className="forum-forum-error-container" role="alert">
                 <h3>❌ Lỗi tải dữ liệu</h3>
-                <p className="forum-error-message">{forum-error}</p>
+                <p className="forum-error-message">{error}</p>
                 <button
                   className="forum-forum-retry-btn"
                   onClick={() => fetchPosts(false)}

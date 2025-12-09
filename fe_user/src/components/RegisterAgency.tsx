@@ -150,9 +150,9 @@ const RegisterAgency = () => {
           certificateId: (response as any)?.agencyId || (response as any)?.id
         }
       })
-    } catch (reg-agency-error: any) {
+    } catch (error: any) {
       setErrors({
-        submit: reg-agency-error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+        submit: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
       })
     } finally {
       setLoading(false)

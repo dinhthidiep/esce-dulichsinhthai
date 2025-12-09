@@ -1,4 +1,4 @@
-.card {
+.ui-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -6,11 +6,11 @@
   transition: box-shadow 0.3s ease;
 }
 
-.card:hover {
+.ui-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.card-content {
+.ui-card-content {
   padding: 1.5rem;
 }
 

@@ -646,8 +646,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                   } catch (err) {
                     console.error('Error rendering review:', err, review);
                     return (
-                      <div key={`error-${index}`} className="review-card card">
-                        <div className="card-content">
+                      <div key={`error-${index}`} className="review-card ui-card">
+                        <div className="ui-card-content">
                           <p>Lỗi khi hiển thị đánh giá này</p>
                         </div>
                       </div>

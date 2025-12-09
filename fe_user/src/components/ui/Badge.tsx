@@ -9,7 +9,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Badge = ({ children, variant = 'default', className = '', ...props }: BadgeProps) => {
   return (
-    <span className={`badge badge-${variant} ${className}`.trim()} {...props}>
+    <span className={['ui-badge', `ui-badge-${variant}`, className].filter(Boolean).join(' ')} {...props}>
       {children}
     </span>
   )

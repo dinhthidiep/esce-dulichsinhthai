@@ -8,7 +8,7 @@ const ForgotPassword = () => {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [fp-error, setError] = useState('')
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,7 +28,7 @@ const ForgotPassword = () => {
       // Chuyển đến màn hình OTP với type=forgot-password
       navigate(`/otp-verification?email=${encodeURIComponent(email)}&type=forgot-password`)
     } catch (err) {
-      console.fp-error('Forgot password fp-error:', err)
+      console.error('Forgot password error:', err)
       setError((err as Error).message || 'Không thể gửi mã OTP. Vui lòng thử lại.')
       setLoading(false)
     }
@@ -55,10 +55,10 @@ const ForgotPassword = () => {
               placeholder="nhập email của bạn"
               value={email}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              className={fp-error ? 'fp-error' : ''}
+              className={error ? 'fp-error' : ''}
             />
           </div>
-          {fp-error && <span className="fp-error-message">{fp-error}</span>}
+          {error && <span className="fp-error-message">{error}</span>}
 
           <button type="submit" className={`fp-login-button ${loading ? 'loading' : ''}`} disabled={loading}>
             {loading ? (

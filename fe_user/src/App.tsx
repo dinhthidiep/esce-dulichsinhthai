@@ -37,10 +37,12 @@ import BookingManager from '~/components/BookingManager'
 import CouponManager from '~/components/CouponManager'
 import Revenue from '~/components/Revenue'
 import ReviewManager from '~/components/ReviewManager'
+import Support from '~/components/support/Support'
 
 function App() {
   return (
     <BrowserRouter>
+      <Support />
       <Suspense fallback={
         <div style={{ 
           display: 'flex', 
