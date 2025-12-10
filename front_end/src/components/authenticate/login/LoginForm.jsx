@@ -18,7 +18,7 @@ const LoginForm = () => {
   useEffect(() => {
     const initGoogle = () => {
       if (!window.google || !window.google.accounts || !window.google.accounts.id) return
-      
+
       // Initialize Google OAuth
       window.google.accounts.id.initialize({
         client_id: '772898465184-2lct3e00mcjggjn5tm33m95bquejphv2.apps.googleusercontent.com',
@@ -26,7 +26,7 @@ const LoginForm = () => {
           try {
             setGeneralError('')
             const idToken = response.credential
-            
+
             if (!idToken) {
               setGeneralError('Không nhận được token từ Google. Vui lòng thử lại!')
               return
@@ -40,14 +40,17 @@ const LoginForm = () => {
             })
 
             if (!res.ok) {
-              const errorMessage = await extractErrorMessage(res, 'Không thể đăng nhập với Google. Vui lòng thử lại!')
+              const errorMessage = await extractErrorMessage(
+                res,
+                'Không thể đăng nhập với Google. Vui lòng thử lại!'
+              )
               setGeneralError(errorMessage)
               console.error('Google login failed:', res.status, errorMessage)
               return
             }
 
             const data = await res.json()
-            
+
             // Kiểm tra token
             const token = data?.token || data?.Token
             if (!token) {
@@ -67,9 +70,14 @@ const LoginForm = () => {
             navigate('/')
           } catch (err) {
             // Bỏ qua lỗi network/fetch và cho phép đăng nhập mock
-            if (err.message && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch'))) {
+            if (
+              err.message &&
+              (err.message.includes('fetch') ||
+                err.message.includes('network') ||
+                err.message.includes('Failed to fetch'))
+            ) {
               console.warn('Network error ignored in Google OAuth, using mock login:', err)
-              
+
               // Decode JWT token để lấy thông tin user từ Google
               try {
                 const base64Url = idToken.split('.')[1]
@@ -81,7 +89,7 @@ const LoginForm = () => {
                     .join('')
                 )
                 const googleUser = JSON.parse(jsonPayload)
-                
+
                 // Tạo mock user info từ Google data
                 const mockUserInfo = {
                   userId: googleUser.sub || 'google_' + Date.now(),
@@ -91,11 +99,11 @@ const LoginForm = () => {
                   roleId: 2, // Default user role
                   phoneNumber: ''
                 }
-                
+
                 // Lưu mock token và userInfo
                 localStorage.setItem('token', 'MOCK_GOOGLE_TOKEN_' + Date.now())
                 localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
-                
+
                 console.log('✅ Mock Google login successful:', mockUserInfo)
                 navigate('/')
                 return
@@ -120,7 +128,7 @@ const LoginForm = () => {
           }
         }
       })
-      
+
       // Render button when ref is available
       const renderButton = () => {
         if (googleBtnRef.current && window.google?.accounts?.id) {
@@ -135,14 +143,14 @@ const LoginForm = () => {
           })
         }
       }
-      
+
       // Try to render immediately
       renderButton()
-      
+
       // Also try after a short delay in case ref isn't ready yet
       setTimeout(renderButton, 100)
     }
-    
+
     // If script already loaded
     if (window.google && window.google.accounts && window.google.accounts.id) {
       initGoogle()
@@ -221,7 +229,12 @@ const LoginForm = () => {
       navigate('/')
     } catch (error) {
       // Bỏ qua lỗi network/fetch
-      if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch'))) {
+      if (
+        error.message &&
+        (error.message.includes('fetch') ||
+          error.message.includes('network') ||
+          error.message.includes('Failed to fetch'))
+      ) {
         console.warn('Network error ignored:', error)
         // Cho phép đăng nhập thành công (mock) khi không có backend
         navigate('/')
