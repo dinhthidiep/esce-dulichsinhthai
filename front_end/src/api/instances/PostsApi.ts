@@ -41,10 +41,8 @@ export interface UpdatePostDto {
   posterName?: string
 }
 
-// ============================
-// MOCK DATA (không cần backend)
-// ============================
-const USE_MOCK_POSTS = true
+// Kết nối backend thật
+const USE_MOCK_POSTS = false
 
 const MOCK_POSTS: PostDto[] = [
   {

@@ -35,10 +35,8 @@ export type HostCertificate = {
 
 export type CertificateType = 'Agency' | 'Host'
 
-// ============================
-// MOCK DATA (không cần backend)
-// ============================
-const USE_MOCK_ROLE_UPGRADE = true
+// Kết nối backend thật
+const USE_MOCK_ROLE_UPGRADE = false
 
 const MOCK_AGENCY_CERTIFICATES: AgencyCertificate[] = [
   {

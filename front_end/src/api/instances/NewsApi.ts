@@ -26,10 +26,8 @@ export interface UpdateNewsDto {
   images?: string[]
 }
 
-// ============================
-// MOCK DATA (không cần backend)
-// ============================
-const USE_MOCK_NEWS = true
+// Kết nối backend thật
+const USE_MOCK_NEWS = false
 
 const MOCK_NEWS: NewsDto[] = [
   {

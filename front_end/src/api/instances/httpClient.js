@@ -4,58 +4,15 @@
 const backend_url_https = "https://localhost:7267";
 const backend_url_http = "http://localhost:5002";
 
-// ============================
-// ⚠️ TẠM THỜI TẮT KẾT NỐI BACKEND
-// ============================
-// Đặt về false hoặc xóa dòng này khi bạn muốn kết nối lại server / database
-export const DISABLE_BACKEND = true;
+// Kết nối trực tiếp backend
+export const DISABLE_BACKEND = false;
 
 export const getAuthToken = () => {
   const stored = localStorage.getItem("token") || "";
-  // Khi backend tắt, nếu chưa đăng nhập thì vẫn trả về token giả để tránh lỗi
-  if (!stored && DISABLE_BACKEND) {
-    return "MOCK_TOKEN";
-  }
   return stored;
 };
 
 export const fetchWithFallback = async (url, options = {}, useHttps = true) => {
-  // Nếu đang tắt backend thì KHÔNG gọi fetch, trả về response giả để UI vẫn chạy
-  if (DISABLE_BACKEND) {
-    const method = (options.method || "GET").toUpperCase();
-    console.warn("[httpClient] Backend DISABLED, returning mock response:", {
-      url,
-      method,
-    });
-
-    // Tạo response giả
-    if (method === "GET") {
-      // Các API GET thường trả về list => [] cho an toàn
-      return new Response("[]", {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (method === "DELETE") {
-      // Xóa thì trả 204 no content
-      return new Response(null, {
-        status: 204,
-      });
-    }
-
-    // POST / PUT: trả lại body hoặc null
-    const body =
-      typeof options.body === "string" && options.body.trim()
-        ? options.body
-        : "null";
-
-    return new Response(body, {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   const baseUrl = useHttps ? backend_url_https : backend_url_http;
   const fullUrl = `${baseUrl}${url}`;
 

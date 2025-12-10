@@ -24,10 +24,8 @@ export type SendChatPayload = {
   imageUrl?: string
 }
 
-// ============================
-// MOCK DATA (không cần backend)
-// ============================
-const USE_MOCK_CHAT = true
+// Kết nối backend thật
+const USE_MOCK_CHAT = false
 
 const MOCK_USERS: ChatUser[] = [
   {

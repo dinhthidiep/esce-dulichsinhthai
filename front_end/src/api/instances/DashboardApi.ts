@@ -35,10 +35,8 @@ export interface PopularPostDto {
   createdAt: string | null
 }
 
-// ============================
-// MOCK DATA (không cần backend)
-// ============================
-const USE_MOCK_DASHBOARD = true
+// Kết nối backend thật
+const USE_MOCK_DASHBOARD = false
 
 const MOCK_DASHBOARD: DashboardDto = {
   totalUsers: 1280,

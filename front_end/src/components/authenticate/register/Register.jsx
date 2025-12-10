@@ -74,55 +74,6 @@ const Register = () => {
             // Chuyển đến trang chủ
             navigate('/')
           } catch (err) {
-            // Bỏ qua lỗi network/fetch và cho phép đăng ký/đăng nhập mock
-            if (err.message && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch'))) {
-              console.warn('Network error ignored in Google OAuth, using mock register/login:', err)
-              
-              // Decode JWT token để lấy thông tin user từ Google
-              try {
-                const base64Url = idToken.split('.')[1]
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-                const jsonPayload = decodeURIComponent(
-                  atob(base64)
-                    .split('')
-                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
-                )
-                const googleUser = JSON.parse(jsonPayload)
-                
-                // Tạo mock user info từ Google data
-                const mockUserInfo = {
-                  userId: googleUser.sub || 'google_' + Date.now(),
-                  email: googleUser.email || '',
-                  fullName: googleUser.name || googleUser.given_name || 'Google User',
-                  picture: googleUser.picture || '',
-                  roleId: 2, // Default user role
-                  phoneNumber: form.phone || ''
-                }
-                
-                // Lưu mock token và userInfo
-                localStorage.setItem('token', 'MOCK_GOOGLE_TOKEN_' + Date.now())
-                localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
-                
-                console.log('✅ Mock Google register/login successful:', mockUserInfo)
-                navigate('/')
-                return
-              } catch (decodeErr) {
-                console.error('Failed to decode Google token:', decodeErr)
-                // Fallback: vẫn cho phép đăng ký/đăng nhập với mock data
-                const mockUserInfo = {
-                  userId: 'google_user_' + Date.now(),
-                  email: 'user@gmail.com',
-                  fullName: 'Google User',
-                  roleId: 2,
-                  phoneNumber: form.phone || ''
-                }
-                localStorage.setItem('token', 'MOCK_GOOGLE_TOKEN_' + Date.now())
-                localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
-                navigate('/')
-                return
-              }
-            }
             console.error('Google register/login error:', err)
             const errorMessage = err.message || 'Không thể đăng ký/đăng nhập bằng Google. Vui lòng thử lại!'
             setGeneralError(errorMessage)
