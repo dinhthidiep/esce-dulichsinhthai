@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import Button from '../ui/Button';
 import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon } from '../icons/index';
 import { getImageUrl } from '../../lib/utils';
 import CreateServiceModal from './CreateServiceModal';
 import EditServiceModal from './EditServiceModal';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './ServicesManagement.css';
 
 interface ServicesManagementProps {
@@ -75,44 +77,63 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     return filtered;
   };
 
-  // Load services - use mock data
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
+    }
+  }, []);
+
+  // Load services from API
   useEffect(() => {
-    setLoadingServices(true);
-    
-    // Generate mock services data (30 services)
-    const mockServices = Array.from({ length: 30 }, (_, i) => {
-      const createdDate = new Date(Date.now() - i * 86400000);
-      const updatedDate = new Date(createdDate.getTime() + Math.random() * 86400000);
-      
-      return {
-        Id: `mock-service-${i + 1}`,
-        id: `mock-service-${i + 1}`,
-        Name: `Dịch vụ ${i + 1}`,
-        name: `Dịch vụ ${i + 1}`,
-        Description: `Mô tả dịch vụ ${i + 1}. Đây là một dịch vụ chất lượng cao phục vụ khách hàng.`,
-        description: `Mô tả dịch vụ ${i + 1}. Đây là một dịch vụ chất lượng cao phục vụ khách hàng.`,
-        Price: Math.floor(Math.random() * 5000000) + 1000000,
-        price: Math.floor(Math.random() * 5000000) + 1000000,
-        Images: '/img/banahills.jpg',
-        images: '/img/banahills.jpg',
-        CreatedAt: createdDate.toISOString(),
-        createdAt: createdDate.toISOString(),
-        UpdatedAt: updatedDate.toISOString(),
-        Updated_At: updatedDate.toISOString(),
-        Status: 'svc-admin-active',
-        status: 'svc-admin-active'
-      };
-    });
-    
-    setServices(mockServices);
-    // Apply initial filters
-    const filtered = applyServiceFilters(mockServices, filterName, sortOrder);
-    setFilteredServices(filtered);
-    // Reset svc-admin-pagination when filter changes
-    setServiceCurrentPage(1);
-    setServicePageInput('');
-    setLoadingServices(false);
-  }, [filterName, sortOrder]);
+    const loadServices = async () => {
+      try {
+        setLoadingServices(true);
+        const userId = getUserId();
+        if (!userId) {
+          setServices([]);
+          setFilteredServices([]);
+          setLoadingServices(false);
+          return;
+        }
+
+        // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
+        const response = await axiosInstance.get(API_ENDPOINTS.SERVICE);
+        const allServices = response.data || [];
+        const servicesData = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        setServices(servicesData);
+        const filtered = applyServiceFilters(servicesData, filterName, sortOrder);
+        setFilteredServices(filtered);
+        setServiceCurrentPage(1);
+        setServicePageInput('');
+      } catch (err) {
+        console.error('Error loading services:', err);
+        if (onError) {
+          onError('Không thể tải danh sách dịch vụ. Vui lòng thử lại.');
+        }
+        setServices([]);
+        setFilteredServices([]);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    loadServices();
+  }, [filterName, sortOrder, getUserId, onError]);
 
   // Handle service search
   const handleServiceSearch = () => {
@@ -123,12 +144,19 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
   };
 
   // Handle delete service
-  const handleDeleteService = (serviceId) => {
+  const handleDeleteService = async (serviceId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) {
-      // Remove the deleted item from the list (mock data only)
-      setServices(prevServices => prevServices.filter(s => (s.Id || s.id) !== serviceId));
-      setFilteredServices(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== serviceId));
-      if (onSuccess) onSuccess('Dịch vụ đã được xóa thành công!');
+      try {
+        await axiosInstance.delete(`${API_ENDPOINTS.SERVICE}/${serviceId}`);
+        setServices(prevServices => prevServices.filter(s => (s.Id || s.id) !== serviceId));
+        setFilteredServices(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== serviceId));
+        if (onSuccess) onSuccess('Dịch vụ đã được xóa thành công!');
+      } catch (err) {
+        console.error('Error deleting service:', err);
+        if (onError) {
+          onError('Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.');
+        }
+      }
     }
   };
 
@@ -194,7 +222,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     }
   };
 
-  const handleCreateServiceSubmit = (e) => {
+  const handleCreateServiceSubmit = async (e) => {
     e.preventDefault();
     
     if (isCreatingService) return;
@@ -214,27 +242,31 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       return;
     }
 
-    // Simulate API delay
-    setTimeout(() => {
-      // Create new service with mock data
-      const newService = {
-        Id: `mock-service-${Date.now()}`,
-        id: `mock-service-${Date.now()}`,
-        Name: createServiceFormData.name,
-        name: createServiceFormData.name,
-        Description: createServiceFormData.description || '',
-        description: createServiceFormData.description || '',
-        Price: parseFloat(createServiceFormData.price),
-        price: parseFloat(createServiceFormData.price),
-        Images: imagePreview || '/img/banahills.jpg',
-        images: imagePreview || '/img/banahills.jpg',
-        CreatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        UpdatedAt: new Date().toISOString(),
-        Updated_At: new Date().toISOString(),
-        Status: 'svc-admin-active',
-        status: 'svc-admin-active'
-      };
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        if (onError) {
+          onError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        }
+        setIsCreatingService(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('Name', createServiceFormData.name);
+      formData.append('Description', createServiceFormData.description || '');
+      formData.append('Price', createServiceFormData.price);
+      if (createServiceFormData.image) {
+        formData.append('Image', createServiceFormData.image);
+      }
+      formData.append('HostId', userId.toString());
+
+      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const newService = response.data;
       
       // Add new service to the list
       setServices(prevServices => [newService, ...prevServices]);
@@ -249,8 +281,14 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       setCreateServiceFormData({ name: '', description: '', price: '', image: null });
       setCreateServiceErrors({});
       setImagePreview(null);
+    } catch (err) {
+      console.error('Error creating service:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi tạo dịch vụ. Vui lòng thử lại.');
+      }
+    } finally {
       setIsCreatingService(false);
-    }, 500);
+    }
   };
 
   const handleCloseCreateServiceModal = () => {
@@ -261,17 +299,18 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
   };
 
   // Edit Service Modal handlers
-  const handleOpenEditServiceModal = (serviceId) => {
+  const handleOpenEditServiceModal = async (serviceId) => {
     setEditingServiceId(serviceId);
     setIsEditServiceModalOpen(true);
     setEditServiceErrors({});
     setEditImagePreview(null);
     setLoadingEditServiceData(true);
     
-    // Simulate loading delay
-    setTimeout(() => {
-      // Get service from state (mock data only)
-      const service = services.find(s => (s.Id || s.id) === serviceId);
+    try {
+      // Load service from API
+      const response = await axiosInstance.get(`${API_ENDPOINTS.SERVICE}/${serviceId}`);
+      const service = response.data;
+      
       if (!service) {
         if (onError) onError('Không tìm thấy dịch vụ.');
         setIsEditServiceModalOpen(false);
@@ -299,8 +338,15 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         }
       }
       
+    } catch (err) {
+      console.error('Error loading service:', err);
+      if (onError) {
+        onError('Không thể tải thông tin dịch vụ. Vui lòng thử lại.');
+      }
+      setIsEditServiceModalOpen(false);
+    } finally {
       setLoadingEditServiceData(false);
-    }, 300);
+    }
   };
 
   const handleEditServiceInputChange = (e) => {
@@ -364,7 +410,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     }
   };
 
-  const handleEditServiceSubmit = (e) => {
+  const handleEditServiceSubmit = async (e) => {
     e.preventDefault();
     
     if (isEditingService) return;
@@ -384,25 +430,27 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       return;
     }
 
-    // Simulate API delay
-    setTimeout(() => {
-      // Update service in state (mock data only)
+    try {
+      const formData = new FormData();
+      formData.append('Name', editServiceFormData.name);
+      formData.append('Description', editServiceFormData.description || '');
+      formData.append('Price', editServiceFormData.price);
+      if (editServiceFormData.image) {
+        formData.append('Image', editServiceFormData.image);
+      }
+
+      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE}/${editingServiceId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const updatedService = response.data;
+      
+      // Update services
       setServices(prevServices => 
         prevServices.map(s => {
           if ((s.Id || s.id) === editingServiceId) {
-            return {
-              ...s,
-              Name: editServiceFormData.name,
-              name: editServiceFormData.name,
-              Description: editServiceFormData.description || '',
-              description: editServiceFormData.description || '',
-              Price: parseFloat(editServiceFormData.price),
-              price: parseFloat(editServiceFormData.price),
-              Images: editImagePreview || s.Images || '/img/banahills.jpg',
-              images: editImagePreview || s.images || '/img/banahills.jpg',
-              UpdatedAt: new Date().toISOString(),
-              Updated_At: new Date().toISOString()
-            };
+            return updatedService;
           }
           return s;
         })
@@ -411,19 +459,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       // Update filtered services
       const updatedServices = services.map(s => {
         if ((s.Id || s.id) === editingServiceId) {
-          return {
-            ...s,
-            Name: editServiceFormData.name,
-            name: editServiceFormData.name,
-            Description: editServiceFormData.description || '',
-            description: editServiceFormData.description || '',
-            Price: parseFloat(editServiceFormData.price),
-            price: parseFloat(editServiceFormData.price),
-            Images: editImagePreview || s.Images || '/img/banahills.jpg',
-            images: editImagePreview || s.images || '/img/banahills.jpg',
-            UpdatedAt: new Date().toISOString(),
-            Updated_At: new Date().toISOString()
-          };
+          return updatedService;
         }
         return s;
       });
@@ -432,8 +468,14 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       
       if (onSuccess) onSuccess('Dịch vụ đã được cập nhật thành công!');
       handleCloseEditServiceModal();
+    } catch (err) {
+      console.error('Error updating service:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi cập nhật dịch vụ. Vui lòng thử lại.');
+      }
+    } finally {
       setIsEditingService(false);
-    }, 500);
+    }
   };
 
   const handleCloseEditServiceModal = () => {

@@ -35,13 +35,15 @@ export const API_ENDPOINTS = {
   USER: '/user',
   REVIEW: '/Review',
   COUPON: '/Coupon',
-  NEWS: '/News',
+  NEWS: '/news', // Note: backend uses lowercase 'news'
   AUTH: '/Auth',
   POST: '/Post',
   POST_REACTION: '/PostReaction',
   POST_SAVE: '/PostSave',
   COMMENT: '/Comment',
   COMMENT_REACTION: '/CommentReaction',
+  NOTIFICATION: '/notification',
+  // PROMOTION: '/Promotion', // TODO: Backend chưa có PromotionController
 } as const
 
 

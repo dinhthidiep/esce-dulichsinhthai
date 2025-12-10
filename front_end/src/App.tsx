@@ -1,31 +1,39 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Suspense } from 'react'
-import { MainLayout } from '~/components/layout'
-import {
-  DashBoard,
-  Users,
-  Posts,
-  Chat,
-  News,
-  Supports,
-  SupportApprovals,
-  Profile,
-  RoleUpgrade
-} from '~/pages'
-import LoginForm from './components/authenticate/login/LoginForm'
-import ForgotPassword from './components/authenticate/forgotPassword/ForgotPassword'
-import Register from './components/authenticate/register/Register'
-import OTPVerification from './components/authenticate/OTPVerify/OTPVerification'
-import ResetPassword from './components/authenticate/resetPassword/ResetPassword'
-import CreateTour from './components/createTour/CreateTour'
-import SocialMedia from './components/socialMedia/SocialMedia'
+import { Suspense, lazy } from 'react'
 import { NotificationProvider } from './contexts/NotificationContext'
+import LoadingSpinner from './components/common/LoadingSpinner'
+
+// Lazy load MainLayout - nó chứa SideBar và nhiều dependencies nặng
+const MainLayout = lazy(() => import('~/components/layout/main-layout'))
+
+// Lazy load pages - Route-based code splitting
+// Import directly from component folders since they export default
+const DashBoard = lazy(() => import('~/components/dashboard'))
+const Users = lazy(() => import('~/components/users'))
+const Posts = lazy(() => import('~/components/posts'))
+const Chat = lazy(() => import('~/components/chat'))
+const News = lazy(() => import('~/components/news'))
+const Supports = lazy(() => import('~/components/supports'))
+const SupportApprovals = lazy(() => import('~/components/supportApprovals'))
+const Profile = lazy(() => import('~/components/profile'))
+const RoleUpgrade = lazy(() => import('~/components/roleUpgrade'))
+
+// Lazy load auth components
+const LoginForm = lazy(() => import('./components/authenticate/login/LoginForm'))
+const ForgotPassword = lazy(() => import('./components/authenticate/forgotPassword/ForgotPassword'))
+const Register = lazy(() => import('./components/authenticate/register/Register'))
+const OTPVerification = lazy(() => import('./components/authenticate/OTPVerify/OTPVerification'))
+const ResetPassword = lazy(() => import('./components/authenticate/resetPassword/ResetPassword'))
+
+// Lazy load other components
+const CreateTour = lazy(() => import('./components/createTour/CreateTour'))
+const SocialMedia = lazy(() => import('./components/socialMedia/SocialMedia'))
 
 function App() {
   return (
     <NotificationProvider>
       <BrowserRouter>
-        <Suspense fallback={<div>Đang tải...</div>}>
+        <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Các route KHÔNG dùng MainLayout */}
             <Route path="/login" element={<LoginForm />} />

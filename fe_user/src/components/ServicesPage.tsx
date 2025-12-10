@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, type ChangeEvent, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import Button from '~/components/ui/Button'
 import { Card, CardContent } from '~/components/ui/Card'
@@ -87,7 +87,7 @@ const ServicesPage = () => {
 
         try {
           const response = await axiosInstance.get<{ AverageRating?: number }>(
-            `/Review/servicecombo/${id}/average-rating`
+            `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
           )
           const rating = response.data.AverageRating || 0
           return { id, rating: parseFloat(String(rating)) || 0 }
@@ -316,7 +316,7 @@ const ServicesPage = () => {
 
   return (
     <div className="svc-services-page">
-      <Header />
+      <ConditionalHeader />
 
       <main className="svc-services-main">
         {/* Page Header */}

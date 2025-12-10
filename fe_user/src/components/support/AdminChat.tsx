@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ArrowLeftIcon, XIcon } from '~/components/icons'
+import axiosInstance from '~/utils/axiosInstance'
 import './AdminChat.css'
 
 interface Message {
@@ -24,16 +25,111 @@ const AdminChat: React.FC<AdminChatProps> = ({
   userName = 'Nguyễn Văn A',
   userRole = 'Du khách',
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [chattedUsers, setChattedUsers] = useState<any[]>([])
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Get userId helper
+  const getUserId = () => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr)
+        const userId = userInfo.Id || userInfo.id
+        if (userId) {
+          return String(userId)
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Error getting user ID:', error)
+      return null
+    }
+  }
+
+  // Fetch chatted users on mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchChattedUsers()
+    }
+  }, [isOpen])
+
+  // Fetch chat history when user is selected
+  useEffect(() => {
+    if (isOpen && selectedUserId) {
+      fetchChatHistory(selectedUserId)
+    } else if (isOpen && !selectedUserId && chattedUsers.length > 0) {
+      // Auto-select first user if available
+      setSelectedUserId(chattedUsers[0].userId || chattedUsers[0].UserId)
+    }
+  }, [isOpen, selectedUserId, chattedUsers])
+
+  const fetchChattedUsers = async () => {
+    try {
+      const response = await axiosInstance.get('/api/chat/GetChattedUser')
+      const users = response.data || []
+      setChattedUsers(users)
+      
+      // Auto-select first user if available
+      if (users.length > 0 && !selectedUserId) {
+        const firstUserId = users[0].userId || users[0].UserId || users[0].Id
+        if (firstUserId) {
+          setSelectedUserId(String(firstUserId))
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching chatted users:', err)
+      // Set default welcome message if no users
+      setMessages([{
+        id: '1',
+        text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
+        isUser: false,
+        timestamp: new Date(),
+      }])
+    }
+  }
+
+  const fetchChatHistory = async (toUserId: string) => {
+    try {
+      setLoading(true)
+      const response = await axiosInstance.get(`/api/chat/GetHistory/${toUserId}`)
+      const history = response.data || []
+      
+      // Transform backend messages to frontend format
+      const transformedMessages: Message[] = history.map((msg: any) => ({
+        id: String(msg.Id || msg.id || Date.now()),
+        text: msg.Content || msg.content || msg.Message || msg.message || '',
+        isUser: (msg.SenderId || msg.senderId || msg.UserId || msg.userId) === getUserId(),
+        timestamp: new Date(msg.CreatedAt || msg.createdAt || msg.Timestamp || msg.timestamp || Date.now()),
+      }))
+      
+      if (transformedMessages.length === 0) {
+        // Show welcome message if no history
+        setMessages([{
+          id: '1',
+          text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
+          isUser: false,
+          timestamp: new Date(),
+        }])
+      } else {
+        setMessages(transformedMessages)
+      }
+    } catch (err) {
+      console.error('Error fetching chat history:', err)
+      // Show default message on error
+      setMessages([{
+        id: '1',
+        text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
+        isUser: false,
+        timestamp: new Date(),
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     scrollToBottom()
@@ -43,8 +139,8 @@ const AdminChat: React.FC<AdminChatProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || loading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -54,18 +150,27 @@ const AdminChat: React.FC<AdminChatProps> = ({
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const messageText = inputValue
     setInputValue('')
+    setLoading(true)
 
-    // Simulate admin response after a delay
-    setTimeout(() => {
-      const adminMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể.',
-        isUser: false,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, adminMessage])
-    }, 1000)
+    try {
+      // TODO: Implement send message API when backend is ready
+      // For now, show auto-response
+      setTimeout(() => {
+        const adminMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể.',
+          isUser: false,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, adminMessage])
+        setLoading(false)
+      }, 1000)
+    } catch (err) {
+      console.error('Error sending message:', err)
+      setLoading(false)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {

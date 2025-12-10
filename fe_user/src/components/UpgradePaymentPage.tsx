@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import axiosInstance from '../utils/axiosInstance'
+import { API_ENDPOINTS } from '../config/api'
 import Header from './Header'
 import Footer from './Footer'
 import Button from './ui/Button'
@@ -42,6 +44,27 @@ const UpgradePaymentPage = () => {
     }
   }, [location, navigate])
 
+  // Get userId helper
+  const getUserId = () => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr)
+        const userId = userInfo.Id || userInfo.id
+        if (userId) {
+          const parsedId = parseInt(userId)
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId
+          }
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Error getting user ID:', error)
+      return null
+    }
+  }
+
   const handlePayment = async () => {
     if (!paymentData) return
 
@@ -49,21 +72,59 @@ const UpgradePaymentPage = () => {
     setError(null)
 
     try {
-      // TODO: Gọi API thanh toán thực tế
-      // Hiện tại mock payment thành công sau 2 giây
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const userId = getUserId()
+      if (!userId) {
+        setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.')
+        setProcessing(false)
+        return
+      }
 
-      // Chuyển tới trang xác nhận thanh toán thành công
+      // Backend yêu cầu UpgradeType phải là "Host" hoặc "Agency" (chữ hoa)
+      // Và Host upgrade là miễn phí, chỉ Agency cần thanh toán
+      if (paymentData.type === 'host') {
+        // Host upgrade miễn phí, không cần gọi payment API
+        navigate('/upgrade-payment-success', {
+          state: {
+            type: paymentData.type,
+            amount: 0,
+            paymentMethod: 'free',
+            certificateId: paymentData.certificateId
+          }
+        })
+        return
+      }
+
+      // Gọi API tạo upgrade payment cho Agency
+      const response = await axiosInstance.post(
+        `${API_ENDPOINTS.PAYMENT}/create-upgrade-payment`,
+        {
+          UserId: userId,
+          UpgradeType: 'Agency', // Backend yêu cầu chữ hoa
+          Amount: paymentData.amount,
+          Description: `Nâng cấp tài khoản lên Agency - ${paymentData.companyName || ''}`
+        }
+      )
+
+      // Nếu có payment URL từ PayOS, redirect đến đó
+      if (response.data?.checkoutUrl) {
+        window.location.href = response.data.checkoutUrl
+        return
+      }
+
+      // Nếu không có checkout URL, chuyển tới trang success
       navigate('/upgrade-payment-success', {
         state: {
           type: paymentData.type,
           amount: paymentData.amount,
           paymentMethod: selectedMethod,
-          certificateId: paymentData.certificateId
+          certificateId: paymentData.certificateId,
+          paymentId: response.data?.paymentId
         }
       })
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.')
+      console.error('Error creating upgrade payment:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.'
+      setError(errorMessage)
       setProcessing(false)
     }
   }

@@ -3,6 +3,7 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import './OTPVerification.css'
 import { verifyOtpForRegister, verifyOtp, register, requestOtpForRegister, forgotPassword } from '~/API/instances/Au'
+import { getRedirectUrlByRole } from '~/lib/utils'
 
 const OTPVerification = () => {
   const navigate = useNavigate()
@@ -123,8 +124,9 @@ const OTPVerification = () => {
           // Set flag để hiển thị welcome message trên landing page
           sessionStorage.setItem('justLoggedIn', 'true')
 
-          // Navigate to landing page
-          navigate('/')
+          // Navigate dựa trên role của user (mặc định là tourist với cấp độ bắt đầu)
+          const redirectUrl = getRedirectUrlByRole(userInfo)
+          navigate(redirectUrl)
         } else {
           setError('Không tìm thấy thông tin đăng ký. Vui lòng đăng ký lại.')
         }

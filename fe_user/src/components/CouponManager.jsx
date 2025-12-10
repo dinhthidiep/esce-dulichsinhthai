@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getCouponsByComboId, deleteCoupon } from "../API/CouponApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const CouponManager = () => {
     const location = useLocation();
@@ -299,11 +299,7 @@ const CouponManager = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

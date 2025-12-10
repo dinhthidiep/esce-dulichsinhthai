@@ -112,4 +112,70 @@ export const getImageUrl = (imagePath: string | null | undefined, fallbackImage:
   return fallbackImage
 }
 
+/**
+ * Xác định URL redirect dựa trên role của user
+ * @param userInfo - Thông tin user từ response (có thể có RoleId, roleId, Role.Name, role.name, RoleName, roleName)
+ * @returns URL path để redirect
+ */
+export const getRedirectUrlByRole = (userInfo: any): string => {
+  if (!userInfo) {
+    return '/'
+  }
+
+  // Lấy roleId hoặc role name từ userInfo
+  let roleId: number | null = null
+  let roleName: string | null = null
+
+  // Kiểm tra RoleId hoặc roleId
+  if (userInfo.RoleId !== undefined && userInfo.RoleId !== null) {
+    roleId = Number(userInfo.RoleId)
+  } else if (userInfo.roleId !== undefined && userInfo.roleId !== null) {
+    roleId = Number(userInfo.roleId)
+  }
+
+  // Kiểm tra Role.Name hoặc role.name
+  if (userInfo.Role?.Name) {
+    roleName = userInfo.Role.Name
+  } else if (userInfo.role?.name) {
+    roleName = userInfo.role.name
+  } else if (userInfo.RoleName) {
+    roleName = userInfo.RoleName
+  } else if (userInfo.roleName) {
+    roleName = userInfo.roleName
+  }
+
+  // Ưu tiên sử dụng roleId nếu có
+  if (roleId !== null) {
+    // Role mapping: 1 = Admin, 2 = Host, 3 = Agency, 4 = Tourist
+    if (roleId === 2) {
+      return '/host-dashboard' // Host
+    }
+    if (roleId === 3) {
+      return '/profile' // Agency - sử dụng profile page
+    }
+    if (roleId === 4) {
+      return '/profile' // Tourist - sử dụng profile page
+    }
+    // Admin hoặc role khác - về trang chủ
+    return '/'
+  }
+
+  // Nếu không có roleId, sử dụng roleName
+  if (roleName) {
+    const roleNameLower = roleName.toLowerCase()
+    if (roleNameLower === 'host') {
+      return '/host-dashboard'
+    }
+    if (roleNameLower === 'agency') {
+      return '/profile'
+    }
+    if (roleNameLower === 'tourist' || roleNameLower === 'user') {
+      return '/profile'
+    }
+  }
+
+  // Mặc định về trang chủ
+  return '/'
+}
+
 

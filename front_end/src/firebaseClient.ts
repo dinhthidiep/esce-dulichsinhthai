@@ -1,9 +1,6 @@
 // firebaseClient.ts
 // Cấu hình Firebase phía frontend để upload ảnh (Firebase Storage)
-// ❗ Bạn cần điền config dự án Firebase của bạn ở biến firebaseConfig bên dưới.
-
-import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+// ❗ Lazy load Firebase để không block initial render
 
 // TODO: Điền config Firebase của bạn tại đây
 // Vào Firebase Console -> Project settings -> Your apps (Web) -> Config
@@ -16,9 +13,25 @@ const firebaseConfig = {
   appId: '1:420740233560:web:8aea62627309928b5e8d2d'
 }
 
-// Khởi tạo app chỉ một lần
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-const storage = getStorage(app)
+// Lazy load Firebase - chỉ load khi cần upload ảnh
+let storageInstance: any = null
+let appInstance: any = null
+
+const getFirebaseStorage = async () => {
+  if (storageInstance) {
+    return storageInstance
+  }
+
+  // Dynamic import Firebase để không load ngay từ đầu
+  const { initializeApp, getApps, getApp } = await import('firebase/app')
+  const { getStorage } = await import('firebase/storage')
+
+  // Khởi tạo app chỉ một lần
+  appInstance = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+  storageInstance = getStorage(appInstance)
+  
+  return storageInstance
+}
 
 /**
  * Compress và resize ảnh trước khi upload
@@ -125,6 +138,10 @@ export const uploadImageToFirebase = async (
   const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
   const filePath = `${folder}/${timestamp}-${random}-${safeName}`
 
+  // Lazy load Firebase storage
+  const storage = await getFirebaseStorage()
+  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+  
   const fileRef = ref(storage, filePath)
 
   // Upload bytes với timeout

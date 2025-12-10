@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
-import Header from './Header';
+import ConditionalHeader from './ConditionalHeader';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
 import LoadingSpinner from './LoadingSpinner';
@@ -1101,7 +1101,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="profile-profile-page">
-        <Header />
+        <ConditionalHeader />
         <main className="profile-profile-main">
           <LoadingSpinner message="Đang tải thông tin cá nhân..." />
         </main>
@@ -1112,7 +1112,7 @@ const ProfilePage = () => {
   if (error && !userInfo) {
     return (
       <div className="profile-profile-page">
-        <Header />
+        <ConditionalHeader />
         <main className="profile-profile-main">
           <div className="profile-profile-container">
             <div className="profile-error-container">
@@ -1285,8 +1285,8 @@ const ProfilePage = () => {
             {/* Personal Info Tab */}
             {activeTab === 'personal' && (
             <div className="profile-profile-form-compact">
-              {/* Level Progress Bar */}
-              {!levelLoading && userId && level && (
+              {/* Level Progress Bar - Only show for non-Host roles */}
+              {!levelLoading && userId && level && getRoleName() !== 'Host' && (
                 <LevelProgressBar
                   totalSpent={totalSpent}
                   level={level}
@@ -1296,7 +1296,7 @@ const ProfilePage = () => {
                   size="large"
                 />
               )}
-              {levelError && (
+              {levelError && getRoleName() !== 'Host' && (
                 <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fef2f2', color: '#dc2626', borderRadius: '0.5rem' }}>
                   {levelError}
                 </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createServiceCombo } from "../API/ServiceComboApi";
 import { getMyServices, addServiceToCombo } from "../API/ServiceApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const CreateServiceCombo = () => {
     // State management
@@ -484,11 +484,7 @@ const CreateServiceCombo = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

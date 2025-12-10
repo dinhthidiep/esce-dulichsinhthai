@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import Button from '~/components/ui/Button'
 import { Card, CardContent } from '~/components/ui/Card'
@@ -255,7 +255,7 @@ const NewsPage = () => {
 
   return (
     <div className="news-news-page">
-      <Header />
+      <ConditionalHeader />
 
       <main className="news-news-main">
         {/* Page Header */}

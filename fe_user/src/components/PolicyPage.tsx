@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import { Card, CardContent } from '~/components/ui/Card'
 import {
@@ -92,7 +92,7 @@ const PolicyPage = () => {
 
   return (
     <div className="policy-policy-page">
-      <Header />
+      <ConditionalHeader />
 
       <main>
         {/* Hero Section */}

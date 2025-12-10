@@ -1,5 +1,4 @@
 // import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import * as signalR from '@microsoft/signalr'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 interface NotificationItem {
@@ -33,82 +32,105 @@ export const useNotification = () => {
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState<any>([])
-  const [_, setConnection] = useState<signalR.HubConnection | null>(null)
   const [isConnected, setIsConnected] = useState(false)
-  const connectionRef = useRef<signalR.HubConnection | null>(null)
+  const connectionRef = useRef<any>(null)
 
   useEffect(() => {
+    // Lazy load SignalR chỉ khi cần thiết và có token
     const token = localStorage.getItem('token')
     if (!token) {
       return
     }
 
-    // Create SignalR connection
-    const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5002/hubs/notification', {
-        accessTokenFactory: () => token,
-        skipNegotiation: false,
-        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
-      })
-      .withAutomaticReconnect()
-      .build()
+    // Delay SignalR connection để không block initial render
+    // Load SignalR module và connect sau khi app đã render xong
+    let mounted = true
+    let connectionTimeout: NodeJS.Timeout | null = null
 
-    // Set up event handlers
-    newConnection.on('ReceiveNotification', (notification) => {
-      setNotifications((prev) => {
-        // Check if notification already exists to avoid duplicates
-        const exists = prev.some((n) => (n.Id || n.id) === (notification.Id || notification.id))
-        if (exists) return prev
-        // Add new notification at the beginning and sort by date
-        const updated = [notification, ...prev]
-        return updated.sort((a, b) => {
-          const dateA = new Date(a.CreatedAt || a.createdAt || 0).getTime()
-          const dateB = new Date(b.CreatedAt || b.createdAt || 0).getTime()
-          return dateB - dateA
+    const initSignalR = async () => {
+      try {
+        // Lazy load SignalR module
+        const signalR = await import('@microsoft/signalr')
+        
+        if (!mounted) return
+
+        // Create SignalR connection
+        const newConnection = new signalR.HubConnectionBuilder()
+          .withUrl('http://localhost:5002/hubs/notification', {
+            accessTokenFactory: () => token,
+            skipNegotiation: false,
+            transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+          })
+          .withAutomaticReconnect()
+          .build()
+
+        // Set up event handlers
+        newConnection.on('ReceiveNotification', (notification) => {
+          if (!mounted) return
+          setNotifications((prev) => {
+            // Check if notification already exists to avoid duplicates
+            const exists = prev.some((n) => (n.Id || n.id) === (notification.Id || notification.id))
+            if (exists) return prev
+            // Add new notification at the beginning and sort by date
+            const updated = [notification, ...prev]
+            return updated.sort((a, b) => {
+              const dateA = new Date(a.CreatedAt || a.createdAt || 0).getTime()
+              const dateB = new Date(b.CreatedAt || b.createdAt || 0).getTime()
+              return dateB - dateA
+            })
+          })
         })
-      })
-    })
 
-    newConnection.on('LoadOldNotifications', (oldNotifications) => {
-      // Sort by CreatedAt descending (newest first)
-      const sorted = (oldNotifications || []).sort((a, b) => {
-        const dateA = new Date(a.CreatedAt || a.createdAt || 0).getTime()
-        const dateB = new Date(b.CreatedAt || b.createdAt || 0).getTime()
-        return dateB - dateA
-      })
-      setNotifications(sorted)
-    })
+        newConnection.on('LoadOldNotifications', (oldNotifications) => {
+          if (!mounted) return
+          // Sort by CreatedAt descending (newest first)
+          const sorted = (oldNotifications || []).sort((a, b) => {
+            const dateA = new Date(a.CreatedAt || a.createdAt || 0).getTime()
+            const dateB = new Date(b.CreatedAt || b.createdAt || 0).getTime()
+            return dateB - dateA
+          })
+          setNotifications(sorted)
+        })
 
-    // Handle connection events
-    newConnection.onclose(() => {
-      setIsConnected(false)
-    })
+        // Handle connection events
+        newConnection.onclose(() => {
+          if (mounted) setIsConnected(false)
+        })
 
-    newConnection.onreconnecting(() => {
-      setIsConnected(false)
-    })
+        newConnection.onreconnecting(() => {
+          if (mounted) setIsConnected(false)
+        })
 
-    newConnection.onreconnected(() => {
-      setIsConnected(true)
-    })
+        newConnection.onreconnected(() => {
+          if (mounted) setIsConnected(true)
+        })
 
-    // Start connection
-    newConnection
-      .start()
-      .then(() => {
-        setIsConnected(true)
-        setConnection(newConnection)
-        connectionRef.current = newConnection
-      })
-      .catch((err) => {
+        // Start connection
+        await newConnection.start()
+        
+        if (mounted) {
+          setIsConnected(true)
+          connectionRef.current = newConnection
+        }
+      } catch (err) {
         console.error('Error starting SignalR connection:', err)
-        setIsConnected(false)
-      })
+        if (mounted) setIsConnected(false)
+      }
+    }
+
+    // Delay connection để không block initial render (500ms)
+    connectionTimeout = setTimeout(() => {
+      initSignalR()
+    }, 500)
 
     // Cleanup on unmount
     return () => {
+      mounted = false
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout)
+      }
       if (connectionRef.current) {
-        connectionRef.current.stop()
+        connectionRef.current.stop().catch(() => {})
       }
     }
   }, [])

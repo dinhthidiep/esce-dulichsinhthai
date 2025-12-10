@@ -10,21 +10,36 @@ namespace ESCE_SYSTEM.Services.PaymentService
 {
     public class PayOSPaymentService : IPaymentService
     {
-        private readonly PayOSOption _options;
+        private readonly PayOSOptions _options;
         private readonly ESCEContext _db;
         private readonly HttpClient _httpClient;
 
-        public PayOSPaymentService(IOptions<PayOSOption> options, ESCEContext db, HttpClient httpClient)
+        public PayOSPaymentService(IOptions<PayOSOptions> options, ESCEContext db, HttpClient httpClient)
         {
             _options = options.Value;
             _db = db;
             _httpClient = httpClient;
 
+            // Validate PayOS configuration
+            if (string.IsNullOrEmpty(_options.ClientId))
+                throw new InvalidOperationException("PayOS ClientId is not configured in appsettings.json");
+            if (string.IsNullOrEmpty(_options.ApiKey))
+                throw new InvalidOperationException("PayOS ApiKey is not configured in appsettings.json");
+            if (string.IsNullOrEmpty(_options.ChecksumKey))
+                throw new InvalidOperationException("PayOS ChecksumKey is not configured in appsettings.json");
+
             // Cấu hình headers cho PayOS API
+            // Note: HttpClient từ AddHttpClient đã được configure trong Program.cs
+            // Nhưng để đảm bảo, chúng ta set lại ở đây
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("x-client-id", _options.ClientId);
             _httpClient.DefaultRequestHeaders.Add("x-api-key", _options.ApiKey);
-            _httpClient.BaseAddress = new Uri("https://api-merchant.payos.vn/");
+            
+            // BaseAddress đã được set trong Program.cs, nhưng set lại để đảm bảo
+            if (_httpClient.BaseAddress == null)
+            {
+                _httpClient.BaseAddress = new Uri("https://api-merchant.payos.vn/");
+            }
         }
 
         // Tạo signature cho PayOS

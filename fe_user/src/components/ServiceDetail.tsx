@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
-import Header from './Header';
+import ConditionalHeader from './ConditionalHeader';
 import Button from './ui/Button';
 import { Card, CardContent } from './ui/Card';
 import Badge from './ui/Badge';
@@ -288,7 +288,7 @@ const ServiceDetail = () => {
         
         // Fetch average rating
         try {
-          const ratingResponse = await axiosInstance.get(`/Review/servicecombo/${id}/average-rating`);
+          const ratingResponse = await axiosInstance.get(`${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`);
           setAverageRating(ratingResponse.data.AverageRating || 0);
         } catch (ratingErr) {
           if (process.env.NODE_ENV === 'development') {
@@ -812,7 +812,7 @@ const ServiceDetail = () => {
   if (loading) {
     return (
       <div className="sd-service-detail-page">
-        <Header />
+        <ConditionalHeader />
         <main className="sd-service-detail-main">
           <LoadingSpinner message="Đang tải thông tin dịch vụ..." />
         </main>
@@ -823,7 +823,7 @@ const ServiceDetail = () => {
   if (error || !service) {
     return (
       <div className="sd-service-detail-page">
-        <Header />
+        <ConditionalHeader />
         <main className="sd-service-detail-main">
           <div className="sd-service-detail-container">
             <div className="sd-error-container" role="alert">

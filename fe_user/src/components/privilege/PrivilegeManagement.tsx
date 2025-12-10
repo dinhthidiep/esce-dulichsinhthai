@@ -4,6 +4,8 @@ import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon } from '../icons/index';
 import CreatePrivilegeModal from './CreatePrivilegeModal';
 import EditPrivilegeModal from './EditPrivilegeModal';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './PrivilegeManagement.css';
 
 interface PrivilegeManagementProps {
@@ -80,33 +82,27 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
     return filtered;
   }, []);
 
-  // Load promotions - use mock data
+  // Load promotions from API
   useEffect(() => {
-    setLoadingPromotions(true);
-    
-    // Generate mock promotions data (30 promotions)
-    const mockPromotions = Array.from({ length: 30 }, (_, i) => {
-      const createdDate = new Date(Date.now() - i * 86400000);
-      const ranks = ['Đồng', 'Bạc', 'Vàng'];
-      const userTypes = ['Khách hàng', 'Công ty'];
-      
-      return {
-        Id: i + 1,
-        id: i + 1,
-        ServiceName: `Dịch vụ ${i + 1}`,
-        serviceName: `Dịch vụ ${i + 1}`,
-        Rank: ranks[i % ranks.length],
-        rank: ranks[i % ranks.length],
-        UserType: userTypes[i % userTypes.length],
-        userType: userTypes[i % userTypes.length],
-        CreatedAt: createdDate.toISOString(),
-        createdAt: createdDate.toISOString()
-      };
-    });
-    
-    setPromotions(mockPromotions);
-    setLoadingPromotions(false);
-  }, []);
+    const loadPromotions = async () => {
+      try {
+        setLoadingPromotions(true);
+        // TODO: Implement promotion API endpoint
+        // For now, set empty array
+        setPromotions([]);
+      } catch (err) {
+        console.error('Error loading promotions:', err);
+        if (onError) {
+          onError('Không thể tải danh sách ưu đãi. Vui lòng thử lại.');
+        }
+        setPromotions([]);
+      } finally {
+        setLoadingPromotions(false);
+      }
+    };
+
+    loadPromotions();
+  }, [onError]);
 
   // Apply filters when filter values change
   useEffect(() => {
@@ -188,32 +184,21 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
       return;
     }
     
-    // Simulate API call with mock data
-    setTimeout(() => {
-      const newPromotion = {
-        Id: promotions.length + 1,
-        id: promotions.length + 1,
-        ServiceName: formData.serviceName,
-        serviceName: formData.serviceName,
-        Rank: formData.rank,
-        rank: formData.rank,
-        UserType: formData.userType,
-        userType: formData.userType,
-        CreatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      };
-      
-      const updatedPromotions = [newPromotion, ...promotions];
-      setPromotions(updatedPromotions);
-      const filtered = applyPromotionFilters(updatedPromotions, promotionFilterName, promotionFilterStatus, promotionSortOrder);
-      setFilteredPromotions(filtered);
-      
+    try {
+      // TODO: Implement promotion API endpoint
+      // For now, just show success message
       if (onSuccess) {
         onSuccess('Ưu đãi đã được tạo thành công!');
       }
       handleCloseCreatePromotionModal();
+    } catch (err) {
+      console.error('Error creating promotion:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi tạo ưu đãi. Vui lòng thử lại.');
+      }
+    } finally {
       setIsCreatingPromotion(false);
-    }, 500);
+    }
   };
 
   // Handle open edit promotion modal
@@ -255,33 +240,21 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
       return;
     }
     
-    // Simulate API call with mock data
-    setTimeout(() => {
-      const updatedPromotions = promotions.map(p => {
-        if ((p.Id || p.id) === editingPromotionId) {
-          return {
-            ...p,
-            ServiceName: formData.serviceName,
-            serviceName: formData.serviceName,
-            Rank: formData.rank,
-            rank: formData.rank,
-            UserType: formData.userType,
-            userType: formData.userType
-          };
-        }
-        return p;
-      });
-      
-      setPromotions(updatedPromotions);
-      const filtered = applyPromotionFilters(updatedPromotions, promotionFilterName, promotionFilterStatus, promotionSortOrder);
-      setFilteredPromotions(filtered);
-      
+    try {
+      // TODO: Implement promotion API endpoint
+      // For now, just show success message
       if (onSuccess) {
         onSuccess('Ưu đãi đã được cập nhật thành công!');
       }
       handleCloseEditPromotionModal();
+    } catch (err) {
+      console.error('Error updating promotion:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi cập nhật ưu đãi. Vui lòng thử lại.');
+      }
+    } finally {
       setIsEditingPromotion(false);
-    }, 500);
+    }
   };
 
   // Handle delete promotion

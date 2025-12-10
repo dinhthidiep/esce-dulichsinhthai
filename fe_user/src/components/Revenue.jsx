@@ -1,7 +1,7 @@
 import "./Revenue.css";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 import { getAllBookings } from "../API/BookingApi";
 // import { getPaymentsByHostId } from '../API/PaymentApi'; // Not needed - payments are extracted from bookings
 import { getMyServiceCombos } from "../API/ServiceComboApi";
@@ -663,11 +663,7 @@ const Revenue = ({ embedded = false }) => {
           /> */}
 
                     {/* Header */}
-                    <Header
-                        showMenuButton={true}
-                        onMenuToggle={toggleSidebar}
-                        sidebarActive={sidebarActive}
-                    />
+                    <HostHeader />
 
                     {/* Page Title */}
                     <section className="content-title-display-box">

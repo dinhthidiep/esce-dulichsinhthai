@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createService } from "../API/ServiceApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const CreateService = () => {
     // State management
@@ -452,11 +452,7 @@ const CreateService = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

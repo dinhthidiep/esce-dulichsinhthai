@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import './LoginForm.css'
 import googleAuthService from '~/services/googleAuth'
 import { login } from '~/API/instances/Au'
+import { getRedirectUrlByRole } from '~/lib/utils'
 
 interface FormData {
   email: string
@@ -138,8 +139,9 @@ const LoginForm = () => {
         // Chuyển về trang ban đầu mà người dùng muốn truy cập
         navigate(returnUrl, { replace: true })
       } else {
-        // Chuyển hướng đến trang landing page
-        navigate('/', { replace: true })
+        // Chuyển hướng dựa trên role của user
+        const redirectUrl = getRedirectUrlByRole(userInfo)
+        navigate(redirectUrl, { replace: true })
       }
     } catch (error) {
       console.error('Login error:', error)

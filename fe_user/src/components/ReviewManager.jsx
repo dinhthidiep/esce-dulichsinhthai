@@ -1,7 +1,7 @@
 import "./ReviewManager.css";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 import {
     getAllReviews,
     getReviewById,
@@ -376,11 +376,7 @@ const ReviewManager = () => {
     return (
         <div className="create-tour-page">
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

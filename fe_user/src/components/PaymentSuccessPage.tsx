@@ -82,32 +82,7 @@ const PaymentSuccessPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!bookingId || isNaN(parseInt(bookingId))) {
-        // Nếu không có bookingId hợp lệ, sử dụng mock data để demo
-        console.log('⚠️ Không có bookingId hợp lệ, sử dụng mock data để demo')
-        const mockBooking: BookingData = {
-          Id: 1,
-          BookingNumber: 'BK-2024-001',
-          TotalAmount: 2500000,
-          Status: 'confirmed',
-          StartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          EndDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          Quantity: 2,
-          ServiceCombo: {
-            Id: 1,
-            Name: 'Tour Đà Lạt 3 ngày 2 đêm',
-            Address: 'Đà Lạt, Lâm Đồng',
-            Image: '/img/banahills.jpg'
-          }
-        }
-        const mockPayment: PaymentData = {
-          Id: 1,
-          Amount: 2500000,
-          Status: 'completed',
-          PaymentMethod: 'PayOS',
-          CreatedAt: new Date().toISOString()
-        }
-        setBooking(mockBooking)
-        setPayment(mockPayment)
+        setError('Không tìm thấy thông tin đặt dịch vụ')
         setLoading(false)
         return
       }
@@ -146,34 +121,7 @@ const PaymentSuccessPage = () => {
         console.error('Lỗi khi tải dữ liệu:', err)
         const axiosError = err as { response?: { status?: number } }
         if (axiosError.response?.status === 404) {
-          // Nếu không tìm thấy, sử dụng mock data để demo
-          console.log('⚠️ Không tìm thấy booking, sử dụng mock data để demo')
-          const bookingIdNum = parseInt(bookingId) || 1
-          const bookingIdStr = String(bookingIdNum).padStart(3, '0')
-          const mockBooking: BookingData = {
-            Id: bookingIdNum,
-            BookingNumber: `BK-2024-${bookingIdStr}`,
-            TotalAmount: 2500000,
-            Status: 'confirmed',
-            StartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            EndDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-            Quantity: 2,
-            ServiceCombo: {
-              Id: 1,
-              Name: 'Tour Đà Lạt 3 ngày 2 đêm',
-              Address: 'Đà Lạt, Lâm Đồng',
-              Image: '/img/banahills.jpg'
-            }
-          }
-          const mockPayment: PaymentData = {
-            Id: 1,
-            Amount: 2500000,
-            Status: 'completed',
-            PaymentMethod: 'PayOS',
-            CreatedAt: new Date().toISOString()
-          }
-          setBooking(mockBooking)
-          setPayment(mockPayment)
+          setError('Không tìm thấy thông tin đặt dịch vụ')
         } else if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
           setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.')
           navigate('/login', { state: { returnUrl: `/payment-success/${bookingId}` } })

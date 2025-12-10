@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon, AlertCircleIcon } from '../icons/index';
 import CreateCouponModal from './CreateCouponModal';
 import EditCouponModal from './EditCouponModal';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './CouponManagement.css';
 
 interface CouponManagementProps {
@@ -26,125 +28,29 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   onApplyPromotionClick,
   onToggleChange
 }, ref) => {
-  // Hardcoded sample coupon data for testing
-  const [sampleCoupons] = useState([
-    {
-      Id: 1001,
-      Code: 'SPRING2025',
-      Description: 'Giảm 10% cho đơn từ 200k',
-      DiscountPercent: 10,
-      DiscountAmount: null,
-      UsageLimit: 500,
-      UsageCount: 0,
-      IsActive: true,
-      CreatedAt: new Date('2024-12-15').toISOString(),
-      StartDate: new Date('2025-03-01').toISOString(),
-      EndDate: new Date('2025-03-31').toISOString()
-    },
-    {
-      Id: 1002,
-      Code: 'SUMMER50',
-      Description: 'Ưu đãi mùa hè - Giảm 50% cho tất cả dịch vụ du lịch',
-      DiscountPercent: 50,
-      DiscountAmount: null,
-      UsageLimit: 200,
-      UsageCount: 45,
-      IsActive: true,
-      CreatedAt: new Date('2024-11-20').toISOString(),
-      StartDate: new Date('2025-06-01').toISOString(),
-      EndDate: new Date('2025-08-31').toISOString()
-    },
-    {
-      Id: 1003,
-      Code: 'VIP100K',
-      Description: 'Coupon VIP - Giảm 100.000 VND cho đơn hàng từ 500.000 VND',
-      DiscountPercent: null,
-      DiscountAmount: 100000,
-      UsageLimit: 1000,
-      UsageCount: 234,
-      IsActive: true,
-      CreatedAt: new Date('2024-10-10').toISOString(),
-      StartDate: new Date('2025-01-01').toISOString(),
-      EndDate: new Date('2025-12-31').toISOString()
-    },
-    {
-      Id: 1004,
-      Code: 'WEEKEND30',
-      Description: 'Giảm giá cuối tuần - Áp dụng cho đơn hàng đặt vào thứ 7 và chủ nhật',
-      DiscountPercent: 30,
-      DiscountAmount: null,
-      UsageLimit: 300,
-      UsageCount: 89,
-      IsActive: false,
-      CreatedAt: new Date('2024-09-05').toISOString(),
-      StartDate: new Date('2025-01-01').toISOString(),
-      EndDate: new Date('2025-12-31').toISOString()
-    },
-    {
-      Id: 1005,
-      Code: 'FIRSTTIME15',
-      Description: 'Giảm giá cho khách hàng lần đầu - Giảm 15% cho đơn hàng đầu tiên',
-      DiscountPercent: 15,
-      DiscountAmount: null,
-      UsageLimit: 800,
-      UsageCount: 156,
-      IsActive: true,
-      CreatedAt: new Date('2024-12-01').toISOString(),
-      StartDate: new Date('2025-02-01').toISOString(),
-      EndDate: new Date('2025-02-28').toISOString()
-    },
-    {
-      Id: 1006,
-      Code: 'BIGSALE200K',
-      Description: 'Sale lớn - Giảm 200.000 VND cho đơn hàng từ 1.000.000 VND trở lên',
-      DiscountPercent: null,
-      DiscountAmount: 200000,
-      UsageLimit: 150,
-      UsageCount: 67,
-      IsActive: true,
-      CreatedAt: new Date('2024-11-25').toISOString(),
-      StartDate: new Date('2025-04-01').toISOString(),
-      EndDate: new Date('2025-04-30').toISOString()
-    },
-    {
-      Id: 1007,
-      Code: 'LOYALTY20',
-      Description: 'Coupon trung thành - Giảm 20% cho khách hàng đã sử dụng dịch vụ trên 5 lần',
-      DiscountPercent: 20,
-      DiscountAmount: null,
-      UsageLimit: 400,
-      UsageCount: 123,
-      IsActive: true,
-      CreatedAt: new Date('2024-10-20').toISOString(),
-      StartDate: new Date('2025-01-01').toISOString(),
-      EndDate: new Date('2025-06-30').toISOString()
-    },
-    {
-      Id: 1008,
-      Code: 'EARLYBIRD10',
-      Description: 'Giảm giá sớm - Giảm 10% cho đơn hàng đặt trước 14 ngày',
-      DiscountPercent: 10,
-      DiscountAmount: null,
-      UsageLimit: 600,
-      UsageCount: 201,
-      IsActive: true,
-      CreatedAt: new Date('2024-08-15').toISOString(),
-      StartDate: new Date('2025-05-01').toISOString(),
-      EndDate: new Date('2025-05-31').toISOString()
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
     }
-  ]);
+  }, []);
 
   // Coupon Rank Rules states
-  const [couponRankRules, setCouponRankRules] = useState([
-    { RuleID: 1, CouponID: 1001, RankID: 'Vàng', UserType: 'Khách hàng', CouponCode: 'SPRING2025' },
-    { RuleID: 2, CouponID: 1002, RankID: 'Bạc', UserType: 'Công ty', CouponCode: 'SUMMER50' },
-    { RuleID: 3, CouponID: 1003, RankID: 'Vàng', UserType: 'Khách hàng', CouponCode: 'VIP100K' },
-    { RuleID: 4, CouponID: 1004, RankID: 'Tất cả', UserType: 'Công ty', CouponCode: 'WEEKEND30' },
-    { RuleID: 5, CouponID: 1005, RankID: 'Đồng', UserType: 'Khách hàng', CouponCode: 'FIRSTTIME15' },
-    { RuleID: 6, CouponID: 1006, RankID: 'Vàng', UserType: 'Công ty', CouponCode: 'BIGSALE200K' },
-    { RuleID: 7, CouponID: 1007, RankID: 'Bạc', UserType: 'Khách hàng', CouponCode: 'LOYALTY20' },
-    { RuleID: 8, CouponID: 1008, RankID: 'Tất cả', UserType: 'Công ty', CouponCode: 'EARLYBIRD10' }
-  ]);
+  const [couponRankRules, setCouponRankRules] = useState([]);
 
   const [coupons, setCoupons] = useState([]);
   const [filteredCoupons, setFilteredCoupons] = useState([]);
@@ -196,12 +102,35 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   const [editCouponErrors, setEditCouponErrors] = useState<{ code?: string; description?: string; discountType?: string; discountValue?: string; usageLimit?: string; startDate?: string; expiryDate?: string; isActive?: boolean }>({});
   const [isEditingCoupon, setIsEditingCoupon] = useState(false);
 
-  // Load initial mock data
+  // Load coupons from API
   useEffect(() => {
-    setCoupons(sampleCoupons);
-    const filtered = applyCouponFilters(sampleCoupons, couponFilterName, couponFilterStatus, couponSortOrder);
-    setFilteredCoupons(filtered);
-  }, []);
+    const loadCoupons = async () => {
+      try {
+        const userId = getUserId();
+        if (!userId) {
+          setCoupons([]);
+          setFilteredCoupons([]);
+          return;
+        }
+
+        // Load coupons for host
+        const response = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/host/${userId}`);
+        const couponsData = response.data || [];
+        setCoupons(couponsData);
+        const filtered = applyCouponFilters(couponsData, couponFilterName, couponFilterStatus, couponSortOrder);
+        setFilteredCoupons(filtered);
+      } catch (err) {
+        console.error('Error loading coupons:', err);
+        if (onError) {
+          onError('Không thể tải danh sách coupon. Vui lòng thử lại.');
+        }
+        setCoupons([]);
+        setFilteredCoupons([]);
+      }
+    };
+
+    loadCoupons();
+  }, [getUserId, couponFilterName, couponFilterStatus, couponSortOrder]);
 
   // Apply filters when they change
   useEffect(() => {
@@ -279,7 +208,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   const handleDeleteCoupon = async (couponId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa coupon này?')) {
       try {
-        // Mock delete - just remove from state
+        await axiosInstance.delete(`${API_ENDPOINTS.COUPON}/${couponId}`);
         setCoupons(prevCoupons => prevCoupons.filter(c => (c.Id || c.id) !== couponId));
         setFilteredCoupons(prevFiltered => prevFiltered.filter(c => (c.Id || c.id) !== couponId));
         if (onSuccess) {
@@ -489,31 +418,49 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
       return;
     }
 
-    // Mock create - add to state
-    const newCoupon = {
-      Id: Math.max(...sampleCoupons.map(c => c.Id), 0) + 1,
-      Code: createCouponFormData.code.trim(),
-      Description: createCouponFormData.description.trim() || null,
-      DiscountPercent: createCouponFormData.discountType === 'percentage' ? parseFloat(createCouponFormData.discountValue) : null,
-      DiscountAmount: createCouponFormData.discountType === 'amount' ? parseFloat(createCouponFormData.discountValue) : null,
-      UsageLimit: parseInt(createCouponFormData.usageLimit),
-      UsageCount: 0,
-      IsActive: true,
-      CreatedAt: new Date().toISOString(),
-      StartDate: createCouponFormData.startDate ? new Date(createCouponFormData.startDate).toISOString() : null,
-      EndDate: createCouponFormData.expiryDate ? new Date(createCouponFormData.expiryDate).toISOString() : null
-    };
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        if (onError) {
+          onError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        }
+        setIsCreatingCoupon(false);
+        return;
+      }
 
-    const updatedCoupons = [...coupons, newCoupon];
-    setCoupons(updatedCoupons);
-    const filtered = applyCouponFilters(updatedCoupons, couponFilterName, couponFilterStatus, couponSortOrder);
-    setFilteredCoupons(filtered);
+      const couponData = {
+        Code: createCouponFormData.code.trim(),
+        Description: createCouponFormData.description.trim() || null,
+        DiscountPercent: createCouponFormData.discountType === 'percentage' ? parseFloat(createCouponFormData.discountValue) : null,
+        DiscountAmount: createCouponFormData.discountType === 'amount' ? parseFloat(createCouponFormData.discountValue) : null,
+        UsageLimit: parseInt(createCouponFormData.usageLimit),
+        UsageCount: 0,
+        IsActive: true,
+        StartDate: createCouponFormData.startDate ? new Date(createCouponFormData.startDate).toISOString() : null,
+        EndDate: createCouponFormData.expiryDate ? new Date(createCouponFormData.expiryDate).toISOString() : null,
+        HostId: userId
+      };
 
-    if (onSuccess) {
-      onSuccess('Coupon đã được tạo thành công!');
+      const response = await axiosInstance.post(API_ENDPOINTS.COUPON, couponData);
+      const newCoupon = response.data;
+
+      const updatedCoupons = [...coupons, newCoupon];
+      setCoupons(updatedCoupons);
+      const filtered = applyCouponFilters(updatedCoupons, couponFilterName, couponFilterStatus, couponSortOrder);
+      setFilteredCoupons(filtered);
+
+      if (onSuccess) {
+        onSuccess('Coupon đã được tạo thành công!');
+      }
+      handleCloseCreateCouponModal();
+    } catch (err) {
+      console.error('Error creating coupon:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi tạo coupon. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsCreatingCoupon(false);
     }
-    handleCloseCreateCouponModal();
-    setIsCreatingCoupon(false);
   };
 
   const handleCloseCreateCouponModal = () => {
@@ -527,10 +474,14 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     setEditingCouponId(couponId);
     setIsEditCouponModalOpen(true);
     setEditCouponErrors({});
+    setLoadingEditCouponData(true);
 
-    // Mock load - get from state
-    const coupon = coupons.find(c => (c.Id || c.id) === couponId);
-    if (coupon) {
+    try {
+      // Load coupon from API
+      const response = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/${couponId}`);
+      const coupon = response.data;
+      
+      if (coupon) {
       const startDate = coupon.StartDate || coupon.startDate;
       const startDateValue = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
       const endDate = coupon.EndDate || coupon.endDate;
@@ -547,6 +498,15 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         expiryDate: expiryDateValue,
         isActive: coupon.IsActive !== undefined ? coupon.IsActive : (coupon.isActive !== undefined ? coupon.isActive : true)
       });
+      }
+    } catch (err) {
+      console.error('Error loading coupon:', err);
+      if (onError) {
+        onError('Không thể tải thông tin coupon. Vui lòng thử lại.');
+      }
+      setIsEditCouponModalOpen(false);
+    } finally {
+      setLoadingEditCouponData(false);
     }
   };
 
@@ -696,33 +656,44 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
       return;
     }
 
-    // Mock update - update in state
-    const updatedCoupons = coupons.map(c => {
-      if ((c.Id || c.id) === editingCouponId) {
-        return {
-          ...c,
-          Code: editCouponFormData.code.trim(),
-          Description: editCouponFormData.description.trim() || null,
-          DiscountPercent: editCouponFormData.discountType === 'percentage' ? parseFloat(editCouponFormData.discountValue) : null,
-          DiscountAmount: editCouponFormData.discountType === 'amount' ? parseFloat(editCouponFormData.discountValue) : null,
-          UsageLimit: parseInt(editCouponFormData.usageLimit),
-          StartDate: editCouponFormData.startDate ? new Date(editCouponFormData.startDate).toISOString() : null,
-          EndDate: editCouponFormData.expiryDate ? new Date(editCouponFormData.expiryDate).toISOString() : null,
-          IsActive: editCouponFormData.isActive
-        };
+    try {
+      const couponData = {
+        Code: editCouponFormData.code.trim(),
+        Description: editCouponFormData.description.trim() || null,
+        DiscountPercent: editCouponFormData.discountType === 'percentage' ? parseFloat(editCouponFormData.discountValue) : null,
+        DiscountAmount: editCouponFormData.discountType === 'amount' ? parseFloat(editCouponFormData.discountValue) : null,
+        UsageLimit: parseInt(editCouponFormData.usageLimit),
+        StartDate: editCouponFormData.startDate ? new Date(editCouponFormData.startDate).toISOString() : null,
+        EndDate: editCouponFormData.expiryDate ? new Date(editCouponFormData.expiryDate).toISOString() : null,
+        IsActive: editCouponFormData.isActive
+      };
+
+      const response = await axiosInstance.put(`${API_ENDPOINTS.COUPON}/${editingCouponId}`, couponData);
+      const updatedCoupon = response.data;
+
+      const updatedCoupons = coupons.map(c => {
+        if ((c.Id || c.id) === editingCouponId) {
+          return updatedCoupon;
+        }
+        return c;
+      });
+
+      setCoupons(updatedCoupons);
+      const filtered = applyCouponFilters(updatedCoupons, couponFilterName, couponFilterStatus, couponSortOrder);
+      setFilteredCoupons(filtered);
+
+      if (onSuccess) {
+        onSuccess('Coupon đã được cập nhật thành công!');
       }
-      return c;
-    });
-
-    setCoupons(updatedCoupons);
-    const filtered = applyCouponFilters(updatedCoupons, couponFilterName, couponFilterStatus, couponSortOrder);
-    setFilteredCoupons(filtered);
-
-    if (onSuccess) {
-      onSuccess('Coupon đã được cập nhật thành công!');
+      handleCloseEditCouponModal();
+    } catch (err) {
+      console.error('Error updating coupon:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi cập nhật coupon. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsEditingCoupon(false);
     }
-    handleCloseEditCouponModal();
-    setIsEditingCoupon(false);
   };
 
   const handleCloseEditCouponModal = () => {

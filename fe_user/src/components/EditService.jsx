@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { updateService, getServiceById } from "../API/ServiceApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const EditService = () => {
     // State management
@@ -457,11 +457,7 @@ const EditService = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

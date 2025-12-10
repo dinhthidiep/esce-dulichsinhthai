@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
-import Header from '~/components/Header';
+import HostHeader from '~/components/HostHeader';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
 import LoadingSpinner from './LoadingSpinner';
@@ -108,34 +108,7 @@ const HostDashboard = () => {
   const [isApplyingPromotion, setIsApplyingPromotion] = useState(false);
   
   // Service Rank Rules states
-  const [serviceRankRules, setServiceRankRules] = useState([
-    // Sample data for testing - 25 items for host-pagination
-    { RuleID: 1, ServiceID: 1, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Tour du lịch sinh thái khám phá bán đảo Sơn Trà và tham quan các điểm đến nổi tiếng tại Đà Nẵng' },
-    { RuleID: 2, ServiceID: 1, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Dịch vụ tổ chức sự kiện và hội nghị chuyên nghiệp với đầy đủ trang thiết bị hiện đại' },
-    { RuleID: 3, ServiceID: 2, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Tour tham quan Đà Nẵng' },
-    { RuleID: 4, ServiceID: 1, RankID: 'Vàng', UserType: 'Công ty', ServiceName: 'Gói dịch vụ nghỉ dưỡng cao cấp tại resort ven biển với bữa sáng buffet và các tiện ích spa, gym, hồ bơi vô cực' },
-    { RuleID: 5, ServiceID: 3, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Dịch vụ cho thuê xe máy và xe đạp du lịch' },
-    { RuleID: 6, ServiceID: 2, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Tour tham quan Đà Nẵng' },
-    { RuleID: 7, ServiceID: 4, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Dịch vụ spa và massage thư giãn cao cấp' },
-    { RuleID: 8, ServiceID: 1, RankID: 'Đồng', UserType: 'Công ty', ServiceName: 'Tour du lịch sinh thái khám phá bán đảo Sơn Trà và tham quan các điểm đến nổi tiếng tại Đà Nẵng' },
-    { RuleID: 9, ServiceID: 5, RankID: 'Bạc', UserType: 'Khách hàng', ServiceName: 'Dịch vụ tổ chức tiệc và sự kiện ngoài trời' },
-    { RuleID: 10, ServiceID: 3, RankID: 'Vàng', UserType: 'Công ty', ServiceName: 'Dịch vụ cho thuê xe máy và xe đạp du lịch' },
-    { RuleID: 11, ServiceID: 2, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Tour tham quan Đà Nẵng' },
-    { RuleID: 12, ServiceID: 4, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Dịch vụ spa và massage thư giãn cao cấp' },
-    { RuleID: 13, ServiceID: 1, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Tour du lịch sinh thái khám phá bán đảo Sơn Trà và tham quan các điểm đến nổi tiếng tại Đà Nẵng' },
-    { RuleID: 14, ServiceID: 6, RankID: 'Đồng', UserType: 'Công ty', ServiceName: 'Dịch vụ hướng dẫn viên du lịch chuyên nghiệp' },
-    { RuleID: 15, ServiceID: 5, RankID: 'Bạc', UserType: 'Khách hàng', ServiceName: 'Dịch vụ tổ chức tiệc và sự kiện ngoài trời' },
-    { RuleID: 16, ServiceID: 3, RankID: 'Vàng', UserType: 'Công ty', ServiceName: 'Dịch vụ cho thuê xe máy và xe đạp du lịch' },
-    { RuleID: 17, ServiceID: 4, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Dịch vụ spa và massage thư giãn cao cấp' },
-    { RuleID: 18, ServiceID: 2, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Tour tham quan Đà Nẵng' },
-    { RuleID: 19, ServiceID: 1, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Tour du lịch sinh thái khám phá bán đảo Sơn Trà và tham quan các điểm đến nổi tiếng tại Đà Nẵng' },
-    { RuleID: 20, ServiceID: 7, RankID: 'Đồng', UserType: 'Công ty', ServiceName: 'Dịch vụ chụp ảnh và quay phim kỷ niệm' },
-    { RuleID: 21, ServiceID: 6, RankID: 'Bạc', UserType: 'Khách hàng', ServiceName: 'Dịch vụ hướng dẫn viên du lịch chuyên nghiệp' },
-    { RuleID: 22, ServiceID: 5, RankID: 'Vàng', UserType: 'Công ty', ServiceName: 'Dịch vụ tổ chức tiệc và sự kiện ngoài trời' },
-    { RuleID: 23, ServiceID: 3, RankID: 'Đồng', UserType: 'Khách hàng', ServiceName: 'Dịch vụ cho thuê xe máy và xe đạp du lịch' },
-    { RuleID: 24, ServiceID: 4, RankID: 'Bạc', UserType: 'Công ty', ServiceName: 'Dịch vụ spa và massage thư giãn cao cấp' },
-    { RuleID: 25, ServiceID: 2, RankID: 'Vàng', UserType: 'Khách hàng', ServiceName: 'Tour tham quan Đà Nẵng' }
-  ]);
+  const [serviceRankRules, setServiceRankRules] = useState([]);
   const [loadingRules, setLoadingRules] = useState(false);
   const [showPromotionsList, setShowPromotionsList] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,17 +116,11 @@ const HostDashboard = () => {
   const itemsPerPage = 5;
   
   // Coupon Rank Rules states (used in Apply Promotion Modal)
-  const [couponRankRules, setCouponRankRules] = useState([
-    // Sample data for testing
-    { RuleID: 1, CouponID: 1001, RankID: 'Vàng', UserType: 'Khách hàng', CouponCode: 'SPRING2025' },
-    { RuleID: 2, CouponID: 1002, RankID: 'Bạc', UserType: 'Công ty', CouponCode: 'SUMMER50' },
-    { RuleID: 3, CouponID: 1003, RankID: 'Vàng', UserType: 'Khách hàng', CouponCode: 'VIP100K' },
-    { RuleID: 4, CouponID: 1004, RankID: 'Tất cả', UserType: 'Công ty', CouponCode: 'WEEKEND30' },
-    { RuleID: 5, CouponID: 1005, RankID: 'Đồng', UserType: 'Khách hàng', CouponCode: 'FIRSTTIME15' },
-    { RuleID: 6, CouponID: 1006, RankID: 'Vàng', UserType: 'Công ty', CouponCode: 'BIGSALE200K' },
-    { RuleID: 7, CouponID: 1007, RankID: 'Bạc', UserType: 'Khách hàng', CouponCode: 'LOYALTY20' },
-    { RuleID: 8, CouponID: 1008, RankID: 'Tất cả', UserType: 'Công ty', CouponCode: 'EARLYBIRD10' }
-  ]);
+  const [couponRankRules, setCouponRankRules] = useState([]);
+  
+  // Services and Coupons for dropdowns
+  const [allServices, setAllServices] = useState([]);
+  const [allCoupons, setAllCoupons] = useState([]);
   
   
   
@@ -380,15 +347,30 @@ const HostDashboard = () => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Add to serviceRankRules (mock data only)
-        const newRule = {
-          RuleID: serviceRankRules.length + 1,
-          ServiceID: parseInt(applyPromotionFormData.serviceId),
-          RankID: applyPromotionFormData.rankId,
-          UserType: applyPromotionFormData.userType,
-          ServiceName: `Dịch vụ ID: ${applyPromotionFormData.serviceId}`
-        };
-        setServiceRankRules(prev => [...prev, newRule]);
+        // Add to serviceRankRules
+        // Load service from API to get name
+        try {
+          const serviceResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE}/${applyPromotionFormData.serviceId}`);
+          const service = serviceResponse.data;
+          const newRule = {
+            RuleID: serviceRankRules.length + 1,
+            ServiceID: parseInt(applyPromotionFormData.serviceId),
+            RankID: applyPromotionFormData.rankId,
+            UserType: applyPromotionFormData.userType,
+            ServiceName: service ? (service.Name || service.name) : `Dịch vụ ID: ${applyPromotionFormData.serviceId}`
+          };
+          setServiceRankRules(prev => [...prev, newRule]);
+        } catch (err) {
+          console.error('Error loading service:', err);
+          const newRule = {
+            RuleID: serviceRankRules.length + 1,
+            ServiceID: parseInt(applyPromotionFormData.serviceId),
+            RankID: applyPromotionFormData.rankId,
+            UserType: applyPromotionFormData.userType,
+            ServiceName: `Dịch vụ ID: ${applyPromotionFormData.serviceId}`
+          };
+          setServiceRankRules(prev => [...prev, newRule]);
+        }
       } else if (activeTab === 'coupons') {
         // TODO: Implement API call to create CouponRankRule
         console.log('Applying coupon promotion:', applyPromotionFormData);
@@ -397,22 +379,29 @@ const HostDashboard = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Add to couponRankRules
-        // Generate mock coupon data for lookup
-        const mockCoupons = Array.from({ length: 20 }, (_, i) => ({
-          Id: 1000 + i + 1,
-          id: 1000 + i + 1,
-          Code: `COUPON${i + 1}`,
-          code: `COUPON${i + 1}`
-        }));
-        const coupon = mockCoupons.find(c => (c.Id || c.id) === parseInt(applyPromotionFormData.couponId));
-        const newRule = {
-          RuleID: couponRankRules.length + 1,
-          CouponID: parseInt(applyPromotionFormData.couponId),
-          RankID: applyPromotionFormData.rankId,
-          UserType: applyPromotionFormData.userType,
-          CouponCode: coupon ? (coupon.Code || coupon.code) : `Mã giảm giá ID: ${applyPromotionFormData.couponId}`
-        };
-        setCouponRankRules(prev => [...prev, newRule]);
+        // Load coupon from API to get code
+        try {
+          const couponResponse = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/${applyPromotionFormData.couponId}`);
+          const coupon = couponResponse.data;
+          const newRule = {
+            RuleID: couponRankRules.length + 1,
+            CouponID: parseInt(applyPromotionFormData.couponId),
+            RankID: applyPromotionFormData.rankId,
+            UserType: applyPromotionFormData.userType,
+            CouponCode: coupon ? (coupon.Code || coupon.code) : `Mã giảm giá ID: ${applyPromotionFormData.couponId}`
+          };
+          setCouponRankRules(prev => [...prev, newRule]);
+        } catch (err) {
+          console.error('Error loading coupon:', err);
+          const newRule = {
+            RuleID: couponRankRules.length + 1,
+            CouponID: parseInt(applyPromotionFormData.couponId),
+            RankID: applyPromotionFormData.rankId,
+            UserType: applyPromotionFormData.userType,
+            CouponCode: `Mã giảm giá ID: ${applyPromotionFormData.couponId}`
+          };
+          setCouponRankRules(prev => [...prev, newRule]);
+        }
       }
       
       setSuccess('Áp dụng thành công!');
@@ -956,7 +945,7 @@ const HostDashboard = () => {
   if (loading) {
     return (
       <>
-        <Header />
+        <HostHeader />
         <main className="host-hostdashboard-main">
           <LoadingSpinner message="Đang tải thông tin cá nhân..." />
         </main>
@@ -967,7 +956,7 @@ const HostDashboard = () => {
   if (error && !userInfo) {
     return (
       <>
-        <Header />
+        <HostHeader />
         <main className="host-hostdashboard-main">
           <div className="host-profile-container">
             <div className="host-error-container">
@@ -1018,7 +1007,7 @@ const HostDashboard = () => {
 
   return (
     <>
-      <Header />
+      <HostHeader />
       <main className="host-hostdashboard-main">
         <div className="host-profile-container">
           {/* Sidebar */}
@@ -1503,20 +1492,11 @@ const HostDashboard = () => {
                       host-required
                     >
                       <option value="">-- Chọn dịch vụ --</option>
-                      {(() => {
-                        // Mock services for Apply Promotion Modal
-                        const mockServices = Array.from({ length: 20 }, (_, i) => ({
-                          Id: `mock-service-${i + 1}`,
-                          id: `mock-service-${i + 1}`,
-                          Name: `Dịch vụ ${i + 1}`,
-                          name: `Dịch vụ ${i + 1}`
-                        }));
-                        return mockServices.map(service => (
-                          <option key={service.Id || service.id} value={service.Id || service.id}>
-                            {service.Name || service.name}
-                          </option>
-                        ));
-                      })()}
+                      {allServices.map(service => (
+                        <option key={service.Id || service.id} value={service.Id || service.id}>
+                          {service.Name || service.name}
+                        </option>
+                      ))}
                     </select>
                     {applyPromotionErrors.serviceId && <div className="host-error">{applyPromotionErrors.serviceId}</div>}
                   </div>
@@ -1535,22 +1515,11 @@ const HostDashboard = () => {
                       host-required
                     >
                       <option value="">-- Chọn coupon --</option>
-                      {(() => {
-                        // Generate mock coupons for dropdown
-                        const mockCoupons = Array.from({ length: 20 }, (_, i) => ({
-                          Id: 1000 + i + 1,
-                          id: 1000 + i + 1,
-                          Code: `COUPON${i + 1}`,
-                          code: `COUPON${i + 1}`,
-                          Description: `Mô tả coupon ${i + 1}`,
-                          description: `Mô tả coupon ${i + 1}`
-                        }));
-                        return mockCoupons.map(coupon => (
-                          <option key={coupon.Id || coupon.id} value={coupon.Id || coupon.id}>
-                            {coupon.Code || coupon.code} - {coupon.Description || coupon.description || 'Không có mô tả'}
-                          </option>
-                        ));
-                      })()}
+                      {allCoupons.map(coupon => (
+                        <option key={coupon.Id || coupon.id} value={coupon.Id || coupon.id}>
+                          {coupon.Code || coupon.code} - {coupon.Description || coupon.description || 'Không có mô tả'}
+                        </option>
+                      ))}
                     </select>
                     {applyPromotionErrors.couponId && <div className="host-error">{applyPromotionErrors.couponId}</div>}
                   </div>

@@ -133,6 +133,8 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<INewsRepository, NewsRepository>(); // ĐÃ THÊM: News Repository
 /*builder.Services.AddScoped<ChatbotService>(); // ĐÃ THÊM: Chatbot Service*/
 
+builder.Services.AddScoped<ChatbotService>();
+
 
 // --- Helpers và Options còn thiếu ---
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

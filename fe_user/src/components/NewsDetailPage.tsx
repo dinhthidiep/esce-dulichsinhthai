@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import Button from '~/components/ui/Button'
 import LoadingSpinner from '~/components/LoadingSpinner'
@@ -10,6 +10,7 @@ import {
   CalendarIcon,
   UserIcon,
   ChevronRightIcon,
+  HeartIcon,
 } from '~/components/icons'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
@@ -39,6 +40,9 @@ const NewsDetailPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [relatedNews, setRelatedNews] = useState<NewsItem[]>([])
+  const [isLiked, setIsLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+  const [isTogglingLike, setIsTogglingLike] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -84,6 +88,10 @@ const NewsDetailPage = () => {
       }
       
       setNews(transformedNews)
+      
+      // Set initial like state
+      setIsLiked(newsData.IsLiked || newsData.isLiked || false)
+      setLikesCount(newsData.LikesCount || newsData.likesCount || 0)
     } catch (err: any) {
       console.error('Error fetching news detail:', err)
       setError(err.response?.data?.message || 'Không thể tải tin tức. Vui lòng thử lại sau.')
@@ -146,6 +154,30 @@ const NewsDetailPage = () => {
     }
   }
 
+  const handleToggleLike = async () => {
+    if (!id || isTogglingLike) return
+
+    try {
+      setIsTogglingLike(true)
+      const response = await axiosInstance.post(`${API_ENDPOINTS.NEWS}/${id}/like`)
+      
+      // Backend trả về { liked: boolean, likesCount: number }
+      if (response.data) {
+        setIsLiked(response.data.liked !== undefined ? response.data.liked : !isLiked)
+        if (response.data.likesCount !== undefined) {
+          setLikesCount(response.data.likesCount)
+        } else {
+          setLikesCount(prev => isLiked ? prev - 1 : prev + 1)
+        }
+      }
+    } catch (err: any) {
+      console.error('Error toggling like:', err)
+      // Không hiển thị error cho user, chỉ log
+    } finally {
+      setIsTogglingLike(false)
+    }
+  }
+
   const formatContent = (content: string) => {
     // Chuyển đổi các đoạn văn được phân cách bởi \n\n thành các thẻ <p>
     return content.split('\n\n').map((paragraph, index) => {
@@ -188,7 +220,7 @@ const NewsDetailPage = () => {
   if (loading) {
     return (
       <div className="news-detail-news-detail-page">
-        <Header />
+        <ConditionalHeader />
         <div className="news-detail-news-detail-main">
           <LoadingSpinner message="Đang tải tin tức..." />
         </div>
@@ -199,7 +231,7 @@ const NewsDetailPage = () => {
   if (error || !news) {
     return (
       <div className="news-detail-news-detail-page">
-        <Header />
+        <ConditionalHeader />
         <div className="news-detail-news-detail-main">
           <div className="news-detail-news-detail-error">
             <h2>❌ Không tìm thấy tin tức</h2>
@@ -254,6 +286,19 @@ const NewsDetailPage = () => {
               </div>
 
               <h1 className="news-detail-news-detail-title">{news.title}</h1>
+              
+              {/* Like Button */}
+              <div className="news-detail-news-like-container">
+                <button
+                  className={`news-detail-news-like-btn ${isLiked ? 'news-detail-news-like-btn-active' : ''}`}
+                  onClick={handleToggleLike}
+                  disabled={isTogglingLike}
+                  aria-label={isLiked ? 'Bỏ thích' : 'Thích'}
+                >
+                  <HeartIcon className={`news-detail-news-like-icon ${isLiked ? 'news-detail-news-like-icon-filled' : ''}`} />
+                  <span className="news-detail-news-like-count">{likesCount}</span>
+                </button>
+              </div>
             </header>
 
             {/* News Image */}

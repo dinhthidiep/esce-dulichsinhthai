@@ -2,7 +2,7 @@ import "~/components/coupon/CouponManagement.css";
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { createCoupon } from "../API/CouponApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 const CreateCoupon = () => {
     // State management - matching database schema
     const [formData, setFormData] = useState({
@@ -468,11 +468,7 @@ const CreateCoupon = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

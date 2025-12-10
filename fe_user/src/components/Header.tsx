@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BellIcon, UserIcon, ChevronDownIcon, StarIcon, CrownIcon, LogOutIcon } from '~/components/icons'
 import NotificationDropdown from '~/components/NotificationDropdown'
@@ -6,9 +6,12 @@ import { getNotifications } from '~/API/NotificationApi'
 import type { NotificationDto } from '~/API/NotificationApi'
 import './Header.css'
 
-const Header = () => {
+const Header = React.memo(() => {
   const location = useLocation()
   const navigate = useNavigate()
+  
+  // Memoize location.pathname để tránh re-render không cần thiết
+  const currentPath = useMemo(() => location.pathname, [location.pathname])
   const [isScrolled, setIsScrolled] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -16,18 +19,29 @@ const Header = () => {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Kiểm tra đăng nhập
+  // Kiểm tra đăng nhập - tối ưu để tránh re-render không cần thiết
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token')
       const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
       
       if (token && userInfoStr) {
-        setIsLoggedIn(true)
         try {
-          setUserInfo(JSON.parse(userInfoStr))
+          const parsedUserInfo = JSON.parse(userInfoStr)
+          setIsLoggedIn(true)
+          // Chỉ update state nếu userInfo thay đổi
+          setUserInfo(prev => {
+            const prevStr = JSON.stringify(prev)
+            const newStr = JSON.stringify(parsedUserInfo)
+            if (prevStr !== newStr) {
+              return parsedUserInfo
+            }
+            return prev
+          })
         } catch (e) {
           console.error('Error parsing userInfo:', e)
+          setIsLoggedIn(false)
+          setUserInfo(null)
         }
       } else {
         setIsLoggedIn(false)
@@ -36,14 +50,20 @@ const Header = () => {
     }
 
     checkAuth()
-    window.addEventListener('storage', checkAuth)
-    const interval = setInterval(checkAuth, 1000)
+    
+    // Chỉ listen storage changes, không check liên tục
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userInfo' || e.key === 'token') {
+        checkAuth()
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
 
     return () => {
-      window.removeEventListener('storage', checkAuth)
-      clearInterval(interval)
+      window.removeEventListener('storage', handleStorageChange)
     }
-  }, [location])
+  }, []) // Chỉ chạy khi mount, không phụ thuộc vào location
 
   // Load unread notifications count
   useEffect(() => {
@@ -128,8 +148,8 @@ const Header = () => {
     return 'User'
   }
 
-  // Lấy avatar hoặc initials
-  const getUserAvatar = () => {
+  // Memoize getUserAvatar để tránh tính toán lại
+  const getUserAvatar = useCallback(() => {
     const avatar = userInfo?.Avatar || userInfo?.avatar
     if (avatar) return avatar
     
@@ -141,14 +161,15 @@ const Header = () => {
       .toUpperCase()
       .slice(0, 2)
     return initials
-  }
+  }, [userInfo])
 
-  const isActive = (path: string) => {
+  // Memoize isActive function để tránh tính toán lại không cần thiết
+  const isActive = useCallback((path: string) => {
     if (path === '/') {
-      return location.pathname === '/'
+      return currentPath === '/'
     }
-    return location.pathname.startsWith(path)
-  }
+    return currentPath.startsWith(path)
+  }, [currentPath])
 
   return (
     <header className={`header-header ${isScrolled ? 'header-scrolled' : ''}`}>
@@ -166,7 +187,7 @@ const Header = () => {
         <nav className="header-header-nav">
           <Link 
             to="/" 
-            className={`header-nav-link ${isActive('/') && location.pathname !== '/services' && location.pathname !== '/forum' && location.pathname !== '/news' && location.pathname !== '/policy' ? 'header-active' : ''}`}
+            className={`header-nav-link ${isActive('/') && currentPath !== '/services' && currentPath !== '/forum' && currentPath !== '/news' && currentPath !== '/policy' ? 'header-active' : ''}`}
           >
             Trang chủ
           </Link>
@@ -234,15 +255,18 @@ const Header = () => {
                   aria-label="Menu người dùng"
                 >
                   <div className="header-user-avatar">
-                    {typeof getUserAvatar() === 'string' && getUserAvatar().startsWith('http') ? (
-                      <img 
-                        src={getUserAvatar()} 
-                        alt="Avatar" 
-                        className="header-user-avatar-img"
-                      />
-                    ) : (
-                      <span className="header-user-avatar-initials">{getUserAvatar()}</span>
-                    )}
+                    {(() => {
+                      const avatar = getUserAvatar()
+                      return typeof avatar === 'string' && avatar.startsWith('http') ? (
+                        <img 
+                          src={avatar} 
+                          alt="Avatar" 
+                          className="header-user-avatar-img"
+                        />
+                      ) : (
+                        <span className="header-user-avatar-initials">{avatar}</span>
+                      )
+                    })()}
                   </div>
                   <div className="header-user-info-inline">
                     <span className="header-user-name-inline">
@@ -310,7 +334,9 @@ const Header = () => {
       </div>
     </header>
   )
-}
+})
+
+Header.displayName = 'Header'
 
 export default Header
 

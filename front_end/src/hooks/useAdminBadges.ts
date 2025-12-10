@@ -21,27 +21,31 @@ export const useAdminBadges = (): AdminBadges => {
   useEffect(() => {
     let mounted = true
 
-    const load = async () => {
-      try {
-        const data: DashboardDto = await fetchDashboardData()
-        if (!mounted || !data) return
+    // Delay fetch để không block initial render của SideBar
+    const loadTimeout = setTimeout(() => {
+      const load = async () => {
+        try {
+          const data: DashboardDto = await fetchDashboardData()
+          if (!mounted || !data) return
 
-        setBadges({
-          users: 0, // Có thể dùng cho số user mới đăng ký nếu backend hỗ trợ sau này
-          chat: data.unreadMessages ?? 0,
-          supports: data.pendingSupports ?? 0,
-          supportApprovals: data.urgentSupports ?? data.pendingSupports ?? 0,
-          roleUpgrade: data.pendingUpgradeRequests ?? 0
-        })
-      } catch (error) {
-        console.warn('[useAdminBadges] Không thể tải dữ liệu badge, dùng giá trị mặc định 0.', error)
+          setBadges({
+            users: 0, // Có thể dùng cho số user mới đăng ký nếu backend hỗ trợ sau này
+            chat: data.unreadMessages ?? 0,
+            supports: data.pendingSupports ?? 0,
+            supportApprovals: data.urgentSupports ?? data.pendingSupports ?? 0,
+            roleUpgrade: data.pendingUpgradeRequests ?? 0
+          })
+        } catch (error) {
+          console.warn('[useAdminBadges] Không thể tải dữ liệu badge, dùng giá trị mặc định 0.', error)
+        }
       }
-    }
 
-    void load()
+      void load()
+    }, 300) // Delay 300ms để SideBar render trước
 
     return () => {
       mounted = false
+      clearTimeout(loadTimeout)
     }
   }, [])
 

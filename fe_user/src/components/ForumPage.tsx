@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import LazyImage from '~/components/LazyImage'
@@ -1512,7 +1512,7 @@ const ForumPage = () => {
 
   return (
     <div className="forum-forum-page">
-      <Header />
+      <ConditionalHeader />
 
       <main className="forum-forum-main">
         {/* Page Header */}

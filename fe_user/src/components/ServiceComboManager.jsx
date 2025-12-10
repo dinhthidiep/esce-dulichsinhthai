@@ -4,7 +4,7 @@ import {
     deleteServiceCombo,
     getServiceComboById,
 } from "../API/ServiceComboApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 // Backend is running on HTTP port 5002
 const backend_url = "http://localhost:5002";
@@ -205,11 +205,7 @@ const ServiceComboManager = () => {
     return (
         <div className="create-tour-page">
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">

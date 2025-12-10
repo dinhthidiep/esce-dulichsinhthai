@@ -14,6 +14,108 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Filter Row */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Filter Field */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Filter Input and Select */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input,
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1e293b;
+  height: 42px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input:focus,
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input::placeholder {
+  color: #94a3b8;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2310b981' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* Search Button */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search {
+  padding: 0.625rem 1.25rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-row {
+    flex-direction: column;
+  }
+
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field {
+    width: 100%;
+  }
+
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search {
+    width: 100%;
+  }
+}
+
 /* Table Container */
 .priv-mgr-privilege-management .priv-mgr-coupons-table-container {
   background: white;

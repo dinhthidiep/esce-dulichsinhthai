@@ -81,25 +81,7 @@ const PaymentFailurePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!bookingId || isNaN(parseInt(bookingId))) {
-        // Nếu không có bookingId hợp lệ, sử dụng mock data để demo
-        console.log('⚠️ Không có bookingId hợp lệ, sử dụng mock data để demo')
-        const mockBooking: BookingData = {
-          Id: 1,
-          BookingNumber: 'BK-2024-001',
-          TotalAmount: 2500000,
-          Status: 'pending',
-          StartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          EndDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          Quantity: 2,
-          ServiceCombo: {
-            Id: 1,
-            Name: 'Tour Đà Lạt 3 ngày 2 đêm',
-            Address: 'Đà Lạt, Lâm Đồng',
-            Image: '/img/banahills.jpg'
-          }
-        }
-        setBooking(mockBooking)
-        setFailureReason('Giao dịch bị từ chối bởi ngân hàng. Vui lòng kiểm tra lại thông tin thẻ thanh toán.')
+        setError('Không tìm thấy thông tin đặt dịch vụ')
         setLoading(false)
         return
       }
@@ -146,60 +128,7 @@ const PaymentFailurePage = () => {
         console.error('Lỗi khi tải dữ liệu:', err)
         const axiosError = err as { response?: { status?: number } }
         if (axiosError.response?.status === 404) {
-          // Nếu không tìm thấy, sử dụng mock data để demo
-          console.log('⚠️ Không tìm thấy booking, sử dụng mock data để demo')
-          const bookingIdNum = parseInt(bookingId) || 1
-          const bookingIdStr = String(bookingIdNum).padStart(3, '0')
-          
-          // Mock data khác nhau tùy theo bookingId để test
-          const mockServices = [
-            {
-              Name: 'Tour Đà Lạt 3 ngày 2 đêm',
-              Address: 'Đà Lạt, Lâm Đồng',
-              Price: 2500000
-            },
-            {
-              Name: 'Tour Hà Nội - Sapa 4 ngày 3 đêm',
-              Address: 'Sapa, Lào Cai',
-              Price: 3500000
-            },
-            {
-              Name: 'Tour Phú Quốc 5 ngày 4 đêm',
-              Address: 'Phú Quốc, Kiên Giang',
-              Price: 4500000
-            }
-          ]
-          
-          const serviceIndex = (bookingIdNum - 1) % mockServices.length
-          const selectedService = mockServices[serviceIndex]
-          
-          const mockBooking: BookingData = {
-            Id: bookingIdNum,
-            BookingNumber: `BK-2024-${bookingIdStr}`,
-            TotalAmount: selectedService.Price,
-            Status: 'pending',
-            StartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            EndDate: new Date(Date.now() + (7 + serviceIndex + 2) * 24 * 60 * 60 * 1000).toISOString(),
-            Quantity: bookingIdNum % 3 + 1, // 1-3 người
-            ServiceCombo: {
-              Id: bookingIdNum,
-              Name: selectedService.Name,
-              Address: selectedService.Address,
-              Image: '/img/banahills.jpg'
-            }
-          }
-          setBooking(mockBooking)
-          
-          // Lý do thất bại khác nhau tùy theo bookingId
-          const failureReasons = [
-            'Giao dịch bị từ chối bởi ngân hàng. Vui lòng kiểm tra lại thông tin thẻ thanh toán.',
-            'Số dư tài khoản không đủ để thực hiện giao dịch. Vui lòng nạp thêm tiền và thử lại.',
-            'Thẻ thanh toán đã hết hạn hoặc bị khóa. Vui lòng sử dụng thẻ khác hoặc liên hệ ngân hàng.',
-            'Vượt quá hạn mức giao dịch trong ngày. Vui lòng thử lại vào ngày mai hoặc liên hệ ngân hàng.',
-            'Lỗi kết nối với hệ thống thanh toán. Vui lòng thử lại sau vài phút.'
-          ]
-          const reasonIndex = (bookingIdNum - 1) % failureReasons.length
-          setFailureReason(failureReasons[reasonIndex])
+          setError('Không tìm thấy thông tin đặt dịch vụ')
         } else if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
           setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.')
           navigate('/login', { state: { returnUrl: `/payment-failure/${bookingId}` } })

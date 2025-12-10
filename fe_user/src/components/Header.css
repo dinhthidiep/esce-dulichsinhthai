@@ -7,11 +7,15 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: none;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .header-header.header-scrolled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s ease;
 }
 
 .header-header-container {
@@ -68,13 +72,14 @@
   color: #333;
   font-weight: 500;
   font-size: 1rem; /* Tăng từ 0.9375rem lên 1rem */
-  transition: color 0.3s;
+  transition: color 0.2s ease;
   position: relative;
   padding: var(--spacing-2, 0.5rem) var(--spacing-2, 0.5rem);
   border-radius: var(--radius-md, 0.5rem);
   min-height: var(--touch-target-min, 2.75rem); /*  WCAG: 44px minimum */
   display: inline-flex;
   align-items: center;
+  will-change: color;
 }
 
 .header-nav-link:hover,

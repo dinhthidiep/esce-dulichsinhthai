@@ -1,7 +1,7 @@
 import "./ServiceManager.css";
 import React, { useEffect, useState } from "react";
 import { getMyServices, deleteService } from "../API/ServiceApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const ServiceManager = () => {
     const [sidebarActive, setSidebarActive] = useState(false);
@@ -135,11 +135,7 @@ const ServiceManager = () => {
     return (
         <div className="srv-mgr-create-tour-page">
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="srv-mgr-content-title-display-box">

@@ -35,41 +35,9 @@ export const useUserLevel = (userId: number | null): UserLevelData => {
       return
     }
 
-    // Mock data để test - lấy từ userInfo nếu có
-    // Nếu user có MembershipTier = 'none' thì totalSpent = 0 (level 0)
-    let MOCK_TOTAL_SPENT: number | null = null
-    if (import.meta.env.DEV) {
-      try {
-        const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
-        if (userInfoStr) {
-          const userInfo = JSON.parse(userInfoStr)
-          const tier = userInfo.MembershipTier || userInfo.membershipTier || userInfo.tier
-          // Nếu là level 0 (none), thì totalSpent = 0
-          if (tier === 'none') {
-            MOCK_TOTAL_SPENT = 0
-          } else {
-            // Các level khác có thể mock số tiền tương ứng
-            // MOCK_TOTAL_SPENT = 2000000 // Bronze
-          }
-        }
-      } catch (e) {
-        // Ignore
-      }
-    }
-
     try {
       setLoading(true)
       setError(null)
-
-      // Nếu có mock data, sử dụng mock data
-      if (MOCK_TOTAL_SPENT !== null) {
-        console.log('🧪 [useUserLevel] Sử dụng mock data:', MOCK_TOTAL_SPENT)
-        setTimeout(() => {
-          setTotalSpent(MOCK_TOTAL_SPENT)
-          setLoading(false)
-        }, 500) // Simulate API delay
-        return
-      }
 
       // Lấy tất cả bookings của user
       const response = await axiosInstance.get<Booking[]>(`${API_ENDPOINTS.BOOKING}/user/${userId}`)

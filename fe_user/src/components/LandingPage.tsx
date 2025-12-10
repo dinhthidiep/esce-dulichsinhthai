@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import axiosInstance from '~/utils/axiosInstance'
-import Header from '~/components/Header'
+import ConditionalHeader from '~/components/ConditionalHeader'
 import Footer from '~/components/Footer'
 import Button from '~/components/ui/Button'
 import { Card, CardContent } from '~/components/ui/Card'
@@ -214,7 +214,7 @@ const LandingPage = () => {
 
         try {
           const response = await axiosInstance.get<{ AverageRating?: number }>(
-            `/Review/servicecombo/${id}/average-rating`
+            `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
           )
           const rating = response.data.AverageRating || 0
           return { id, rating: parseFloat(String(rating)) || 0 }
@@ -481,7 +481,7 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
-      <Header />
+      <ConditionalHeader />
 
       {/* Welcome Message */}
       {showWelcomeMessage && userInfo && (

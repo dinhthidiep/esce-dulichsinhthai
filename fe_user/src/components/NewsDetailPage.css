@@ -85,6 +85,64 @@
   margin: 0;
 }
 
+/* Like Button */
+.news-detail-news-like-container {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.news-detail-news-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.news-detail-news-like-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.news-detail-news-like-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.news-detail-news-like-btn-active {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.news-detail-news-like-btn-active:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.news-detail-news-like-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: currentColor;
+  fill: none;
+  transition: all 0.2s;
+}
+
+.news-detail-news-like-icon-filled {
+  fill: currentColor;
+}
+
+.news-detail-news-like-count {
+  font-weight: 500;
+}
+
 /* News Image */
 .news-detail-news-detail-image-wrapper {
   width: 100%;

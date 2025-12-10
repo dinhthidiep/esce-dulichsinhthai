@@ -4,6 +4,8 @@ import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon } from '../icons/index';
 import CreateServiceComboModal from './CreateServiceComboModal';
 import EditServiceComboModal from './EditServiceComboModal';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './ServiceComboManagement.css';
 
 interface ServiceComboManagementProps {
@@ -121,6 +123,27 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   
   const DEFAULT_IMAGE_URL = '/img/banahills.jpg';
   
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
+    }
+  }, []);
+  
   // Filter and sort function for service combos
   const applyServiceComboFilters = useCallback((comboList, nameFilter, statusFilter, order) => {
     if (!Array.isArray(comboList) || comboList.length === 0) {
@@ -161,55 +184,35 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     return filtered;
   }, []);
 
-  // Load service combos - use mock data
+  // Load service combos from API
   useEffect(() => {
-    setLoadingServiceCombos(true);
-    
-    // Generate mock service combos data (30 combos)
-    const mockServiceCombos = Array.from({ length: 30 }, (_, i) => {
-      const createdDate = new Date(Date.now() - i * 86400000);
-      const statuses = ['open', 'closed', 'canceled'];
-      const status = statuses[i % statuses.length];
-      const startDate = new Date(Date.now() + i * 86400000);
-      const endDate = new Date(startDate.getTime() + (i % 7 + 1) * 86400000);
-      const numberOfDays = Math.floor(Math.random() * 5) + 1;
-      const numberOfNights = Math.floor(Math.random() * 5) + 1;
-      
-      return {
-        Id: `mock-combo-${i + 1}`,
-        id: `mock-combo-${i + 1}`,
-        Name: `Gói dịch vụ ${i + 1}`,
-        name: `Gói dịch vụ ${i + 1}`,
-        Address: `Địa chỉ ${i + 1}, Thành phố Hồ Chí Minh`,
-        address: `Địa chỉ ${i + 1}, Thành phố Hồ Chí Minh`,
-        Description: `Mô tả gói dịch vụ ${i + 1}. Đây là một gói dịch vụ chất lượng cao.`,
-        description: `Mô tả gói dịch vụ ${i + 1}. Đây là một gói dịch vụ chất lượng cao.`,
-        Price: Math.floor(Math.random() * 10000000) + 2000000,
-        price: Math.floor(Math.random() * 10000000) + 2000000,
-        AvailableSlots: Math.floor(Math.random() * 50) + 10,
-        availableSlots: Math.floor(Math.random() * 50) + 10,
-        Status: status,
-        status: status,
-        CancellationPolicy: `Chính sách hủy cho gói ${i + 1}`,
-        cancellationPolicy: `Chính sách hủy cho gói ${i + 1}`,
-        Image: '/img/banahills.jpg',
-        image: '/img/banahills.jpg',
-        CreatedAt: createdDate.toISOString(),
-        createdAt: createdDate.toISOString(),
-        StartDate: startDate.toISOString(),
-        startDate: startDate.toISOString(),
-        EndDate: endDate.toISOString(),
-        endDate: endDate.toISOString(),
-        NumberOfDays: numberOfDays,
-        numberOfDays: numberOfDays,
-        NumberOfNights: numberOfNights,
-        numberOfNights: numberOfNights
-      };
-    });
-    
-    setServiceCombos(mockServiceCombos);
-    setLoadingServiceCombos(false);
-  }, []);
+    const loadServiceCombos = async () => {
+      try {
+        setLoadingServiceCombos(true);
+        const userId = getUserId();
+        if (!userId) {
+          setServiceCombos([]);
+          setLoadingServiceCombos(false);
+          return;
+        }
+
+        // Get service combos for host
+        const response = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
+        const combosData = response.data || [];
+        setServiceCombos(combosData);
+      } catch (err) {
+        console.error('Error loading service combos:', err);
+        if (onError) {
+          onError('Không thể tải danh sách gói dịch vụ. Vui lòng thử lại.');
+        }
+        setServiceCombos([]);
+      } finally {
+        setLoadingServiceCombos(false);
+      }
+    };
+
+    loadServiceCombos();
+  }, [getUserId, onError]);
 
   // Apply filters when filter values change
   useEffect(() => {
@@ -259,21 +262,26 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   };
 
   // Handle delete service combo
-  const handleDeleteServiceCombo = (serviceComboId) => {
+  const handleDeleteServiceCombo = async (serviceComboId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa combo dịch vụ này? Hành động này không thể hoàn tác.')) {
-      // Mock delete - remove from state
-      setTimeout(() => {
+      try {
+        await axiosInstance.delete(`${API_ENDPOINTS.SERVICE_COMBO}/${serviceComboId}`);
         setServiceCombos(prevCombos => prevCombos.filter(s => (s.Id || s.id) !== serviceComboId));
         setFilteredServiceCombos(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== serviceComboId));
         if (onSuccess) {
           onSuccess('Combo dịch vụ đã được xóa thành công!');
         }
-      }, 500);
+      } catch (err) {
+        console.error('Error deleting service combo:', err);
+        if (onError) {
+          onError('Có lỗi xảy ra khi xóa combo dịch vụ. Vui lòng thử lại.');
+        }
+      }
     }
   };
 
   // Handle open create service combo modal
-  const handleOpenCreateServiceComboModal = () => {
+  const handleOpenCreateServiceComboModal = async () => {
     setIsCreateServiceComboModalOpen(true);
     setCreateServiceComboFormData({
       name: '',
@@ -300,31 +308,36 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setCreateServiceComboPromotionFilterName('');
     setCreateServiceComboPromotionFilterRank('all');
     
-    // Load services (mock data only)
-    const mockServices = Array.from({ length: 20 }, (_, i) => ({
-      Id: i + 1,
-      Name: `Dịch vụ ${i + 1}`,
-      Description: `Mô tả dịch vụ ${i + 1}`,
-      Price: Math.floor(Math.random() * 5000000) + 1000000
-    }));
-    setCreateServiceComboAllServices(mockServices);
-    
-    // Load promotions (mock data)
-    const mockPromotions = Array.from({ length: 15 }, (_, i) => ({
-      Id: i + 1,
-      ServiceName: `Dịch vụ ${i + 1}`,
-      Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3]
-    }));
-    setCreateServiceComboAllPromotions(mockPromotions);
-    
-    // Load coupons (mock data)
-    const mockCoupons = Array.from({ length: 15 }, (_, i) => ({
-      Id: i + 1,
-      Code: `COUPON${i + 1}`,
-      Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3],
-      UserType: ['Khách hàng', 'Công ty'][i % 2]
-    }));
-    setCreateServiceComboAllCoupons(mockCoupons);
+    // Load services from API
+    try {
+      const userId = getUserId();
+      if (userId) {
+        // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
+        const servicesResponse = await axiosInstance.get(API_ENDPOINTS.SERVICE);
+        const allServices = servicesResponse.data || [];
+        const hostServices = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        setCreateServiceComboAllServices(hostServices);
+      } else {
+        setCreateServiceComboAllServices([]);
+      }
+      
+      // Load promotions - TODO: Implement promotion API endpoint
+      // For now, set empty array
+      setCreateServiceComboAllPromotions([]);
+      
+      // Load coupons from API
+      if (userId) {
+        const couponsResponse = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/host/${userId}`);
+        setCreateServiceComboAllCoupons(couponsResponse.data || []);
+      } else {
+        setCreateServiceComboAllCoupons([]);
+      }
+    } catch (err) {
+      console.error('Error loading data for create modal:', err);
+      setCreateServiceComboAllServices([]);
+      setCreateServiceComboAllPromotions([]);
+      setCreateServiceComboAllCoupons([]);
+    }
   };
 
   // Handle close create service combo modal
@@ -446,7 +459,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   };
 
   // Handle create service combo submit
-  const handleCreateServiceComboSubmit = (e) => {
+  const handleCreateServiceComboSubmit = async (e) => {
     e.preventDefault();
     
     // Validate required fields
@@ -491,38 +504,53 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setIsCreatingServiceCombo(true);
     setCreateServiceComboErrors({});
     
-    // Mock create - add to state
-    setTimeout(() => {
-      const newCombo = {
-        Id: `mock-combo-${Date.now()}`,
-        id: `mock-combo-${Date.now()}`,
-        Name: createServiceComboFormData.name.trim(),
-        name: createServiceComboFormData.name.trim(),
-        Address: createServiceComboFormData.address.trim(),
-        address: createServiceComboFormData.address.trim(),
-        Description: createServiceComboFormData.description?.trim() || '',
-        description: createServiceComboFormData.description?.trim() || '',
-        Price: parseFloat(createServiceComboFormData.price) || 0,
-        price: parseFloat(createServiceComboFormData.price) || 0,
-        AvailableSlots: parseInt(createServiceComboFormData.availableSlots) || 0,
-        availableSlots: parseInt(createServiceComboFormData.availableSlots) || 0,
-        Status: createServiceComboFormData.status || 'open',
-        status: createServiceComboFormData.status || 'open',
-        CancellationPolicy: createServiceComboFormData.cancellationPolicy?.trim() || '',
-        cancellationPolicy: createServiceComboFormData.cancellationPolicy?.trim() || '',
-        Image: createServiceComboImagePreview || DEFAULT_IMAGE_URL,
-        image: createServiceComboImagePreview || DEFAULT_IMAGE_URL,
-        CreatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        StartDate: createServiceComboFormData.startDate || '',
-        startDate: createServiceComboFormData.startDate || '',
-        EndDate: createServiceComboFormData.endDate || '',
-        endDate: createServiceComboFormData.endDate || '',
-        NumberOfDays: parseInt(createServiceComboFormData.numberOfDays) || 0,
-        numberOfDays: parseInt(createServiceComboFormData.numberOfDays) || 0,
-        NumberOfNights: parseInt(createServiceComboFormData.numberOfNights) || 0,
-        numberOfNights: parseInt(createServiceComboFormData.numberOfNights) || 0
-      };
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        if (onError) {
+          onError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        }
+        setIsCreatingServiceCombo(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('Name', createServiceComboFormData.name.trim());
+      formData.append('Address', createServiceComboFormData.address.trim());
+      formData.append('Description', createServiceComboFormData.description?.trim() || '');
+      formData.append('Price', createServiceComboFormData.price);
+      formData.append('AvailableSlots', createServiceComboFormData.availableSlots);
+      formData.append('Status', createServiceComboFormData.status || 'open');
+      formData.append('CancellationPolicy', createServiceComboFormData.cancellationPolicy?.trim() || '');
+      formData.append('StartDate', createServiceComboFormData.startDate || '');
+      formData.append('EndDate', createServiceComboFormData.endDate || '');
+      formData.append('NumberOfDays', createServiceComboFormData.numberOfDays || '0');
+      formData.append('NumberOfNights', createServiceComboFormData.numberOfNights || '0');
+      formData.append('HostId', userId.toString());
+      if (createServiceComboFormData.image) {
+        formData.append('Image', createServiceComboFormData.image);
+      }
+
+      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const newCombo = response.data;
+      
+      // Add service combo details if services are selected
+      const selectedServiceIds = Object.keys(createServiceComboSelectedServices).filter(
+        id => createServiceComboSelectedServices[id]?.selected
+      );
+      
+      for (const serviceId of selectedServiceIds) {
+        const quantity = createServiceComboSelectedServices[serviceId]?.quantity || 1;
+        await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO_DETAIL, {
+          ServiceComboId: newCombo.Id || newCombo.id,
+          ServiceId: parseInt(serviceId),
+          Quantity: quantity
+        });
+      }
       
       const updatedCombos = [newCombo, ...serviceCombos];
       setServiceCombos(updatedCombos);
@@ -533,12 +561,18 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         onSuccess('Combo dịch vụ đã được tạo thành công!');
       }
       handleCloseCreateServiceComboModal();
+    } catch (err) {
+      console.error('Error creating service combo:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi tạo combo dịch vụ. Vui lòng thử lại.');
+      }
+    } finally {
       setIsCreatingServiceCombo(false);
-    }, 500);
+    }
   };
 
   // Handle open edit service combo modal
-  const handleOpenEditServiceComboModal = (serviceComboId) => {
+  const handleOpenEditServiceComboModal = async (serviceComboId) => {
     setEditingServiceComboId(serviceComboId);
     setIsEditServiceComboModalOpen(true);
     setLoadingEditServiceComboData(true);
@@ -564,9 +598,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setEditServiceComboServiceFilterPrice('');
     setIsEditServicesTableOpen(true);
     
-    // Load service combo data - use mock data
-    setTimeout(() => {
-      const serviceCombo = serviceCombos.find(sc => (sc.Id || sc.id) === serviceComboId);
+    // Load service combo data from API
+    try {
+      const response = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${serviceComboId}`);
+      const serviceCombo = response.data;
+      
       if (!serviceCombo) {
         if (onError) {
           onError('Không tìm thấy combo dịch vụ.');
@@ -610,33 +646,24 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         setEditServiceComboImagePreview(`http://localhost:5002/images/${existingImage}`);
       }
       
-      // Load services - use mock data
-      const mockServices = Array.from({ length: 20 }, (_, i) => ({
-        Id: i + 1,
-        Name: `Dịch vụ ${i + 1}`,
-        Description: `Mô tả dịch vụ ${i + 1}`,
-        Price: Math.floor(Math.random() * 5000000) + 1000000
-      }));
-      setEditServiceComboAllServices(mockServices);
+      // Load services from API
+      const userId = getUserId();
+      if (userId) {
+        // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
+        const servicesResponse = await axiosInstance.get(API_ENDPOINTS.SERVICE);
+        const allServices = servicesResponse.data || [];
+        const hostServices = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        setEditServiceComboAllServices(hostServices);
+      } else {
+        setEditServiceComboAllServices([]);
+      }
       
-      // Load promotions (mock data)
-      const mockPromotions = Array.from({ length: 15 }, (_, i) => ({
-        Id: i + 1,
-        ServiceName: `Dịch vụ ${i + 1}`,
-        Rank: ['Đồng', 'Bạc', 'Vàng'][i % 3]
-      }));
-      setEditServiceComboAllPromotions(mockPromotions);
+      // Load promotions - TODO: Implement promotion API endpoint
+      setEditServiceComboAllPromotions([]);
       
-      // Load existing service combo details - use mock data
-      const mockDetails = Array.from({ length: 3 }, (_, i) => ({
-        Id: `mock-detail-${i + 1}`,
-        id: `mock-detail-${i + 1}`,
-        ServiceId: i + 1,
-        serviceId: i + 1,
-        Quantity: Math.floor(Math.random() * 5) + 1,
-        quantity: Math.floor(Math.random() * 5) + 1
-      }));
-      const detailsArray = mockDetails;
+      // Load existing service combo details from API
+      const detailsResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/combo/${serviceComboId}`);
+      const detailsArray = detailsResponse.data || [];
       
       const selected = {};
       detailsArray.forEach(detail => {
@@ -649,8 +676,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       });
       
       setEditServiceComboSelectedServices(selected);
+    } catch (err) {
+      console.error('Error loading service combo:', err);
+      if (onError) {
+        onError('Không thể tải thông tin combo dịch vụ. Vui lòng thử lại.');
+      }
+      handleCloseEditServiceComboModal();
+    } finally {
       setLoadingEditServiceComboData(false);
-    }, 500);
+    }
   };
 
   // Handle close edit service combo modal
@@ -785,7 +819,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   };
 
   // Handle edit service combo submit
-  const handleEditServiceComboSubmit = (e) => {
+  const handleEditServiceComboSubmit = async (e) => {
     e.preventDefault();
     
     if (!editingServiceComboId) {
@@ -837,37 +871,57 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setIsEditingServiceCombo(true);
     setEditServiceComboErrors({});
     
-    // Mock update - update in state
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append('Name', editServiceComboFormData.name.trim());
+      formData.append('Address', editServiceComboFormData.address.trim());
+      formData.append('Description', editServiceComboFormData.description?.trim() || '');
+      formData.append('Price', editServiceComboFormData.price);
+      formData.append('AvailableSlots', editServiceComboFormData.availableSlots);
+      formData.append('Status', editServiceComboFormData.status || 'open');
+      formData.append('CancellationPolicy', editServiceComboFormData.cancellationPolicy?.trim() || '');
+      formData.append('StartDate', editServiceComboFormData.startDate || '');
+      formData.append('EndDate', editServiceComboFormData.endDate || '');
+      formData.append('NumberOfDays', editServiceComboFormData.numberOfDays || '0');
+      formData.append('NumberOfNights', editServiceComboFormData.numberOfNights || '0');
+      if (editServiceComboFormData.image) {
+        formData.append('Image', editServiceComboFormData.image);
+      }
+
+      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE_COMBO}/${editingServiceComboId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const updatedCombo = response.data;
+      
+      // Update service combo details
+      // First, get existing details
+      const detailsResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/combo/${editingServiceComboId}`);
+      const existingDetails = detailsResponse.data || [];
+      
+      // Delete existing details
+      for (const detail of existingDetails) {
+        await axiosInstance.delete(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/${detail.Id || detail.id}`);
+      }
+      
+      // Create new details for selected services
+      const selectedServiceIds = Object.keys(editServiceComboSelectedServices).filter(
+        id => editServiceComboSelectedServices[id]?.selected
+      );
+      
+      for (const serviceId of selectedServiceIds) {
+        const quantity = editServiceComboSelectedServices[serviceId]?.quantity || 1;
+        await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO_DETAIL, {
+          ServiceComboId: editingServiceComboId,
+          ServiceId: parseInt(serviceId),
+          Quantity: quantity
+        });
+      }
+      
       const updatedCombos = serviceCombos.map(sc => {
         if ((sc.Id || sc.id) === editingServiceComboId) {
-          return {
-            ...sc,
-            Name: editServiceComboFormData.name.trim(),
-            name: editServiceComboFormData.name.trim(),
-            Address: editServiceComboFormData.address.trim(),
-            address: editServiceComboFormData.address.trim(),
-            Description: editServiceComboFormData.description?.trim() || '',
-            description: editServiceComboFormData.description?.trim() || '',
-            Price: parseFloat(editServiceComboFormData.price) || 0,
-            price: parseFloat(editServiceComboFormData.price) || 0,
-            AvailableSlots: parseInt(editServiceComboFormData.availableSlots) || 0,
-            availableSlots: parseInt(editServiceComboFormData.availableSlots) || 0,
-            Status: editServiceComboFormData.status || 'open',
-            status: editServiceComboFormData.status || 'open',
-            CancellationPolicy: editServiceComboFormData.cancellationPolicy?.trim() || '',
-            cancellationPolicy: editServiceComboFormData.cancellationPolicy?.trim() || '',
-            Image: editServiceComboImagePreview || sc.Image || sc.image || DEFAULT_IMAGE_URL,
-            image: editServiceComboImagePreview || sc.Image || sc.image || DEFAULT_IMAGE_URL,
-            StartDate: editServiceComboFormData.startDate ? new Date(editServiceComboFormData.startDate).toISOString() : '',
-            startDate: editServiceComboFormData.startDate ? new Date(editServiceComboFormData.startDate).toISOString() : '',
-            EndDate: editServiceComboFormData.endDate ? new Date(editServiceComboFormData.endDate).toISOString() : '',
-            endDate: editServiceComboFormData.endDate ? new Date(editServiceComboFormData.endDate).toISOString() : '',
-            NumberOfDays: parseInt(editServiceComboFormData.numberOfDays) || 0,
-            numberOfDays: parseInt(editServiceComboFormData.numberOfDays) || 0,
-            NumberOfNights: parseInt(editServiceComboFormData.numberOfNights) || 0,
-            numberOfNights: parseInt(editServiceComboFormData.numberOfNights) || 0
-          };
+          return updatedCombo;
         }
         return sc;
       });
@@ -880,8 +934,14 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         onSuccess('Combo dịch vụ đã được cập nhật thành công!');
       }
       handleCloseEditServiceComboModal();
+    } catch (err) {
+      console.error('Error updating service combo:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi cập nhật combo dịch vụ. Vui lòng thử lại.');
+      }
+    } finally {
       setIsEditingServiceCombo(false);
-    }, 500);
+    }
   };
 
   // Expose function to open create modal

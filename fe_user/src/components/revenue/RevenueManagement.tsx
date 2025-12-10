@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -11,6 +11,8 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './RevenueManagement.css';
 
 // Register Chart.js components
@@ -47,45 +49,86 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
     return new Date().getFullYear().toString();
   });
 
-  // Load mock payments data
-  useEffect(() => {
-    // Generate mock payments data
-    const mockPayments = [];
-    const now = new Date();
-    
-    // Generate payments for the last 12 months
-    for (let i = 0; i < 365; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      // Create 1-3 payments per day randomly
-      const numPayments = Math.floor(Math.random() * 3) + 1;
-      for (let j = 0; j < numPayments; j++) {
-        const paymentDate = new Date(date);
-        paymentDate.setHours(Math.floor(Math.random() * 24));
-        paymentDate.setMinutes(Math.floor(Math.random() * 60));
-        
-        mockPayments.push({
-          Id: `mock-payment-${i}-${j}`,
-          id: `mock-payment-${i}-${j}`,
-          BookingId: `mock-booking-${i}-${j}`,
-          bookingId: `mock-booking-${i}-${j}`,
-          Amount: Math.floor(Math.random() * 5000000) + 1000000,
-          amount: Math.floor(Math.random() * 5000000) + 1000000,
-          PaymentDate: paymentDate.toISOString(),
-          paymentDate: paymentDate.toISOString(),
-          Status: 'success',
-          status: 'success',
-          Method: 'booking',
-          method: 'booking',
-          CreatedAt: paymentDate.toISOString(),
-          createdAt: paymentDate.toISOString()
-        });
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
       }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
     }
-    
-    setPayments(mockPayments);
   }, []);
+
+  // Load payments from API
+  useEffect(() => {
+    const loadPayments = async () => {
+      try {
+        const userId = getUserId();
+        if (!userId) {
+          setPayments([]);
+          return;
+        }
+
+        // Get payments for host's bookings
+        // First get host's service combos, then get bookings for those combos, then get payments
+        const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
+        const serviceCombos = serviceCombosResponse.data || [];
+        const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
+        
+        // Get bookings for each service combo
+        const allBookings: any[] = [];
+        for (const comboId of comboIds) {
+          try {
+            const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
+            const comboBookings = bookingsResponse.data || [];
+            allBookings.push(...comboBookings);
+          } catch (err) {
+            // Ignore 404 for combos without bookings
+            if ((err as any)?.response?.status !== 404) {
+              console.error(`Error loading bookings for combo ${comboId}:`, err);
+            }
+          }
+        }
+        
+        const bookingIds = allBookings.map((b: any) => b.Id || b.id);
+
+        // Get payments for each booking
+        const hostPayments: any[] = [];
+        for (const bookingId of bookingIds) {
+          try {
+            const paymentResponse = await axiosInstance.get(`${API_ENDPOINTS.PAYMENT}/status/${bookingId}`);
+            const payment = paymentResponse.data;
+            if (payment) {
+              hostPayments.push(payment);
+            }
+          } catch (err) {
+            // Ignore 404 for bookings without payments
+            if ((err as any)?.response?.status !== 404) {
+              console.error(`Error loading payment for booking ${bookingId}:`, err);
+            }
+          }
+        }
+
+        setPayments(hostPayments);
+      } catch (err) {
+        console.error('Error loading payments:', err);
+        setPayments([]);
+      }
+    };
+
+    loadPayments();
+  }, [getUserId]);
 
   // Revenue chart calculations
   const revenueChartData = useMemo(() => {
@@ -313,14 +356,47 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
     }
   }), []);
 
-  // Generate mock bookings for statistics
-  const mockBookingsForStats = useMemo(() => {
-    const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-    return Array.from({ length: 25 }, (_, i) => ({
-      Status: statuses[i % 4],
-      status: statuses[i % 4]
-    }));
-  }, []);
+  // Load bookings for statistics
+  const [bookingsForStats, setBookingsForStats] = useState([]);
+
+  useEffect(() => {
+    const loadBookingsForStats = async () => {
+      try {
+        const userId = getUserId();
+        if (!userId) {
+          setBookingsForStats([]);
+          return;
+        }
+
+        // Get bookings for host's service combos
+        const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
+        const serviceCombos = serviceCombosResponse.data || [];
+        const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
+        
+        // Get bookings for each service combo
+        const allBookings: any[] = [];
+        for (const comboId of comboIds) {
+          try {
+            const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
+            const comboBookings = bookingsResponse.data || [];
+            allBookings.push(...comboBookings);
+          } catch (err) {
+            // Ignore 404 for combos without bookings
+            if ((err as any)?.response?.status !== 404) {
+              console.error(`Error loading bookings for combo ${comboId}:`, err);
+            }
+          }
+        }
+        
+        setBookingsForStats(allBookings);
+      } catch (err) {
+        console.error('Error loading bookings for stats:', err);
+        setBookingsForStats([]);
+      }
+    };
+
+    loadBookingsForStats();
+  }, [getUserId]);
 
   return (
     <div className="revenue-mgr-revenue-management">
@@ -439,12 +515,12 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
             <div className="revenue-mgr-revenue-stats-grid">
               <div className="revenue-mgr-revenue-stat-card">
                 <div className="revenue-mgr-revenue-stat-label">Tổng số booking</div>
-                <div className="revenue-mgr-revenue-stat-value">{mockBookingsForStats.length}</div>
+                <div className="revenue-mgr-revenue-stat-value">{bookingsForStats.length}</div>
               </div>
               <div className="revenue-mgr-revenue-stat-card">
                 <div className="revenue-mgr-revenue-stat-label">Đã hoàn thành</div>
                 <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-completed">
-                  {mockBookingsForStats.filter(b => {
+                  {bookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'completed';
                   }).length}
@@ -453,7 +529,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
               <div className="revenue-mgr-revenue-stat-card">
                 <div className="revenue-mgr-revenue-stat-label">Đã chấp nhận</div>
                 <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-accepted">
-                  {mockBookingsForStats.filter(b => {
+                  {bookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'confirmed';
                   }).length}
@@ -462,7 +538,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
               <div className="revenue-mgr-revenue-stat-card">
                 <div className="revenue-mgr-revenue-stat-label">Đã từ chối</div>
                 <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-rejected">
-                  {mockBookingsForStats.filter(b => {
+                  {bookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'cancelled';
                   }).length}
@@ -471,7 +547,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
               <div className="revenue-mgr-revenue-stat-card">
                 <div className="revenue-mgr-revenue-stat-label">Đã xử lý</div>
                 <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-pending">
-                  {mockBookingsForStats.filter(b => {
+                  {bookingsForStats.filter(b => {
                     const status = (b.Status || b.status || '').toLowerCase();
                     return status === 'pending';
                   }).length}

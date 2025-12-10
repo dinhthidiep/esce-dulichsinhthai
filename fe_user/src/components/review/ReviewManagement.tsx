@@ -5,6 +5,8 @@ import LoadingSpinner from '../LoadingSpinner';
 import { CalendarIcon, StarIcon, CommentIcon, MoreVerticalIcon, AlertCircleIcon } from '../icons/index';
 import ReplyReviewModal from './ReplyReviewModal';
 import { getImageUrl } from '../../lib/utils';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './ReviewManagement.css';
 
 interface ReviewManagementProps {
@@ -60,102 +62,44 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
     }
   }, []);
 
-  // Load reviews - use mock data
+  // Load reviews from API
   useEffect(() => {
     const fetchReviews = async () => {
       const userId = getUserId();
       if (!userId) {
         setLoadingReviews(false);
+        setReviews([]);
         return;
       }
 
       try {
         setLoadingReviews(true);
         
-        // Generate mock reviews data (25 reviews)
-        const mockReviews = Array.from({ length: 25 }, (_, i) => ({
-          Id: `mock-${i + 1}`,
-          id: `mock-${i + 1}`,
-          Rating: Math.floor(Math.random() * 5) + 1,
-          rating: Math.floor(Math.random() * 5) + 1,
-          Comment: `Đây là nhận xét mẫu số ${i + 1}. Dịch vụ rất tốt và đáng giá!`,
-          comment: `Đây là nhận xét mẫu số ${i + 1}. Dịch vụ rất tốt và đáng giá!`,
-          Content: `Đây là nhận xét mẫu số ${i + 1}. Dịch vụ rất tốt và đáng giá!`,
-          content: `Đây là nhận xét mẫu số ${i + 1}. Dịch vụ rất tốt và đáng giá!`,
-          CreatedAt: new Date(Date.now() - i * 86400000).toISOString(),
-          createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-          CreatedDate: new Date(Date.now() - i * 86400000).toISOString(),
-          createdDate: new Date(Date.now() - i * 86400000).toISOString(),
-          User: {
-            Id: `user-${i + 1}`,
-            id: `user-${i + 1}`,
-            Name: `Người dùng ${i + 1}`,
-            name: `Người dùng ${i + 1}`,
-            Avatar: '',
-            avatar: ''
-          },
-          user: {
-            Id: `user-${i + 1}`,
-            id: `user-${i + 1}`,
-            Name: `Người dùng ${i + 1}`,
-            name: `Người dùng ${i + 1}`,
-            Avatar: '',
-            avatar: ''
-          },
-          Booking: {
-            ServiceCombo: {
-              Id: `combo-${i + 1}`,
-              id: `combo-${i + 1}`,
-              Name: `Combo dịch vụ ${i + 1}`,
-              name: `Combo dịch vụ ${i + 1}`,
-              Image: '/img/banahills.jpg',
-              image: '/img/banahills.jpg',
-              HostId: userId,
-              hostId: userId
-            },
-            serviceCombo: {
-              Id: `combo-${i + 1}`,
-              id: `combo-${i + 1}`,
-              Name: `Combo dịch vụ ${i + 1}`,
-              name: `Combo dịch vụ ${i + 1}`,
-              Image: '/img/banahills.jpg',
-              image: '/img/banahills.jpg',
-              HostId: userId,
-              hostId: userId
-            }
-          },
-          booking: {
-            ServiceCombo: {
-              Id: `combo-${i + 1}`,
-              id: `combo-${i + 1}`,
-              Name: `Combo dịch vụ ${i + 1}`,
-              name: `Combo dịch vụ ${i + 1}`,
-              Image: '/img/banahills.jpg',
-              image: '/img/banahills.jpg',
-              HostId: userId,
-              hostId: userId
-            },
-            serviceCombo: {
-              Id: `combo-${i + 1}`,
-              id: `combo-${i + 1}`,
-              Name: `Combo dịch vụ ${i + 1}`,
-              name: `Combo dịch vụ ${i + 1}`,
-              Image: '/img/banahills.jpg',
-              image: '/img/banahills.jpg',
-              HostId: userId,
-              hostId: userId
-            }
-          },
-          Replies: [],
-          replies: []
-        }));
+        // Get all reviews - backend should filter by host's service combos
+        // For now, get all reviews and filter client-side if needed
+        const response = await axiosInstance.get(API_ENDPOINTS.REVIEW);
+        const allReviews = response.data || [];
         
-        setReviews(mockReviews);
+        // Filter reviews for host's service combos
+        // First get host's service combos, then filter reviews
+        const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
+        const hostCombos = serviceComboResponse.data || [];
+        const hostComboIds = hostCombos.map(c => c.Id || c.id);
+        
+        const hostReviews = allReviews.filter(review => {
+          const booking = review.Booking || review.booking;
+          const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
+          const comboId = serviceCombo?.Id || serviceCombo?.id;
+          return comboId && hostComboIds.includes(comboId);
+        });
+        
+        setReviews(hostReviews);
       } catch (err) {
         console.error('Error loading reviews:', err);
         if (onError) {
           onError('Không thể tải đánh giá. Vui lòng thử lại.');
         }
+        setReviews([]);
       } finally {
         setLoadingReviews(false);
       }
@@ -249,7 +193,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
     setReplyText('');
   };
 
-  const handleSubmitReply = () => {
+  const handleSubmitReply = async () => {
     if (!selectedReview) return;
     
     if (!replyText.trim()) {
@@ -264,96 +208,49 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
       const reviewId = selectedReview.Id || selectedReview.id;
       const currentUserId = getUserId();
       
-      // Update state directly (mock data)
-      setReviews(prevReviews => 
-        prevReviews.map(review => {
-          const id = review.Id || review.id;
-          if (id === reviewId) {
-            const existingReplies = review.Replies || review.replies || [];
-            const existingReply = existingReplies.length > 0 ? existingReplies[0] : null;
-            
-            if (existingReply) {
-              // Update existing reply
-              return {
-                ...review,
-                Replies: [{
-                  ...existingReply,
-                  Comment: replyText.trim(),
-                  comment: replyText.trim(),
-                  UpdatedAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                }],
-                replies: [{
-                  ...existingReply,
-                  Comment: replyText.trim(),
-                  comment: replyText.trim(),
-                  UpdatedAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                }]
-              };
-            } else {
-              // Create new reply
-              const newReply = {
-                Id: `reply-${Date.now()}`,
-                id: `reply-${Date.now()}`,
-                Comment: replyText.trim(),
-                comment: replyText.trim(),
-                UserId: currentUserId,
-                userId: currentUserId,
-                CreatedAt: new Date().toISOString(),
-                createdAt: new Date().toISOString()
-              };
-              return {
-                ...review,
-                Replies: [newReply],
-                replies: [newReply]
-              };
-            }
-          }
-          return review;
-        })
-      );
-      
-      // Update selectedReview state
-      const updatedReview = reviews.find(r => (r.Id || r.id) === reviewId);
-      if (updatedReview) {
-        const existingReplies = updatedReview.Replies || updatedReview.replies || [];
-        const existingReply = existingReplies.length > 0 ? existingReplies[0] : null;
-        if (existingReply) {
-          setSelectedReview({
-            ...updatedReview,
-            Replies: [{
-              ...existingReply,
-              Comment: replyText.trim(),
-              comment: replyText.trim()
-            }],
-            replies: [{
-              ...existingReply,
-              Comment: replyText.trim(),
-              comment: replyText.trim()
-            }]
-          });
-        } else {
-          setSelectedReview({
-            ...updatedReview,
-            Replies: [{
-              Id: `reply-${Date.now()}`,
-              id: `reply-${Date.now()}`,
-              Comment: replyText.trim(),
-              comment: replyText.trim(),
-              UserId: currentUserId,
-              userId: currentUserId
-            }],
-            replies: [{
-              Id: `reply-${Date.now()}`,
-              id: `reply-${Date.now()}`,
-              Comment: replyText.trim(),
-              comment: replyText.trim(),
-              UserId: currentUserId,
-              userId: currentUserId
-            }]
-          });
+      if (!currentUserId) {
+        if (onError) {
+          onError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
         }
+        setIsSubmittingReply(false);
+        return;
+      }
+
+      const existingReplies = selectedReview.Replies || selectedReview.replies || [];
+      const existingReply = existingReplies.length > 0 ? existingReplies[0] : null;
+      
+      if (existingReply) {
+        // Update existing reply using Review reply API
+        const replyId = existingReply.Id || existingReply.id;
+        await axiosInstance.put(`${API_ENDPOINTS.REVIEW}/reply/${replyId}`, {
+          Content: replyText.trim()
+        });
+      } else {
+        // Create new reply using Review reply API
+        await axiosInstance.post(`${API_ENDPOINTS.REVIEW}/${reviewId}/reply`, {
+          AuthorId: currentUserId,
+          Content: replyText.trim()
+        });
+      }
+      
+      // Reload reviews to get updated data
+      const response = await axiosInstance.get(API_ENDPOINTS.REVIEW);
+      const allReviews = response.data || [];
+      const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${currentUserId}`);
+      const hostCombos = serviceComboResponse.data || [];
+      const hostComboIds = hostCombos.map(c => c.Id || c.id);
+      const hostReviews = allReviews.filter(review => {
+        const booking = review.Booking || review.booking;
+        const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
+        const comboId = serviceCombo?.Id || serviceCombo?.id;
+        return comboId && hostComboIds.includes(comboId);
+      });
+      setReviews(hostReviews);
+      
+      // Update selectedReview
+      const updatedReview = hostReviews.find(r => (r.Id || r.id) === reviewId);
+      if (updatedReview) {
+        setSelectedReview(updatedReview);
       }
       
       if (onSuccess) {
@@ -370,7 +267,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
     }
   };
 
-  const handleDeleteReply = () => {
+  const handleDeleteReply = async () => {
     if (!selectedReview) return;
     
     const reply = selectedReview.Replies && selectedReview.Replies.length > 0 
@@ -391,28 +288,37 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
     setIsSubmittingReply(true);
     try {
       const reviewId = selectedReview.Id || selectedReview.id;
+      const currentUserId = getUserId();
       
-      // Update state directly (mock data)
-      setReviews(prevReviews => 
-        prevReviews.map(review => {
-          const id = review.Id || review.id;
-          if (id === reviewId) {
-            return {
-              ...review,
-              Replies: [],
-              replies: []
-            };
-          }
-          return review;
-        })
-      );
+      const existingReplies = selectedReview.Replies || selectedReview.replies || [];
+      const existingReply = existingReplies.length > 0 ? existingReplies[0] : null;
       
-      // Update selectedReview state
-      setSelectedReview({
-        ...selectedReview,
-        Replies: [],
-        replies: []
+      if (existingReply) {
+        const replyId = existingReply.Id || existingReply.id;
+        await axiosInstance.delete(`${API_ENDPOINTS.REVIEW}/reply/${replyId}`);
+      }
+      
+      // Reload reviews to get updated data
+      const response = await axiosInstance.get(API_ENDPOINTS.REVIEW);
+      const allReviews = response.data || [];
+      const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${currentUserId}`);
+      const hostCombos = serviceComboResponse.data || [];
+      const hostComboIds = hostCombos.map(c => c.Id || c.id);
+      const hostReviews = allReviews.filter(review => {
+        const booking = review.Booking || review.booking;
+        const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
+        const comboId = serviceCombo?.Id || serviceCombo?.id;
+        return comboId && hostComboIds.includes(comboId);
       });
+      setReviews(hostReviews);
+      
+      // Update selectedReview
+      const updatedReview = hostReviews.find(r => (r.Id || r.id) === reviewId);
+      if (updatedReview) {
+        setSelectedReview(updatedReview);
+      } else {
+        setSelectedReview(null);
+      }
       
       if (onSuccess) {
         onSuccess('Đã xóa phản hồi thành công!');

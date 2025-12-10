@@ -5,6 +5,8 @@ import LoadingSpinner from '../LoadingSpinner';
 import { CalendarIcon, UserIcon } from '../icons/index';
 import BookingConfirmationModal from './BookingConfirmationModal';
 import { formatPrice, getImageUrl } from '../../lib/utils';
+import axiosInstance from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/api';
 import './BookingManagement.css';
 
 interface BookingManagementProps {
@@ -50,81 +52,53 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
     }
   }, []);
 
-  // Load bookings - use mock data
+  // Load bookings from API
   useEffect(() => {
-    setLoadingBookings(true);
-    
-    const userId = getUserId();
-    if (!userId) {
-      setLoadingBookings(false);
-      return;
-    }
-    
-    // Generate mock bookings data (25 bookings with 4 statuses)
-    const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-    const mockBookings = Array.from({ length: 25 }, (_, i) => {
-      const status = statuses[i % 4];
-      const bookingDate = new Date(Date.now() - i * 86400000);
-      const startDate = new Date(bookingDate.getTime() + 7 * 86400000);
-      const endDate = new Date(startDate.getTime() + 3 * 86400000);
-      
-      return {
-        Id: `mock-booking-${i + 1}`,
-        id: `mock-booking-${i + 1}`,
-        Status: status,
-        status: status,
-        BookingDate: bookingDate.toISOString(),
-        bookingDate: bookingDate.toISOString(),
-        StartDate: startDate.toISOString(),
-        startDate: startDate.toISOString(),
-        EndDate: endDate.toISOString(),
-        endDate: endDate.toISOString(),
-        Quantity: Math.floor(Math.random() * 5) + 1,
-        quantity: Math.floor(Math.random() * 5) + 1,
-        TotalAmount: Math.floor(Math.random() * 5000000) + 1000000,
-        totalAmount: Math.floor(Math.random() * 5000000) + 1000000,
-        Notes: i % 3 === 0 ? `Ghi chú cho booking ${i + 1}` : '',
-        notes: i % 3 === 0 ? `Ghi chú cho booking ${i + 1}` : '',
-        CreatedAt: bookingDate.toISOString(),
-        createdAt: bookingDate.toISOString(),
-        User: {
-          Id: `user-${i + 1}`,
-          id: `user-${i + 1}`,
-          Name: `Người dùng ${i + 1}`,
-          name: `Người dùng ${i + 1}`
-        },
-        user: {
-          Id: `user-${i + 1}`,
-          id: `user-${i + 1}`,
-          Name: `Người dùng ${i + 1}`,
-          name: `Người dùng ${i + 1}`
-        },
-        ServiceCombo: {
-          Id: `combo-${i + 1}`,
-          id: `combo-${i + 1}`,
-          Name: `Combo dịch vụ ${i + 1}`,
-          name: `Combo dịch vụ ${i + 1}`,
-          Image: '/img/banahills.jpg',
-          image: '/img/banahills.jpg',
-          HostId: userId,
-          hostId: userId
-        },
-        serviceCombo: {
-          Id: `combo-${i + 1}`,
-          id: `combo-${i + 1}`,
-          Name: `Combo dịch vụ ${i + 1}`,
-          name: `Combo dịch vụ ${i + 1}`,
-          Image: '/img/banahills.jpg',
-          image: '/img/banahills.jpg',
-          HostId: userId,
-          hostId: userId
+    const loadBookings = async () => {
+      const userId = getUserId();
+      if (!userId) {
+        setLoadingBookings(false);
+        setBookings([]);
+        return;
+      }
+
+      try {
+        setLoadingBookings(true);
+        // Get bookings for host's service combos
+        // First get all service combos for this host, then get bookings for those combos
+        const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
+        const serviceCombos = serviceCombosResponse.data || [];
+        const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
+        
+        // Get bookings for each service combo
+        const allBookings: any[] = [];
+        for (const comboId of comboIds) {
+          try {
+            const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
+            const comboBookings = bookingsResponse.data || [];
+            allBookings.push(...comboBookings);
+          } catch (err) {
+            // Ignore 404 for combos without bookings
+            if ((err as any)?.response?.status !== 404) {
+              console.error(`Error loading bookings for combo ${comboId}:`, err);
+            }
+          }
         }
-      };
-    });
-    
-    setBookings(mockBookings);
-    setLoadingBookings(false);
-  }, [getUserId]);
+        
+        setBookings(allBookings);
+      } catch (err) {
+        console.error('Error loading bookings:', err);
+        if (onError) {
+          onError('Không thể tải danh sách booking. Vui lòng thử lại.');
+        }
+        setBookings([]);
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    loadBookings();
+  }, [getUserId, onError]);
 
   // Filter and sort bookings
   useEffect(() => {
@@ -255,7 +229,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
     setBookingModalData({ bookingId: null, action: '', notes: '' });
   };
 
-  const handleConfirmBookingAction = () => {
+  const handleConfirmBookingAction = async () => {
     const { bookingId, action, notes } = bookingModalData;
     
     let newStatus;
@@ -276,27 +250,42 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
       return;
     }
     
-    // Update state directly (mock data)
-    setBookings(prevBookings => 
-      prevBookings.map(booking => {
-        const id = booking.Id || booking.id;
-        if (id === bookingId) {
-          return {
-            ...booking,
-            Status: newStatus,
-            status: newStatus,
-            Notes: notes || booking.Notes || booking.notes || '',
-            notes: notes || booking.Notes || booking.notes || ''
-          };
-        }
-        return booking;
-      })
-    );
-    
-    if (onSuccess) {
-      onSuccess(`Đã ${actionText} booking thành công!`);
+    try {
+      // Update booking status via API
+      const updateData = {
+        Status: newStatus,
+        Notes: notes || ''
+      };
+      
+      await axiosInstance.put(`${API_ENDPOINTS.BOOKING}/${bookingId}`, updateData);
+      
+      // Update local state
+      setBookings(prevBookings => 
+        prevBookings.map(booking => {
+          const id = booking.Id || booking.id;
+          if (id === bookingId) {
+            return {
+              ...booking,
+              Status: newStatus,
+              status: newStatus,
+              Notes: notes || booking.Notes || booking.notes || '',
+              notes: notes || booking.Notes || booking.notes || ''
+            };
+          }
+          return booking;
+        })
+      );
+      
+      if (onSuccess) {
+        onSuccess(`Đã ${actionText} booking thành công!`);
+      }
+      handleCloseBookingModal();
+    } catch (err) {
+      console.error('Error updating booking:', err);
+      if (onError) {
+        onError(`Có lỗi xảy ra khi ${actionText} booking. Vui lòng thử lại.`);
+      }
     }
-    handleCloseBookingModal();
   };
 
   return (

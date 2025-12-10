@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ArrowLeftIcon, XIcon, SparklesIcon } from '~/components/icons'
+import axiosInstance from '~/utils/axiosInstance'
 import './AIChatbot.css'
 
 interface Message {
@@ -30,6 +31,7 @@ Bạn cần hỗ trợ gì nhé? 🤓`,
     },
   ])
   const [inputValue, setInputValue] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const suggestedQuestions = [
@@ -45,6 +47,19 @@ Bạn cần hỗ trợ gì nhé? 🤓`,
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const getAIResponseFromAPI = async (question: string): Promise<string> => {
+    try {
+      const response = await axiosInstance.post('/api/Chatbox/ask', {
+        Question: question,
+      })
+      return response.data?.Answer || response.data?.answer || generateAIResponse(question)
+    } catch (err) {
+      console.error('Error calling Chatbox API:', err)
+      // Fallback to local response
+      return generateAIResponse(question)
+    }
   }
 
   const generateAIResponse = (userMessage: string): string => {
@@ -98,9 +113,9 @@ Bạn muốn tìm hiểu về địa điểm nào? 🗺️`
 Hoặc bạn có thể chat với Admin để được hỗ trợ chi tiết hơn! 💬`
   }
 
-  const handleSendMessage = (messageText?: string) => {
+  const handleSendMessage = async (messageText?: string) => {
     const text = messageText || inputValue
-    if (!text.trim()) return
+    if (!text.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -111,9 +126,21 @@ Hoặc bạn có thể chat với Admin để được hỗ trợ chi tiết hơ
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
+    setIsLoading(true)
 
-    // Simulate AI thinking time
-    setTimeout(() => {
+    try {
+      // Call Chatbox API
+      const aiResponse = await getAIResponseFromAPI(text)
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponse,
+        isUser: false,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (err) {
+      console.error('Error getting AI response:', err)
+      // Fallback to local response
       const aiResponse = generateAIResponse(text)
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -122,7 +149,9 @@ Hoặc bạn có thể chat với Admin để được hỗ trợ chi tiết hơ
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, aiMessage])
-    }, 800)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -172,9 +201,11 @@ Hoặc bạn có thể chat với Admin để được hỗ trợ chi tiết hơ
             <ArrowLeftIcon className="ai-chatbot-back-icon" />
             <span>Quay lại</span>
           </button>
-          <div className="ai-chatbot-status">
-            <span className="ai-chatbot-status-dot"></span>
-            <span className="ai-chatbot-status-text">AI đang trực tuyến - Phản hồi tức thì</span>
+            <div className="ai-chatbot-status">
+            <span className={`ai-chatbot-status-dot ${isLoading ? 'ai-chatbot-status-dot-pulsing' : ''}`}></span>
+            <span className="ai-chatbot-status-text">
+              {isLoading ? 'AI đang suy nghĩ...' : 'AI đang trực tuyến - Phản hồi tức thì'}
+            </span>
           </div>
         </div>
 
@@ -226,7 +257,7 @@ Hoặc bạn có thể chat với Admin để được hỗ trợ chi tiết hơ
           <button
             className="ai-chatbot-send-btn"
             onClick={() => handleSendMessage()}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isLoading}
             aria-label="Gửi tin nhắn"
           >
             <svg

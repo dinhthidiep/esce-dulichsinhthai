@@ -1,43 +1,51 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Suspense } from 'react'
+import LoadingSpinner from '~/components/LoadingSpinner'
+
+// Core pages - keep synchronous for faster initial load
 import LandingPage from '~/components/LandingPage'
-import ServicesPage from '~/components/ServicesPage'
-import ServiceDetail from '~/components/ServiceDetail'
 import LoginForm from '~/components/LoginForm'
 import Register from '~/components/Register'
-import ForgotPassword from '~/components/ForgotPassword'
-import OTPVerification from '~/components/OTPVerification'
-import ResetPassword from '~/components/ResetPassword'
-import BookingPage from '~/components/BookingPage'
-import PaymentPage from '~/components/PaymentPage'
-import PaymentSuccessPage from '~/components/PaymentSuccessPage'
-import PaymentFailurePage from '~/components/PaymentFailurePage'
-import ProfilePage from '~/components/ProfilePage'
-import ForumPage from '~/components/ForumPage'
-import NewsPage from '~/components/NewsPage'
-import NewsDetailPage from '~/components/NewsDetailPage'
-import PolicyPage from '~/components/PolicyPage'
-import RegisterAgency from '~/components/RegisterAgency'
-import RegisterHost from '~/components/RegisterHost'
-import UpgradeAccount from '~/components/UpgradeAccount'
-import UpgradePaymentPage from '~/components/UpgradePaymentPage'
-import UpgradePaymentSuccessPage from '~/components/UpgradePaymentSuccessPage'
-import SubscriptionPackages from '~/components/SubscriptionPackages'
-import HostDashboard from '~/components/HostDashboard'
-import CreateTour from '~/components/CreateTour'
-import ServiceComboManager from '~/components/ServiceComboManager'
-import ServiceManager from '~/components/ServiceManager'
-import CreateService from '~/components/CreateService'
-import EditService from '~/components/EditService'
-import CreateServiceCombo from '~/components/CreateServiceCombo'
-import EditServiceCombo from '~/components/EditServiceCombo'
-import CreateCoupon from '~/components/CreateCoupon'
-import BookingManager from '~/components/BookingManager'
-import CouponManager from '~/components/CouponManager'
-import Revenue from '~/components/Revenue'
-import ReviewManager from '~/components/ReviewManager'
 import Support from '~/components/support/Support'
+
+// Lazy load heavy components
+const ServicesPage = lazy(() => import('~/components/ServicesPage'))
+const ServiceDetail = lazy(() => import('~/components/ServiceDetail'))
+const ForgotPassword = lazy(() => import('~/components/ForgotPassword'))
+const OTPVerification = lazy(() => import('~/components/OTPVerification'))
+const ResetPassword = lazy(() => import('~/components/ResetPassword'))
+const BookingPage = lazy(() => import('~/components/BookingPage'))
+const PaymentPage = lazy(() => import('~/components/PaymentPage'))
+const PaymentSuccessPage = lazy(() => import('~/components/PaymentSuccessPage'))
+const PaymentFailurePage = lazy(() => import('~/components/PaymentFailurePage'))
+const ProfilePage = lazy(() => import('~/components/ProfilePage'))
+const ForumPage = lazy(() => import('~/components/ForumPage'))
+const NewsPage = lazy(() => import('~/components/NewsPage'))
+const NewsDetailPage = lazy(() => import('~/components/NewsDetailPage'))
+const PolicyPage = lazy(() => import('~/components/PolicyPage'))
+const RegisterAgency = lazy(() => import('~/components/RegisterAgency'))
+const RegisterHost = lazy(() => import('~/components/RegisterHost'))
+const UpgradeAccount = lazy(() => import('~/components/UpgradeAccount'))
+const UpgradePaymentPage = lazy(() => import('~/components/UpgradePaymentPage'))
+const UpgradePaymentSuccessPage = lazy(() => import('~/components/UpgradePaymentSuccessPage'))
+const SubscriptionPackages = lazy(() => import('~/components/SubscriptionPackages'))
+
+// Host Dashboard - large component
+const HostDashboard = lazy(() => import('~/components/HostDashboard'))
+
+// Management pages - large components
+const CreateTour = lazy(() => import('~/components/CreateTour'))
+const ServiceComboManager = lazy(() => import('~/components/ServiceComboManager'))
+const ServiceManager = lazy(() => import('~/components/ServiceManager'))
+const CreateService = lazy(() => import('~/components/CreateService'))
+const EditService = lazy(() => import('~/components/EditService'))
+const CreateServiceCombo = lazy(() => import('~/components/CreateServiceCombo'))
+const EditServiceCombo = lazy(() => import('~/components/EditServiceCombo'))
+const CreateCoupon = lazy(() => import('~/components/CreateCoupon'))
+const BookingManager = lazy(() => import('~/components/BookingManager'))
+const CouponManager = lazy(() => import('~/components/CouponManager'))
+const Revenue = lazy(() => import('~/components/Revenue'))
+const ReviewManager = lazy(() => import('~/components/ReviewManager'))
 
 function App() {
   return (
@@ -48,11 +56,9 @@ function App() {
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
-          height: '100vh',
-          fontSize: '1.2rem',
-          color: '#64748b'
+          height: '100vh'
         }}>
-          Đang tải...
+          <LoadingSpinner message="Đang tải trang..." />
         </div>
       }>
         <Routes>

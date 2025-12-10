@@ -10,7 +10,7 @@ import {
     deleteServiceComboDetail,
     updateServiceComboDetail,
 } from "../API/ServiceApi";
-import Header from "~/components/Header";
+import HostHeader from "~/components/HostHeader";
 
 const backend_url = "http://localhost:5002";
 
@@ -696,11 +696,7 @@ const EditServiceCombo = () => {
             </aside>
 
             {/* Header */}
-            <Header
-                showMenuButton={true}
-                onMenuToggle={toggleSidebar}
-                sidebarActive={sidebarActive}
-            />
+            <HostHeader />
 
             {/* Page Title */}
             <section className="content-title-display-box">
