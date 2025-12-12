@@ -13,7 +13,6 @@ const Users = lazy(() => import('~/components/users'))
 const Posts = lazy(() => import('~/components/posts'))
 const Chat = lazy(() => import('~/components/chat'))
 const News = lazy(() => import('~/components/news'))
-const Supports = lazy(() => import('~/components/supports'))
 const SupportApprovals = lazy(() => import('~/components/supportApprovals'))
 const Profile = lazy(() => import('~/components/profile'))
 const RoleUpgrade = lazy(() => import('~/components/roleUpgrade'))
@@ -55,7 +54,6 @@ function App() {
               <Route path="/post" element={<Posts />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/news" element={<News />} />
-              <Route path="/supports" element={<Supports />} />
               <Route path="/support-approvals" element={<SupportApprovals />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/role-upgrade" element={<RoleUpgrade />} />

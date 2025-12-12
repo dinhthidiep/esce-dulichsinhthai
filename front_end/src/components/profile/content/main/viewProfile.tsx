@@ -73,42 +73,112 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const getUserInfo = (): UserInfo => {
+    const loadProfile = async () => {
+      setIsLoading(true)
+      setError(null)
+      
+      // Kiểm tra role Admin trước khi load profile
       try {
         const userInfoStr = localStorage.getItem('userInfo')
         if (userInfoStr) {
           const parsed = JSON.parse(userInfoStr)
-          // Normalize role information from localStorage
-          const roleObj = parsed?.Role ?? parsed?.role
-          return {
-            ...parsed,
-            roleName:
-              parsed?.roleName ??
-              parsed?.RoleName ??
-              roleObj?.Name ??
-              roleObj?.name ??
-              (typeof parsed?.Role === 'string' ? parsed.Role : null) ??
-              (typeof parsed?.role === 'string' ? parsed.role : null),
-            role:
-              parsed?.role ??
-              parsed?.Role ??
-              (typeof parsed?.Role === 'string' ? parsed.Role : null),
-            roleId: parsed?.roleId ?? parsed?.RoleId ?? roleObj?.Id ?? roleObj?.id ?? undefined
+          const roleId = parsed?.roleId ?? parsed?.RoleId
+          const roleName = parsed?.roleName ?? parsed?.RoleName ?? parsed?.role ?? parsed?.Role
+          
+          // Chỉ Admin (roleId = 1 hoặc roleName = 'Admin') mới được truy cập
+          const isAdmin = roleId === 1 || 
+                         roleName === 'Admin' || 
+                         (typeof roleName === 'string' && roleName.toLowerCase() === 'admin')
+          
+          if (!isAdmin) {
+            setError('Chỉ Admin mới có thể truy cập trang này.')
+            setIsLoading(false)
+            return
           }
         }
-      } catch (error) {
-        console.error('Error parsing userInfo:', error)
+      } catch (err) {
+        console.error('Error checking admin role:', err)
+        setError('Không thể xác thực quyền truy cập.')
+        setIsLoading(false)
+        return
       }
-      return {
-        id: 1,
-        name: 'Admin',
-        email: 'admin@example.com',
-        role: 'Admin',
-        roleName: 'Admin',
-        roleId: 1
+      
+      try {
+        const { fetchProfile } = await import('~/api/instances/UserApi')
+        const profile = await fetchProfile()
+        
+        // Kiểm tra lại role từ API response
+        const isAdminFromApi = profile.roleId === 1 || 
+                              profile.roleName === 'Admin' ||
+                              (typeof profile.roleName === 'string' && profile.roleName.toLowerCase() === 'admin')
+        
+        if (!isAdminFromApi) {
+          setError('Chỉ Admin mới có thể truy cập trang này.')
+          setIsLoading(false)
+          return
+        }
+        
+        setUserInfo({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.avatar,
+          phone: profile.phone,
+          gender: profile.gender,
+          address: profile.address,
+          dateOfBirth: profile.dob,
+          dob: profile.dob,
+          role: profile.roleName || 'Admin',
+          roleName: profile.roleName || 'Admin',
+          roleId: profile.roleId
+        })
+      } catch (err) {
+        console.error('Error loading profile:', err)
+        setError(err instanceof Error ? err.message : 'Không thể tải thông tin hồ sơ')
+        
+        // Fallback to localStorage (chỉ nếu là Admin)
+        try {
+          const userInfoStr = localStorage.getItem('userInfo')
+          if (userInfoStr) {
+            const parsed = JSON.parse(userInfoStr)
+            const roleId = parsed?.roleId ?? parsed?.RoleId
+            const roleName = parsed?.roleName ?? parsed?.RoleName ?? parsed?.role ?? parsed?.Role
+            const isAdmin = roleId === 1 || 
+                           roleName === 'Admin' || 
+                           (typeof roleName === 'string' && roleName.toLowerCase() === 'admin')
+            
+            if (isAdmin) {
+              const roleObj = parsed?.Role ?? parsed?.role
+              setUserInfo({
+                ...parsed,
+                roleName:
+                  parsed?.roleName ??
+                  parsed?.RoleName ??
+                  roleObj?.Name ??
+                  roleObj?.name ??
+                  (typeof parsed?.Role === 'string' ? parsed.Role : null) ??
+                  (typeof parsed?.role === 'string' ? parsed.role : null) ??
+                  'Admin',
+                role:
+                  parsed?.role ??
+                  parsed?.Role ??
+                  (typeof parsed?.Role === 'string' ? parsed.Role : null) ??
+                  'Admin',
+                roleId: parsed?.roleId ?? parsed?.RoleId ?? roleObj?.Id ?? roleObj?.id ?? 1
+              })
+            } else {
+              setError('Chỉ Admin mới có thể truy cập trang này.')
+            }
+          }
+        } catch (localErr) {
+          console.error('Error parsing userInfo from localStorage:', localErr)
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
-    setUserInfo(getUserInfo())
+    
+    loadProfile()
   }, [])
 
   useEffect(() => {

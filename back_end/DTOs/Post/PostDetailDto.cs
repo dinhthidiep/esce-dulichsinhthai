@@ -28,6 +28,8 @@ namespace ESCE_SYSTEM.DTOs
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public string CreatedDate { get; set; } = null!;
+        public byte ReactionTypeId { get; set; }
+        public string ReactionTypeName { get; set; } = string.Empty;
     }
 
     public class PostCommentDetailDto

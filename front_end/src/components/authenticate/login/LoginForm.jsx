@@ -56,9 +56,18 @@ const LoginForm = () => {
               return
             }
 
+            // Kiểm tra RoleId - chỉ cho phép Admin (RoleId = 1) đăng nhập
+            const userInfo = data.UserInfo || data.userInfo
+            const roleId = userInfo?.RoleId || userInfo?.roleId
+            
+            if (roleId !== 1) {
+              // Nếu không phải Admin, hiển thị lỗi như thể email/mật khẩu sai
+              setGeneralError('Email đăng nhập hoặc mật khẩu không đúng.')
+              return
+            }
+
             // Lưu token và userInfo
             localStorage.setItem('token', token)
-            const userInfo = data.UserInfo || data.userInfo
             if (userInfo) {
               localStorage.setItem('userInfo', JSON.stringify(userInfo))
             }

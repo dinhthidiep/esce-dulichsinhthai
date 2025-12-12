@@ -3,7 +3,6 @@ import HomeIcon from '@mui/icons-material/Home'
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import FeedIcon from '@mui/icons-material/Feed'
-import HeadphonesIcon from '@mui/icons-material/Headphones'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -38,12 +37,6 @@ export const sidebarConfig = [
     title: 'Tin tức',
     path: '/news',
     icon: <FeedIcon />,
-    badge: 0
-  },
-  {
-    title: 'Hỗ trợ',
-    path: '/supports',
-    icon: <HeadphonesIcon />,
     badge: 0
   },
   {

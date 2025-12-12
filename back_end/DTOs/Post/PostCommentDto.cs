@@ -22,4 +22,16 @@ namespace ESCE_SYSTEM.DTOs
         public string PostCommentId { get; set; } = null!;
         public string? ReplyPostCommentId { get; set; }
     }
+
+    public class LockCommentDto
+    {
+        public string CommentId { get; set; } = null!;
+        public string Reason { get; set; } = null!;
+    }
+
+    public class UnlockCommentDto
+    {
+        public string CommentId { get; set; } = null!;
+        public string Reason { get; set; } = null!;
+    }
 }

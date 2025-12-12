@@ -32,6 +32,25 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
+        [HttpPost("{postId}/{reactionTypeId}")]
+        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        public async Task<IActionResult> ReactToPost(int postId, byte reactionTypeId)
+        {
+            try
+            {
+                await _postReactionService.ReactToPost(postId, reactionTypeId);
+                
+                var reactionNames = new[] { "", "thích", "yêu thích", "haha", "wow", "buồn", "phẫn nộ" };
+                var reactionName = reactionTypeId < reactionNames.Length ? reactionNames[reactionTypeId] : "phản ứng";
+                
+                return Ok(new { message = $"Đã {reactionName} bài viết" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("unlike/{postReactionId}")]
         [Authorize(Roles = "Admin,Host,Agency,Customer")]
         public async Task<IActionResult> UnlikePost(int postReactionId)

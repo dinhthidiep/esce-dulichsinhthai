@@ -17,6 +17,7 @@ namespace ESCE_SYSTEM.DTOs
         public string PosterApproverName { get; set; } = null!;
         public string PublicDate { get; set; } = null!;
         public string ArticleTitle { get; set; } = null!;
+        public bool IsLocked { get; set; }
 
         public List<PostLikeResponseDto> Likes { get; set; } = new List<PostLikeResponseDto>();
         public List<PostCommentResponseDto> Comments { get; set; } = new List<PostCommentResponseDto>();
@@ -29,6 +30,8 @@ namespace ESCE_SYSTEM.DTOs
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public DateTime CreatedDate { get; set; }
+        public byte ReactionTypeId { get; set; }
+        public string ReactionTypeName { get; set; } = string.Empty;
     }
 
     public class PostCommentResponseDto

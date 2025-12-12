@@ -20,6 +20,7 @@ namespace ESCE_SYSTEM.Models
         public DateTime? UpdatedAt { get; set; }
         public int ReactionsCount { get; set; }
         public bool? IsDeleted { get; set; }
+        public bool IsLocked { get; set; }
 
         public virtual Account Author { get; set; } = null!;
         public virtual Post Post { get; set; } = null!;

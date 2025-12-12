@@ -18,6 +18,7 @@ namespace ESCE_SYSTEM.Services.UserService
         Task BanAccount(string accountId, string reason);
         Task UnbanAccount(string accountId);
         Task<Account> UpdateProfileAsync(int userId, UpdateProfileDto updateDto); // Cần Entity để Update
+        Task<UserProfileDto> GetProfileAsync(int userId); // Lấy profile của user hiện tại
 
         // =======================================================================================
         // PHƯƠNG THỨC HIỂN THỊ (Trả về DTO)

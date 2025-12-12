@@ -33,18 +33,65 @@ namespace ESCE_SYSTEM.Repositories
 
         public async Task<IEnumerable<Post>> GetAllAsync()
         {
-            return await _context.Posts
-                .Where(p => !p.IsDeleted)
-                .Include(p => p.Author)
-                .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
-                .ThenInclude(c => c.Author)
-                .Include(p => p.Postreactions)
-                .ThenInclude(pr => pr.User)
-                .Include(p => p.Postsaves)
-                .ThenInclude(ps => ps.Account)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            try
+            {
+                // Đơn giản hóa query để tránh lỗi với Include phức tạp
+                // Load posts với Author và Role trước
+                var posts = await _context.Posts
+                    .Where(p => !p.IsDeleted)
+                    .Include(p => p.Author)
+                        .ThenInclude(a => a.Role)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .ToListAsync();
+
+                // Load Comments, Postreactions, Postsaves riêng để tránh lỗi
+                foreach (var post in posts)
+                {
+                    try
+                    {
+                        await _context.Entry(post)
+                            .Collection(p => p.Comments)
+                            .Query()
+                            .Where(c => c.IsDeleted != true)
+                            .Include(c => c.Author)
+                            .LoadAsync();
+
+                        await _context.Entry(post)
+                            .Collection(p => p.Postreactions)
+                            .Query()
+                            .Include(pr => pr.User)
+                            .LoadAsync();
+
+                        await _context.Entry(post)
+                            .Collection(p => p.Postsaves)
+                            .Query()
+                            .Include(ps => ps.Account)
+                            .LoadAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[PostRepository.GetAllAsync] Error loading navigation properties for post {post.Id}: {ex.Message}");
+                        // Tiếp tục với các posts khác
+                    }
+                }
+
+                return posts;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostRepository.GetAllAsync] ========== ERROR ==========");
+                Console.WriteLine($"[PostRepository.GetAllAsync] Error Type: {ex.GetType().Name}");
+                Console.WriteLine($"[PostRepository.GetAllAsync] Error Message: {ex.Message}");
+                Console.WriteLine($"[PostRepository.GetAllAsync] StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[PostRepository.GetAllAsync] InnerException Type: {ex.InnerException.GetType().Name}");
+                    Console.WriteLine($"[PostRepository.GetAllAsync] InnerException Message: {ex.InnerException.Message}");
+                    Console.WriteLine($"[PostRepository.GetAllAsync] InnerException StackTrace: {ex.InnerException.StackTrace}");
+                }
+                Console.WriteLine($"[PostRepository.GetAllAsync] ===========================");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Post>> GetApprovedPostsAsync()

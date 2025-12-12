@@ -8,8 +8,18 @@ const backend_url_http = "http://localhost:5002";
 export const DISABLE_BACKEND = false;
 
 export const getAuthToken = () => {
-  const stored = localStorage.getItem("token") || "";
-  return stored;
+  // Kiểm tra cả localStorage và sessionStorage
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+  if (!token) {
+    console.warn('[httpClient] No token found in localStorage or sessionStorage')
+  } else {
+    console.log('[httpClient] Token found:', { 
+      length: token.length, 
+      preview: `${token.substring(0, 20)}...`,
+      source: localStorage.getItem("token") ? 'localStorage' : 'sessionStorage'
+    })
+  }
+  return token;
 };
 
 export const fetchWithFallback = async (url, options = {}, useHttps = true) => {

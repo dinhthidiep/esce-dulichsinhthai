@@ -66,6 +66,24 @@ namespace ESCE_SYSTEM.Services
             var currentUserId = _userContextService.GetCurrentUserId();
             var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
 
+            // Kiểm tra role của user: Admin tự động Approved, các role khác phải Pending
+            // Kiểm tra nhiều cách để đảm bảo phát hiện đúng Admin
+            bool isAdminFromContext = _userContextService.IsAdmin();
+            string? roleFromContext = _userContextService.Role;
+            string? roleNameFromUser = currentUser?.Role?.Name;
+            int? roleIdFromUser = currentUser?.RoleId;
+            
+            bool isAdmin = isAdminFromContext || 
+                          (roleFromContext?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true) ||
+                          (roleNameFromUser?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true) ||
+                          (roleIdFromUser == 1);
+            
+            // Log để debug
+            Console.WriteLine($"[PostService.Create] UserId: {currentUserId}, IsAdmin: {isAdmin}, " +
+                             $"RoleFromContext: {roleFromContext}, RoleNameFromUser: {roleNameFromUser}, RoleIdFromUser: {roleIdFromUser}");
+            
+            string initialStatus = isAdmin ? "Approved" : "Pending";
+
             var post = new Post
             {
                 Title = postDto.ArticleTitle ?? "Không có tiêu đề",
@@ -73,7 +91,7 @@ namespace ESCE_SYSTEM.Services
                 AuthorId = currentUserId,
                 Image = postDto.Images != null && postDto.Images.Any() ? string.Join(",", postDto.Images) : null,
                 CreatedAt = DateTime.Now,
-                Status = "Pending",
+                Status = initialStatus,
                 IsDeleted = false,
                 CommentsCount = 0,
                 ReactionsCount = 0,
@@ -82,15 +100,19 @@ namespace ESCE_SYSTEM.Services
 
             var createdPost = await _postRepository.AddAsync(post);
 
-            // Gửi thông báo cho tất cả Admin
-            await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            // Chỉ gửi thông báo cho Admin nếu bài viết cần duyệt (Pending)
+            if (!isAdmin)
+            {
+                await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            }
 
             return await GetPostDetail(createdPost.Id);
         }
 
-        public async Task Delete(int id)
+        public async Task Delete(DeletePostDto deletePostDto)
         {
-            var post = await _postRepository.GetByIdAsync(id);
+            var postId = int.Parse(deletePostDto.PostId);
+            var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
             {
                 throw new Exception("Không tìm thấy bài viết");
@@ -102,87 +124,195 @@ namespace ESCE_SYSTEM.Services
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa bài viết này");
             }
 
-            await _postRepository.SoftDeleteAsync(id);
+            await _postRepository.SoftDeleteAsync(postId);
 
-            // Gửi thông báo cho tác giả
-            await GuiThongBaoChoNguoiDung(post.AuthorId, "Bài viết đã bị xóa",
-                $"Bài viết '{post.Title}' của bạn đã bị xóa");
+            // Gửi thông báo và email cho tác giả với lý do
+            await GuiThongBaoVaEmailXoaBaiViet(post, deletePostDto.Reason);
         }
 
         public async Task<List<PostResponseDto>> GetAllPosts()
         {
-            var posts = await _postRepository.GetAllAsync();
-            var postDtos = new List<PostResponseDto>();
-
-            foreach (var post in posts)
+            try
             {
-                var postDto = new PostResponseDto
+                Console.WriteLine("[PostService.GetAllPosts] Starting to fetch posts from repository...");
+                
+                IEnumerable<Post> posts;
+                try
                 {
-                    PostId = post.Id.ToString(),
-                    PostContent = post.Content,
-                    Images = post.Image?.Split(',').ToList() ?? new List<string>(),
-                    PosterId = post.AuthorId.ToString(),
-                    PosterRole = post.Author?.Role?.Name ?? string.Empty,
-                    PosterName = post.Author?.Name ?? string.Empty,
-                    Status = post.Status,
-                    RejectComment = post.RejectComment ?? string.Empty,
-                    PosterApproverId = post.AuthorId.ToString(),
-                    PosterApproverName = post.Author?.Name ?? string.Empty,
-                    PublicDate = post.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? string.Empty,
-                    ArticleTitle = post.Title,
-                    Hashtags = new List<string>(),
-                    Likes = new List<PostLikeResponseDto>(),
-                    Comments = new List<PostCommentResponseDto>()
-                };
-
-                // Lấy reactions (likes) cho post
-                var reactions = await _postReactionRepository.GetByPostIdAsync(post.Id);
-                foreach (var reaction in reactions)
+                    posts = await _postRepository.GetAllAsync();
+                }
+                catch (Exception repoEx)
                 {
-                    postDto.Likes.Add(new PostLikeResponseDto
-                    {
-                        PostLikeId = reaction.Id.ToString(),
-                        AccountId = reaction.UserId.ToString(),
-                        FullName = reaction.User?.Name ?? string.Empty,
-                        CreatedDate = reaction.CreatedAt ?? DateTime.Now
-                    });
+                    Console.WriteLine($"[PostService.GetAllPosts] Repository error: {repoEx.Message}");
+                    Console.WriteLine($"[PostService.GetAllPosts] Repository StackTrace: {repoEx.StackTrace}");
+                    throw new Exception($"Lỗi khi lấy dữ liệu từ database: {repoEx.Message}", repoEx);
+                }
+                
+                Console.WriteLine($"[PostService.GetAllPosts] Repository returned {posts?.Count() ?? 0} posts");
+                
+                if (posts == null)
+                {
+                    Console.WriteLine("[PostService.GetAllPosts] Posts is null, returning empty list");
+                    return new List<PostResponseDto>();
                 }
 
-                // Lấy comments cho post
-                var comments = await _commentRepository.GetByPostIdAsync(post.Id);
-                foreach (var comment in comments)
-                {
-                    var commentDto = new PostCommentResponseDto
-                    {
-                        PostCommentId = comment.Id.ToString(),
-                        FullName = comment.Author?.Name ?? string.Empty,
-                        Content = comment.Content,
-                        Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
-                        CreatedDate = comment.CreatedAt,
-                        Likes = new List<PostCommentLikeResponseDto>(),
-                        Replies = new List<ReplyPostCommentResponseDto>()
-                    };
+                var postDtos = new List<PostResponseDto>();
 
-                    // Lấy reactions cho comment
-                    var commentReactions = await _commentReactionRepository.GetByCommentIdAsync(comment.Id);
-                    foreach (var commentReaction in commentReactions)
+                foreach (var post in posts)
+                {
+                    try
                     {
-                        commentDto.Likes.Add(new PostCommentLikeResponseDto
+                        // Xử lý images an toàn
+                        var images = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(post.Image))
                         {
-                            PostCommentLikeId = commentReaction.Id.ToString(),
-                            AccountId = commentReaction.UserId.ToString(),
-                            FullName = commentReaction.User?.Name ?? string.Empty,
-                            CreatedDate = commentReaction.CreatedAt ?? DateTime.Now
-                        });
-                    }
+                            try
+                            {
+                                images = post.Image.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(img => img.Trim())
+                                    .Where(img => !string.IsNullOrWhiteSpace(img))
+                                    .ToList();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[PostService.GetAllPosts] Error parsing images for post {post.Id}: {ex.Message}");
+                                images = new List<string>();
+                            }
+                        }
 
-                    postDto.Comments.Add(commentDto);
+                        var postDto = new PostResponseDto
+                        {
+                            PostId = post.Id.ToString(),
+                            PostContent = post.Content ?? string.Empty,
+                            Images = images,
+                            PosterId = post.AuthorId.ToString(),
+                            PosterRole = post.Author?.Role?.Name ?? string.Empty,
+                            PosterName = post.Author?.Name ?? string.Empty,
+                            Status = post.Status ?? "Pending",
+                            RejectComment = post.RejectComment ?? string.Empty,
+                            PosterApproverId = post.AuthorId.ToString(),
+                            PosterApproverName = post.Author?.Name ?? string.Empty,
+                            PublicDate = post.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? string.Empty,
+                            ArticleTitle = post.Title ?? string.Empty,
+                            IsLocked = post.IsLocked,
+                            Hashtags = new List<string>(),
+                            Likes = new List<PostLikeResponseDto>(),
+                            Comments = new List<PostCommentResponseDto>()
+                        };
+
+                        // Lấy reactions (likes) cho post
+                        try
+                        {
+                            var reactions = await _postReactionRepository.GetByPostIdAsync(post.Id);
+                            if (reactions != null)
+                            {
+                                foreach (var reaction in reactions)
+                                {
+                                    if (reaction != null)
+                                    {
+                                        postDto.Likes.Add(new PostLikeResponseDto
+                                        {
+                                            PostLikeId = reaction.Id.ToString(),
+                                            AccountId = reaction.UserId.ToString(),
+                                            FullName = reaction.User?.Name ?? string.Empty,
+                                            CreatedDate = reaction.CreatedAt ?? DateTime.Now,
+                                            ReactionTypeId = reaction.ReactionTypeId,
+                                            ReactionTypeName = reaction.ReactionType?.Name ?? string.Empty
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[PostService.GetAllPosts] Error loading reactions for post {post.Id}: {ex.Message}");
+                            // Tiếp tục với empty likes list
+                        }
+
+                        // Lấy comments cho post
+                        try
+                        {
+                            var comments = await _commentRepository.GetByPostIdAsync(post.Id);
+                            if (comments != null)
+                            {
+                                foreach (var comment in comments)
+                                {
+                                    if (comment != null)
+                                    {
+                                        var commentDto = new PostCommentResponseDto
+                                        {
+                                            PostCommentId = comment.Id.ToString(),
+                                            FullName = comment.Author?.Name ?? string.Empty,
+                                            Content = comment.Content ?? string.Empty,
+                                            Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
+                                            CreatedDate = comment.CreatedAt,
+                                            Likes = new List<PostCommentLikeResponseDto>(),
+                                            Replies = new List<ReplyPostCommentResponseDto>()
+                                        };
+
+                                        // Lấy reactions cho comment
+                                        try
+                                        {
+                                            var commentReactions = await _commentReactionRepository.GetByCommentIdAsync(comment.Id);
+                                            if (commentReactions != null)
+                                            {
+                                                foreach (var commentReaction in commentReactions)
+                                                {
+                                                    if (commentReaction != null)
+                                                    {
+                                                        commentDto.Likes.Add(new PostCommentLikeResponseDto
+                                                        {
+                                                            PostCommentLikeId = commentReaction.Id.ToString(),
+                                                            AccountId = commentReaction.UserId.ToString(),
+                                                            FullName = commentReaction.User?.Name ?? string.Empty,
+                                                            CreatedDate = commentReaction.CreatedAt ?? DateTime.Now
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine($"[PostService.GetAllPosts] Error loading comment reactions for comment {comment.Id}: {ex.Message}");
+                                            // Tiếp tục với empty likes list
+                                        }
+
+                                        postDto.Comments.Add(commentDto);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[PostService.GetAllPosts] Error loading comments for post {post.Id}: {ex.Message}");
+                            // Tiếp tục với empty comments list
+                        }
+
+                        postDtos.Add(postDto);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[PostService.GetAllPosts] Error processing post {post?.Id}: {ex.Message}");
+                        Console.WriteLine($"[PostService.GetAllPosts] StackTrace: {ex.StackTrace}");
+                        // Bỏ qua post này và tiếp tục với post tiếp theo
+                        continue;
+                    }
                 }
 
-                postDtos.Add(postDto);
+                Console.WriteLine($"[PostService.GetAllPosts] Successfully processed {postDtos.Count} posts");
+                return postDtos;
             }
-
-            return postDtos;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostService.GetAllPosts] Fatal error: {ex.Message}");
+                Console.WriteLine($"[PostService.GetAllPosts] StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[PostService.GetAllPosts] InnerException: {ex.InnerException.Message}");
+                    Console.WriteLine($"[PostService.GetAllPosts] InnerException StackTrace: {ex.InnerException.StackTrace}");
+                }
+                throw;
+            }
         }
 
         public async Task<List<Post>> GetAllPostsApproved()
@@ -230,7 +360,9 @@ namespace ESCE_SYSTEM.Services
                 {
                     AccountId = r.UserId.ToString(),
                     FullName = r.User?.Name ?? string.Empty,
-                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm")
+                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm"),
+                    ReactionTypeId = r.ReactionTypeId,
+                    ReactionTypeName = r.ReactionType?.Name ?? string.Empty
                 }).ToList(),
                 Comments = comments.Select(c => new PostCommentDetailDto
                 {
@@ -335,6 +467,52 @@ namespace ESCE_SYSTEM.Services
 
             // Gửi email và thông báo cho tác giả
             await GuiThongBaoYeuCauChinhSua(post, reviewPostDto.Comment);
+        }
+
+        public async Task LockPost(LockPostDto lockPostDto)
+        {
+            var postId = int.Parse(lockPostDto.PostId);
+            var post = await _postRepository.GetByIdAsync(postId);
+            if (post == null)
+            {
+                throw new Exception("Không tìm thấy bài viết");
+            }
+
+            if (!_userContextService.IsAdmin())
+            {
+                throw new UnauthorizedAccessException("Chỉ Admin mới có thể khóa bài viết");
+            }
+
+            post.IsLocked = true;
+            post.UpdatedAt = DateTime.Now;
+
+            await _postRepository.UpdateAsync(post);
+
+            // Gửi thông báo và email cho tác giả với lý do
+            await GuiThongBaoVaEmailKhoaBaiViet(post, lockPostDto.Reason);
+        }
+
+        public async Task UnlockPost(UnlockPostDto unlockPostDto)
+        {
+            var postId = int.Parse(unlockPostDto.PostId);
+            var post = await _postRepository.GetByIdAsync(postId);
+            if (post == null)
+            {
+                throw new Exception("Không tìm thấy bài viết");
+            }
+
+            if (!_userContextService.IsAdmin())
+            {
+                throw new UnauthorizedAccessException("Chỉ Admin mới có thể mở khóa bài viết");
+            }
+
+            post.IsLocked = false;
+            post.UpdatedAt = DateTime.Now;
+
+            await _postRepository.UpdateAsync(post);
+
+            // Gửi thông báo và email cho tác giả với lý do
+            await GuiThongBaoVaEmailMoKhoaBaiViet(post, unlockPostDto.Reason);
         }
 
         #region Private Methods - Email & Notification (Tiếng Việt)
@@ -486,6 +664,81 @@ namespace ESCE_SYSTEM.Services
                 Console.WriteLine($"Gửi email thất bại: {ex.Message}");
             }
             
+        }
+
+        private async Task GuiThongBaoVaEmailKhoaBaiViet(Post post, string lyDo)
+        {
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
+            if (author != null)
+            {
+                var notificationDto = new NotificationDto
+                {
+                    UserId = author.Id,
+                    Title = "Bài viết đã bị khóa",
+                    Message = $"Bài viết '{post.Title}' của bạn đã bị khóa bởi Admin. Lý do: {lyDo}",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _notificationService.AddNotificationAsync(notificationDto);
+
+                await _hubNotificationContext.Clients.User(author.Id.ToString())
+                    .SendAsync("ReceiveNotification", notificationDto);
+
+                await GuiEmailBaiViet(author, "PostLocked.html",
+                    $"Bài viết '{post.Title}' đã bị khóa",
+                    post.Title, lyDo);
+            }
+        }
+
+        private async Task GuiThongBaoVaEmailMoKhoaBaiViet(Post post, string lyDo)
+        {
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
+            if (author != null)
+            {
+                var notificationDto = new NotificationDto
+                {
+                    UserId = author.Id,
+                    Title = "Bài viết đã được mở khóa",
+                    Message = $"Bài viết '{post.Title}' của bạn đã được mở khóa bởi Admin. Lý do: {lyDo}",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _notificationService.AddNotificationAsync(notificationDto);
+
+                await _hubNotificationContext.Clients.User(author.Id.ToString())
+                    .SendAsync("ReceiveNotification", notificationDto);
+
+                await GuiEmailBaiViet(author, "PostUnlocked.html",
+                    $"Bài viết '{post.Title}' đã được mở khóa",
+                    post.Title, lyDo);
+            }
+        }
+
+        private async Task GuiThongBaoVaEmailXoaBaiViet(Post post, string lyDo)
+        {
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
+            if (author != null)
+            {
+                var notificationDto = new NotificationDto
+                {
+                    UserId = author.Id,
+                    Title = "Bài viết đã bị xóa",
+                    Message = $"Bài viết '{post.Title}' của bạn đã bị xóa bởi Admin. Lý do: {lyDo}",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _notificationService.AddNotificationAsync(notificationDto);
+
+                await _hubNotificationContext.Clients.User(author.Id.ToString())
+                    .SendAsync("ReceiveNotification", notificationDto);
+
+                await GuiEmailBaiViet(author, "PostDeleted.html",
+                    $"Bài viết '{post.Title}' đã bị xóa",
+                    post.Title, lyDo);
+            }
         }
         #endregion 
     }

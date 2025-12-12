@@ -107,36 +107,53 @@ const authorizedRequest = async (input: RequestInfo | URL, init: RequestInit = {
   return response.json()
 }
 
-const normalizeDashboard = (payload: any): DashboardDto => ({
-  totalUsers: payload?.totalUsers ?? payload?.TotalUsers ?? 0,
-  userGrowth: payload?.userGrowth ?? payload?.UserGrowth ?? '',
-  totalPosts: payload?.totalPosts ?? payload?.TotalPosts ?? 0,
-  postGrowth: payload?.postGrowth ?? payload?.PostGrowth ?? '',
-  pendingSupports: payload?.pendingSupports ?? payload?.PendingSupports ?? 0,
-  totalViews: payload?.totalViews ?? payload?.TotalViews ?? 0,
-  todayComments: payload?.todayComments ?? payload?.TodayComments ?? 0,
-  todayReactions: payload?.todayReactions ?? payload?.TodayReactions ?? 0,
-  todayChatMessages: payload?.todayChatMessages ?? payload?.TodayChatMessages ?? 0,
-  unreadNotifications: payload?.unreadNotifications ?? payload?.UnreadNotifications ?? 0,
-  activeTours: payload?.activeTours ?? payload?.ActiveTours ?? 0,
-  todayBookings: payload?.todayBookings ?? payload?.TodayBookings ?? 0,
-  recentActivities: (payload?.recentActivities ?? payload?.RecentActivities ?? []).map((item: any) => ({
-    description: item?.description ?? item?.Description ?? '',
-    timeAgo: item?.timeAgo ?? item?.TimeAgo ?? '',
-    type: item?.type ?? item?.Type ?? ''
-  })),
-  urgentSupports: payload?.urgentSupports ?? payload?.UrgentSupports ?? 0,
-  pendingUpgradeRequests: payload?.pendingUpgradeRequests ?? payload?.PendingUpgradeRequests ?? 0,
-  unreadMessages: payload?.unreadMessages ?? payload?.UnreadMessages ?? 0,
-  popularPosts: (payload?.popularPosts ?? payload?.PopularPosts ?? []).map((item: any) => ({
-    id: item?.id ?? item?.Id ?? 0,
-    title: item?.title ?? item?.Title ?? '',
-    authorName: item?.authorName ?? item?.AuthorName ?? '',
-    reactionsCount: item?.reactionsCount ?? item?.ReactionsCount ?? 0,
-    commentsCount: item?.commentsCount ?? item?.CommentsCount ?? 0,
-    createdAt: item?.createdAt ?? item?.CreatedAt ?? null
-  }))
-})
+const normalizeDashboard = (payload: any): DashboardDto => {
+  // Backend trả về DashboardStatisticsDto với format PascalCase
+  const totalUsers = payload?.totalUsers ?? payload?.TotalUsers ?? 0
+  const usersGrowthPercent = payload?.usersGrowthPercent ?? payload?.UsersGrowthPercent ?? 0
+  const totalPosts = payload?.totalPosts ?? payload?.TotalPosts ?? 0
+  const postsGrowthPercent = payload?.postsGrowthPercent ?? payload?.PostsGrowthPercent ?? 0
+  const totalBookings = payload?.totalBookings ?? payload?.TotalBookings ?? 0
+  
+  // Format growth percent thành string
+  const formatGrowth = (percent: number): string => {
+    if (percent === 0) return '0%'
+    const sign = percent > 0 ? '+' : ''
+    return `${sign}${percent.toFixed(1)}%`
+  }
+
+  return {
+    totalUsers,
+    userGrowth: formatGrowth(usersGrowthPercent),
+    totalPosts,
+    postGrowth: formatGrowth(postsGrowthPercent),
+    // Các field này backend chưa có, để mặc định 0
+    pendingSupports: payload?.pendingSupports ?? payload?.PendingSupports ?? 0,
+    totalViews: payload?.totalViews ?? payload?.TotalViews ?? 0,
+    todayComments: payload?.todayComments ?? payload?.TodayComments ?? 0,
+    todayReactions: payload?.todayReactions ?? payload?.TodayReactions ?? 0,
+    todayChatMessages: payload?.todayChatMessages ?? payload?.TodayChatMessages ?? 0,
+    unreadNotifications: payload?.unreadNotifications ?? payload?.UnreadNotifications ?? 0,
+    activeTours: payload?.activeTours ?? payload?.ActiveTours ?? payload?.totalServiceCombos ?? payload?.TotalServiceCombos ?? 0,
+    todayBookings: totalBookings, // Sử dụng totalBookings từ backend
+    recentActivities: (payload?.recentActivities ?? payload?.RecentActivities ?? []).map((item: any) => ({
+      description: item?.description ?? item?.Description ?? '',
+      timeAgo: item?.timeAgo ?? item?.TimeAgo ?? '',
+      type: item?.type ?? item?.Type ?? ''
+    })),
+    urgentSupports: payload?.urgentSupports ?? payload?.UrgentSupports ?? 0,
+    pendingUpgradeRequests: payload?.pendingUpgradeRequests ?? payload?.PendingUpgradeRequests ?? 0,
+    unreadMessages: payload?.unreadMessages ?? payload?.UnreadMessages ?? 0,
+    popularPosts: (payload?.popularPosts ?? payload?.PopularPosts ?? []).map((item: any) => ({
+      id: item?.id ?? item?.Id ?? 0,
+      title: item?.title ?? item?.Title ?? '',
+      authorName: item?.authorName ?? item?.AuthorName ?? '',
+      reactionsCount: item?.reactionsCount ?? item?.ReactionsCount ?? 0,
+      commentsCount: item?.commentsCount ?? item?.CommentsCount ?? 0,
+      createdAt: item?.createdAt ?? item?.CreatedAt ?? null
+    }))
+  }
+}
 
 export const fetchDashboardData = async (): Promise<DashboardDto> => {
   if (USE_MOCK_DASHBOARD) {
@@ -144,7 +161,8 @@ export const fetchDashboardData = async (): Promise<DashboardDto> => {
     return MOCK_DASHBOARD
   }
 
-  const data = await authorizedRequest('/api/dashboard', {
+  // Sửa endpoint để khớp với backend: /api/Statistics/dashboard
+  const data = await authorizedRequest('/api/Statistics/dashboard', {
     method: 'GET'
   })
   return normalizeDashboard(data)

@@ -38,12 +38,34 @@ namespace ESCE_SYSTEM.Services
 
         public async Task LikePost(int postId)
         {
+            // Gọi ReactToPost với reactionTypeId = 1 (Like) để tương thích ngược
+            await ReactToPost(postId, 1);
+        }
+
+        public async Task ReactToPost(int postId, byte reactionTypeId)
+        {
             var currentUserId = _userContextService.GetCurrentUserId();
+            
+            // Kiểm tra xem user đã có reaction nào cho post này chưa
             var existingReaction = await _postReactionRepository.GetByUserAndPostAsync(currentUserId, postId);
 
+            // Nếu đã có reaction, xóa reaction cũ trước khi thêm reaction mới
             if (existingReaction != null)
             {
-                throw new Exception("Bạn đã thích bài viết này rồi");
+                // Nếu cùng loại reaction -> unlike (xóa)
+                if (existingReaction.ReactionTypeId == reactionTypeId)
+                {
+                    await UnlikePost(existingReaction.Id);
+                    return;
+                }
+                else
+                {
+                    // Nếu khác loại reaction -> cập nhật reaction type
+                    existingReaction.ReactionTypeId = reactionTypeId;
+                    existingReaction.CreatedAt = DateTime.Now;
+                    await _postReactionRepository.UpdateAsync(existingReaction);
+                    return;
+                }
             }
 
             var post = await _postRepository.GetByIdAsync(postId);
@@ -52,11 +74,17 @@ namespace ESCE_SYSTEM.Services
                 throw new Exception("Không tìm thấy bài viết");
             }
 
+            // Validate reactionTypeId (1-6)
+            if (reactionTypeId < 1 || reactionTypeId > 6)
+            {
+                throw new Exception("Loại cảm xúc không hợp lệ. Vui lòng chọn từ 1-6.");
+            }
+
             var postReaction = new Postreaction
             {
                 UserId = currentUserId,
                 PostId = postId,
-                ReactionTypeId = 1, // Like
+                ReactionTypeId = reactionTypeId,
                 CreatedAt = DateTime.Now
             };
 
@@ -66,12 +94,14 @@ namespace ESCE_SYSTEM.Services
             post.ReactionsCount++;
             await _postRepository.UpdateAsync(post);
 
-            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người like)
+            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người react)
             if (post.AuthorId != currentUserId)
             {
                 var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
-                await GuiThongBaoReaction(post.AuthorId, "Có người thích bài viết của bạn",
-                    $"{currentUser.Name} đã thích bài viết: {post.Title}");
+                var reactionNames = new[] { "", "thích", "yêu thích", "haha", "wow", "buồn", "phẫn nộ" };
+                var reactionName = reactionTypeId < reactionNames.Length ? reactionNames[reactionTypeId] : "phản ứng";
+                await GuiThongBaoReaction(post.AuthorId, "Có người phản ứng với bài viết của bạn",
+                    $"{currentUser.Name} đã {reactionName} bài viết: {post.Title}");
             }
         }
 

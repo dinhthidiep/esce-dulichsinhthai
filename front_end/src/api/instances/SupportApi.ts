@@ -75,6 +75,15 @@ export interface UpdateSupportRequestDto {
   image?: string | null
 }
 
+export interface ApproveSupportDto {
+  supportId: string
+}
+
+export interface RejectSupportDto {
+  supportId: string
+  comment: string
+}
+
 const MOCK_SUPPORT_REQUESTS: RequestSupportDto[] = [
   {
     id: 1,

@@ -51,6 +51,8 @@ import {
   getSupportResponses,
   createSupportResponse,
   deleteSupportResponse,
+  approveSupport,
+  rejectSupport,
   type RequestSupportDto,
   type SupportResponseDto,
   type CreateSupportRequestDto,
@@ -175,8 +177,11 @@ export default function MainSupportsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteResponseDialogOpen, setDeleteResponseDialogOpen] = useState(false)
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [ticketToDelete, setTicketToDelete] = useState<RequestSupportDto | null>(null)
   const [responseToDelete, setResponseToDelete] = useState<SupportResponseDto | null>(null)
+  const [ticketToReject, setTicketToReject] = useState<RequestSupportDto | null>(null)
+  const [rejectComment, setRejectComment] = useState('')
 
   // Form states
   const [newContent, setNewContent] = useState('')
@@ -522,6 +527,64 @@ export default function MainSupportsContent() {
       const errorMsg = err?.message || 'Không thể xóa phản hồi'
       setError(errorMsg)
       console.error('Error deleting response:', err)
+    }
+  }
+
+  // Approve support request
+  const handleApproveSupport = async (ticket: RequestSupportDto) => {
+    try {
+      setError(null)
+      await approveSupport(ticket.id)
+      showSnackbar('Đã phê duyệt yêu cầu hỗ trợ', 'success')
+      await loadTickets()
+      
+      if (selectedTicket && selectedTicket.id === ticket.id) {
+        const updated = await getSupportRequestById(ticket.id)
+        setSelectedTicket(updated)
+      }
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Không thể phê duyệt yêu cầu hỗ trợ'
+      setError(errorMsg)
+      console.error('Error approving support:', err)
+    }
+  }
+
+  // Open reject dialog
+  const handleOpenRejectDialog = (ticket: RequestSupportDto) => {
+    setTicketToReject(ticket)
+    setRejectComment('')
+    setRejectDialogOpen(true)
+  }
+
+  // Close reject dialog
+  const handleCloseRejectDialog = () => {
+    setRejectDialogOpen(false)
+    setTicketToReject(null)
+    setRejectComment('')
+  }
+
+  // Reject support request
+  const handleRejectSupport = async () => {
+    if (!ticketToReject || !rejectComment.trim()) {
+      setError('Vui lòng nhập lý do từ chối')
+      return
+    }
+
+    try {
+      setError(null)
+      await rejectSupport(ticketToReject.id, rejectComment.trim())
+      showSnackbar('Đã từ chối yêu cầu hỗ trợ', 'success')
+      handleCloseRejectDialog()
+      await loadTickets()
+      
+      if (selectedTicket && selectedTicket.id === ticketToReject.id) {
+        const updated = await getSupportRequestById(ticketToReject.id)
+        setSelectedTicket(updated)
+      }
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Không thể từ chối yêu cầu hỗ trợ'
+      setError(errorMsg)
+      console.error('Error rejecting support:', err)
     }
   }
 
@@ -1148,22 +1211,40 @@ export default function MainSupportsContent() {
                 </Select>
               </FormControl>
               {(selectedTicket.status === 'Pending' || selectedTicket.status === 'pending') && (
-                <Button
-                  variant="contained"
-                  color="success"
-                  size="small"
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: 2,
-                    fontSize: '1.3rem',
-                    fontWeight: 600,
-                    px: 2.5
-                  }}
-                  startIcon={<CheckCircleIcon />}
-                >
-                  Phê duyệt yêu cầu
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => handleApproveSupport(selectedTicket)}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      fontSize: '1.3rem',
+                      fontWeight: 600,
+                      px: 2.5
+                    }}
+                    startIcon={<CheckCircleIcon />}
+                  >
+                    Phê duyệt
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={() => handleOpenRejectDialog(selectedTicket)}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      fontSize: '1.3rem',
+                      fontWeight: 600,
+                      px: 2.5
+                    }}
+                    startIcon={<CancelIcon />}
+                  >
+                    Từ chối
+                  </Button>
+                </>
               )}
             </Box>
           )}
@@ -1634,6 +1715,61 @@ export default function MainSupportsContent() {
           )}
         </Menu>
       ))}
+
+      {/* Reject Dialog */}
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={handleCloseRejectDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontSize: '1.8rem', fontWeight: 600 }}>
+          Từ chối yêu cầu hỗ trợ
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2, fontSize: '1.4rem' }}>
+            Vui lòng nhập lý do từ chối yêu cầu hỗ trợ này:
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            value={rejectComment}
+            onChange={(e) => setRejectComment(e.target.value)}
+            placeholder="Nhập lý do từ chối..."
+            sx={{ fontSize: '1.4rem' }}
+            error={!rejectComment.trim()}
+            helperText={!rejectComment.trim() ? 'Lý do từ chối không được để trống' : ''}
+          />
+          {error && (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: '1.2rem' }}>
+              {error}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button
+            onClick={handleCloseRejectDialog}
+            sx={{ fontSize: '1.3rem', textTransform: 'none' }}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleRejectSupport}
+            variant="contained"
+            color="error"
+            disabled={!rejectComment.trim()}
+            sx={{ fontSize: '1.3rem', textTransform: 'none' }}
+          >
+            Xác nhận từ chối
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

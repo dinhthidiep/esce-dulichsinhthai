@@ -1,8 +1,10 @@
 ﻿using ESCE_SYSTEM.DTOs.News;
 using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ESCE_SYSTEM.Services.NewsService
 {
@@ -107,19 +109,88 @@ namespace ESCE_SYSTEM.Services.NewsService
 
         public async Task DeleteNewsAsync(int newsId)
         {
-            var news = await _dbContext.News.FirstOrDefaultAsync(n => n.NewsId == newsId);
-            if (news == null)
+            try
             {
-                throw new InvalidOperationException("Tin tức không tồn tại.");
+                Console.WriteLine($"[NewsService.DeleteNewsAsync] Starting to delete news with ID: {newsId}");
+
+                // Tìm news cần xóa
+                var news = await _dbContext.News.FirstOrDefaultAsync(n => n.NewsId == newsId);
+                if (news == null)
+                {
+                    Console.WriteLine($"[NewsService.DeleteNewsAsync] News with ID {newsId} not found");
+                    throw new InvalidOperationException("Tin tức không tồn tại.");
+                }
+
+                Console.WriteLine($"[NewsService.DeleteNewsAsync] Found news: {news.NewsTitle}");
+
+                // Xóa related reactions trước (sử dụng transaction để đảm bảo atomicity)
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    // Xóa reactions
+                    var reactions = await _dbContext.Reactions
+                        .Where(r => r.TargetType == NewsReactionType && r.TargetId == newsId)
+                        .ToListAsync();
+
+                    if (reactions.Any())
+                    {
+                        Console.WriteLine($"[NewsService.DeleteNewsAsync] Found {reactions.Count} reactions to delete");
+                        _dbContext.Reactions.RemoveRange(reactions);
+                        await _dbContext.SaveChangesAsync();
+                        Console.WriteLine($"[NewsService.DeleteNewsAsync] Reactions deleted successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[NewsService.DeleteNewsAsync] No reactions found for this news");
+                    }
+
+                    // Xóa news
+                    _dbContext.News.Remove(news);
+                    await _dbContext.SaveChangesAsync();
+
+                    // Commit transaction
+                    await transaction.CommitAsync();
+
+                    Console.WriteLine($"[NewsService.DeleteNewsAsync] News deleted successfully");
+                }
+                catch (Exception ex)
+                {
+                    // Rollback nếu có lỗi
+                    await transaction.RollbackAsync();
+                    Console.WriteLine($"[NewsService.DeleteNewsAsync] Transaction rolled back due to error: {ex.Message}");
+                    throw;
+                }
             }
-
-            // Remove related reactions
-            var reactions = _dbContext.Reactions
-                .Where(r => r.TargetType == NewsReactionType && r.TargetId == newsId);
-            _dbContext.Reactions.RemoveRange(reactions);
-
-            _dbContext.News.Remove(news);
-            await _dbContext.SaveChangesAsync();
+            catch (InvalidOperationException)
+            {
+                throw; // Re-throw để controller xử lý
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                Console.WriteLine($"[NewsService.DeleteNewsAsync] Database error: {dbEx.Message}");
+                if (dbEx.InnerException != null)
+                {
+                    Console.WriteLine($"[NewsService.DeleteNewsAsync] InnerException: {dbEx.InnerException.Message}");
+                    
+                    // Kiểm tra foreign key constraint error
+                    if (dbEx.InnerException.Message.Contains("FOREIGN KEY") || 
+                        dbEx.InnerException.Message.Contains("REFERENCE"))
+                    {
+                        throw new Exception("Không thể xóa tin tức vì còn dữ liệu liên quan. Vui lòng xóa các dữ liệu liên quan trước.", dbEx);
+                    }
+                }
+                throw new Exception($"Lỗi database khi xóa tin tức: {dbEx.Message}", dbEx);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[NewsService.DeleteNewsAsync] Error: {ex.Message}");
+                Console.WriteLine($"[NewsService.DeleteNewsAsync] StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[NewsService.DeleteNewsAsync] InnerException: {ex.InnerException.Message}");
+                }
+                throw new Exception($"Lỗi khi xóa tin tức: {ex.Message}", ex);
+            }
         }
 
         public async Task<(bool liked, int likesCount)> ToggleLikeAsync(int newsId, int userId)

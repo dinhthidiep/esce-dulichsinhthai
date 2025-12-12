@@ -190,6 +190,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasColumnName("CREATED_AT").HasDefaultValueSql("(getdate())");
                 entity.Property(e => e.Image).HasColumnName("IMAGE");
                 entity.Property(e => e.IsDeleted).HasColumnName("IS_DELETED").HasDefaultValueSql("((0))");
+                entity.Property(e => e.IsLocked).HasColumnName("IS_LOCKED").HasDefaultValueSql("((0))");
                 entity.Property(e => e.ReactionsCount).HasColumnName("REACTIONS_COUNT").HasDefaultValueSql("((0))");
                 entity.Property(e => e.ParentCommentId).HasColumnName("PARENT_COMMENT_ID");
                 entity.Property(e => e.PostId).HasColumnName("POST_ID");
@@ -434,6 +435,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.RejectComment).HasMaxLength(1000).HasColumnName("REJECT_COMMENT");
                 entity.Property(e => e.ReviewComments).HasMaxLength(1000).HasColumnName("REVIEW_COMMENTS");
                 entity.Property(e => e.IsDeleted).HasColumnName("IS_DELETED").HasDefaultValueSql("((0))");
+                entity.Property(e => e.IsLocked).HasColumnName("IS_LOCKED").HasDefaultValueSql("((0))");
                 entity.Property(e => e.Title).HasMaxLength(255).HasColumnName("TITLE");
                 entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT").HasDefaultValueSql("(getdate())");
 

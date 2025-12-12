@@ -57,6 +57,13 @@ namespace ESCE_SYSTEM.Repositories
             return postReaction;
         }
 
+        public async Task<Postreaction> UpdateAsync(Postreaction postReaction)
+        {
+            _context.Postreactions.Update(postReaction);
+            await _context.SaveChangesAsync();
+            return postReaction;
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var postReaction = await _context.Postreactions.FindAsync(id);

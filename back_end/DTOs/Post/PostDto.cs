@@ -21,4 +21,22 @@ namespace ESCE_SYSTEM.DTOs
         public string PostId { get; set; } = null!;
         public string Comment { get; set; } = null!;
     }
+
+    public class LockPostDto
+    {
+        public string PostId { get; set; } = null!;
+        public string Reason { get; set; } = null!;
+    }
+
+    public class UnlockPostDto
+    {
+        public string PostId { get; set; } = null!;
+        public string Reason { get; set; } = null!;
+    }
+
+    public class DeletePostDto
+    {
+        public string PostId { get; set; } = null!;
+        public string Reason { get; set; } = null!;
+    }
 }

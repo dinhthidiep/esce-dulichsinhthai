@@ -34,7 +34,8 @@ import {
   approveCertificate,
   getAgencyCertificates,
   getHostCertificates,
-  rejectCertificate
+  rejectCertificate,
+  reviewCertificate
 } from '~/api/instances/RoleUpgradeApi'
 
 type CertificateStatus = 'Pending' | 'Approved' | 'Rejected' | 'Review' | string | null | undefined
@@ -108,7 +109,7 @@ const toAdminRequest = (
 
 export default function MainRoleUpgradeContent() {
   const [adminStatusFilter, setAdminStatusFilter] = useState<
-    'All' | 'Pending' | 'Approved' | 'Rejected'
+    'All' | 'Pending' | 'Approved' | 'Rejected' | 'Review'
   >('Pending')
   const [agencyRequests, setAgencyRequests] = useState<AgencyCertificate[]>([])
   const [hostRequests, setHostRequests] = useState<HostCertificate[]>([])
@@ -123,18 +124,39 @@ export default function MainRoleUpgradeContent() {
     request: null,
     comment: ''
   })
+  const [reviewDialog, setReviewDialog] = useState<{
+    open: boolean
+    request: AdminRequest | null
+    comment: string
+  }>({
+    open: false,
+    request: null,
+    comment: ''
+  })
 
   const loadAdminRequests = async () => {
     setAdminLoading(true)
     setAdminError(null)
     try {
+      const statusParam = adminStatusFilter === 'All' ? undefined : adminStatusFilter
+      console.log('[RoleUpgrade] Loading requests with filter:', { adminStatusFilter, statusParam })
+      
       const [agency, host] = await Promise.all([
-        getAgencyCertificates(adminStatusFilter === 'All' ? undefined : adminStatusFilter),
-        getHostCertificates(adminStatusFilter === 'All' ? undefined : adminStatusFilter)
+        getAgencyCertificates(statusParam),
+        getHostCertificates(statusParam)
       ])
+      
+      console.log('[RoleUpgrade] Loaded data:', { 
+        agencyCount: agency.length, 
+        hostCount: host.length,
+        agency,
+        host
+      })
+      
       setAgencyRequests(agency)
       setHostRequests(host)
     } catch (error) {
+      console.error('[RoleUpgrade] Error loading requests:', error)
       setAdminError(error instanceof Error ? error.message : 'Không thể tải danh sách yêu cầu.')
     } finally {
       setAdminLoading(false)
@@ -159,7 +181,8 @@ export default function MainRoleUpgradeContent() {
     try {
       await approveCertificate({ certificateId: request.certificateId, type: request.type })
       setAdminError(null)
-      loadAdminRequests()
+      // Reload để cập nhật mock data (certificate sẽ biến mất sau khi approve)
+      await loadAdminRequests()
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : 'Không thể phê duyệt yêu cầu.')
     }
@@ -179,9 +202,29 @@ export default function MainRoleUpgradeContent() {
       })
       setRejectDialog({ open: false, request: null, comment: '' })
       setAdminError(null)
-      loadAdminRequests()
+      await loadAdminRequests()
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : 'Không thể từ chối yêu cầu.')
+    }
+  }
+
+  const handleReviewRequest = async () => {
+    if (!reviewDialog.request) return
+    if (!reviewDialog.comment.trim()) {
+      setAdminError('Vui lòng nhập nội dung yêu cầu bổ sung.')
+      return
+    }
+    try {
+      await reviewCertificate({
+        certificateId: reviewDialog.request.certificateId,
+        type: reviewDialog.request.type,
+        comment: reviewDialog.comment.trim()
+      })
+      setReviewDialog({ open: false, request: null, comment: '' })
+      setAdminError(null)
+      await loadAdminRequests()
+    } catch (error) {
+      setAdminError(error instanceof Error ? error.message : 'Không thể gửi yêu cầu bổ sung.')
     }
   }
 
@@ -210,8 +253,8 @@ export default function MainRoleUpgradeContent() {
             </Typography>
           }
           action={
-            <Stack direction="row" spacing={1}>
-              {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((status) => (
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {(['All', 'Pending', 'Review', 'Approved', 'Rejected'] as const).map((status) => (
                 <Chip
                   key={status}
                   label={status === 'All' ? 'Tất cả' : (statusMeta[status]?.label ?? status)}
@@ -358,6 +401,27 @@ export default function MainRoleUpgradeContent() {
                                 </Button>
                               </span>
                             </Tooltip>
+                            {request.status === 'Pending' && (
+                              <Tooltip title="Yêu cầu bổ sung thông tin" arrow>
+                                <span>
+                                  <Button
+                                    variant="outlined"
+                                    color="info"
+                                    startIcon={<InfoIcon />}
+                                    onClick={() =>
+                                      setReviewDialog({
+                                        open: true,
+                                        request,
+                                        comment: ''
+                                      })
+                                    }
+                                    fullWidth
+                                  >
+                                    Yêu cầu bổ sung
+                                  </Button>
+                                </span>
+                              </Tooltip>
+                            )}
                           </Stack>
                         </Grid>
                       </Grid>
@@ -407,6 +471,47 @@ export default function MainRoleUpgradeContent() {
           </Button>
           <Button variant="contained" color="error" onClick={handleRejectRequest}>
             Từ chối
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={reviewDialog.open}
+        onClose={() => setReviewDialog({ open: false, request: null, comment: '' })}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Yêu cầu bổ sung thông tin</DialogTitle>
+        <DialogContent>
+          {reviewDialog.request && (
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontWeight: 600 }}>{reviewDialog.request.applicantName}</Typography>
+              <Typography sx={{ color: 'text.secondary' }}>
+                Vai trò: {reviewDialog.request.type === 'Agency' ? 'Travel Agency' : 'Host'}
+              </Typography>
+            </Box>
+          )}
+          <TextField
+            label="Nội dung yêu cầu bổ sung"
+            multiline
+            minRows={3}
+            value={reviewDialog.comment}
+            onChange={(event) =>
+              setReviewDialog((prev) => ({
+                ...prev,
+                comment: event.target.value
+              }))
+            }
+            fullWidth
+            placeholder="Nhập nội dung yêu cầu bổ sung thông tin..."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReviewDialog({ open: false, request: null, comment: '' })}>
+            Hủy
+          </Button>
+          <Button variant="contained" color="info" onClick={handleReviewRequest}>
+            Gửi yêu cầu
           </Button>
         </DialogActions>
       </Dialog>

@@ -23,6 +23,7 @@ namespace ESCE_SYSTEM.Models
         public string? RejectComment { get; set; }
         public string? ReviewComments { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsLocked { get; set; }
         public int CommentsCount { get; set; }
         public int ReactionsCount { get; set; }
         public int SavesCount { get; set; }

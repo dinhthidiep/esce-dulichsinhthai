@@ -13,7 +13,8 @@ namespace ESCE_SYSTEM.Services
         Task<ServiceCombo> CreateAsync(ServiceCombo ServiceCombo);
         Task<ServiceCombo?> UpdateAsync(int id, ServiceCombo ServiceCombo);
         Task<ServiceCombo?> DeleteAsync(int id);
-        Task<bool> UpdateStatusAsync(int id, string status); // Admin duyệt ServiceCombo
+        Task<bool> UpdateStatusAsync(int id, string status, string? comment = null); // Admin duyệt ServiceCombo
         Task<IEnumerable<ServiceCombo>> GetAllForAdminAsync(); // Admin xem tất cả (kể cả chưa duyệt)
+        Task<IEnumerable<ServiceCombo>> GetAllPendingAsync(); // Admin xem tất cả ServiceCombo đang pending
     }
 }

@@ -26,7 +26,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { uploadImageToFirebase } from '~/firebaseClient'
 import { styled } from '@mui/material/styles'
-import { updateProfile as updateProfileApi } from '~/api/instances/UserApi'
+import { updateProfile as updateProfileApi, changePassword } from '~/api/instances/UserApi'
 
 interface UserInfo {
   id?: number
@@ -109,44 +109,27 @@ const CameraOverlay = styled(Box)(() => ({
 export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const getUserInfo = (): UserInfo => {
-    try {
-      const userInfoStr = localStorage.getItem('userInfo')
-      if (userInfoStr) {
-        return JSON.parse(userInfoStr)
-      }
-    } catch (error) {
-      console.error('Error parsing userInfo:', error)
-    }
-    return {
-      id: 1,
-      name: 'Admin',
-      email: 'admin@example.com',
-      role: 'Admin'
-    }
-  }
-
   const extractDateOnly = (value?: string | null) => {
     if (!value) return ''
     const date = value.includes('T') ? value.split('T')[0] : value
     return date
   }
 
-  const userInfo = getUserInfo()
   const [formData, setFormData] = useState<FormState>({
-    name: userInfo.name || userInfo.fullName || '',
-    email: userInfo.email || '',
-    phone: userInfo.phone || '',
-    gender: userInfo.gender || '',
-    address: userInfo.address || '',
-    dateOfBirth: extractDateOnly(userInfo.dateOfBirth || (userInfo as any).dob),
+    name: '',
+    email: '',
+    phone: '',
+    gender: '',
+    address: '',
+    dateOfBirth: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    avatar: userInfo.avatar || ''
+    avatar: ''
   })
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(userInfo.avatar || null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [showPasswordFields, setShowPasswordFields] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -157,22 +140,147 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
     severity: 'success' as 'success' | 'error'
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const updatedUserInfo = getUserInfo()
-    setFormData({
-      name: updatedUserInfo.name || updatedUserInfo.fullName || '',
-      email: updatedUserInfo.email || '',
-      phone: updatedUserInfo.phone || '',
-      gender: updatedUserInfo.gender || '',
-      address: updatedUserInfo.address || '',
-      dateOfBirth: extractDateOnly(updatedUserInfo.dateOfBirth || (updatedUserInfo as any).dob),
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-      avatar: updatedUserInfo.avatar || ''
-    })
-    setAvatarPreview(updatedUserInfo.avatar || null)
+    const loadProfile = async () => {
+      setIsLoading(true)
+      
+      // Kiểm tra role Admin trước khi load profile
+      try {
+        const userInfoStr = localStorage.getItem('userInfo')
+        if (userInfoStr) {
+          const parsed = JSON.parse(userInfoStr)
+          const roleId = parsed?.roleId ?? parsed?.RoleId
+          const roleName = parsed?.roleName ?? parsed?.RoleName ?? parsed?.role ?? parsed?.Role
+          
+          // Chỉ Admin (roleId = 1 hoặc roleName = 'Admin') mới được truy cập
+          const isAdmin = roleId === 1 || 
+                         roleName === 'Admin' || 
+                         (typeof roleName === 'string' && roleName.toLowerCase() === 'admin')
+          
+          if (!isAdmin) {
+            setIsLoading(false)
+            setSnackbar({
+              open: true,
+              message: 'Chỉ Admin mới có thể truy cập trang này.',
+              severity: 'error'
+            })
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Error checking admin role:', err)
+        setIsLoading(false)
+        setSnackbar({
+          open: true,
+          message: 'Không thể xác thực quyền truy cập.',
+          severity: 'error'
+        })
+        return
+      }
+      
+      try {
+        const { fetchProfile } = await import('~/api/instances/UserApi')
+        const profile = await fetchProfile()
+        
+        // Kiểm tra lại role từ API response
+        const isAdminFromApi = profile.roleId === 1 || 
+                              profile.roleName === 'Admin' ||
+                              (typeof profile.roleName === 'string' && profile.roleName.toLowerCase() === 'admin')
+        
+        if (!isAdminFromApi) {
+          setIsLoading(false)
+          setSnackbar({
+            open: true,
+            message: 'Chỉ Admin mới có thể truy cập trang này.',
+            severity: 'error'
+          })
+          return
+        }
+        
+        setFormData({
+          name: profile.name || '',
+          email: profile.email || '',
+          phone: profile.phone || '',
+          gender: profile.gender || '',
+          address: profile.address || '',
+          dateOfBirth: extractDateOnly(profile.dob),
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+          avatar: profile.avatar || ''
+        })
+        setAvatarPreview(profile.avatar || null)
+      } catch (error) {
+        console.error('Error loading profile:', error)
+        // Fallback to localStorage (chỉ nếu là Admin)
+        try {
+          const userInfoStr = localStorage.getItem('userInfo')
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr)
+            const roleId = userInfo?.roleId ?? userInfo?.RoleId
+            const roleName = userInfo?.roleName ?? userInfo?.RoleName ?? userInfo?.role ?? userInfo?.Role
+            const isAdmin = roleId === 1 || 
+                           roleName === 'Admin' || 
+                           (typeof roleName === 'string' && roleName.toLowerCase() === 'admin')
+            
+            if (isAdmin) {
+              setFormData({
+                name: userInfo.name || userInfo.fullName || '',
+                email: userInfo.email || '',
+                phone: userInfo.phone || '',
+                gender: userInfo.gender || '',
+                address: userInfo.address || '',
+                dateOfBirth: extractDateOnly(userInfo.dateOfBirth || userInfo.dob),
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+                avatar: userInfo.avatar || ''
+              })
+              setAvatarPreview(userInfo.avatar || null)
+            } else {
+              setSnackbar({
+                open: true,
+                message: 'Chỉ Admin mới có thể truy cập trang này.',
+                severity: 'error'
+              })
+            }
+          }
+        } catch (localErr) {
+          console.error('Error parsing userInfo from localStorage:', localErr)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadProfile()
+  }, [])
+
+  useEffect(() => {
+    // Sync with localStorage if it changes (from other components)
+    try {
+      const userInfoStr = localStorage.getItem('userInfo')
+      if (userInfoStr) {
+        const updatedUserInfo = JSON.parse(userInfoStr)
+        setFormData(prev => ({
+          ...prev,
+          name: updatedUserInfo.name || updatedUserInfo.fullName || prev.name,
+          email: updatedUserInfo.email || prev.email,
+          phone: updatedUserInfo.phone || prev.phone,
+          gender: updatedUserInfo.gender || prev.gender,
+          address: updatedUserInfo.address || prev.address,
+          dateOfBirth: extractDateOnly(updatedUserInfo.dateOfBirth || updatedUserInfo.dob) || prev.dateOfBirth,
+          avatar: updatedUserInfo.avatar || prev.avatar
+        }))
+        if (updatedUserInfo.avatar) {
+          setAvatarPreview(updatedUserInfo.avatar)
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing with localStorage:', error)
+    }
   }, [])
 
   const getInitials = (name: string) => {
@@ -195,35 +303,80 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
 
   const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setSnackbar({ open: true, message: 'Vui lòng chọn file ảnh', severity: 'error' })
-        return
-      }
+    if (!file) {
+      console.warn('[EditProfile] No file selected')
+      return
+    }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setSnackbar({
-          open: true,
-          message: 'Kích thước ảnh không được vượt quá 5MB',
-          severity: 'error'
-        })
-        return
-      }
+    console.log('[EditProfile] File selected:', {
+      name: file.name,
+      type: file.type,
+      size: (file.size / 1024).toFixed(2) + ' KB'
+    })
 
-      try {
-        // Upload avatar lên Firebase và dùng URL trả về
-        const url = await uploadImageToFirebase(file, 'avatars')
-        setAvatarPreview(url)
-        setFormData({ ...formData, avatar: url })
-      } catch (error) {
-        console.error('Error uploading avatar to Firebase:', error)
-        setSnackbar({
-          open: true,
-          message: 'Không thể upload ảnh đại diện. Vui lòng thử lại.',
-          severity: 'error'
-        })
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setSnackbar({ open: true, message: 'Vui lòng chọn file ảnh', severity: 'error' })
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({
+        open: true,
+        message: 'Kích thước ảnh không được vượt quá 5MB',
+        severity: 'error'
+      })
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    try {
+      console.log('[EditProfile] Starting upload to Firebase...')
+      // Upload avatar lên Firebase và dùng URL trả về
+      const url = await uploadImageToFirebase(file, 'avatars')
+      console.log('[EditProfile] Upload successful, URL:', url)
+      setAvatarPreview(url)
+      setFormData((prev) => ({ ...prev, avatar: url }))
+      setSnackbar({
+        open: true,
+        message: 'Upload ảnh đại diện thành công! Nhấn "Lưu" để cập nhật.',
+        severity: 'success'
+      })
+    } catch (error) {
+      console.error('[EditProfile] Error uploading avatar to Firebase:', error)
+      let errorMessage = 'Không thể upload ảnh đại diện. Vui lòng thử lại.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Upload ảnh quá lâu. Vui lòng thử lại với ảnh nhỏ hơn.'
+        } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+          errorMessage = 'Không có quyền upload ảnh. Vui lòng kiểm tra cấu hình Firebase.'
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Lỗi kết nối. Vui lòng kiểm tra kết nối internet và thử lại.'
+        } else {
+          errorMessage = error.message || errorMessage
+        }
+      }
+      
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      })
+    } finally {
+      setIsUploadingAvatar(false)
+      // Reset file input để có thể chọn lại file cùng tên
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
       }
     }
   }
@@ -271,10 +424,33 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
 
     try {
       setIsSaving(true)
+
+      // Nếu user muốn đổi mật khẩu, gọi API change password trước
+      if (showPasswordFields) {
+        try {
+          await changePassword({
+            OldPassword: formData.currentPassword,
+            NewPassword: formData.newPassword
+          })
+          // Không hiển thị snackbar ở đây, sẽ hiển thị sau khi update profile thành công
+        } catch (passwordError) {
+          const errorMessage = passwordError instanceof Error ? passwordError.message : 'Không thể đổi mật khẩu'
+          setSnackbar({
+            open: true,
+            message: errorMessage,
+            severity: 'error'
+          })
+          setIsSaving(false)
+          return // Dừng lại nếu đổi mật khẩu thất bại
+        }
+      }
+
+      // Cập nhật profile
+      // Nếu avatar là empty string, gửi empty string để backend set về null
       const payload = {
         Name: formData.name.trim(),
         Phone: formData.phone ?? '',
-        Avatar: formData.avatar ?? '',
+        Avatar: formData.avatar || '', // Gửi empty string nếu muốn xóa avatar
         Gender: formData.gender ?? '',
         Address: formData.address ?? '',
         DOB: formData.dateOfBirth ?? ''
@@ -284,7 +460,6 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
       const updatedUser = response.user
 
       const updatedUserInfo = {
-        ...userInfo,
         id: updatedUser.id,
         name: updatedUser.name,
         fullName: updatedUser.name,
@@ -312,20 +487,25 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
       // Dispatch custom event to notify other components (e.g., SocialMedia) that profile was updated
       window.dispatchEvent(new CustomEvent('userProfileUpdated'))
 
+      // Hiển thị thông báo thành công
+      const successMessage = showPasswordFields
+        ? 'Đổi mật khẩu và cập nhật thông tin thành công!'
+        : response.message || 'Cập nhật thông tin thành công!'
+      
       setSnackbar({
         open: true,
-        message: response.message || 'Cập nhật thông tin thành công!',
+        message: successMessage,
         severity: 'success'
       })
 
       // Reset password fields nếu đã đổi mật khẩu
       if (showPasswordFields) {
-        setFormData({
-          ...formData,
+        setFormData((prev) => ({
+          ...prev,
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
-        })
+        }))
         setShowPasswordFields(false)
       }
 
@@ -429,19 +609,30 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
               </AvatarContainer>
             </Box>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Typography
-                sx={{
-                  fontSize: '1.3rem',
-                  color: 'text.secondary',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    color: 'primary.main'
-                  }
-                }}
-                onClick={handleAvatarClick}
-              >
-                Nhấn để thay đổi ảnh đại diện
-              </Typography>
+              {isUploadingAvatar ? (
+                <Typography
+                  sx={{
+                    fontSize: '1.3rem',
+                    color: 'text.secondary'
+                  }}
+                >
+                  Đang upload ảnh...
+                </Typography>
+              ) : (
+                <Typography
+                  sx={{
+                    fontSize: '1.3rem',
+                    color: 'text.secondary',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      color: 'primary.main'
+                    }
+                  }}
+                  onClick={handleAvatarClick}
+                >
+                  Nhấn để thay đổi ảnh đại diện
+                </Typography>
+              )}
             </Box>
 
             {/* Thông tin cá nhân */}

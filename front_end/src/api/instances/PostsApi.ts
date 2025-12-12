@@ -24,6 +24,7 @@ export interface PostDto {
   likesCount: number
   commentsCount: number
   isLiked: boolean
+  isLocked?: boolean
   hashtags: string[]
   likes?: PostLikeDto[]
 }
@@ -118,6 +119,11 @@ const authorizedRequest = async (input: RequestInfo | URL, init: RequestInit = {
 const normalizePost = (payload: any): PostDto => {
   // Fast normalization - optimized like News
   const postId = parseInt(String(payload?.postId ?? payload?.PostId ?? payload?.id ?? 0), 10) || 0
+  
+  if (postId === 0) {
+    console.warn('[PostsApi] normalizePost: postId is 0, payload:', payload)
+  }
+  
   const title = payload?.title ?? payload?.Title ?? payload?.articleTitle ?? payload?.ArticleTitle ?? ''
   const content = payload?.content ?? payload?.Content ?? payload?.postContent ?? payload?.PostContent ?? ''
   
@@ -181,13 +187,55 @@ const normalizePost = (payload: any): PostDto => {
   
   // Parse likes array
   const likes: PostLikeDto[] = Array.isArray(likesArray)
-    ? likesArray.map((like: any) => ({
-        postLikeId: String(like?.postLikeId ?? like?.PostLikeId ?? like?.id ?? like?.Id ?? ''),
-        accountId: String(like?.accountId ?? like?.AccountId ?? like?.userId ?? like?.UserId ?? ''),
-        fullName: like?.fullName ?? like?.FullName ?? like?.name ?? like?.Name ?? 'Người dùng',
-        createdDate: like?.createdDate ?? like?.CreatedDate ?? like?.createdAt ?? like?.CreatedAt ?? new Date().toISOString(),
-        reactionType: like?.reactionType ?? like?.ReactionType ?? 'like'
-      }))
+    ? likesArray.map((like: any) => {
+        const reactionTypeId = like?.reactionTypeId ?? like?.ReactionTypeId ?? 1
+        const reactionTypeName = (like?.reactionTypeName ?? like?.ReactionTypeName ?? '').toLowerCase().trim()
+        
+        // Map reactionTypeName (có thể là tiếng Việt hoặc tiếng Anh) hoặc reactionTypeId sang key chuẩn
+        const getReactionKey = (): string => {
+          // Nếu có tên, map từ tên
+          if (reactionTypeName) {
+            // Map từ tên tiếng Việt hoặc tiếng Anh
+            const nameMap: Record<string, string> = {
+              'like': 'like',
+              'thích': 'like',
+              'love': 'love',
+              'tim': 'love',
+              'yêu thích': 'love',
+              'haha': 'haha',
+              'wow': 'wow',
+              'sad': 'sad',
+              'buồn': 'sad',
+              'angry': 'angry',
+              'phẫn nộ': 'angry',
+              'phannộ': 'angry'
+            }
+            const mapped = nameMap[reactionTypeName]
+            if (mapped) return mapped
+          }
+          
+          // Nếu không có tên hoặc không map được, dùng reactionTypeId
+          switch (reactionTypeId) {
+            case 1: return 'like'
+            case 2: return 'love'
+            case 3: return 'haha'
+            case 4: return 'wow'
+            case 5: return 'sad'
+            case 6: return 'angry'
+            default: return 'like'
+          }
+        }
+        
+        const reactionType = getReactionKey()
+        
+        return {
+          postLikeId: String(like?.postLikeId ?? like?.PostLikeId ?? like?.id ?? like?.Id ?? ''),
+          accountId: String(like?.accountId ?? like?.AccountId ?? like?.userId ?? like?.UserId ?? ''),
+          fullName: like?.fullName ?? like?.FullName ?? like?.name ?? like?.Name ?? 'Người dùng',
+          createdDate: like?.createdDate ?? like?.CreatedDate ?? like?.createdAt ?? like?.CreatedAt ?? new Date().toISOString(),
+          reactionType: reactionType
+        }
+      })
     : []
   
   // Tính isLiked: kiểm tra xem current user có trong likes array không
@@ -227,6 +275,7 @@ const normalizePost = (payload: any): PostDto => {
     likesCount,
     commentsCount,
     isLiked,
+    isLocked: payload?.isLocked ?? payload?.IsLocked ?? false,
     hashtags: Array.isArray(payload?.hashtags ?? payload?.Hashtags) 
       ? (payload.hashtags ?? payload.Hashtags) 
       : [],
@@ -256,11 +305,19 @@ export const fetchAllPosts = async (): Promise<PostDto[]> => {
     }
     
     const data = await response.json()
+    console.log('[PostsApi] Raw response from backend:', data)
+    console.log('[PostsApi] Response is array:', Array.isArray(data))
+    console.log('[PostsApi] Response length:', Array.isArray(data) ? data.length : 'N/A')
+    
     const normalized = Array.isArray(data) ? data.map(normalizePost) : []
     
     // Debug log
-    console.log('Fetched posts with isLiked:', normalized.map(p => ({ 
-      postId: p.postId, 
+    console.log('[PostsApi] Normalized posts count:', normalized.length)
+    console.log('[PostsApi] Normalized posts:', normalized.map(p => ({ 
+      postId: p.postId,
+      title: p.title,
+      status: p.status,
+      authorName: p.authorName,
       isLiked: p.isLiked,
       likesCount: p.likesCount 
     })))
@@ -365,7 +422,7 @@ export const updatePost = async (postId: number, dto: UpdatePostDto): Promise<vo
   })
 }
 
-export const deletePost = async (postId: number): Promise<void> => {
+export const deletePost = async (postId: number, reason: string): Promise<void> => {
   if (USE_MOCK_POSTS) {
     const before = MOCK_POSTS.length
     const idx = MOCK_POSTS.findIndex(p => p.postId === postId)
@@ -381,12 +438,16 @@ export const deletePost = async (postId: number): Promise<void> => {
     throw new Error('Vui lòng đăng nhập để tiếp tục.')
   }
 
-  const response = await fetchWithFallback(`/api/Post/DeletePost?id=${postId}`, {
+  const response = await fetchWithFallback(`/api/Post/DeletePost`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
-    }
+    },
+    body: JSON.stringify({
+      PostId: String(postId),
+      Reason: reason
+    })
   })
 
   if (!response.ok) {
@@ -431,8 +492,45 @@ export const rejectPost = async (postId: number, comment: string): Promise<void>
   })
 }
 
+/**
+ * Lấy tất cả bài viết đang pending (Admin only)
+ * Endpoint: GET /api/Post/GetAllPostsPending
+ */
+export const fetchAllPostsPending = async (): Promise<PostDto[]> => {
+  if (USE_MOCK_POSTS) {
+    console.warn('[PostsApi] Using MOCK_POSTS data (backend disabled)')
+    return MOCK_POSTS.filter(p => p.status === 'Pending')
+  }
+
+  try {
+    const token = getAuthToken()
+    const response = await fetchWithFallback('/api/Post/GetAllPostsPending', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('[PostsApi] Raw pending posts response from backend:', data)
+    
+    const normalized = Array.isArray(data) ? data.map(normalizePost) : []
+    console.log('[PostsApi] Normalized pending posts count:', normalized.length)
+    
+    return normalized
+  } catch (error) {
+    console.error('[PostsApi] fetchAllPostsPending failed:', error)
+    throw error
+  }
+}
+
 // Like/Unlike Post (với nhiều loại reaction)
-// Backend mới: POST /api/PostReaction/{postId}/{reactionTypeId} và DELETE /api/PostReaction/unlike/{postReactionId}
+// Backend: POST /api/PostReaction/{postId}/{reactionTypeId} và DELETE /api/PostReaction/unlike/{postReactionId}
 // reactionTypeId: 1 = Like, 2 = Love, 3 = Haha, 4 = Wow, 5 = Sad, 6 = Angry
 export const toggleLikePost = async (
   postId: number,
@@ -474,8 +572,13 @@ export const toggleLikePost = async (
       return likeAccountId === currentUserIdStr
     })
     if (userLike && userLike.postLikeId) {
-      postReactionId = userLike.postLikeId
-      currentReactionType = (userLike.reactionType ?? '').toString().toLowerCase()
+      const likeId = String(userLike.postLikeId)
+      // Bỏ qua temp ID (ID bắt đầu bằng "temp-")
+      // Temp ID được tạo trong optimistic update, không phải ID thực từ backend
+      if (!likeId.startsWith('temp-')) {
+        postReactionId = userLike.postLikeId
+        currentReactionType = (userLike.reactionType ?? '').toString().toLowerCase()
+      }
     }
   }
 
@@ -491,6 +594,37 @@ export const toggleLikePost = async (
       default: return 'like'
     }
   })()
+
+  // Nếu không tìm thấy postReactionId (có thể do temp ID), fetch lại post để lấy ID thực
+  // Chỉ fetch nếu có userLike trong optimistic update (có temp ID)
+  if (!postReactionId && currentUserId && likes.length > 0) {
+    const currentUserIdStr = String(currentUserId)
+    const userLike = likes.find((like: PostLikeDto) => {
+      const likeAccountId = String(like.accountId ?? '')
+      return likeAccountId === currentUserIdStr
+    })
+    // Nếu tìm thấy userLike nhưng có temp ID, cần fetch lại post để lấy ID thực
+    if (userLike && String(userLike.postLikeId).startsWith('temp-')) {
+      try {
+        const freshPost = await fetchPostById(validPostId)
+        const freshLikes = Array.isArray(freshPost?.likes) ? freshPost.likes : []
+        const freshUserLike = freshLikes.find((like: PostLikeDto) => {
+          const likeAccountId = String(like.accountId ?? '')
+          return likeAccountId === currentUserIdStr
+        })
+        if (freshUserLike && freshUserLike.postLikeId) {
+          const freshLikeId = String(freshUserLike.postLikeId)
+          if (!freshLikeId.startsWith('temp-')) {
+            postReactionId = freshUserLike.postLikeId
+            currentReactionType = (freshUserLike.reactionType ?? '').toString().toLowerCase()
+          }
+        }
+      } catch (err) {
+        console.warn('[PostsApi] Could not fetch fresh post to get real postReactionId:', err)
+        // Tiếp tục với logic bình thường, backend sẽ xử lý
+      }
+    }
+  }
 
   // Nếu user đã có reaction cùng loại -> bỏ reaction (unlike)
   if (postReactionId && currentReactionType && currentReactionType === targetReactionName) {
@@ -510,8 +644,9 @@ export const toggleLikePost = async (
 
       console.log('[PostsApi] Successfully unliked post:', validPostId)
 
-    // Lấy lại bài viết đã cập nhật từ backend (bao gồm likes/reactions mới)
-    return await fetchPostById(validPostId)
+      // Trả về post đã cập nhật (không cần reload nếu đã optimistic update)
+      // Frontend sẽ tự cập nhật, nhưng vẫn trả về để đảm bảo data sync
+      return await fetchPostById(validPostId)
   }
 
   // Nếu chưa có reaction, hoặc đang đổi sang loại khác -> gọi ReactToPost với reactionTypeId tương ứng
@@ -524,6 +659,7 @@ export const toggleLikePost = async (
       previousReaction: currentReactionType
     })
 
+    // Backend hỗ trợ endpoint /api/PostReaction/{postId}/{reactionTypeId}
     await authorizedRequest(`/api/PostReaction/${validPostId}/${reactionTypeId}`, {
       method: 'POST'
     })
@@ -534,7 +670,8 @@ export const toggleLikePost = async (
       previousReaction: currentReactionType
     })
 
-    // Lấy lại bài viết đã cập nhật từ backend (bao gồm likes/reactions mới)
+    // Trả về post đã cập nhật (không cần reload nếu đã optimistic update)
+    // Frontend sẽ tự cập nhật, nhưng vẫn trả về để đảm bảo data sync
     return await fetchPostById(validPostId)
   } catch (error: any) {
     const msg = typeof error?.message === 'string' ? error.message : ''
@@ -571,7 +708,7 @@ export const toggleLikePost = async (
           throw new Error('Không thể bỏ thích bài viết')
         }
 
-        // Sau khi unlike, lấy lại bài viết cập nhật
+        // Trả về post đã cập nhật (không cần reload nếu đã optimistic update)
         return await fetchPostById(validPostId)
       } catch (unlikeError: any) {
         console.error('[PostsApi] Error unliking after already liked:', unlikeError)
@@ -616,6 +753,7 @@ export interface PostComment {
   replies?: PostCommentReply[]
   authorId?: number
   authorID?: number
+  isLocked?: boolean
 }
 
 export interface PostCommentLike {
@@ -737,7 +875,8 @@ const normalizeComment = (payload: any): PostComment | null => {
     likes: normalizedLikes.length > 0 ? normalizedLikes : undefined,
     replies: normalizedReplies.length > 0 ? normalizedReplies : undefined,
     authorId: payload?.AuthorId ?? payload?.authorId ?? payload?.Author?.Id ?? payload?.author?.id,
-    authorID: payload?.AuthorId ?? payload?.authorId
+    authorID: payload?.AuthorId ?? payload?.authorId,
+    isLocked: payload?.isLocked ?? payload?.IsLocked ?? false
   }
 }
 
@@ -866,6 +1005,48 @@ export const deleteComment = async (commentId: number): Promise<void> => {
     const fallbackMessage = `HTTP ${response.status}: ${response.statusText}`
     throw new Error(await extractErrorMessage(response, fallbackMessage))
   }
+}
+
+// Lock/Unlock Comment (Admin only)
+export const lockComment = async (commentId: number, reason: string): Promise<void> => {
+  await authorizedRequest(`/api/Comment/lock`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      CommentId: String(commentId),
+      Reason: reason
+    })
+  })
+}
+
+export const unlockComment = async (commentId: number, reason: string): Promise<void> => {
+  await authorizedRequest(`/api/Comment/unlock`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      CommentId: String(commentId),
+      Reason: reason
+    })
+  })
+}
+
+// Lock/Unlock Post (Admin only)
+export const lockPost = async (postId: number, reason: string): Promise<void> => {
+  await authorizedRequest(`/api/Post/lock`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      PostId: String(postId),
+      Reason: reason
+    })
+  })
+}
+
+export const unlockPost = async (postId: number, reason: string): Promise<void> => {
+  await authorizedRequest(`/api/Post/unlock`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      PostId: String(postId),
+      Reason: reason
+    })
+  })
 }
 
 // Toggle like (tim) cho comment - chỉ 1 loại reaction "like"

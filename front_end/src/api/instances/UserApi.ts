@@ -116,34 +116,25 @@ const loadProfileFromLocalStorage = (): UserProfile => {
 
 export const fetchProfile = async () => {
   try {
-    // Lấy userId từ localStorage (userInfo được lưu sau khi login)
-    let userId: number | null = null
-    try {
-      const raw = localStorage.getItem('userInfo')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        const rawId = parsed?.id ?? parsed?.Id
-        if (rawId !== undefined && rawId !== null) {
-          const parsedId = typeof rawId === 'string' ? parseInt(rawId, 10) : Number(rawId)
-          if (!Number.isNaN(parsedId) && parsedId > 0) {
-            userId = parsedId
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('[UserApi] Không parse được userInfo từ localStorage:', err)
-    }
-
-    if (!userId) {
-      // Nếu không lấy được userId, fallback về localStorage
-      return loadProfileFromLocalStorage()
-    }
-
-    // Backend: [HttpGet("{id}")] GetUserById trong UserController
-    const result = await authorizedRequest(`/api/user/${userId}`, {
+    // Backend: [HttpGet("profile")] GetProfile trong UserController
+    // Endpoint này tự động lấy userId từ JWT token, không cần truyền userId
+    const result = await authorizedRequest('/api/user/profile', {
       method: 'GET'
     })
-    return normalizeProfile(result)
+    const normalizedProfile = normalizeProfile(result)
+    
+    // Đồng bộ với localStorage để các component khác có thể dùng
+    try {
+      const merged = {
+        ...(JSON.parse(localStorage.getItem('userInfo') || '{}') || {}),
+        ...normalizedProfile
+      }
+      localStorage.setItem('userInfo', JSON.stringify(merged))
+    } catch (err) {
+      console.error('[UserApi] Lỗi lưu userInfo sau khi fetchProfile:', err)
+    }
+    
+    return normalizedProfile
   } catch (error) {
     console.error('[UserApi] fetchProfile lỗi, dùng dữ liệu từ localStorage hoặc mặc định.', error)
     return loadProfileFromLocalStorage()
@@ -200,6 +191,40 @@ export const updateProfile = async (payload: UpdateProfilePayload) => {
       message: 'Cập nhật hồ sơ (chỉ lưu trên trình duyệt, server hiện đang lỗi).',
       user: fallbackUser
     }
+  }
+}
+
+export type ChangePasswordPayload = {
+  OldPassword: string
+  NewPassword: string
+}
+
+export const changePassword = async (payload: ChangePasswordPayload) => {
+  try {
+    const result = await authorizedRequest('/api/user/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    return {
+      message: result?.message ?? 'Đổi mật khẩu thành công'
+    }
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Không thể đổi mật khẩu'
+    console.error('[UserApi] changePassword lỗi:', error)
+    
+    if (errorMessage.includes('Old password is incorrect') || 
+        errorMessage.includes('Mật khẩu cũ không đúng')) {
+      throw new Error('Mật khẩu cũ không đúng. Vui lòng kiểm tra lại.')
+    }
+    
+    if (errorMessage.includes('Failed to fetch') || 
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('Network request failed')) {
+      throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra:\n1. Backend đã chạy chưa?\n2. URL backend có đúng không?\n3. Có vấn đề về CORS không?')
+    }
+    
+    throw error
   }
 }
 

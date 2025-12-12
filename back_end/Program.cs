@@ -105,6 +105,7 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IServiceComboDetailRepository, ServiceComboDetailRepository>();
 builder.Services.AddScoped<IServiceComboRepository, ServiceComboRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
+builder.Services.AddScoped<ISupportRepository, SupportRepository>();
 builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<ICommentReactionService, CommentReactionService>();
@@ -117,6 +118,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IServiceComboDetailService, ServiceComboDetailService>();
 builder.Services.AddScoped<IServiceComboService, ServiceComboService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
+builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<ISystemLogService, SystemLogService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -310,6 +312,7 @@ app.MapGet("/", context =>
 
 // SignalR
 app.MapHub<NotificationHub>("/notificationhub"); // Đã bật SignalR Hub
+app.MapHub<ChatHub>("/chathub"); // ChatHub cho real-time messaging
 
 
 app.Run();

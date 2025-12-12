@@ -133,6 +133,15 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
+        // Admin xem tất cả ServiceCombo đang pending
+        [HttpGet("admin/pending")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllPending()
+        {
+            var result = await _service.GetAllPendingAsync();
+            return Ok(result);
+        }
+
         // Admin duyệt ServiceCombo (thay đổi status: pending, approved, rejected)
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin")]
@@ -143,7 +152,13 @@ namespace ESCE_SYSTEM.Controllers
                 return BadRequest(new { message = "Status không được để trống" });
             }
 
-            var updated = await _service.UpdateStatusAsync(id, statusDto.Status);
+            // Nếu từ chối, yêu cầu comment
+            if (statusDto.Status.ToLower() == "rejected" && string.IsNullOrWhiteSpace(statusDto.Comment))
+            {
+                return BadRequest(new { message = "Lý do từ chối không được để trống" });
+            }
+
+            var updated = await _service.UpdateStatusAsync(id, statusDto.Status, statusDto.Comment);
             if (!updated)
             {
                 return NotFound(new { message = "Không tìm thấy ServiceCombo hoặc status không hợp lệ" });

@@ -262,6 +262,14 @@ export default function ChatMainContent() {
   }
 
   const userInfo = getUserInfo()
+  
+  // Kiểm tra role Admin
+  const roleId = userInfo?.roleId ?? userInfo?.RoleId
+  const roleName = userInfo?.roleName ?? userInfo?.RoleName ?? userInfo?.role ?? userInfo?.Role
+  const isAdmin = roleId === 1 || 
+                 roleName === 'Admin' || 
+                 (typeof roleName === 'string' && roleName.toLowerCase() === 'admin')
+  
   // Đảm bảo currentUser.id luôn là number và hợp lệ
   const currentUserId = Number(userInfo.id ?? userInfo.userId ?? 1)
   if (Number.isNaN(currentUserId) || currentUserId <= 0) {
@@ -277,8 +285,13 @@ export default function ChatMainContent() {
   console.log('[ChatMainContent] Current user:', {
     id: currentUser.id,
     idType: typeof currentUser.id,
-    name: currentUser.name
+    name: currentUser.name,
+    isAdmin,
+    roleId,
+    roleName
   })
+  
+  // State để hiển thị lỗi (không còn check Admin nữa)
 
   const [conversations, setConversations] = useState<Conversation[]>([])
   // Lưu selectedConversationId vào localStorage để persist qua reload
@@ -437,7 +450,10 @@ export default function ChatMainContent() {
     [mapApiMessageToUi]
   )
 
+  // Load conversations cho tất cả authenticated users
+  // Backend sẽ tự động lọc: Admin thấy tất cả users, non-Admin chỉ thấy Admin users
   const loadConversations = useCallback(async () => {
+
     setIsLoadingConversations(true)
     setConversationError(null)
     try {
@@ -897,6 +913,7 @@ export default function ChatMainContent() {
   }, [conversations.length, ensureConversationHistory])
 
   const loadChatUsers = async () => {
+    // Backend sẽ tự động lọc: Admin thấy tất cả users, non-Admin chỉ thấy Admin users
     setIsLoadingChatUsers(true)
     setCreateChatError(null)
     try {
@@ -933,6 +950,7 @@ export default function ChatMainContent() {
   }
 
   const handleCreateChatConversation = async () => {
+    // Backend sẽ validate: non-Admin chỉ được gửi tin nhắn cho Admin
     if (!selectedChatUser) {
       setCreateChatError('Vui lòng chọn người dùng để bắt đầu đoạn chat.')
       return
@@ -1614,6 +1632,9 @@ export default function ChatMainContent() {
     })
     return counts
   }
+
+  // Tất cả authenticated users đều có thể truy cập chat
+  // Backend sẽ tự động lọc users theo role: Admin thấy tất cả, non-Admin chỉ thấy Admin users
 
   return (
     <>

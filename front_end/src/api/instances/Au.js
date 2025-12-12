@@ -37,6 +37,16 @@ export const login = async (userEmail, password) => {
 
     if (contentType.includes('application/json')) {
       const data = await response.json()
+      
+      // Kiểm tra RoleId - chỉ cho phép Admin (RoleId = 1) đăng nhập
+      const userInfo = data.UserInfo || data.userInfo
+      const roleId = userInfo?.RoleId || userInfo?.roleId
+      
+      if (roleId !== 1) {
+        // Nếu không phải Admin, trả về lỗi như thể email/mật khẩu sai
+        throw new Error('Email đăng nhập hoặc mật khẩu không đúng.')
+      }
+      
       return data
     }
 

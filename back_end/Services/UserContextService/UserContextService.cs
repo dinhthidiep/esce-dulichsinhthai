@@ -30,10 +30,12 @@ namespace ESCE_SYSTEM.Services.UserContextService
         // **TRIỂN KHAI PHƯƠNG THỨC BỔ SUNG: IsAdmin**
         public bool IsAdmin()
         {
-            // Giả định Role "Admin" là vai trò có quyền phê duyệt
-            // Tên Role có thể là "Admin" (Role ID = 1) hoặc "Host" (Role ID = 2), tùy theo logic của bạn.
-            // Dựa trên code PostService, có vẻ bạn chỉ cần Admin.
-            return Role == "Admin";
+            // Kiểm tra case-insensitive để đảm bảo phát hiện đúng Admin
+            // Role ID = 1 là Admin
+            if (string.IsNullOrEmpty(Role))
+                return false;
+            
+            return Role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
         }
 
     }

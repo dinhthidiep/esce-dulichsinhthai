@@ -105,5 +105,43 @@ namespace ESCE_SYSTEM.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPut("lock")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> LockComment([FromBody] LockCommentDto lockCommentDto)
+        {
+            try
+            {
+                await _commentService.LockComment(lockCommentDto);
+                return Ok(new { message = "Đã khóa bình luận" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid("Bạn không có quyền khóa bình luận này");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("unlock")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UnlockComment([FromBody] UnlockCommentDto unlockCommentDto)
+        {
+            try
+            {
+                await _commentService.UnlockComment(unlockCommentDto);
+                return Ok(new { message = "Đã mở khóa bình luận" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid("Bạn không có quyền mở khóa bình luận này");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

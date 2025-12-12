@@ -12,5 +12,7 @@ namespace ESCE_SYSTEM.Services
         Task<Comment> GetById(int id);
         Task Update(int id, UpdatePostCommentDto comment);
         Task Delete(int id);
+        Task LockComment(LockCommentDto lockCommentDto);
+        Task UnlockComment(UnlockCommentDto unlockCommentDto);
     }
 }

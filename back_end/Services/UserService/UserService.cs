@@ -282,9 +282,10 @@ namespace ESCE_SYSTEM.Services.UserService
                 user.Phone = updateDto.Phone.Trim();
             }
 
-            if (!string.IsNullOrEmpty(updateDto.Avatar))
+            // Cho phép set Avatar về null/empty để xóa avatar
+            if (updateDto.Avatar != null)
             {
-                user.Avatar = updateDto.Avatar;
+                user.Avatar = string.IsNullOrWhiteSpace(updateDto.Avatar) ? null : updateDto.Avatar;
             }
 
             if (!string.IsNullOrEmpty(updateDto.Gender))
@@ -358,6 +359,34 @@ namespace ESCE_SYSTEM.Services.UserService
             {
                 throw new Exception($"Error updating profile: {exception.InnerException?.Message ?? exception.Message}", exception);
             }
+        }
+
+        public async Task<UserProfileDto> GetProfileAsync(int userId)
+        {
+            var user = await _dbContext.Accounts
+                .Include(account => account.Role)
+                .FirstOrDefaultAsync(account => account.Id == userId);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found");
+            }
+
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                Avatar = user.Avatar,
+                Phone = user.Phone,
+                Dob = user.Dob,
+                Gender = user.Gender,
+                Address = user.Address,
+                RoleId = user.RoleId,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
         }
 
         public async Task BanAccount(string accountId, string reason)
@@ -577,7 +606,14 @@ namespace ESCE_SYSTEM.Services.UserService
         {
             var query = _dbContext.AgencieCertificates
               .Include(agencyCertificate => agencyCertificate.Account)
+                .ThenInclude(account => account.Role)
               .AsQueryable();
+
+            // Chỉ hiển thị certificates từ Customer (RoleId = 4) tại thời điểm hiện tại
+            // Lưu ý: Sau khi approve, role của user thay đổi từ Customer sang Agency,
+            // nên các certificate đã approve sẽ không hiển thị nữa (điều này là đúng vì đã xử lý xong)
+            // Chỉ các certificate có status Pending hoặc Review mới hiển thị (từ Customer chưa được xử lý)
+            query = query.Where(agencyCertificate => agencyCertificate.Account.RoleId == 4);
 
             if (!string.IsNullOrEmpty(status) && status != "All")
             {
@@ -615,7 +651,14 @@ namespace ESCE_SYSTEM.Services.UserService
         {
             var query = _dbContext.HostCertificates
               .Include(hostCertificate => hostCertificate.Host)
+                .ThenInclude(host => host.Role)
               .AsQueryable();
+
+            // Chỉ hiển thị certificates từ Customer (RoleId = 4) tại thời điểm hiện tại
+            // Lưu ý: Sau khi approve, role của user thay đổi từ Customer sang Host,
+            // nên các certificate đã approve sẽ không hiển thị nữa (điều này là đúng vì đã xử lý xong)
+            // Chỉ các certificate có status Pending hoặc Review mới hiển thị (từ Customer chưa được xử lý)
+            query = query.Where(hostCertificate => hostCertificate.Host.RoleId == 4);
 
             if (!string.IsNullOrEmpty(status) && status != "All")
             {
@@ -655,10 +698,20 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
-            var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
+            var user = await _dbContext.Accounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
+            }
+
+            // Chỉ cho phép Customer (RoleId = 4) nâng cấp vai trò
+            // Các role khác (Admin, Host, Agency) đã được nâng cấp rồi nên không được nâng cấp nữa
+            if (user.RoleId != 4)
+            {
+                var currentRole = user.Role?.Name ?? "Unknown";
+                throw new InvalidOperationException($"Chỉ người dùng có vai trò Customer mới có thể nâng cấp vai trò. Vai trò hiện tại của bạn là: {currentRole}");
             }
 
             var agencyCertificate = new Models.AgencieCertificate
@@ -688,10 +741,20 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
-            var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
+            var user = await _dbContext.Accounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
+            }
+
+            // Chỉ cho phép Customer (RoleId = 4) nâng cấp vai trò
+            // Các role khác (Admin, Host, Agency) đã được nâng cấp rồi nên không được nâng cấp nữa
+            if (user.RoleId != 4)
+            {
+                var currentRole = user.Role?.Name ?? "Unknown";
+                throw new InvalidOperationException($"Chỉ người dùng có vai trò Customer mới có thể nâng cấp vai trò. Vai trò hiện tại của bạn là: {currentRole}");
             }
 
             var hostCertificate = new Models.HostCertificate

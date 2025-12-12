@@ -58,6 +58,7 @@ namespace ESCE_SYSTEM.Services
                 Image = commentDto.Images != null && commentDto.Images.Any() ? string.Join(",", commentDto.Images) : null,
                 CreatedAt = DateTime.Now,
                 IsDeleted = false,
+                IsLocked = false,
                 ReactionsCount = 0
             };
 
@@ -137,6 +138,12 @@ namespace ESCE_SYSTEM.Services
                 throw new Exception("Không tìm thấy bình luận");
             }
 
+            // Kiểm tra nếu comment bị khóa
+            if (comment.IsLocked)
+            {
+                throw new Exception("Bình luận đã bị khóa, không thể chỉnh sửa");
+            }
+
             var currentUserId = _userContextService.GetCurrentUserId();
             if (comment.AuthorId != currentUserId)
             {
@@ -158,6 +165,54 @@ namespace ESCE_SYSTEM.Services
                 await GuiThongBaoBinhLuan(post.AuthorId, "Bình luận đã được cập nhật",
                     $"{currentUser.Name} đã cập nhật bình luận trên bài viết của bạn");
             }
+        }
+
+        public async Task LockComment(LockCommentDto lockCommentDto)
+        {
+            var commentId = int.Parse(lockCommentDto.CommentId);
+            var comment = await _commentRepository.GetByIdAsync(commentId);
+            if (comment == null)
+            {
+                throw new Exception("Không tìm thấy bình luận");
+            }
+
+            if (!_userContextService.IsAdmin())
+            {
+                throw new UnauthorizedAccessException("Chỉ Admin mới có thể khóa bình luận");
+            }
+
+            comment.IsLocked = true;
+            comment.UpdatedAt = DateTime.Now;
+
+            await _commentRepository.UpdateAsync(comment);
+
+            // Gửi thông báo cho tác giả của bình luận
+            await GuiThongBaoBinhLuan(comment.AuthorId, "Bình luận đã bị khóa",
+                $"Bình luận của bạn đã bị khóa bởi Admin. Lý do: {lockCommentDto.Reason}");
+        }
+
+        public async Task UnlockComment(UnlockCommentDto unlockCommentDto)
+        {
+            var commentId = int.Parse(unlockCommentDto.CommentId);
+            var comment = await _commentRepository.GetByIdAsync(commentId);
+            if (comment == null)
+            {
+                throw new Exception("Không tìm thấy bình luận");
+            }
+
+            if (!_userContextService.IsAdmin())
+            {
+                throw new UnauthorizedAccessException("Chỉ Admin mới có thể mở khóa bình luận");
+            }
+
+            comment.IsLocked = false;
+            comment.UpdatedAt = DateTime.Now;
+
+            await _commentRepository.UpdateAsync(comment);
+
+            // Gửi thông báo cho tác giả của bình luận
+            await GuiThongBaoBinhLuan(comment.AuthorId, "Bình luận đã được mở khóa",
+                $"Bình luận của bạn đã được mở khóa bởi Admin. Lý do: {unlockCommentDto.Reason}");
         }
 
         private async Task GuiThongBaoBinhLuan(int userId, string tieuDe, string noiDung)

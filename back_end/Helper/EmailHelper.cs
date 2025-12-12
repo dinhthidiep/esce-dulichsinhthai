@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using MailKit.Net.Smtp;
 using MimeKit;
-using ESCE_SYSTEM.Options;
 using Microsoft.Extensions.Logging;
 
 namespace ESCE_SYSTEM.Helper;

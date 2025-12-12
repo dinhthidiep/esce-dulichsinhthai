@@ -439,12 +439,28 @@ export default function NewsManagement() {
 
     try {
       setDeleting(true)
+      setError(null)
+      console.log('[NewsManagement] Deleting news:', deletingNews.newsId)
+      
       await deleteNews(deletingNews.newsId)
+      
+      console.log('[NewsManagement] News deleted successfully, reloading list...')
+      
+      // Remove from local state immediately for better UX
+      setNews((prev) => prev.filter((n) => n.newsId !== deletingNews.newsId))
+      
+      // Reload to ensure sync with backend
       await loadNews()
+      
       handleCloseDeleteDialog()
+      setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể xóa tin tức')
-      console.error('Error deleting news:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Không thể xóa tin tức'
+      setError(errorMessage)
+      console.error('[NewsManagement] Error deleting news:', err)
+      
+      // Reload on error to ensure state is correct
+      await loadNews()
     } finally {
       setDeleting(false)
     }

@@ -65,19 +65,46 @@ let MOCK_MESSAGES: ChatMessage[] = [
 
 const ensureToken = () => {
   const token = getAuthToken()
+  console.log('[ChatApi] Token check:', { 
+    hasToken: !!token, 
+    tokenLength: token?.length || 0,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : 'N/A'
+  })
+  
   // Khi dev UI với mock / backend tắt thì không bắt buộc phải đăng nhập
   if (!token && DISABLE_BACKEND) {
     console.warn('[ChatApi] No token, but DISABLE_BACKEND=true -> dùng token mock')
     return 'MOCK_TOKEN'
   }
-  if (!token) {
+  if (!token || token.trim() === '') {
+    console.error('[ChatApi] No token found in localStorage')
     throw new Error('Vui lòng đăng nhập để tiếp tục trò chuyện.')
   }
   return token
 }
 
 const handleResponse = async (response: Response, endpoint: string) => {
+  console.log('[ChatApi] Response status:', { 
+    endpoint, 
+    status: response.status, 
+    statusText: response.statusText,
+    ok: response.ok 
+  })
+  
   if (!response.ok) {
+    // Xử lý lỗi 401 Unauthorized
+    if (response.status === 401) {
+      const errorText = await response.text()
+      console.error('[ChatApi] 401 Unauthorized:', { endpoint, errorText })
+      
+      // Kiểm tra xem có phải do token không hợp lệ không
+      const token = getAuthToken()
+      if (!token || token.trim() === '') {
+        throw new Error('Vui lòng đăng nhập lại. Token không tồn tại.')
+      } else {
+        throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+      }
+    }
     const fallbackMessage = `HTTP ${response.status}: ${response.statusText}`
     const errorMessage = await extractErrorMessage(response, fallbackMessage)
     console.error(`[ChatApi] Error at ${endpoint}:`, {

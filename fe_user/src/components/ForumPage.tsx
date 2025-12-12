@@ -387,11 +387,11 @@ const ForumPage = () => {
     try {
       setLoading(true)
       setError(null)
-      // Dùng GetAllPost và filter theo Status = "Approved" để lấy PostResponseDto đã format sẵn
-      const response = await axiosInstance.get<Post[]>(`${API_ENDPOINTS.POST}/GetAllPost`)
+      // Dùng endpoint approved để chỉ lấy bài viết đã được duyệt
+      const response = await axiosInstance.get<Post[]>(`${API_ENDPOINTS.POST}/approved`)
       
-      // Filter chỉ lấy posts đã approved
-      const approvedPosts = (response.data || []).filter(post => post.Status === 'Approved')
+      // Endpoint approved đã trả về chỉ bài viết Approved, không cần filter nữa
+      const approvedPosts = response.data || []
       
       // Normalize posts và kiểm tra user đã like/save chưa
       const savedPostIds = getSavedPostIds()

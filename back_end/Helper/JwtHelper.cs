@@ -5,9 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 using ESCE_SYSTEM.Options;
 using ESCE_SYSTEM.DTOs;
-
 using ESCE_SYSTEM.DTOs.Users;
-using ESCE_SYSTEM.Options;
 
 namespace ESCE_SYSTEM.Helpers
 {

@@ -550,6 +550,12 @@ export const updateNews = async (newsId: number, dto: UpdateNewsDto): Promise<Ne
   }
 }
 
+/**
+ * Xóa tin tức (Chỉ Admin)
+ * Endpoint: DELETE /api/news/{newsId}
+ * Requires: Authentication + Admin role
+ * @param newsId - ID của tin tức cần xóa
+ */
 export const deleteNews = async (newsId: number): Promise<void> => {
   if (USE_MOCK_NEWS) {
     const before = MOCK_NEWS.length
@@ -562,8 +568,77 @@ export const deleteNews = async (newsId: number): Promise<void> => {
     return
   }
 
-  // Phần implement thật nằm phía dưới, không thay đổi
-  // (hàm deleteNews phía dưới sẽ không bao giờ chạy khi USE_MOCK_NEWS = true)
+  // Validate newsId
+  const validNewsId = parseInt(String(newsId), 10)
+  if (!validNewsId || isNaN(validNewsId) || validNewsId <= 0) {
+    throw new Error('ID tin tức không hợp lệ')
+  }
+
+  try {
+    const token = getAuthToken()
+    if (!token) {
+      throw new Error('Vui lòng đăng nhập để tiếp tục.')
+    }
+
+    const endpoint = `/api/news/${validNewsId}`
+    console.log('[NewsApi] Deleting news:', { newsId: validNewsId })
+
+    const response = await fetchWithFallback(endpoint, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (!response.ok) {
+      const fallbackMessage = `HTTP ${response.status}: ${response.statusText}`
+      const errorMessage = await extractErrorMessage(response, fallbackMessage)
+      console.error('[NewsApi] deleteNews failed:', {
+        newsId: validNewsId,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorMessage
+      })
+      throw new Error(errorMessage)
+    }
+
+    // Handle 204 No Content or 200 OK
+    if (response.status === 204 || response.status === 200) {
+      console.log('[NewsApi] News deleted successfully:', validNewsId)
+      return
+    }
+
+    // Try to parse response if available
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text()
+      if (text) {
+        try {
+          const data = JSON.parse(text)
+          console.log('[NewsApi] Delete news response:', data)
+          return
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Không thể xóa tin tức'
+    console.error(`[NewsApi] Error deleting news ${validNewsId}:`, error)
+
+    if (
+      errorMessage.includes('Failed to fetch') ||
+      errorMessage.includes('NetworkError') ||
+      errorMessage.includes('Network request failed')
+    ) {
+      throw new Error(
+        'Không thể kết nối đến server. Vui lòng kiểm tra:\n1. Backend đã chạy chưa?\n2. URL backend có đúng không?\n3. Có vấn đề về CORS không?'
+      )
+    }
+
+    throw error
+  }
 }
 
 /**

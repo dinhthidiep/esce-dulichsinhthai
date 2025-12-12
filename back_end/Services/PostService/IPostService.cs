@@ -13,10 +13,12 @@ namespace ESCE_SYSTEM.Services
         Task<Post> GetById(int id);
         Task<PostDetailDto> Create(PostDto post);
         Task Update(int id, PostDto post);
-        Task Delete(int id);
+        Task Delete(DeletePostDto deletePostDto);
         Task Approve(ApprovePostDto approvePostDto);
         Task Reject(RejectPostDto rejectPostDto);
         Task Review(ReviewPostDto reviewPostDto);
         Task<PostDetailDto> GetPostDetail(int postId);
+        Task LockPost(LockPostDto lockPostDto);
+        Task UnlockPost(UnlockPostDto unlockPostDto);
     }
 }

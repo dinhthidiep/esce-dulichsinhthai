@@ -4,9 +4,8 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import ActivityCard from '~/components/common/ActivityCard'
 import QuickStatic from '~/components/common/QuickStaticCard'
-import PriorityTaskCard from '~/components/common/PriorityTaskCard'
-import PopularPostCard from '~/components/common/PopularPostCard'
 import { fetchDashboardData, type DashboardDto } from '~/api/instances/DashboardApi'
+import { fetchWithFallback, getAuthToken } from '~/api/instances/httpClient'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -22,26 +21,117 @@ import type {
   QuickStaticFeedProps,
   QuickStaticCardProps,
   ActivityFeedProps,
-  ActivityCardProps,
-  PriorityTaskCardFeedProps,
-  PriorityTaskCardProps,
-  PopularPostFeedProps,
-  PopularPostProps
+  ActivityCardProps
 } from '~/types/common'
 
 export default function MainDashBoardContent() {
   const [dashboardData, setDashboardData] = useState<DashboardDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [topServiceCombos, setTopServiceCombos] = useState<any[]>([])
+  const [timeSeriesMonthly, setTimeSeriesMonthly] = useState<any>(null)
+  const [timeSeriesDaily, setTimeSeriesDaily] = useState<any>(null)
+  const [topCustomers, setTopCustomers] = useState<any[]>([])
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
         setLoading(true)
         setError(null)
+        
+        // Load dashboard data
         const data = await fetchDashboardData()
         console.log('Dashboard main data loaded:', data)
         setDashboardData(data)
+
+        // Load top service combos (for QuickStatic)
+        try {
+          const token = getAuthToken()
+          const serviceComboRes = await fetchWithFallback('/api/Statistics/service-combos?period=month', {
+            method: 'GET',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json'
+            }
+          })
+          if (serviceComboRes.ok) {
+            const serviceComboData = await serviceComboRes.json()
+            setTopServiceCombos(serviceComboData?.topServiceCombos || serviceComboData?.TopServiceCombos || [])
+          }
+        } catch (e) {
+          console.warn('Failed to load service combos:', e)
+        }
+
+        // Load time series data for monthly chart
+        try {
+          const token = getAuthToken()
+          const timeSeriesMonthlyRes = await fetchWithFallback('/api/Statistics/time-series?period=year', {
+            method: 'GET',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json'
+            }
+          })
+          if (timeSeriesMonthlyRes.ok) {
+            const timeSeries = await timeSeriesMonthlyRes.json()
+            setTimeSeriesMonthly(timeSeries)
+          }
+        } catch (e) {
+          console.warn('Failed to load monthly time series:', e)
+        }
+
+        // Load time series data for daily chart
+        try {
+          const token = getAuthToken()
+          const timeSeriesDailyRes = await fetchWithFallback('/api/Statistics/time-series?period=month', {
+            method: 'GET',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json'
+            }
+          })
+          if (timeSeriesDailyRes.ok) {
+            const timeSeries = await timeSeriesDailyRes.json()
+            setTimeSeriesDaily(timeSeries)
+          }
+        } catch (e) {
+          console.warn('Failed to load daily time series:', e)
+        }
+
+        // Load top customers from bookings
+        try {
+          const token = getAuthToken()
+          const bookingsRes = await fetchWithFallback('/api/Booking', {
+            method: 'GET',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json'
+            }
+          })
+          if (bookingsRes.ok) {
+            const bookings = await bookingsRes.json()
+            // Group by customer and calculate total spending
+            const customerMap = new Map()
+            bookings.forEach((booking: any) => {
+              if (booking.status === 'completed' && booking.customerId) {
+                const customerId = booking.customerId
+                const amount = booking.totalAmount || 0
+                if (!customerMap.has(customerId)) {
+                  customerMap.set(customerId, { customerId, totalAmount: 0, bookingCount: 0, customerName: booking.customerName || 'Khách hàng' })
+                }
+                const customer = customerMap.get(customerId)
+                customer.totalAmount += amount
+                customer.bookingCount += 1
+              }
+            })
+            const topCustomersList = Array.from(customerMap.values())
+              .sort((a, b) => b.totalAmount - a.totalAmount)
+              .slice(0, 6)
+            setTopCustomers(topCustomersList)
+          }
+        } catch (e) {
+          console.warn('Failed to load top customers:', e)
+        }
       } catch (error) {
         console.error('Error loading dashboard:', error)
         setError(error instanceof Error ? error.message : 'Không thể tải dữ liệu')
@@ -153,68 +243,41 @@ export default function MainDashBoardContent() {
     )
   }
 
-  // Quick Static Config: Top doanh nghiệp có thu nhập cao (mock)
-  const quickStaticFeeds: QuickStaticFeedProps[] = [
-    {
-      title: 'Công ty Du lịch ABC',
-      value: '320.000.000 VNĐ',
-      valueClassName: 'bg-emerald-500'
-    },
-    {
-      title: 'Travel Agency XYZ',
-      value: '280.000.000 VNĐ',
-      valueClassName: 'bg-sky-500'
-    },
-    {
-      title: 'Homestay Đà Lạt Xinh',
-      value: '215.000.000 VNĐ',
-      valueClassName: 'bg-violet-500'
-    },
-    {
-      title: 'Resort Biển Xanh',
-      value: '190.000.000 VNĐ',
-      valueClassName: 'bg-amber-500'
-    },
-    {
-      title: 'Tour Trekking Highlands',
-      value: '155.000.000 VNĐ',
-      valueClassName: 'bg-rose-500'
-    },
-    {
-      title: 'Hostel City Center',
-      value: '130.000.000 VNĐ',
-      valueClassName: 'bg-lime-500'
-    }
-  ]
+  // Quick Static Config: Top doanh nghiệp có thu nhập cao (từ database)
+  const colors = ['bg-emerald-500', 'bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-lime-500']
+  const quickStaticFeeds: QuickStaticFeedProps[] = topServiceCombos.length > 0
+    ? topServiceCombos.slice(0, 6).map((combo, index) => ({
+        title: combo.name || combo.Name || 'N/A',
+        value: `${(combo.revenue || combo.Revenue || 0).toLocaleString('vi-VN')} VNĐ`,
+        valueClassName: colors[index % colors.length]
+      }))
+    : [
+        {
+          title: 'Chưa có dữ liệu',
+          value: '0 VNĐ',
+          valueClassName: 'bg-gray-500'
+        }
+      ]
 
   const quickStaticConfig: QuickStaticCardProps = {
     title: 'Top doanh nghiệp có thu nhập cao',
     data: quickStaticFeeds
   }
 
-  // Thay "Hoạt động gần đây" bằng "Top chi tiêu trong hệ thống"
-  const spendingFeeds: ActivityFeedProps[] = [
-    {
-      desc: 'Nguyễn Văn A - 120.000.000 VNĐ',
-      time: '15 đơn đặt tour',
-      markColorClassName: 'bg-emerald-500'
-    },
-    {
-      desc: 'Trần Thị B - 95.000.000 VNĐ',
-      time: '12 đơn đặt tour',
-      markColorClassName: 'bg-sky-500'
-    },
-    {
-      desc: 'Lê Văn C - 72.500.000 VNĐ',
-      time: '9 đơn đặt tour',
-      markColorClassName: 'bg-violet-500'
-    },
-    {
-      desc: 'Hoàng Minh D - 50.000.000 VNĐ',
-      time: '6 đơn đặt tour',
-      markColorClassName: 'bg-amber-500'
-    }
-  ]
+  // Top chi tiêu trong hệ thống (từ database)
+  const spendingFeeds: ActivityFeedProps[] = topCustomers.length > 0
+    ? topCustomers.slice(0, 4).map((customer, index) => ({
+        desc: `${customer.customerName} - ${customer.totalAmount.toLocaleString('vi-VN')} VNĐ`,
+        time: `${customer.bookingCount} đơn đặt tour`,
+        markColorClassName: colors[index % colors.length]
+      }))
+    : [
+        {
+          desc: 'Chưa có dữ liệu',
+          time: '',
+          markColorClassName: 'bg-gray-500'
+        }
+      ]
 
   const activityConfig: ActivityCardProps = {
     data: spendingFeeds,
@@ -222,124 +285,38 @@ export default function MainDashBoardContent() {
     bgClassName: 'bg-white'
   }
 
-  // Priority Task Config
-  const priorityTaskFeeds: PriorityTaskCardFeedProps[] = [
-    {
-      title: `${dashboardData.urgentSupports} tickets hỗ trợ`,
-      subTitle: 'Chờ xử lí',
-      status: 'Urgent',
-      titleClassName: 'text-red-800',
-      bgClassName: 'bg-red-50 border-red-200! border! border-solid',
-      subTitleClassName: 'text-red-600',
-      statusClassName: 'bg-red-600 border! border-solid! border-red-200!'
-    },
-    {
-      title: `${dashboardData.pendingUpgradeRequests} yêu cầu nâng cấp`,
-      titleClassName: 'text-yellow-800',
-      subTitle: 'Chờ duyệt',
-      subTitleClassName: 'text-yellow-600',
-      status: 'Medium',
-      statusClassName: 'bg-green-600 border! border-solid! border-yellow-200!',
-      bgClassName: 'bg-yellow-50 border-yellow-200! border! border-solid'
-    },
-    {
-      title: `${dashboardData.unreadMessages} tin nhắn chat`,
-      titleClassName: 'text-blue-800',
-      subTitle: 'Chưa đọc',
-      subTitleClassName: 'text-blue-600',
-      status: 'Low',
-      statusClassName: 'bg-white! border! border-solid! border-green-600! text-green-600!',
-      bgClassName: 'bg-blue-50 border-blue-200! border! border-solid'
-    }
-  ]
-
-  const priorityTaskConfig: PriorityTaskCardProps = {
-    title: 'Cần xử lý ưu tiên',
-    data: priorityTaskFeeds
-  }
-
-  // Popular Posts Config
-  const popularPostFeeds: PopularPostFeedProps[] =
-    dashboardData.popularPosts.length > 0
-      ? dashboardData.popularPosts.map((post) => ({
-          title: post.title,
-          subtitle: `${post.commentsCount} comments`,
-          value: <span className="text-[1.4rem]! font-medium!">{post.reactionsCount} ❤️</span>
-        }))
-      : [
-          {
-            title: 'Chưa có bài viết nào',
-            subtitle: '',
-            value: <span className="text-[1.4rem]! font-medium!">-</span>
-          }
-        ]
-
-  const popularPostConfig: PopularPostProps = {
-    data: popularPostFeeds,
-    title: 'Bài viết phổ biến'
-  }
-
-  // User Activity Config (using recent active users - simplified)
-  const userActivityFeeds: PopularPostFeedProps[] =
-    dashboardData.popularPosts.length > 0
-      ? dashboardData.popularPosts.slice(0, 3).map((post) => ({
-          title: post.authorName,
-          subtitle: 'Author',
-          value: (
-            <span className="text-white text-[1.2rem]! bg-yellow-500 rounded-xl p-[0.2rem_0.8rem]! font-medium!">
-              Active
-            </span>
-          )
-        }))
-      : [
-          {
-            title: 'Chưa có user nào',
-            subtitle: '',
-            value: (
-              <span className="text-white text-[1.2rem]! bg-gray-500 rounded-xl p-[0.2rem_0.8rem]! font-medium!">
-                -
-              </span>
-            )
-          }
-        ]
-
-  const userActivityConfig: PopularPostProps = {
-    data: userActivityFeeds,
-    title: 'Users hoạt động'
-  }
 
   // ============================
-  // MOCK BIỂU ĐỒ DOANH THU
+  // BIỂU ĐỒ DOANH THU TỪ DATABASE
   // ============================
-  // Do backend đang tắt, ta dùng dữ liệu mock để hiển thị 2 biểu đồ:
-  // 1. Doanh thu theo từng tháng (12 tháng)
-  // 2. Doanh thu theo từng ngày trong tháng hiện tại (30 ngày)
+  // Lấy dữ liệu từ TimeSeriesStatistics
 
-  const monthlyRevenueData = [
-    { month: 'Tháng 1', revenue: 120_000_000 },
-    { month: 'Tháng 2', revenue: 150_000_000 },
-    { month: 'Tháng 3', revenue: 180_000_000 },
-    { month: 'Tháng 4', revenue: 160_000_000 },
-    { month: 'Tháng 5', revenue: 210_000_000 },
-    { month: 'Tháng 6', revenue: 240_000_000 },
-    { month: 'Tháng 7', revenue: 230_000_000 },
-    { month: 'Tháng 8', revenue: 260_000_000 },
-    { month: 'Tháng 9', revenue: 220_000_000 },
-    { month: 'Tháng 10', revenue: 280_000_000 },
-    { month: 'Tháng 11', revenue: 300_000_000 },
-    { month: 'Tháng 12', revenue: 320_000_000 }
-  ]
+  // Biểu đồ theo tháng (12 tháng trong năm)
+  const monthlyRevenueData = timeSeriesMonthly?.data || timeSeriesMonthly?.Data || []
+  const monthlyChartData = monthlyRevenueData.length > 0
+    ? monthlyRevenueData.map((point: any) => ({
+        month: point.label || point.Label || '',
+        revenue: Number(point.revenue || point.Revenue || 0)
+      }))
+    : Array.from({ length: 12 }, (_, idx) => ({
+        month: `Tháng ${idx + 1}`,
+        revenue: 0
+      }))
 
-  const dailyRevenueData = Array.from({ length: 30 }, (_, idx) => {
-    const day = idx + 1
-    // Tạo pattern nhẹ: cuối tuần cao hơn
-    const base = 3_000_000 + (day % 7 === 0 || day % 7 === 6 ? 4_000_000 : 0)
-    const fluctuation = (day % 5) * 500_000
-    return {
-      day: `Ngày ${day}`,
-      revenue: base + fluctuation
-    }
-  })
+  // Biểu đồ theo ngày (các ngày trong tháng hiện tại)
+  const dailyRevenueData = timeSeriesDaily?.data || timeSeriesDaily?.Data || []
+  const dailyChartData = dailyRevenueData.length > 0
+    ? dailyRevenueData.map((point: any) => ({
+        day: point.label || point.Label || '',
+        revenue: Number(point.revenue || point.Revenue || 0)
+      }))
+    : Array.from({ length: 30 }, (_, idx) => {
+        const day = idx + 1
+        return {
+          day: `Ngày ${day}`,
+          revenue: 0
+        }
+      })
 
   return (
     <Box className="flex flex-col gap-[2.4rem]">
@@ -359,12 +336,12 @@ export default function MainDashBoardContent() {
             Doanh thu theo từng tháng
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ area thể hiện tổng doanh thu mock theo từng tháng trong năm.
+            Biểu đồ area thể hiện tổng doanh thu theo từng tháng trong năm (từ database).
           </Typography>
           <Box sx={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={monthlyRevenueData}
+                data={monthlyChartData}
                 margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
               >
                 <defs>
@@ -410,12 +387,12 @@ export default function MainDashBoardContent() {
             Doanh thu theo ngày trong tháng
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ cột thể hiện doanh thu mock theo từng ngày trong tháng.
+            Biểu đồ cột thể hiện doanh thu theo từng ngày trong tháng (từ database).
           </Typography>
           <Box sx={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={dailyRevenueData}
+                data={dailyChartData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -441,12 +418,6 @@ export default function MainDashBoardContent() {
         <QuickStatic {...quickStaticConfig} />
       </Box>
 
-      {/* Hàng 3: Các khối ưu tiên & bài viết phổ biến */}
-      <Box className="grid grid-cols-3 gap-x-[2.4rem] px-[2.4rem] pb-[2.4rem]">
-        <PriorityTaskCard {...priorityTaskConfig} />
-        <PopularPostCard {...popularPostConfig} />
-        <PopularPostCard {...userActivityConfig} />
-      </Box>
     </Box>
   )
 }

@@ -193,24 +193,65 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
-        [HttpPut("profile")]
-        [Authorize]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto updateDto)
+        [HttpGet("profile")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetProfile()
         {
             try
             {
                 var userIdString = _userContextService.UserId;
                 if (!int.TryParse(userIdString, out int userId))
                 {
-                    return Unauthorized("Invalid user information");
+                    return Unauthorized(new { message = "Invalid user information" });
                 }
 
-                var updatedUser = await _userService.UpdateProfileAsync(userId, updateDto);
-                return Ok(new { message = "Profile updated successfully", user = updatedUser });
+                var profile = await _userService.GetProfileAsync(userId);
+                return Ok(profile);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
             catch (Exception exception)
             {
-                return BadRequest(exception.Message);
+                return BadRequest(new { message = $"Error getting profile: {exception.Message}", error = exception.GetType().Name });
+            }
+        }
+
+        [HttpPut("profile")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto updateDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Invalid input data", errors = ModelState });
+                }
+
+                var userIdString = _userContextService.UserId;
+                if (!int.TryParse(userIdString, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid user information" });
+                }
+
+                var updatedUser = await _userService.UpdateProfileAsync(userId, updateDto);
+                
+                // Trả về UserProfileDto thay vì Account entity
+                var profileDto = await _userService.GetProfileAsync(userId);
+                return Ok(new { message = "Profile updated successfully", user = profileDto });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception exception)
+            {
+                return BadRequest(new { message = $"Error updating profile: {exception.Message}", error = exception.GetType().Name });
             }
         }
 
@@ -247,17 +288,40 @@ namespace ESCE_SYSTEM.Controllers
 
         #region Authentication Endpoints
         [HttpPost("change-password")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePassword)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Invalid input data", errors = ModelState });
+                }
+
+                if (string.IsNullOrWhiteSpace(changePassword.OldPassword))
+                {
+                    return BadRequest(new { message = "Old password is required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(changePassword.NewPassword))
+                {
+                    return BadRequest(new { message = "New password is required" });
+                }
+
                 await _userService.ChangePassword(changePassword);
-                return Ok("Password has been changed successfully.");
+                return Ok(new { message = "Password has been changed successfully." });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception exception)
             {
-                return BadRequest(exception.Message);
+                return BadRequest(new { message = $"Error changing password: {exception.Message}", error = exception.GetType().Name });
             }
         }
 

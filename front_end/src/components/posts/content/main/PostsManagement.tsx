@@ -41,7 +41,9 @@ import {
   ThumbUpOffAlt as LikeBorderIcon,
   Comment as CommentIcon,
   Send as SendIcon,
-  Favorite as FavoriteIcon
+  Favorite as FavoriteIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon
 } from '@mui/icons-material'
 import { uploadImageToFirebase } from '~/firebaseClient'
 import {
@@ -56,6 +58,10 @@ import {
   createComment,
   updateComment,
   deleteComment,
+  lockPost,
+  unlockPost,
+  lockComment,
+  unlockComment,
   type PostDto,
   type CreatePostDto,
   type UpdatePostDto,
@@ -176,6 +182,23 @@ export default function PostsManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingPost, setDeletingPost] = useState<PostDto | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteReason, setDeleteReason] = useState('')
+
+  // Lock/Unlock Post State
+  const [lockingPost, setLockingPost] = useState<Set<number>>(new Set())
+  const [lockDialogOpen, setLockDialogOpen] = useState(false)
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false)
+  const [lockingPostData, setLockingPostData] = useState<PostDto | null>(null)
+  const [lockReason, setLockReason] = useState('')
+  const [unlockReason, setUnlockReason] = useState('')
+
+  // Lock/Unlock Comment State
+  const [lockingComment, setLockingComment] = useState<Set<string>>(new Set())
+  const [lockCommentDialogOpen, setLockCommentDialogOpen] = useState(false)
+  const [unlockCommentDialogOpen, setUnlockCommentDialogOpen] = useState(false)
+  const [lockingCommentData, setLockingCommentData] = useState<{ comment: PostComment; postId: number } | null>(null)
+  const [lockCommentReason, setLockCommentReason] = useState('')
+  const [unlockCommentReason, setUnlockCommentReason] = useState('')
 
   // Approve/Reject State
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
@@ -335,11 +358,15 @@ export default function PostsManagement() {
     try {
       setLoading(true)
       setError(null)
+      console.log('[PostsManagement] Loading posts...')
       const data = await fetchAllPosts()
+      console.log('[PostsManagement] Fetched posts:', data?.length || 0, 'posts')
+      console.log('[PostsManagement] Posts data:', data)
       setPosts(data || [])
+      console.log('[PostsManagement] Posts state updated, count:', data?.length || 0)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách bài viết')
-      console.error('Error loading posts:', err)
+      console.error('[PostsManagement] Error loading posts:', err)
       setPosts([])
     } finally {
       setLoading(false)
@@ -348,17 +375,28 @@ export default function PostsManagement() {
 
   // Filter Posts - optimized
   const filteredPosts = useMemo(() => {
-    if (posts.length === 0) return []
+    console.log('[PostsManagement] Filtering posts. Total:', posts.length, 'Status filter:', statusFilter, 'Search:', searchText)
+    
+    if (posts.length === 0) {
+      console.log('[PostsManagement] No posts to filter')
+      return []
+    }
 
     let filtered = posts
+    console.log('[PostsManagement] Before filtering:', filtered.length, 'posts')
 
     // Filter by status (fast)
     if (statusFilter !== 'All') {
       const statusLower = statusFilter.toLowerCase()
       filtered = filtered.filter((post) => {
         const postStatus = post.status?.toLowerCase() ?? ''
-        return postStatus === statusLower
+        const matches = postStatus === statusLower
+        if (!matches) {
+          console.log('[PostsManagement] Post filtered out by status:', post.postId, 'Status:', post.status, 'Filter:', statusFilter)
+        }
+        return matches
       })
+      console.log('[PostsManagement] After status filter:', filtered.length, 'posts')
     }
 
     // Filter by search text (fast)
@@ -368,14 +406,20 @@ export default function PostsManagement() {
         const title = (item.title ?? '').toLowerCase()
         const content = (item.content ?? '').toLowerCase()
         const author = (item.authorName ?? '').toLowerCase()
-        return (
+        const matches = (
           title.includes(lowerSearch) ||
           content.includes(lowerSearch) ||
           author.includes(lowerSearch)
         )
+        if (!matches) {
+          console.log('[PostsManagement] Post filtered out by search:', item.postId)
+        }
+        return matches
       })
+      console.log('[PostsManagement] After search filter:', filtered.length, 'posts')
     }
 
+    console.log('[PostsManagement] Final filtered posts:', filtered.length)
     return filtered
   }, [posts, searchText, statusFilter])
 
@@ -557,6 +601,7 @@ export default function PostsManagement() {
   // Delete Post Handlers
   const handleOpenDeleteDialog = (post: PostDto) => {
     setDeletingPost(post)
+    setDeleteReason('')
     setDeleteDialogOpen(true)
     handleMenuClose(post.postId)
   }
@@ -564,14 +609,18 @@ export default function PostsManagement() {
   const handleCloseDeleteDialog = () => {
     setDeleteDialogOpen(false)
     setDeletingPost(null)
+    setDeleteReason('')
   }
 
   const handleDeletePost = async () => {
-    if (!deletingPost) return
+    if (!deletingPost || !deleteReason.trim()) {
+      setError('Vui lòng nhập lý do xóa bài viết')
+      return
+    }
 
     try {
       setDeleting(true)
-      await deletePost(deletingPost.postId)
+      await deletePost(deletingPost.postId, deleteReason.trim())
 
       // Remove from local state immediately for better UX
       setPosts((prev) => prev.filter((p) => p.postId !== deletingPost.postId))
@@ -580,9 +629,11 @@ export default function PostsManagement() {
       await loadPosts()
 
       handleCloseDeleteDialog()
+      setSnackbar({ open: true, message: 'Đã xóa bài viết và gửi thông báo đến tác giả', severity: 'success' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xóa bài viết')
       console.error('Error deleting post:', err)
+      setSnackbar({ open: true, message: err instanceof Error ? err.message : 'Không thể xóa bài viết', severity: 'error' })
       // Reload on error to ensure state is correct
       await loadPosts()
     } finally {
@@ -647,6 +698,85 @@ export default function PostsManagement() {
     }
   }
 
+  // Lock/Unlock Post Handlers
+  const handleOpenLockDialog = (post: PostDto) => {
+    setLockingPostData(post)
+    setLockReason('')
+    setLockDialogOpen(true)
+    handleMenuClose(post.postId)
+  }
+
+  const handleCloseLockDialog = () => {
+    setLockDialogOpen(false)
+    setLockingPostData(null)
+    setLockReason('')
+  }
+
+  const handleLockPost = async () => {
+    if (!lockingPostData || !lockReason.trim()) {
+      setError('Vui lòng nhập lý do khóa bài viết')
+      return
+    }
+
+    try {
+      setLockingPost((prev) => new Set(prev).add(lockingPostData.postId))
+      await lockPost(lockingPostData.postId, lockReason.trim())
+      await loadPosts()
+      setSnackbar({ open: true, message: 'Đã khóa bài viết và gửi thông báo đến tác giả', severity: 'success' })
+      handleCloseLockDialog()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Không thể khóa bài viết'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error locking post:', err)
+    } finally {
+      setLockingPost((prev) => {
+        const next = new Set(prev)
+        next.delete(lockingPostData?.postId ?? 0)
+        return next
+      })
+    }
+  }
+
+  const handleOpenUnlockDialog = (post: PostDto) => {
+    setLockingPostData(post)
+    setUnlockReason('')
+    setUnlockDialogOpen(true)
+    handleMenuClose(post.postId)
+  }
+
+  const handleCloseUnlockDialog = () => {
+    setUnlockDialogOpen(false)
+    setLockingPostData(null)
+    setUnlockReason('')
+  }
+
+  const handleUnlockPost = async () => {
+    if (!lockingPostData || !unlockReason.trim()) {
+      setError('Vui lòng nhập lý do mở khóa bài viết')
+      return
+    }
+
+    try {
+      setLockingPost((prev) => new Set(prev).add(lockingPostData.postId))
+      await unlockPost(lockingPostData.postId, unlockReason.trim())
+      await loadPosts()
+      setSnackbar({ open: true, message: 'Đã mở khóa bài viết và gửi thông báo đến tác giả', severity: 'success' })
+      handleCloseUnlockDialog()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Không thể mở khóa bài viết'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error unlocking post:', err)
+    } finally {
+      setLockingPost((prev) => {
+        const next = new Set(prev)
+        next.delete(lockingPostData?.postId ?? 0)
+        return next
+      })
+    }
+  }
+
   // Menu Handlers
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, postId: number) => {
     setMenuAnchor((prev) => ({ ...prev, [postId]: event.currentTarget }))
@@ -680,7 +810,13 @@ export default function PostsManagement() {
     return userIdNum === authorIdNum && userIdNum > 0
   }
 
+  // Admin can see menu for all posts (to lock/unlock/delete)
+  const canSeeMenu = (post: PostDto) => {
+    return isAdmin || canEditOrDelete(post)
+  }
+
   // Reaction handler: chọn/bỏ reaction, gửi reactionTypeId tương ứng xuống backend
+  // Optimistic update - cập nhật UI ngay lập tức, không cần chờ API
   const handleReactionClick = async (post: PostDto, reaction: ReactionKey) => {
     // Double check authentication - giống handleToggleLike
     if (!isAuthenticated || !currentUser) {
@@ -690,14 +826,82 @@ export default function PostsManagement() {
       return
     }
 
+    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? null
+    if (!userId) return
+
+    const userIdStr = String(userId)
+    const reactionTypeId = REACTION_ID_MAP[reaction] ?? REACTION_ID_MAP.like
+    const currentUserReaction = getCurrentUserReaction(post)
+    
+    // Lưu state cũ để rollback nếu có lỗi
+    const previousPost = { ...post }
+    const previousLikes = post.likes ? [...post.likes] : []
+
+    // Optimistic update - cập nhật UI ngay lập tức
+    setPosts((prev) => {
+      return prev.map((p) => {
+        if (p.postId !== post.postId) return p
+
+        const currentLikes = p.likes || []
+        const existingLikeIndex = currentLikes.findIndex(
+          (like) => String(like.accountId ?? '') === userIdStr
+        )
+
+        let newLikes: PostLikeDto['likes']
+        let newLikesCount = p.likesCount
+        let newIsLiked = p.isLiked
+
+        if (currentUserReaction === reaction) {
+          // Nếu đã có reaction cùng loại -> unlike (xóa reaction)
+          newLikes = currentLikes.filter((like) => String(like.accountId ?? '') !== userIdStr)
+          newLikesCount = Math.max(0, p.likesCount - 1)
+          newIsLiked = false
+        } else if (existingLikeIndex >= 0) {
+          // Nếu đã có reaction khác loại -> cập nhật reaction type
+          newLikes = [...currentLikes]
+          newLikes[existingLikeIndex] = {
+            ...newLikes[existingLikeIndex],
+            reactionType: reaction
+          }
+          // likesCount không đổi, chỉ đổi loại
+          newIsLiked = true
+        } else {
+          // Chưa có reaction -> thêm reaction mới
+          const reactionNames = ['', 'like', 'love', 'haha', 'wow', 'sad', 'angry']
+          newLikes = [
+            ...currentLikes,
+            {
+              postLikeId: `temp-${Date.now()}`, // Temporary ID, sẽ được cập nhật từ backend
+              accountId: userIdStr,
+              fullName: currentUser?.name ?? currentUser?.Name ?? 'Bạn',
+              createdDate: new Date().toISOString(),
+              reactionType: reaction
+            }
+          ]
+          newLikesCount = p.likesCount + 1
+          newIsLiked = true
+        }
+
+        return {
+          ...p,
+          likes: newLikes,
+          likesCount: newLikesCount,
+          isLiked: newIsLiked
+        }
+      })
+    })
+
+    // Gọi API trong background (không chờ response để cập nhật UI)
     try {
       setLikingPosts((prev) => new Set(prev).add(post.postId))
-      const reactionTypeId = REACTION_ID_MAP[reaction] ?? REACTION_ID_MAP.like
       const updatedPost = await toggleLikePost(post.postId, post, reactionTypeId)
 
-      // Chỉ cập nhật lại bài viết đang được react, không reset toàn trang
+      // Cập nhật lại với dữ liệu chính xác từ backend (để có postLikeId đúng)
       setPosts((prev) => prev.map((p) => (p.postId === updatedPost.postId ? updatedPost : p)))
     } catch (err) {
+      // Rollback về state cũ nếu có lỗi
+      setPosts((prev) => prev.map((p) => (p.postId === post.postId ? previousPost : p)))
+      
       const errorMessage = err instanceof Error ? err.message : 'Không thể bày tỏ cảm xúc'
       setError(errorMessage)
       setSnackbar({ open: true, message: errorMessage, severity: 'error' })
@@ -870,11 +1074,100 @@ export default function PostsManagement() {
           p.postId === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p
         )
       )
+      setSnackbar({ open: true, message: 'Đã xóa bình luận', severity: 'success' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xóa bình luận')
+      setSnackbar({ open: true, message: err instanceof Error ? err.message : 'Không thể xóa bình luận', severity: 'error' })
       console.error('Error deleting comment:', err)
     } finally {
       setDeletingComment((prev) => {
+        const next = new Set(prev)
+        next.delete(commentId)
+        return next
+      })
+    }
+  }
+
+  // Lock/Unlock Comment Handlers
+  const handleOpenLockCommentDialog = (comment: PostComment, postId: number) => {
+    setLockingCommentData({ comment, postId })
+    setLockCommentReason('')
+    setLockCommentDialogOpen(true)
+  }
+
+  const handleCloseLockCommentDialog = () => {
+    setLockCommentDialogOpen(false)
+    setLockingCommentData(null)
+    setLockCommentReason('')
+  }
+
+  const handleLockComment = async () => {
+    if (!lockingCommentData || !lockCommentReason.trim()) {
+      setError('Vui lòng nhập lý do khóa bình luận')
+      return
+    }
+
+    const commentId = getCommentId(lockingCommentData.comment)
+    try {
+      setLockingComment((prev) => new Set(prev).add(commentId))
+      await lockComment(parseInt(commentId, 10), lockCommentReason.trim())
+      
+      // Reload comments
+      const comments = await fetchCommentsByPost(lockingCommentData.postId)
+      setPostComments((prev) => ({ ...prev, [lockingCommentData.postId]: comments }))
+      
+      setSnackbar({ open: true, message: 'Đã khóa bình luận và gửi thông báo đến tác giả', severity: 'success' })
+      handleCloseLockCommentDialog()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Không thể khóa bình luận'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error locking comment:', err)
+    } finally {
+      setLockingComment((prev) => {
+        const next = new Set(prev)
+        next.delete(commentId)
+        return next
+      })
+    }
+  }
+
+  const handleOpenUnlockCommentDialog = (comment: PostComment, postId: number) => {
+    setLockingCommentData({ comment, postId })
+    setUnlockCommentReason('')
+    setUnlockCommentDialogOpen(true)
+  }
+
+  const handleCloseUnlockCommentDialog = () => {
+    setUnlockCommentDialogOpen(false)
+    setLockingCommentData(null)
+    setUnlockCommentReason('')
+  }
+
+  const handleUnlockComment = async () => {
+    if (!lockingCommentData || !unlockCommentReason.trim()) {
+      setError('Vui lòng nhập lý do mở khóa bình luận')
+      return
+    }
+
+    const commentId = getCommentId(lockingCommentData.comment)
+    try {
+      setLockingComment((prev) => new Set(prev).add(commentId))
+      await unlockComment(parseInt(commentId, 10), unlockCommentReason.trim())
+      
+      // Reload comments
+      const comments = await fetchCommentsByPost(lockingCommentData.postId)
+      setPostComments((prev) => ({ ...prev, [lockingCommentData.postId]: comments }))
+      
+      setSnackbar({ open: true, message: 'Đã mở khóa bình luận và gửi thông báo đến tác giả', severity: 'success' })
+      handleCloseUnlockCommentDialog()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Không thể mở khóa bình luận'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error unlocking comment:', err)
+    } finally {
+      setLockingComment((prev) => {
         const next = new Set(prev)
         next.delete(commentId)
         return next
@@ -888,6 +1181,11 @@ export default function PostsManagement() {
     const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
     const userId = currentUser?.id ?? currentUser?.userId ?? 0
     return commentAuthorId === userId
+  }
+
+  // Admin can delete/lock/unlock any comment
+  const canAdminManageComment = (comment: PostComment) => {
+    return isAdmin && isAuthenticated
   }
 
   const getCommentId = (comment: PostComment): string => {
@@ -1166,6 +1464,15 @@ export default function PostsManagement() {
                           color={getStatusColor(post.status)}
                           sx={{ fontWeight: 'medium' }}
                         />
+                        {post.isLocked && (
+                          <Chip
+                            icon={<LockIcon sx={{ fontSize: '0.875rem !important' }} />}
+                            label="Đã khóa"
+                            size="small"
+                            color="error"
+                            sx={{ fontWeight: 'medium' }}
+                          />
+                        )}
                         <Typography
                           variant="caption"
                           color="text.secondary"
@@ -1176,11 +1483,18 @@ export default function PostsManagement() {
                       </Box>
                     </Box>
                   </Box>
-                  {canEditOrDelete(post) && (
+                  {/* Menu button - luôn hiển thị cho Admin, hoặc cho user sở hữu bài viết */}
+                  {(isAdmin || canEditOrDelete(post)) && (
                     <IconButton
                       size="small"
                       onClick={(e) => handleMenuOpen(e, post.postId)}
-                      sx={{ color: 'text.secondary' }}
+                      sx={{ 
+                        color: 'text.secondary',
+                        '&:hover': {
+                          bgcolor: 'action.hover'
+                        }
+                      }}
+                      title="Tùy chọn"
                     >
                       <MoreVertIcon />
                     </IconButton>
@@ -1464,11 +1778,14 @@ export default function PostsManagement() {
                           const commentId = getCommentId(comment)
                           const isEditing = editingComments[commentId] !== undefined
                           const canEdit = canEditOrDeleteComment(comment)
+                          const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
+                          const userId = currentUser?.id ?? currentUser?.userId ?? currentUser?.Id ?? currentUser?.UserId ?? 0
+                          const isCommentOwner = commentAuthorId === userId
 
                           return (
                             <Box
                               key={commentId}
-                              sx={{ bgcolor: 'background.default', p: 1.5, borderRadius: 1 }}
+                              sx={{ bgcolor: 'background.default', p: 1.5, borderRadius: 1, position: 'relative' }}
                             >
                               <Box
                                 display="flex"
@@ -1501,21 +1818,90 @@ export default function PostsManagement() {
                                     </Typography>
                                   </Box>
                                 </Box>
-                                {canEdit && !isEditing && (
-                                  <Box display="flex" gap={0.5}>
+                                {/* Action buttons - Always show for Admin, show for user if own comment */}
+                                {/* Positioned at top right corner */}
+                                <Box 
+                                  display="flex" 
+                                  gap={0.5} 
+                                  alignItems="center"
+                                  sx={{ 
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    zIndex: 1
+                                  }}
+                                >
+                                  {/* User can edit own comment */}
+                                  {isCommentOwner && !isEditing && (
                                     <IconButton
                                       size="small"
                                       onClick={() =>
                                         handleStartEditComment(commentId, comment.content)
                                       }
+                                      disabled={comment.isLocked}
+                                      title={comment.isLocked ? 'Bình luận đã bị khóa' : 'Chỉnh sửa'}
+                                      sx={{ 
+                                        bgcolor: 'background.paper',
+                                        '&:hover': { bgcolor: 'action.hover' }
+                                      }}
                                     >
                                       <EditIcon fontSize="small" />
                                     </IconButton>
+                                  )}
+                                  {/* Admin can lock/unlock any comment - Always visible for Admin */}
+                                  {isAdmin && !isEditing && (
+                                    <>
+                                      {comment.isLocked ? (
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => handleOpenUnlockCommentDialog(comment, post.postId)}
+                                          disabled={lockingComment.has(commentId)}
+                                          title="Mở khóa bình luận"
+                                          sx={{ 
+                                            color: 'success.main',
+                                            bgcolor: 'background.paper',
+                                            '&:hover': { bgcolor: 'action.hover' }
+                                          }}
+                                        >
+                                          {lockingComment.has(commentId) ? (
+                                            <CircularProgress size={16} />
+                                          ) : (
+                                            <LockOpenIcon fontSize="small" />
+                                          )}
+                                        </IconButton>
+                                      ) : (
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => handleOpenLockCommentDialog(comment, post.postId)}
+                                          disabled={lockingComment.has(commentId)}
+                                          title="Khóa bình luận"
+                                          sx={{ 
+                                            color: 'warning.main',
+                                            bgcolor: 'background.paper',
+                                            '&:hover': { bgcolor: 'action.hover' }
+                                          }}
+                                        >
+                                          {lockingComment.has(commentId) ? (
+                                            <CircularProgress size={16} />
+                                          ) : (
+                                            <LockIcon fontSize="small" />
+                                          )}
+                                        </IconButton>
+                                      )}
+                                    </>
+                                  )}
+                                  {/* User can delete own comment, Admin can delete any comment */}
+                                  {(isCommentOwner || isAdmin) && !isEditing && (
                                     <IconButton
                                       size="small"
                                       onClick={() => handleDeleteComment(commentId, post.postId)}
                                       disabled={deletingComment.has(commentId)}
-                                      sx={{ color: 'error.main' }}
+                                      sx={{ 
+                                        color: 'error.main',
+                                        bgcolor: 'background.paper',
+                                        '&:hover': { bgcolor: 'action.hover' }
+                                      }}
+                                      title="Xóa bình luận"
                                     >
                                       {deletingComment.has(commentId) ? (
                                         <CircularProgress size={16} />
@@ -1523,8 +1909,8 @@ export default function PostsManagement() {
                                         <DeleteIcon fontSize="small" />
                                       )}
                                     </IconButton>
-                                  </Box>
-                                )}
+                                  )}
+                                </Box>
                               </Box>
 
                               {isEditing ? (
@@ -1541,12 +1927,13 @@ export default function PostsManagement() {
                                       }))
                                     }
                                     sx={{ bgcolor: 'white' }}
+                                    disabled={comment.isLocked}
                                   />
                                   <IconButton
                                     size="small"
                                     color="primary"
                                     onClick={() => handleUpdateComment(commentId, post.postId)}
-                                    disabled={updatingComment.has(commentId)}
+                                    disabled={updatingComment.has(commentId) || comment.isLocked}
                                   >
                                     {updatingComment.has(commentId) ? (
                                       <CircularProgress size={16} />
@@ -1563,6 +1950,15 @@ export default function PostsManagement() {
                                 </Box>
                               ) : (
                                 <>
+                                  {comment.isLocked && (
+                                    <Chip
+                                      icon={<LockIcon sx={{ fontSize: '0.75rem !important' }} />}
+                                      label="Đã khóa"
+                                      size="small"
+                                      color="error"
+                                      sx={{ mb: 1, fontSize: '0.7rem' }}
+                                    />
+                                  )}
                                   <Typography
                                     variant="body2"
                                     color="text.primary"
@@ -1602,12 +1998,13 @@ export default function PostsManagement() {
                 )}
               </CardContent>
 
-              {/* Menu */}
+              {/* Menu - Admin luôn thấy menu với các nút Xóa/Khóa/Mở khóa */}
               <Menu
                 anchorEl={menuAnchor[post.postId]}
                 open={Boolean(menuAnchor[post.postId])}
                 onClose={() => handleMenuClose(post.postId)}
               >
+                {/* Duyệt/Từ chối - chỉ hiển thị cho Admin khi bài viết đang Pending */}
                 {isAdmin && post.status === 'Pending' && (
                   <>
                     <MenuItem onClick={() => handleOpenApproveDialog(post)}>
@@ -1621,8 +2018,45 @@ export default function PostsManagement() {
                     <Divider />
                   </>
                 )}
-                {canEditOrDelete(post) && (
+                
+                {/* Khóa/Mở khóa - Admin luôn thấy */}
+                {isAdmin && (
                   <>
+                    {post.isLocked ? (
+                      <MenuItem
+                        onClick={() => handleOpenUnlockDialog(post)}
+                        disabled={lockingPost.has(post.postId)}
+                      >
+                        <LockOpenIcon sx={{ mr: 1 }} fontSize="small" color="success" />
+                        Mở khóa bài viết
+                      </MenuItem>
+                    ) : (
+                      <MenuItem
+                        onClick={() => handleOpenLockDialog(post)}
+                        disabled={lockingPost.has(post.postId)}
+                      >
+                        <LockIcon sx={{ mr: 1 }} fontSize="small" color="warning" />
+                        Khóa bài viết
+                      </MenuItem>
+                    )}
+                  </>
+                )}
+                
+                {/* Xóa - Admin luôn thấy, user chỉ thấy bài viết của mình */}
+                {isAdmin && (
+                  <MenuItem
+                    onClick={() => handleOpenDeleteDialog(post)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
+                    Xóa bài viết
+                  </MenuItem>
+                )}
+                
+                {/* Chỉnh sửa/Xóa - chỉ cho user sở hữu bài viết (không phải Admin) */}
+                {!isAdmin && canEditOrDelete(post) && (
+                  <>
+                    <Divider />
                     <MenuItem onClick={() => handleOpenEditDialog(post)}>
                       <EditIcon sx={{ mr: 1 }} fontSize="small" />
                       Chỉnh sửa
@@ -1993,6 +2427,8 @@ export default function PostsManagement() {
       <Dialog
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
         PaperProps={{
           sx: {
             borderRadius: 2
@@ -2000,12 +2436,30 @@ export default function PostsManagement() {
         }}
       >
         <DialogTitle sx={{ bgcolor: 'error.main', color: 'white', fontWeight: 'bold' }}>
-          Xác nhận xóa
+          Xác nhận xóa bài viết
         </DialogTitle>
         <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
-          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem' }}>
+          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem', mb: 2 }}>
             Bạn có chắc chắn muốn xóa bài viết này? Hành động này không thể hoàn tác.
           </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Lý do xóa (bắt buộc)"
+            placeholder="Nhập lý do xóa bài viết..."
+            value={deleteReason}
+            onChange={(e) => setDeleteReason(e.target.value)}
+            required
+            sx={{
+              bgcolor: 'white',
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'error.main'
+                }
+              }
+            }}
+          />
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
           <Button onClick={handleCloseDeleteDialog} sx={{ color: 'text.secondary' }}>
@@ -2014,7 +2468,7 @@ export default function PostsManagement() {
           <Button
             onClick={handleDeletePost}
             variant="contained"
-            disabled={deleting}
+            disabled={deleting || !deleteReason.trim()}
             sx={{
               bgcolor: 'error.main',
               '&:hover': {
@@ -2026,6 +2480,136 @@ export default function PostsManagement() {
             }}
           >
             {deleting ? <CircularProgress size={20} color="inherit" /> : 'Xóa'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Lock Dialog */}
+      <Dialog
+        open={lockDialogOpen}
+        onClose={handleCloseLockDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 'bold' }}>
+          Khóa bài viết
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
+          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem', mb: 2 }}>
+            Bạn có chắc chắn muốn khóa bài viết này? Lý do sẽ được gửi đến tác giả qua email và thông báo.
+          </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Lý do khóa (bắt buộc)"
+            placeholder="Nhập lý do khóa bài viết..."
+            value={lockReason}
+            onChange={(e) => setLockReason(e.target.value)}
+            required
+            sx={{
+              bgcolor: 'white',
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'warning.main'
+                }
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
+          <Button onClick={handleCloseLockDialog} sx={{ color: 'text.secondary' }}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleLockPost}
+            variant="contained"
+            disabled={lockingPost.has(lockingPostData?.postId ?? 0) || !lockReason.trim()}
+            sx={{
+              bgcolor: 'warning.main',
+              '&:hover': {
+                bgcolor: 'warning.dark'
+              },
+              '&:disabled': {
+                bgcolor: 'grey.300'
+              }
+            }}
+          >
+            {lockingPost.has(lockingPostData?.postId ?? 0) ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              'Khóa'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Unlock Dialog */}
+      <Dialog
+        open={unlockDialogOpen}
+        onClose={handleCloseUnlockDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: 'success.main', color: 'white', fontWeight: 'bold' }}>
+          Mở khóa bài viết
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
+          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem', mb: 2 }}>
+            Bạn có chắc chắn muốn mở khóa bài viết này? Lý do sẽ được gửi đến tác giả qua email và thông báo.
+          </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Lý do mở khóa (bắt buộc)"
+            placeholder="Nhập lý do mở khóa bài viết..."
+            value={unlockReason}
+            onChange={(e) => setUnlockReason(e.target.value)}
+            required
+            sx={{
+              bgcolor: 'white',
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'success.main'
+                }
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
+          <Button onClick={handleCloseUnlockDialog} sx={{ color: 'text.secondary' }}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleUnlockPost}
+            variant="contained"
+            disabled={lockingPost.has(lockingPostData?.postId ?? 0) || !unlockReason.trim()}
+            sx={{
+              bgcolor: 'success.main',
+              '&:hover': {
+                bgcolor: 'success.dark'
+              },
+              '&:disabled': {
+                bgcolor: 'grey.300'
+              }
+            }}
+          >
+            {lockingPost.has(lockingPostData?.postId ?? 0) ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              'Mở khóa'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -2148,7 +2732,7 @@ export default function PostsManagement() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6" fontWeight="bold">
-              Người đã thích bài viết
+              Người đã thả cảm xúc
             </Typography>
             <IconButton
               onClick={() => setLikesDialogOpen(false)}
@@ -2162,52 +2746,199 @@ export default function PostsManagement() {
         <DialogContent sx={{ bgcolor: 'background.default', pt: 2 }}>
           {selectedPostLikes && selectedPostLikes.length > 0 ? (
             <Box>
-              {selectedPostLikes.map((like, index) => (
-                <Box
-                  key={like.postLikeId || index}
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  py={1.5}
-                  sx={{
-                    borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
-                    borderColor: 'divider',
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                      borderRadius: 1
-                    }
-                  }}
-                >
-                  <Avatar
+              {selectedPostLikes.map((like, index) => {
+                // Lấy reaction type từ like object
+                const reactionType = (like.reactionType || 'like').toLowerCase() as ReactionKey
+                const reaction = REACTIONS.find(r => r.key === reactionType) || REACTIONS[0] // Default to 'like'
+                
+                return (
+                  <Box
+                    key={like.postLikeId || index}
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    py={1.5}
                     sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: 'primary.main'
+                      borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        borderRadius: 1
+                      }
                     }}
                   >
-                    {like.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                  </Avatar>
-                  <Box flex={1}>
-                    <Typography variant="body1" fontWeight="medium">
-                      {like.fullName || 'Người dùng'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatTimeAgo(like.createdDate)}
-                    </Typography>
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'primary.main'
+                      }}
+                    >
+                      {like.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    </Avatar>
+                    <Box flex={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body1" fontWeight="medium">
+                          {like.fullName || 'Người dùng'}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: '1.2rem',
+                            lineHeight: 1
+                          }}
+                          title={reaction.label}
+                        >
+                          {reaction.emoji}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatTimeAgo(like.createdDate)}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <LikeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-                </Box>
-              ))}
+                )
+              })}
             </Box>
           ) : (
             <Box textAlign="center" py={4}>
               <LikeBorderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                Chưa có ai thích bài viết này
+                Chưa có ai thả cảm xúc cho bài viết này
               </Typography>
             </Box>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Lock Comment Dialog */}
+      <Dialog
+        open={lockCommentDialogOpen}
+        onClose={handleCloseLockCommentDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 'bold' }}>
+          Khóa bình luận
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
+          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem', mb: 2 }}>
+            Bạn có chắc chắn muốn khóa bình luận này? Lý do sẽ được gửi đến tác giả qua thông báo.
+          </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Lý do khóa (bắt buộc)"
+            placeholder="Nhập lý do khóa bình luận..."
+            value={lockCommentReason}
+            onChange={(e) => setLockCommentReason(e.target.value)}
+            required
+            sx={{
+              bgcolor: 'white',
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'warning.main'
+                }
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
+          <Button onClick={handleCloseLockCommentDialog} sx={{ color: 'text.secondary' }}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleLockComment}
+            variant="contained"
+            disabled={lockingComment.has(getCommentId(lockingCommentData?.comment ?? {} as PostComment)) || !lockCommentReason.trim()}
+            sx={{
+              bgcolor: 'warning.main',
+              '&:hover': {
+                bgcolor: 'warning.dark'
+              },
+              '&:disabled': {
+                bgcolor: 'grey.300'
+              }
+            }}
+          >
+            {lockingComment.has(getCommentId(lockingCommentData?.comment ?? {} as PostComment)) ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              'Khóa'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Unlock Comment Dialog */}
+      <Dialog
+        open={unlockCommentDialogOpen}
+        onClose={handleCloseUnlockCommentDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: 'success.main', color: 'white', fontWeight: 'bold' }}>
+          Mở khóa bình luận
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
+          <DialogContentText sx={{ color: 'text.primary', fontSize: '1rem', mb: 2 }}>
+            Bạn có chắc chắn muốn mở khóa bình luận này? Lý do sẽ được gửi đến tác giả qua thông báo.
+          </DialogContentText>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Lý do mở khóa (bắt buộc)"
+            placeholder="Nhập lý do mở khóa bình luận..."
+            value={unlockCommentReason}
+            onChange={(e) => setUnlockCommentReason(e.target.value)}
+            required
+            sx={{
+              bgcolor: 'white',
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'success.main'
+                }
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
+          <Button onClick={handleCloseUnlockCommentDialog} sx={{ color: 'text.secondary' }}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleUnlockComment}
+            variant="contained"
+            disabled={lockingComment.has(getCommentId(lockingCommentData?.comment ?? {} as PostComment)) || !unlockCommentReason.trim()}
+            sx={{
+              bgcolor: 'success.main',
+              '&:hover': {
+                bgcolor: 'success.dark'
+              },
+              '&:disabled': {
+                bgcolor: 'grey.300'
+              }
+            }}
+          >
+            {lockingComment.has(getCommentId(lockingCommentData?.comment ?? {} as PostComment)) ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              'Mở khóa'
+            )}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Snackbar for notifications */}

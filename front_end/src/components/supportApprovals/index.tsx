@@ -1,11 +1,11 @@
 import HeaderSupportApprovals from './header'
-import SupportsContent from '../supports/content'
+import ApprovalContent from './content/main/ApprovalContent'
 
 const SupportApprovals = () => {
   return (
     <>
       <HeaderSupportApprovals />
-      <SupportsContent />
+      <ApprovalContent />
     </>
   )
 }

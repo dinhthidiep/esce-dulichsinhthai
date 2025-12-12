@@ -36,14 +36,19 @@ export type HostCertificate = {
 export type CertificateType = 'Agency' | 'Host'
 
 // Kết nối backend thật
-const USE_MOCK_ROLE_UPGRADE = false
+// Đặt USE_MOCK_ROLE_UPGRADE = true để xem mock data
+const USE_MOCK_ROLE_UPGRADE = true
 
-const MOCK_AGENCY_CERTIFICATES: AgencyCertificate[] = [
+// Mock data chỉ hiển thị các đơn từ Customer (RoleId = 4)
+// Sau khi approve, role của user thay đổi nên certificate không còn hiển thị
+// Vì vậy mock data chỉ có các status: Pending, Review, Rejected (chưa được approve)
+// Sử dụng let để có thể cập nhật khi xử lý đơn
+let MOCK_AGENCY_CERTIFICATES: AgencyCertificate[] = [
   {
     agencyId: 1,
     accountId: 10,
     companyName: 'Công ty Du lịch ABC',
-    licenseFile: 'Giấy phép kinh doanh số 0123456789',
+    licenseFile: 'https://example.com/licenses/abc-license.pdf',
     phone: '0901234567',
     email: 'abc@example.com',
     website: 'https://abc-travel.vn',
@@ -51,54 +56,188 @@ const MOCK_AGENCY_CERTIFICATES: AgencyCertificate[] = [
     rejectComment: null,
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     updatedAt: undefined,
-    userName: 'Nguyễn Văn A',
-    userEmail: 'a@example.com'
+    userName: 'Nguyễn Văn A (Customer)',
+    userEmail: 'customer1@example.com'
   },
   {
     agencyId: 2,
     accountId: 11,
-    companyName: 'Công ty Du lịch XYZ',
-    licenseFile: 'Giấy phép số 987654321',
-    phone: '0912345678',
-    email: 'xyz@example.com',
-    website: null,
-    status: 'Approved',
+    companyName: 'Công ty Lữ hành Việt Nam',
+    licenseFile: 'https://example.com/licenses/vietnam-travel-license.pdf',
+    phone: '0923456789',
+    email: 'info@vietnamtravel.vn',
+    website: 'https://vietnamtravel.vn',
+    status: 'Pending',
     rejectComment: null,
-    createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    userName: 'Trần Thị B',
-    userEmail: 'b@example.com'
+    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    updatedAt: undefined,
+    userName: 'Trần Thị B (Customer)',
+    userEmail: 'customer2@example.com'
+  },
+  {
+    agencyId: 3,
+    accountId: 12,
+    companyName: 'Công ty Du lịch Sinh thái',
+    licenseFile: 'https://example.com/licenses/eco-travel-license.pdf',
+    phone: '0934567890',
+    email: 'contact@ecotravel.vn',
+    website: 'https://ecotravel.vn',
+    status: 'Review',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    userName: 'Lê Văn C (Customer)',
+    userEmail: 'customer3@example.com'
+  },
+  {
+    agencyId: 4,
+    accountId: 13,
+    companyName: 'Công ty Du lịch Quốc tế',
+    licenseFile: 'https://example.com/licenses/international-license.pdf',
+    phone: '0945678901',
+    email: 'info@internationaltravel.com',
+    website: 'https://internationaltravel.com',
+    status: 'Rejected',
+    rejectComment: 'Giấy phép kinh doanh không hợp lệ, vui lòng cung cấp bản gốc',
+    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+    userName: 'Phạm Thị D (Customer)',
+    userEmail: 'customer4@example.com'
+  },
+  {
+    agencyId: 5,
+    accountId: 14,
+    companyName: 'Công ty Tổ chức Tour',
+    licenseFile: 'https://example.com/licenses/tour-org-license.pdf',
+    phone: '0956789012',
+    email: 'sales@tourorg.vn',
+    website: 'https://tourorg.vn',
+    status: 'Pending',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 0.5 * 86400000).toISOString(), // 12 giờ trước
+    updatedAt: undefined,
+    userName: 'Hoàng Văn E (Customer)',
+    userEmail: 'customer5@example.com'
+  },
+  {
+    agencyId: 6,
+    accountId: 15,
+    companyName: 'Công ty Du lịch Miền Trung',
+    licenseFile: 'https://example.com/licenses/mientrung-travel-license.pdf',
+    phone: '0967890123',
+    email: 'info@mientrungtravel.vn',
+    website: 'https://mientrungtravel.vn',
+    status: 'Pending',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 0.25 * 86400000).toISOString(), // 6 giờ trước
+    updatedAt: undefined,
+    userName: 'Võ Thị F (Customer)',
+    userEmail: 'customer6@example.com'
   }
 ]
 
-const MOCK_HOST_CERTIFICATES: HostCertificate[] = [
+// Mock data chỉ hiển thị các đơn từ Customer (RoleId = 4)
+// Sau khi approve, role của user thay đổi nên certificate không còn hiển thị
+// Vì vậy mock data chỉ có các status: Pending, Review, Rejected (chưa được approve)
+// Sử dụng let để có thể cập nhật khi xử lý đơn
+let MOCK_HOST_CERTIFICATES: HostCertificate[] = [
   {
     certificateId: 1,
     hostId: 20,
-    businessLicenseFile: 'Giấy phép kinh doanh homestay 123',
+    businessLicenseFile: 'https://example.com/licenses/homestay-dalat-license.pdf',
     businessName: 'Homestay Đà Lạt Xinh',
     phone: '0987654321',
-    email: 'host1@example.com',
+    email: 'customer7@example.com',
     status: 'Pending',
     rejectComment: null,
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
     updatedAt: undefined,
-    hostName: 'Lê Văn C',
-    hostEmail: 'c@example.com'
+    hostName: 'Lê Văn G (Customer)',
+    hostEmail: 'customer7@example.com'
   },
   {
     certificateId: 2,
     hostId: 21,
-    businessLicenseFile: 'Giấy phép villa biển',
+    businessLicenseFile: 'https://example.com/licenses/villa-bien-xanh-license.pdf',
     businessName: 'Villa Biển Xanh',
     phone: '0977777777',
-    email: 'host2@example.com',
+    email: 'customer8@example.com',
     status: 'Rejected',
-    rejectComment: 'Thiếu giấy tờ xác minh địa chỉ',
+    rejectComment: 'Thiếu giấy tờ xác minh địa chỉ kinh doanh',
     createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
     updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    hostName: 'Phạm Thị D',
-    hostEmail: 'd@example.com'
+    hostName: 'Phạm Thị H (Customer)',
+    hostEmail: 'customer8@example.com'
+  },
+  {
+    certificateId: 3,
+    hostId: 22,
+    businessLicenseFile: 'https://example.com/licenses/resort-mountain-license.pdf',
+    businessName: 'Resort Núi Rừng',
+    phone: '0955555555',
+    email: 'customer9@example.com',
+    status: 'Pending',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    updatedAt: undefined,
+    hostName: 'Trần Văn I (Customer)',
+    hostEmail: 'customer9@example.com'
+  },
+  {
+    certificateId: 4,
+    hostId: 23,
+    businessLicenseFile: 'https://example.com/licenses/camping-site-license.pdf',
+    businessName: 'Khu Cắm Trại Thiên Nhiên',
+    phone: '0944444444',
+    email: 'customer10@example.com',
+    status: 'Review',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    hostName: 'Lê Thị K (Customer)',
+    hostEmail: 'customer10@example.com'
+  },
+  {
+    certificateId: 5,
+    hostId: 24,
+    businessLicenseFile: 'https://example.com/licenses/beach-house-license.pdf',
+    businessName: 'Nhà Nghỉ Biển Đẹp',
+    phone: '0933333333',
+    email: 'customer11@example.com',
+    status: 'Pending',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 0.25 * 86400000).toISOString(), // 6 giờ trước
+    updatedAt: undefined,
+    hostName: 'Phạm Văn L (Customer)',
+    hostEmail: 'customer11@example.com'
+  },
+  {
+    certificateId: 6,
+    hostId: 25,
+    businessLicenseFile: 'https://example.com/licenses/boutique-hotel-license.pdf',
+    businessName: 'Boutique Hotel Phố Cổ',
+    phone: '0922222222',
+    email: 'customer12@example.com',
+    status: 'Rejected',
+    rejectComment: 'Giấy phép kinh doanh đã hết hạn, cần gia hạn',
+    createdAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    hostName: 'Hoàng Thị M (Customer)',
+    hostEmail: 'customer12@example.com'
+  },
+  {
+    certificateId: 7,
+    hostId: 26,
+    businessLicenseFile: 'https://example.com/licenses/farm-stay-license.pdf',
+    businessName: 'Farm Stay Sinh thái',
+    phone: '0911111111',
+    email: 'customer13@example.com',
+    status: 'Pending',
+    rejectComment: null,
+    createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+    updatedAt: undefined,
+    hostName: 'Nguyễn Văn N (Customer)',
+    hostEmail: 'customer13@example.com'
   }
 ]
 
@@ -524,15 +663,35 @@ export const approveCertificate = async (payload: { certificateId: number; type:
       throw new Error('Loại chứng chỉ không hợp lệ (phải là Agency hoặc Host)')
     }
 
+    // Mock data: Xóa certificate khỏi danh sách (vì sau khi approve, role đã thay đổi nên không còn hiển thị)
+    if (USE_MOCK_ROLE_UPGRADE) {
+      console.log('[RoleUpgradeApi] Approving certificate (MOCK):', { certificateId: payload.certificateId, type: payload.type })
+      if (payload.type === 'Agency') {
+        MOCK_AGENCY_CERTIFICATES = MOCK_AGENCY_CERTIFICATES.filter(
+          c => c.agencyId !== payload.certificateId
+        )
+        console.log('[RoleUpgradeApi] Removed approved agency certificate from mock data')
+      } else {
+        MOCK_HOST_CERTIFICATES = MOCK_HOST_CERTIFICATES.filter(
+          c => c.certificateId !== payload.certificateId
+        )
+        console.log('[RoleUpgradeApi] Removed approved host certificate from mock data')
+      }
+      return 'Chứng chỉ đã được phê duyệt thành công. (Mock)'
+    }
+
     const endpoint = '/api/user/approve-certificate'
     console.log('[RoleUpgradeApi] Approving certificate:', { certificateId: payload.certificateId, type: payload.type })
+    
+    // Convert type string to number (Agency = 1, Host = 2)
+    const typeNumber = payload.type === 'Agency' ? 1 : 2
     
     const response = await fetchWithFallback(endpoint, {
       method: 'PUT',
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type
+        Type: typeNumber
       })
     })
     
@@ -572,15 +731,41 @@ export const rejectCertificate = async (payload: { certificateId: number; type: 
       throw new Error('Lý do từ chối không được để trống')
     }
 
+    // Mock data: Cập nhật status thành Rejected và thêm rejectComment
+    if (USE_MOCK_ROLE_UPGRADE) {
+      console.log('[RoleUpgradeApi] Rejecting certificate (MOCK):', { certificateId: payload.certificateId, type: payload.type, comment: payload.comment })
+      if (payload.type === 'Agency') {
+        const cert = MOCK_AGENCY_CERTIFICATES.find(c => c.agencyId === payload.certificateId)
+        if (cert) {
+          cert.status = 'Rejected'
+          cert.rejectComment = payload.comment.trim()
+          cert.updatedAt = new Date().toISOString()
+          console.log('[RoleUpgradeApi] Updated agency certificate status to Rejected in mock data')
+        }
+      } else {
+        const cert = MOCK_HOST_CERTIFICATES.find(c => c.certificateId === payload.certificateId)
+        if (cert) {
+          cert.status = 'Rejected'
+          cert.rejectComment = payload.comment.trim()
+          cert.updatedAt = new Date().toISOString()
+          console.log('[RoleUpgradeApi] Updated host certificate status to Rejected in mock data')
+        }
+      }
+      return 'Chứng chỉ đã bị từ chối. (Mock)'
+    }
+
     const endpoint = '/api/user/reject-certificate'
     console.log('[RoleUpgradeApi] Rejecting certificate:', { certificateId: payload.certificateId, type: payload.type })
+    
+    // Convert type string to number (Agency = 1, Host = 2)
+    const typeNumber = payload.type === 'Agency' ? 1 : 2
     
     const response = await fetchWithFallback(endpoint, {
       method: 'PUT',
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type,
+        Type: typeNumber,
         Comment: payload.comment.trim()
       })
     })
@@ -621,15 +806,39 @@ export const reviewCertificate = async (payload: { certificateId: number; type: 
       throw new Error('Nội dung yêu cầu bổ sung không được để trống')
     }
 
+    // Mock data: Cập nhật status thành Review
+    if (USE_MOCK_ROLE_UPGRADE) {
+      console.log('[RoleUpgradeApi] Reviewing certificate (MOCK):', { certificateId: payload.certificateId, type: payload.type, comment: payload.comment })
+      if (payload.type === 'Agency') {
+        const cert = MOCK_AGENCY_CERTIFICATES.find(c => c.agencyId === payload.certificateId)
+        if (cert) {
+          cert.status = 'Review'
+          cert.updatedAt = new Date().toISOString()
+          console.log('[RoleUpgradeApi] Updated agency certificate status to Review in mock data')
+        }
+      } else {
+        const cert = MOCK_HOST_CERTIFICATES.find(c => c.certificateId === payload.certificateId)
+        if (cert) {
+          cert.status = 'Review'
+          cert.updatedAt = new Date().toISOString()
+          console.log('[RoleUpgradeApi] Updated host certificate status to Review in mock data')
+        }
+      }
+      return 'Yêu cầu bổ sung thông tin đã được gửi. (Mock)'
+    }
+
     const endpoint = '/api/user/review-certificate'
     console.log('[RoleUpgradeApi] Reviewing certificate:', { certificateId: payload.certificateId, type: payload.type })
+    
+    // Convert type string to number (Agency = 1, Host = 2)
+    const typeNumber = payload.type === 'Agency' ? 1 : 2
     
     const response = await fetchWithFallback(endpoint, {
       method: 'PUT',
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type,
+        Type: typeNumber,
         Comment: payload.comment.trim()
       })
     })
