@@ -53,17 +53,24 @@ const HostHeader = React.memo(() => {
 
     checkAuth()
     
-    // Chỉ listen storage changes, không check liên tục
+    // Listen storage changes từ tab/window khác
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'userInfo' || e.key === 'token') {
         checkAuth()
       }
     }
     
+    // Listen custom event từ cùng tab (khi ProfilePage cập nhật)
+    const handleUserStorageChange = () => {
+      checkAuth()
+    }
+    
     window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('userStorageChange', handleUserStorageChange)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('userStorageChange', handleUserStorageChange)
     }
   }, []) // Chỉ chạy khi mount, không phụ thuộc vào location
 
@@ -139,15 +146,22 @@ const HostHeader = React.memo(() => {
       .slice(0, 2)
     return initials
   }, [userInfo])
+  
+  // Kiểm tra avatar có phải là URL hoặc base64 không
+  const isAvatarImage = useCallback((avatar: string) => {
+    if (!avatar || typeof avatar !== 'string') return false
+    // Kiểm tra URL (http/https) hoặc base64 (data:image)
+    return avatar.startsWith('http') || avatar.startsWith('data:image')
+  }, [])
 
   // Memoize isActive function để tránh tính toán lại không cần thiết
   const isActive = useCallback((path: string) => {
     if (path === '/') {
       return currentPath === '/' && 
              !currentPath.startsWith('/services') && 
-             currentPath !== '/forum' && 
+             !currentPath.startsWith('/forum') && 
              !currentPath.startsWith('/news') && 
-             currentPath !== '/policy'
+             !currentPath.startsWith('/policy')
     }
     if (path === '/services') {
       return currentPath === '/services' || currentPath.startsWith('/services/')
@@ -245,7 +259,7 @@ const HostHeader = React.memo(() => {
               <div className="host-header-user-avatar">
                 {(() => {
                   const avatar = getUserAvatar()
-                  return userInfo && typeof avatar === 'string' && avatar.startsWith('http') ? (
+                  return userInfo && isAvatarImage(avatar) ? (
                     <img 
                       src={avatar} 
                       alt="Avatar" 

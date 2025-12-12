@@ -149,26 +149,45 @@ const ProfilePage = () => {
           return;
         }
 
-        // Thử lấy userInfo từ localStorage trước (fallback)
+        // Lấy userInfo từ storage trước để merge với API response (ưu tiên storage cho avatar)
         const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        let storageUserInfo: any = null;
+        if (userInfoStr) {
+          try {
+            storageUserInfo = JSON.parse(userInfoStr);
+          } catch (parseErr) {
+            console.warn('⚠️ [ProfilePage] Không thể parse userInfo từ storage:', parseErr);
+          }
+        }
+        
         let userData: any = null;
         
         try {
           const response = await axiosInstance.get(`${API_ENDPOINTS.USER}/${userId}`);
           console.log('✅ [ProfilePage] Nhận được dữ liệu user từ API:', response.data);
           userData = response.data;
+          
+          // Merge với storage để ưu tiên avatar từ storage (nếu có)
+          // Vì storage đã được cập nhật khi save, còn API có thể chưa sync
+          if (storageUserInfo) {
+            // Ưu tiên avatar từ storage nếu có (đã được cập nhật)
+            if (storageUserInfo.Avatar || storageUserInfo.avatar) {
+              userData.Avatar = storageUserInfo.Avatar || storageUserInfo.avatar;
+              userData.avatar = storageUserInfo.Avatar || storageUserInfo.avatar;
+            }
+            // Merge các field khác từ storage nếu API không có
+            if (!userData.Name && !userData.name && (storageUserInfo.Name || storageUserInfo.name)) {
+              userData.Name = storageUserInfo.Name || storageUserInfo.name;
+              userData.name = storageUserInfo.Name || storageUserInfo.name;
+            }
+          }
         } catch (apiErr: any) {
           console.warn('⚠️ [ProfilePage] Không thể lấy user từ API, sử dụng data từ localStorage:', apiErr?.message);
           
           // Fallback: sử dụng userInfo từ localStorage
-          if (userInfoStr) {
-            try {
-              userData = JSON.parse(userInfoStr);
-              console.log('✅ [ProfilePage] Sử dụng userInfo từ localStorage:', userData);
-            } catch (parseErr) {
-              console.error('❌ [ProfilePage] Lỗi parse userInfo từ localStorage:', parseErr);
-              throw apiErr; // Ném lại lỗi API nếu không parse được
-            }
+          if (storageUserInfo) {
+            userData = storageUserInfo;
+            console.log('✅ [ProfilePage] Sử dụng userInfo từ localStorage:', userData);
           } else {
             throw apiErr; // Ném lại lỗi API nếu không có userInfo trong storage
           }
@@ -190,6 +209,11 @@ const ProfilePage = () => {
           }
         }
 
+        // Ưu tiên avatar từ storage nếu có (đã được cập nhật)
+        const avatarFromStorage = storageUserInfo?.Avatar || storageUserInfo?.avatar;
+        const avatarFromApi = userData.Avatar || userData.avatar;
+        const finalAvatar = avatarFromStorage || avatarFromApi || '';
+
         const initialFormData = {
           name: userData.Name || userData.name || '',
           email: userData.Email || userData.email || '',
@@ -197,7 +221,7 @@ const ProfilePage = () => {
           dob: dobFormatted,
           gender: userData.Gender || userData.gender || '',
           address: userData.Address || userData.address || '',
-          avatar: userData.Avatar || userData.avatar || ''
+          avatar: finalAvatar
         };
         
         setFormData(initialFormData);
@@ -251,12 +275,21 @@ const ProfilePage = () => {
         } else {
           setBookings([]);
         }
-      } catch (err) {
+      } catch (err: any) {
+        const axiosError = err as { response?: { status?: number }; code?: string; message?: string }
+        const errorStatus = axiosError?.response?.status
+        const errorCode = axiosError?.code
+        
         console.error(' Lỗi khi tải lịch sử đặt dịch vụ:', err);
-        if (err.response?.status === 401 || err.response?.status === 403) {
+        if (errorStatus === 401 || errorStatus === 403) {
           setError('Bạn không có quyền xem lịch sử đặt dịch vụ. Vui lòng đăng nhập lại.');
-        } else if (err.response?.status === 404) {
+        } else if (errorStatus === 404) {
           setBookings([]); // User chưa có booking nào
+        } else if (errorCode === 'ECONNABORTED' || axiosError?.message?.includes('timeout')) {
+          // Timeout - hiển thị thông báo nhẹ nhàng và set mảng rỗng
+          console.warn('⚠️ [ProfilePage] Request timeout khi tải bookings')
+          setBookings([])
+          setError('Không thể tải lịch sử đặt dịch vụ. Vui lòng thử lại sau.')
         } else {
           setError('Không thể tải lịch sử đặt dịch vụ. Vui lòng thử lại sau.');
           setBookings([]);
@@ -358,6 +391,8 @@ const ProfilePage = () => {
           errors.name = 'Họ và tên không được để trống';
         } else if (value.trim().length < 2) {
           errors.name = 'Họ và tên phải có ít nhất 2 ký tự';
+        } else if (value.trim().length > 100) {
+          errors.name = 'Họ và tên không được vượt quá 100 ký tự';
         } else {
           delete errors.name;
         }
@@ -366,9 +401,13 @@ const ProfilePage = () => {
         if (!value || value.trim() === '') {
           errors.phone = 'Số điện thoại không được để trống';
         } else {
-          const phoneRegex = /^[0-9]{10,11}$/;
-          if (!phoneRegex.test(value.trim())) {
-            errors.phone = 'Số điện thoại phải có 10-11 chữ số';
+          const trimmedPhone = value.trim();
+          // Database chỉ cho phép 10 ký tự, nhưng frontend cần validate cho 10 số
+          const phoneRegex = /^[0-9]{10}$/;
+          if (!phoneRegex.test(trimmedPhone)) {
+            errors.phone = 'Số điện thoại phải có đúng 10 chữ số';
+          } else if (trimmedPhone.length > 10) {
+            errors.phone = 'Số điện thoại không được vượt quá 10 ký tự';
           } else {
             delete errors.phone;
           }
@@ -377,6 +416,8 @@ const ProfilePage = () => {
       case 'address':
         if (!value || value.trim() === '') {
           errors.address = 'Địa chỉ không được để trống';
+        } else if (value.trim().length > 255) {
+          errors.address = 'Địa chỉ không được vượt quá 255 ký tự';
         } else {
           delete errors.address;
         }
@@ -384,6 +425,8 @@ const ProfilePage = () => {
       case 'gender':
         if (!value || value.trim() === '') {
           errors.gender = 'Giới tính không được để trống';
+        } else if (value.trim().length > 10) {
+          errors.gender = 'Giới tính không được vượt quá 10 ký tự';
         } else {
           delete errors.gender;
         }
@@ -393,25 +436,34 @@ const ProfilePage = () => {
           errors.dob = 'Ngày sinh không được để trống';
         } else {
           const dobDate = new Date(value);
-          const today = new Date();
           
-          if (dobDate > today) {
-            errors.dob = 'Ngày sinh không thể trong tương lai';
+          // Kiểm tra Invalid Date
+          if (isNaN(dobDate.getTime())) {
+            errors.dob = 'Ngày sinh không hợp lệ';
           } else {
-            // Kiểm tra 18 tuổi trở lên
-            const age = today.getFullYear() - dobDate.getFullYear();
-            const monthDiff = today.getMonth() - dobDate.getMonth();
-            const dayDiff = today.getDate() - dobDate.getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time để so sánh ngày
+            const normalizedDob = new Date(dobDate);
+            normalizedDob.setHours(0, 0, 0, 0);
             
-            let actualAge = age;
-            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-              actualAge = age - 1;
-            }
-            
-            if (actualAge < 18) {
-              errors.dob = 'Bạn phải từ 18 tuổi trở lên';
+            if (normalizedDob > today) {
+              errors.dob = 'Ngày sinh không thể trong tương lai';
             } else {
-              delete errors.dob;
+              // Kiểm tra 18 tuổi trở lên
+              const age = today.getFullYear() - dobDate.getFullYear();
+              const monthDiff = today.getMonth() - dobDate.getMonth();
+              const dayDiff = today.getDate() - dobDate.getDate();
+              
+              let actualAge = age;
+              if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                actualAge = age - 1;
+              }
+              
+              if (actualAge < 18) {
+                errors.dob = 'Bạn phải từ 18 tuổi trở lên';
+              } else {
+                delete errors.dob;
+              }
             }
           }
         }
@@ -519,79 +571,93 @@ const ProfilePage = () => {
       setSuccess(null);
       setFieldErrors({});
 
-      // Validate all profile-required fields
-      validateField('name', formData.name);
-      validateField('phone', formData.phone);
-      validateField('address', formData.address);
-      validateField('gender', formData.gender);
-      validateField('dob', formData.dob);
+      // Validate tất cả các field - không dùng validateField vì nó async và có thể không kịp cập nhật state
+      const validationErrors: { [key: string]: string } = {};
       
-      // Kiểm tra nếu có lỗi validation
-      const newErrors: { [key: string]: string } = {};
-      
-      // Họ và tên (bắt buộc)
+      // Họ và tên (bắt buộc, 2-100 ký tự)
       if (!formData.name || formData.name.trim() === '') {
-        newErrors.name = 'Họ và tên không được để trống';
+        validationErrors.name = 'Họ và tên không được để trống';
       } else if (formData.name.trim().length < 2) {
-        newErrors.name = 'Họ và tên phải có ít nhất 2 ký tự';
+        validationErrors.name = 'Họ và tên phải có ít nhất 2 ký tự';
+      } else if (formData.name.trim().length > 100) {
+        validationErrors.name = 'Họ và tên không được vượt quá 100 ký tự';
       }
       
-      // Số điện thoại (bắt buộc)
+      // Số điện thoại (bắt buộc, đúng 10 số - database chỉ cho phép 10 ký tự)
       if (!formData.phone || formData.phone.trim() === '') {
-        newErrors.phone = 'Số điện thoại không được để trống';
+        validationErrors.phone = 'Số điện thoại không được để trống';
       } else {
-        const phoneRegex = /^[0-9]{10,11}$/;
-        if (!phoneRegex.test(formData.phone.trim())) {
-          newErrors.phone = 'Số điện thoại phải có 10-11 chữ số';
+        const trimmedPhone = formData.phone.trim();
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(trimmedPhone)) {
+          validationErrors.phone = 'Số điện thoại phải có đúng 10 chữ số';
+        } else if (trimmedPhone.length > 10) {
+          validationErrors.phone = 'Số điện thoại không được vượt quá 10 ký tự';
         }
       }
       
-      // Địa chỉ (bắt buộc)
+      // Địa chỉ (bắt buộc, tối đa 255 ký tự)
       if (!formData.address || formData.address.trim() === '') {
-        newErrors.address = 'Địa chỉ không được để trống';
+        validationErrors.address = 'Địa chỉ không được để trống';
+      } else if (formData.address.trim().length > 255) {
+        validationErrors.address = 'Địa chỉ không được vượt quá 255 ký tự';
       }
       
-      // Giới tính (bắt buộc)
+      // Giới tính (bắt buộc, tối đa 10 ký tự)
       if (!formData.gender || formData.gender.trim() === '') {
-        newErrors.gender = 'Giới tính không được để trống';
+        validationErrors.gender = 'Giới tính không được để trống';
+      } else if (formData.gender.trim().length > 10) {
+        validationErrors.gender = 'Giới tính không được vượt quá 10 ký tự';
       }
       
-      // Ngày sinh (bắt buộc và phải từ 18 tuổi trở lên)
+      // Ngày sinh (bắt buộc, hợp lệ, không trong tương lai, từ 18 tuổi trở lên)
       if (!formData.dob || formData.dob.trim() === '') {
-        newErrors.dob = 'Ngày sinh không được để trống';
+        validationErrors.dob = 'Ngày sinh không được để trống';
       } else {
         const dobDate = new Date(formData.dob);
-        const today = new Date();
         
-        if (dobDate > today) {
-          newErrors.dob = 'Ngày sinh không thể trong tương lai';
+        // Kiểm tra Invalid Date
+        if (isNaN(dobDate.getTime())) {
+          validationErrors.dob = 'Ngày sinh không hợp lệ';
         } else {
-          // Kiểm tra 18 tuổi trở lên
-          const age = today.getFullYear() - dobDate.getFullYear();
-          const monthDiff = today.getMonth() - dobDate.getMonth();
-          const dayDiff = today.getDate() - dobDate.getDate();
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const normalizedDob = new Date(dobDate);
+          normalizedDob.setHours(0, 0, 0, 0);
           
-          let actualAge = age;
-          if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-            actualAge = age - 1;
-          }
-          
-          if (actualAge < 18) {
-            newErrors.dob = 'Bạn phải từ 18 tuổi trở lên';
+          if (normalizedDob > today) {
+            validationErrors.dob = 'Ngày sinh không thể trong tương lai';
+          } else {
+            // Kiểm tra 18 tuổi trở lên
+            const age = today.getFullYear() - dobDate.getFullYear();
+            const monthDiff = today.getMonth() - dobDate.getMonth();
+            const dayDiff = today.getDate() - dobDate.getDate();
+            
+            let actualAge = age;
+            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+              actualAge = age - 1;
+            }
+            
+            if (actualAge < 18) {
+              validationErrors.dob = 'Bạn phải từ 18 tuổi trở lên';
+            }
           }
         }
       }
       
-      if (Object.keys(newErrors).length > 0) {
-        setFieldErrors(newErrors);
+      // Nếu có lỗi validation, hiển thị và dừng lại
+      if (Object.keys(validationErrors).length > 0) {
+        setFieldErrors(validationErrors);
         setError('Vui lòng kiểm tra lại thông tin đã nhập');
         setSaving(false);
         // Scroll to first error
-        const firstErrorField = document.querySelector('.profile-form-input[aria-invalid="true"]');
-        if (firstErrorField) {
-          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          (firstErrorField as HTMLElement).focus();
-        }
+        setTimeout(() => {
+          const firstErrorField = document.querySelector('.profile-form-input[aria-invalid="true"]') as HTMLElement;
+          if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorField.focus();
+          }
+        }, 100);
         return;
       }
 
@@ -648,11 +714,63 @@ const ProfilePage = () => {
       console.log(' ProfilePage.handleSave: Endpoint:', `${API_ENDPOINTS.USER}/profile`);
 
       const response = await axiosInstance.put(`${API_ENDPOINTS.USER}/profile`, updateData);
-      console.log(' ProfilePage: Cập nhật thành công:', response.data);
+      
+      // Log response để debug
+      if (import.meta.env.DEV) {
+        console.log('✅ [ProfilePage] Response status:', response.status);
+        console.log('✅ [ProfilePage] Response data:', response.data);
+        console.log('✅ [ProfilePage] Response.data.user:', response.data?.user);
+      }
 
-      // Update userInfo with new data
-      const updatedUser = response.data.user || response.data;
+      // Backend trả về { message: "Profile updated successfully", user: Account }
+      // Account entity có thể có circular reference, cần xử lý cẩn thận
+      let updatedUser = response.data?.user || response.data;
+      
+      if (!updatedUser) {
+        console.error('❌ [ProfilePage] Response không có user data:', response.data);
+        throw new Error('Không nhận được dữ liệu user từ server. Vui lòng thử lại.');
+      }
+      
+      // Đảm bảo updatedUser là object hợp lệ
+      if (typeof updatedUser !== 'object') {
+        console.error('❌ [ProfilePage] User data không phải object:', updatedUser);
+        throw new Error('Dữ liệu user không hợp lệ từ server.');
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ [ProfilePage] Updated user data:', updatedUser);
+        console.log('✅ [ProfilePage] Updated user fields:', {
+          Name: updatedUser.Name || updatedUser.name,
+          Phone: updatedUser.Phone || updatedUser.phone,
+          Gender: updatedUser.Gender || updatedUser.gender,
+          Address: updatedUser.Address || updatedUser.address,
+          DOB: updatedUser.Dob || updatedUser.dob,
+          Avatar: updatedUser.Avatar || updatedUser.avatar
+        });
+      }
+      
       setUserInfo(updatedUser);
+
+      // Format DOB từ response để cập nhật formData
+      let dobFormatted = '';
+      if (updatedUser.Dob || updatedUser.dob) {
+        const dobDate = new Date(updatedUser.Dob || updatedUser.dob);
+        if (!isNaN(dobDate.getTime())) {
+          dobFormatted = dobDate.toISOString().split('T')[0];
+        }
+      }
+
+      // Cập nhật formData với dữ liệu mới từ response
+      const updatedFormData = {
+        name: updatedUser.Name || updatedUser.name || formData.name,
+        email: updatedUser.Email || updatedUser.email || formData.email,
+        phone: updatedUser.Phone || updatedUser.phone || formData.phone,
+        dob: dobFormatted || formData.dob,
+        gender: updatedUser.Gender || updatedUser.gender || formData.gender,
+        address: updatedUser.Address || updatedUser.address || formData.address,
+        avatar: updatedUser.Avatar || updatedUser.avatar || formData.avatar
+      };
+      setFormData(updatedFormData);
 
       // Update localStorage userInfo
       const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
@@ -691,8 +809,8 @@ const ProfilePage = () => {
         }
       }
 
-      // Update original data ref
-      originalFormDataRef.current = JSON.stringify(formData);
+      // Update original data ref với formData mới đã được cập nhật
+      originalFormDataRef.current = JSON.stringify(updatedFormData);
       setHasChanges(false);
       setIsEditing(false);
       setFieldErrors({});
@@ -1128,7 +1246,22 @@ const ProfilePage = () => {
     );
   }
 
-  const avatarUrl = formData.avatar || userInfo?.Avatar || userInfo?.avatar || '';
+  // Ưu tiên avatar từ storage (đã được cập nhật) để đồng bộ với Header
+  const getAvatarFromStorage = () => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const storageUserInfo = JSON.parse(userInfoStr);
+        return storageUserInfo?.Avatar || storageUserInfo?.avatar || '';
+      }
+    } catch (e) {
+      // Silent fail
+    }
+    return '';
+  };
+  
+  // Ưu tiên: storage > formData > userInfo
+  const avatarUrl = getAvatarFromStorage() || formData.avatar || userInfo?.Avatar || userInfo?.avatar || '';
   const displayName = userInfo?.Name || userInfo?.name || 'Người dùng';
   const displayEmail = userInfo?.Email || userInfo?.email || '';
   const roleName = getRoleName();
@@ -1153,7 +1286,7 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-profile-page">
-      <Header />
+      <ConditionalHeader />
       <main className="profile-profile-main">
         <div className="profile-profile-container">
           {/* Sidebar */}
@@ -1357,7 +1490,7 @@ const ProfilePage = () => {
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('name', e.target.value)}
                       disabled={!isEditing}
-                      profile-required
+                      required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).name}
                       aria-describedby={(fieldErrors as { [key: string]: string }).name ? 'name-error' : undefined}
                       placeholder="Nhập họ và tên của bạn"
@@ -1385,7 +1518,7 @@ const ProfilePage = () => {
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('phone', e.target.value)}
                       disabled={!isEditing}
-                      profile-required
+                      required
                       placeholder="0901234567"
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).phone}
                       aria-describedby={(fieldErrors as { [key: string]: string }).phone ? 'phone-error' : undefined}
@@ -1410,7 +1543,7 @@ const ProfilePage = () => {
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('gender', e.target.value)}
                       disabled={!isEditing}
-                      profile-required
+                      required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).gender}
                       aria-describedby={(fieldErrors as { [key: string]: string }).gender ? 'gender-error' : undefined}
                     >
@@ -1442,7 +1575,7 @@ const ProfilePage = () => {
                       value={formData.address}
                       onChange={handleInputChange}
                       onBlur={(e) => validateField('address', e.target.value)}
-                      profile-required
+                      required
                       aria-invalid={!!(fieldErrors as { [key: string]: string }).address}
                       aria-describedby={(fieldErrors as { [key: string]: string }).address ? 'address-error' : undefined}
                       disabled={!isEditing}
@@ -1497,7 +1630,7 @@ const ProfilePage = () => {
                       }}
                       onBlur={(e) => validateField('dob', e.target.value)}
                       disabled={!isEditing}
-                      profile-required
+                      required
                       max={(() => {
                         // Max date là 18 năm trước từ hôm nay
                         const today = new Date();
@@ -1615,9 +1748,8 @@ const ProfilePage = () => {
                                       if (window.confirm('Bạn có chắc muốn hủy đặt dịch vụ này?')) {
                                         try {
                                           setLoadingBookings(true);
-                                          await axiosInstance.put(`${API_ENDPOINTS.BOOKING}/${bookingId}/status`, {
-                                            Status: 'cancelled'
-                                          });
+                                          // Backend nhận [FromBody] string status, không phải object
+                                          await axiosInstance.put(`${API_ENDPOINTS.BOOKING}/${bookingId}/status`, 'cancelled');
                                           // Reload bookings
                                           const userId = getUserId();
                                           const response = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);

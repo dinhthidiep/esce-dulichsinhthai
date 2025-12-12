@@ -1,8 +1,10 @@
 ﻿using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.DTOs;
 using ESCE_SYSTEM.Services.PaymentService;
+using ESCE_SYSTEM.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System;
 
 namespace ESCE_SYSTEM.Controllers
@@ -13,11 +15,13 @@ namespace ESCE_SYSTEM.Controllers
     {
         private readonly ESCEContext _db;
         private readonly IPaymentService _paymentService;
+        private readonly PayOSOptions _payOSOptions;
 
-        public PaymentController(ESCEContext db, IPaymentService paymentService)
+        public PaymentController(ESCEContext db, IPaymentService paymentService, IOptions<PayOSOptions> payOSOptions)
         {
             _db = db;
             _paymentService = paymentService;
+            _payOSOptions = payOSOptions.Value;
         }
 
         [HttpPost("create-intent")]
@@ -147,6 +151,87 @@ namespace ESCE_SYSTEM.Controllers
                 return NotFound("Payment not found");
 
             return Ok(payment);
+        }
+
+        // Endpoint xử lý callback từ PayOS khi thanh toán thành công
+        [HttpGet("return")]
+        public async Task<IActionResult> HandleReturn([FromQuery] long? orderCode, [FromQuery] string? status)
+        {
+            try
+            {
+                var frontendUrl = _payOSOptions.FrontendUrl.TrimEnd('/');
+                
+                if (!orderCode.HasValue)
+                {
+                    // Redirect đến trang lỗi nếu không có orderCode
+                    return Redirect($"{frontendUrl}/payment/failure/0?error=missing_order_code");
+                }
+
+                // Extract bookingId từ orderCode
+                // orderCode = bookingId * 1_000_000L + (timestamp % 1_000_000)
+                int bookingId = (int)(orderCode.Value / 1_000_000L);
+
+                // Kiểm tra booking có tồn tại không
+                var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+                if (booking == null)
+                {
+                    return Redirect($"{frontendUrl}/payment/failure/{bookingId}?error=booking_not_found");
+                }
+
+                // Kiểm tra payment status
+                var payment = await _db.Payments
+                    .Where(p => p.BookingId == bookingId)
+                    .OrderByDescending(p => p.UpdatedAt)
+                    .FirstOrDefaultAsync();
+
+                // Nếu status từ PayOS là "PAID" hoặc payment status là "completed", redirect đến success
+                if (status?.ToUpper() == "PAID" || payment?.Status?.ToLower() == "completed")
+                {
+                    return Redirect($"{frontendUrl}/payment/success/{bookingId}");
+                }
+
+                // Ngược lại, redirect đến failure
+                return Redirect($"{frontendUrl}/payment/failure/{bookingId}");
+            }
+            catch (Exception ex)
+            {
+                // Log error và redirect đến failure
+                var frontendUrl = _payOSOptions.FrontendUrl.TrimEnd('/');
+                return Redirect($"{frontendUrl}/payment/failure/0?error=server_error");
+            }
+        }
+
+        // Endpoint xử lý callback từ PayOS khi người dùng hủy thanh toán
+        [HttpGet("cancel")]
+        public async Task<IActionResult> HandleCancel([FromQuery] long? orderCode)
+        {
+            try
+            {
+                var frontendUrl = _payOSOptions.FrontendUrl.TrimEnd('/');
+                
+                if (!orderCode.HasValue)
+                {
+                    return Redirect($"{frontendUrl}/payment/failure/0?error=missing_order_code");
+                }
+
+                // Extract bookingId từ orderCode
+                int bookingId = (int)(orderCode.Value / 1_000_000L);
+
+                // Kiểm tra booking có tồn tại không
+                var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+                if (booking == null)
+                {
+                    return Redirect($"{frontendUrl}/payment/failure/{bookingId}?error=booking_not_found");
+                }
+
+                // Redirect đến trang failure với thông báo hủy
+                return Redirect($"{frontendUrl}/payment/failure/{bookingId}?reason=cancelled");
+            }
+            catch (Exception ex)
+            {
+                var frontendUrl = _payOSOptions.FrontendUrl.TrimEnd('/');
+                return Redirect($"{frontendUrl}/payment/failure/0?error=server_error");
+            }
         }
     }
 }

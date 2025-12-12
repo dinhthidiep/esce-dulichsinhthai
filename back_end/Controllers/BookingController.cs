@@ -2,6 +2,8 @@
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.DTOs;
+using System.Linq;
+using System;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -38,9 +40,30 @@ namespace ESCE_SYSTEM.Controllers
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
-            var bookings = await _service.GetByUserIdAsync(userId);
-            if (bookings == null || !bookings.Any()) return NotFound();
-            return Ok(bookings.Select(b => MapToDto(b)));
+            try
+            {
+                var startTime = DateTime.UtcNow;
+                
+                // Sử dụng method tối ưu với projection thay vì Include
+                var bookings = await _service.GetByUserIdOptimizedAsync(userId);
+                
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                // Log thời gian query để debug
+                Console.WriteLine($"[BookingController] GetByUserId({userId}) took {elapsed}ms, found {bookings?.Count() ?? 0} bookings");
+                
+                if (bookings == null || !bookings.Any()) 
+                {
+                    return Ok(new List<BookingDto>()); // Trả về mảng rỗng thay vì NotFound
+                }
+                return Ok(bookings.Select(b => MapToDto(b)));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BookingController] Error in GetByUserId({userId}): {ex.Message}");
+                Console.WriteLine($"[BookingController] StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Lỗi khi lấy danh sách booking", error = ex.Message });
+            }
         }
 
         // Lấy booking theo serviceComboId
@@ -63,13 +86,59 @@ namespace ESCE_SYSTEM.Controllers
 
         // Tạo booking mới
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Booking booking)
+        public async Task<IActionResult> Create([FromBody] CreateBookingDto dto)
         {
-            if (booking == null || booking.UserId <= 0 || string.IsNullOrEmpty(booking.Status))
-                return BadRequest("Invalid booking data.");
+            // Kiểm tra ModelState trước để xem có lỗi validation nào không
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                
+                return BadRequest(new { 
+                    message = "Validation failed", 
+                    errors = errors
+                });
+            }
 
-            var created = await _service.CreateAsync(booking);
-            return Ok(MapToDto(created));
+            if (dto == null)
+            {
+                return BadRequest(new { message = "Invalid booking data. DTO is null." });
+            }
+
+            // Validate DTO manually
+            if (dto.UserId <= 0)
+            {
+                return BadRequest(new { message = "UserId phải lớn hơn 0." });
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.ItemType))
+            {
+                return BadRequest(new { message = "ItemType là bắt buộc." });
+            }
+
+            if (dto.ItemType != "combo" && dto.ItemType != "service")
+            {
+                return BadRequest(new { message = "ItemType phải là 'combo' hoặc 'service'." });
+            }
+
+            if (dto.Quantity <= 0)
+            {
+                return BadRequest(new { message = "Quantity phải lớn hơn 0." });
+            }
+
+            try
+            {
+                var created = await _service.CreateFromDtoAsync(dto);
+                return Ok(MapToDto(created));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi tạo booking", error = ex.Message });
+            }
         }
 
         // Cập nhật booking
@@ -127,17 +196,52 @@ namespace ESCE_SYSTEM.Controllers
         // ----------------- Helper -----------------
         private BookingDto MapToDto(Booking b)
         {
-            return new BookingDto
+            var dto = new BookingDto
             {
                 Id = b.Id,
-                BookingNumber = b.BookingNumber,
+                BookingNumber = b.BookingNumber ?? string.Empty,
                 UserId = b.UserId,
                 ServiceComboId = b.ServiceComboId,
                 ServiceId = b.ServiceId,
+                Quantity = b.Quantity,
+                UnitPrice = b.UnitPrice,
                 TotalAmount = b.TotalAmount,
-                Status = b.Status,
-                BookingDate = b.BookingDate
+                Status = b.Status ?? "pending",
+                Notes = b.Notes,
+                BookingDate = b.BookingDate,
+                ConfirmedDate = b.ConfirmedDate,
+                CompletedDate = b.CompletedDate,
+                ItemType = b.ItemType ?? string.Empty
             };
+
+            // Map ServiceCombo details
+            if (b.ServiceCombo != null)
+            {
+                dto.ServiceCombo = new ServiceComboInfoDto
+                {
+                    Id = b.ServiceCombo.Id,
+                    Name = b.ServiceCombo.Name ?? string.Empty,
+                    Address = b.ServiceCombo.Address ?? string.Empty,
+                    Description = b.ServiceCombo.Description,
+                    Price = b.ServiceCombo.Price,
+                    Image = b.ServiceCombo.Image
+                };
+            }
+
+            // Map Service details
+            if (b.Service != null)
+            {
+                dto.Service = new ServiceInfoDto
+                {
+                    Id = b.Service.Id,
+                    Name = b.Service.Name ?? string.Empty,
+                    Description = b.Service.Description,
+                    Price = b.Service.Price,
+                    Images = b.Service.Images
+                };
+            }
+
+            return dto;
         }
     }
 

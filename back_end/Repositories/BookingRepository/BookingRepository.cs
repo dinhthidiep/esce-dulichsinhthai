@@ -35,34 +35,40 @@ namespace ESCE_SYSTEM.Repositories
 
         public async Task<IEnumerable<Booking>> GetByUserIdAsync(int userId)
         {
+            // Chỉ load ServiceCombo và Service vì MapToDto không sử dụng User/Role
+            // Điều này giảm số lượng JOIN và tăng tốc độ query đáng kể
             return await _context.Bookings
-                .Include(b => b.User)
-                    .ThenInclude(u => u.Role)
+                .AsNoTracking() // Tăng tốc độ query bằng cách không track changes
                 .Include(b => b.ServiceCombo)
                 .Include(b => b.Service)
                 .Where(b => b.UserId == userId)
+                .OrderByDescending(b => b.BookingDate) // Sắp xếp để dễ đọc và có thể tối ưu index
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Booking>> GetByServiceComboIdAsync(int ServicecomboId)
         {
             return await _context.Bookings
+                .AsNoTracking()
                 .Include(b => b.User)
                     .ThenInclude(u => u.Role)
                 .Include(b => b.ServiceCombo)
                 .Include(b => b.Service)
                 .Where(b => b.ServiceComboId == ServicecomboId)
+                .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Booking>> GetByServiceIdAsync(int serviceId)
         {
             return await _context.Bookings
+                .AsNoTracking()
                 .Include(b => b.User)
                     .ThenInclude(u => u.Role)
                 .Include(b => b.ServiceCombo)
                 .Include(b => b.Service)
                 .Where(b => b.ServiceId == serviceId)
+                .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
         }
 

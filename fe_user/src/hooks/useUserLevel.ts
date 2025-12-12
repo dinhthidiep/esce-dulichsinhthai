@@ -61,12 +61,26 @@ export const useUserLevel = (userId: number | null): UserLevelData => {
         setTotalSpent(0)
       }
     } catch (err) {
-      console.error('Error fetching user spending:', err)
-      // Không hiển thị lỗi nếu là 404 (user chưa có booking)
-      if ((err as { response?: { status?: number } })?.response?.status !== 404) {
+      const axiosError = err as { response?: { status?: number }; code?: string; message?: string }
+      const errorStatus = axiosError?.response?.status
+      const errorCode = axiosError?.code
+      
+      // 404 có nghĩa là user chưa có booking nào - đây là trường hợp bình thường, không phải lỗi
+      if (errorStatus === 404) {
+        // User chưa có booking, set totalSpent = 0 (đã là default)
+        setTotalSpent(0)
+        setError(null) // Không có lỗi
+      } else if (errorCode === 'ECONNABORTED' || axiosError?.message?.includes('timeout')) {
+        // Timeout - không hiển thị lỗi cho user, chỉ log và set giá trị mặc định
+        console.warn('⚠️ [useUserLevel] Request timeout, sử dụng giá trị mặc định')
+        setTotalSpent(0)
+        setError(null) // Không hiển thị lỗi timeout cho user
+      } else {
+        // Lỗi thực sự (network, server error, etc.)
+        console.error('Error fetching user spending:', err)
         setError('Không thể tải thông tin level. Vui lòng thử lại sau.')
+        setTotalSpent(0)
       }
-      setTotalSpent(0)
     } finally {
       setLoading(false)
     }

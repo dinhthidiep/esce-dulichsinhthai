@@ -255,7 +255,7 @@ const NewsDetailPage = () => {
 
   return (
     <div className="news-detail-news-detail-page">
-      <Header />
+      <ConditionalHeader />
 
       <main className="news-detail-news-detail-main">
         {/* Back Button */}

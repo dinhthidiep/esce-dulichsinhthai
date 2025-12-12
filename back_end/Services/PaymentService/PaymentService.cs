@@ -92,6 +92,16 @@ namespace ESCE_SYSTEM.Services.PaymentService
         // --------------------------------------
         public async Task<CreatePaymentResponse> CreatePaymentAsync(Booking booking, decimal amount, string description)
         {
+            // PayOS chỉ cho phép description tối đa 25 ký tự
+            if (string.IsNullOrEmpty(description))
+            {
+                description = $"TT DV #{booking.Id}";
+            }
+            else if (description.Length > 25)
+            {
+                description = description.Substring(0, 25);
+            }
+
             long amountVND = (long)amount;
 
             long orderCode = booking.Id * 1_000_000L +
@@ -269,6 +279,26 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 payment.TransactionId = transactionId;
                 payment.UpdatedAt = DateTime.UtcNow;
 
+                // Nếu là payment cho booking, cập nhật trạng thái booking
+                if (payment.BookingId.HasValue)
+                {
+                    var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId.Value);
+                    if (booking != null)
+                    {
+                        if (payment.Status == "success")
+                        {
+                            booking.Status = "completed";
+                            booking.CompletedDate = DateTime.UtcNow;
+                            booking.UpdatedAt = DateTime.UtcNow;
+                        }
+                        else if (payment.Status == "canceled")
+                        {
+                            booking.Status = "cancelled";
+                            booking.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                }
+
                 await _db.SaveChangesAsync();
 
                 return true;
@@ -286,6 +316,16 @@ namespace ESCE_SYSTEM.Services.PaymentService
         // --------------------------------------
         public async Task<CreatePaymentResponse> CreateUpgradePaymentAsync(int userId, string upgradeType, decimal amount, string description)
         {
+            // PayOS chỉ cho phép description tối đa 25 ký tự
+            if (string.IsNullOrEmpty(description))
+            {
+                description = $"Nâng cấp {upgradeType}";
+            }
+            else if (description.Length > 25)
+            {
+                description = description.Substring(0, 25);
+            }
+
             long amountVND = (long)amount;
 
             long orderCode = userId * 1_000_000L +

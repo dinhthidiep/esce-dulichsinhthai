@@ -51,17 +51,24 @@ const Header = React.memo(() => {
 
     checkAuth()
     
-    // Chỉ listen storage changes, không check liên tục
+    // Listen storage changes từ tab/window khác
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'userInfo' || e.key === 'token') {
         checkAuth()
       }
     }
     
+    // Listen custom event từ cùng tab (khi ProfilePage cập nhật)
+    const handleUserStorageChange = () => {
+      checkAuth()
+    }
+    
     window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('userStorageChange', handleUserStorageChange)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('userStorageChange', handleUserStorageChange)
     }
   }, []) // Chỉ chạy khi mount, không phụ thuộc vào location
 
@@ -162,6 +169,13 @@ const Header = React.memo(() => {
       .slice(0, 2)
     return initials
   }, [userInfo])
+  
+  // Kiểm tra avatar có phải là URL hoặc base64 không
+  const isAvatarImage = useCallback((avatar: string) => {
+    if (!avatar || typeof avatar !== 'string') return false
+    // Kiểm tra URL (http/https) hoặc base64 (data:image)
+    return avatar.startsWith('http') || avatar.startsWith('data:image')
+  }, [])
 
   // Memoize isActive function để tránh tính toán lại không cần thiết
   const isActive = useCallback((path: string) => {
@@ -257,7 +271,7 @@ const Header = React.memo(() => {
                   <div className="header-user-avatar">
                     {(() => {
                       const avatar = getUserAvatar()
-                      return typeof avatar === 'string' && avatar.startsWith('http') ? (
+                      return isAvatarImage(avatar) ? (
                         <img 
                           src={avatar} 
                           alt="Avatar" 

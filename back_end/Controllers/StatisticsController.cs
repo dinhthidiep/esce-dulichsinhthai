@@ -18,11 +18,11 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         /// <summary>
-        /// L?y th?ng kê t?ng quan cho dashboard
+        /// L?y th?ng k?t?ng quan cho dashboard
         /// </summary>
-        /// <param name="period">K? th?ng kê: day, week, month, year</param>
-        /// <param name="startDate">Ngày b?t d?u (optional)</param>
-        /// <param name="endDate">Ngày k?t thúc (optional)</param>
+        /// <param name="period">K? th?ng k? day, week, month, year</param>
+        /// <param name="startDate">Ng? b?t d?u (optional)</param>
+        /// <param name="endDate">Ng? k?t th? (optional)</param>
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardStatisticsDto>> GetDashboardStatistics(
             [FromQuery] string period = "day",
@@ -42,16 +42,16 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê dashboard", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?dashboard", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y th?ng kê theo th?i gian (d? li?u cho bi?u d?)
+        /// L?y th?ng k?theo th?i gian (d? li?u cho bi?u d?)
         /// </summary>
-        /// <param name="period">K? th?ng kê: day (theo gi?), week (theo ngày), month (theo ngày), year (theo tháng)</param>
-        /// <param name="startDate">Ngày b?t d?u (optional)</param>
-        /// <param name="endDate">Ngày k?t thúc (optional)</param>
+        /// <param name="period">K? th?ng k? day (theo gi?), week (theo ng?), month (theo ng?), year (theo th?g)</param>
+        /// <param name="startDate">Ng? b?t d?u (optional)</param>
+        /// <param name="endDate">Ng? k?t th? (optional)</param>
         [HttpGet("time-series")]
         public async Task<ActionResult<TimeSeriesStatisticsDto>> GetTimeSeriesStatistics(
             [FromQuery] string period = "day",
@@ -71,12 +71,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê time series", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?time series", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y th?ng kê chi ti?t ngu?i dùng
+        /// L?y th?ng k?chi ti?t ngu?i d?g
         /// </summary>
         [HttpGet("users")]
         public async Task<ActionResult<UserStatisticsDto>> GetUserStatistics(
@@ -97,12 +97,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê ngu?i dùng", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?ngu?i d?g", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y th?ng kê doanh thu
+        /// L?y th?ng k?doanh thu
         /// </summary>
         [HttpGet("revenue")]
         public async Task<ActionResult<RevenueStatisticsDto>> GetRevenueStatistics(
@@ -123,12 +123,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê doanh thu", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?doanh thu", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y th?ng kê Servicecombo
+        /// L?y th?ng k?Servicecombo
         /// </summary>
         [HttpGet("service-combos")]
         public async Task<ActionResult<ServiceComboStatisticsDto>> GetServiceComboStatistics(
@@ -149,12 +149,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê service combo", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?service combo", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y th?ng kê bài vi?t
+        /// L?y th?ng k?b? vi?t
         /// </summary>
         [HttpGet("posts")]
         public async Task<ActionResult<PostStatisticsDto>> GetPostStatistics(
@@ -175,12 +175,12 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y th?ng kê bài vi?t", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y th?ng k?b? vi?t", error = ex.Message });
             }
         }
 
         /// <summary>
-        /// L?y t?t c? th?ng kê cùng lúc
+        /// L?y t?t c? th?ng k?c?g l?
         /// </summary>
         [HttpGet("all")]
         public async Task<IActionResult> GetAllStatistics(
@@ -216,7 +216,7 @@ namespace ESCE_SYSTEM.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "L?i khi l?y t?t c? th?ng kê", error = ex.Message });
+                return StatusCode(500, new { message = "L?i khi l?y t?t c? th?ng k?", error = ex.Message });
             }
         }
     }

@@ -273,22 +273,51 @@ const ServiceDetail = () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // Validate ID
+        if (!id) {
+          setError('ID dịch vụ không hợp lệ.');
+          setLoading(false);
+          return;
+        }
+        
+        const serviceId = parseInt(id, 10);
+        if (isNaN(serviceId) || serviceId <= 0) {
+          setError('ID dịch vụ không hợp lệ.');
+          setLoading(false);
+          setTimeout(() => {
+            navigate('/services', { replace: true });
+          }, 2000);
+          return;
+        }
+        
         // Gọi API ServiceCombo thay vì Service
-        console.log('🔍 [ServiceDetail] Đang tải service với ID:', id);
-        const url = `${API_ENDPOINTS.SERVICE_COMBO}/${id}`;
-        console.log('🔍 [ServiceDetail] API URL:', url);
+        if (import.meta.env.DEV) {
+          console.log('🔍 [ServiceDetail] Đang tải service với ID:', serviceId);
+        }
+        const url = `${API_ENDPOINTS.SERVICE_COMBO}/${serviceId}`;
+        if (import.meta.env.DEV) {
+          console.log('🔍 [ServiceDetail] API URL:', url);
+        }
         
         const response = await axiosInstance.get(url);
-        console.log('✅ [ServiceDetail] Nhận được dữ liệu:', response.data);
-        console.log('  - Service ID:', response.data?.Id || response.data?.id);
-        console.log('  - Service Name:', response.data?.Name || response.data?.name);
-        console.log('  - Service Status:', response.data?.Status || response.data?.status);
+        if (import.meta.env.DEV) {
+          console.log('✅ [ServiceDetail] Nhận được dữ liệu:', response.data);
+          console.log('  - Service ID:', response.data?.Id || response.data?.id);
+          console.log('  - Service Name:', response.data?.Name || response.data?.name);
+          console.log('  - Service Status:', response.data?.Status || response.data?.status);
+        }
+        
+        // Validate response data
+        if (!response.data) {
+          throw new Error('Không nhận được dữ liệu từ server.');
+        }
         
         setService(response.data);
         
         // Fetch average rating
         try {
-          const ratingResponse = await axiosInstance.get(`${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`);
+          const ratingResponse = await axiosInstance.get(`${API_ENDPOINTS.REVIEW}/ServiceCombo/${serviceId}/average-rating`);
           setAverageRating(ratingResponse.data.AverageRating || 0);
         } catch (ratingErr) {
           if (process.env.NODE_ENV === 'development') {
@@ -299,20 +328,43 @@ const ServiceDetail = () => {
           setRatingLoading(false);
         }
       } catch (err) {
-        console.error('❌ [ServiceDetail] Lỗi khi tải chi tiết dịch vụ:', err);
-        console.error('  - Error message:', err?.message);
-        console.error('  - Error code:', err?.code);
-        console.error('  - Response status:', err?.response?.status);
-        console.error('  - Response data:', err?.response?.data);
+        const errorStatus = err?.response?.status;
+        const errorCode = err?.code;
         
         let errorMessage = 'Không thể tải thông tin dịch vụ. Vui lòng thử lại sau.';
         
-        if (err?.response?.status === 404) {
-          errorMessage = `Không tìm thấy dịch vụ với ID: ${id}`;
-        } else if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNREFUSED') {
-          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra backend có đang chạy tại https://localhost:7267 không.';
-        } else if (err?.response?.status) {
-          errorMessage = `Lỗi ${err.response.status}: ${err.response.statusText || 'Không thể tải thông tin dịch vụ'}`;
+        if (errorStatus === 404) {
+          // Service không tồn tại hoặc chưa được duyệt
+          const serviceId = id ? parseInt(id, 10) : null;
+          if (serviceId && !isNaN(serviceId)) {
+            errorMessage = `Dịch vụ với ID ${serviceId} không tồn tại hoặc chưa được duyệt.`;
+          } else {
+            errorMessage = 'Dịch vụ không tồn tại hoặc chưa được duyệt.';
+          }
+          // 404 là lỗi hợp lệ (resource không tồn tại), chỉ log ở mức info
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ [ServiceDetail] ServiceCombo không tìm thấy:', {
+              serviceId: id,
+              message: errorMessage
+            });
+          }
+        } else {
+          // Các lỗi khác (network, server error, etc.) - log chi tiết
+          if (import.meta.env.DEV) {
+            console.error('❌ [ServiceDetail] Lỗi khi tải chi tiết dịch vụ:', err);
+            console.error('  - Error message:', err?.message);
+            console.error('  - Error code:', errorCode);
+            console.error('  - Response status:', errorStatus);
+            console.error('  - Response data:', err?.response?.data);
+          }
+          
+          if (errorCode === 'ERR_NETWORK' || errorCode === 'ECONNREFUSED') {
+            errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+          } else if (errorStatus === 403) {
+            errorMessage = 'Bạn không có quyền truy cập dịch vụ này.';
+          } else if (errorStatus) {
+            errorMessage = `Lỗi ${errorStatus}: ${err.response?.statusText || 'Không thể tải thông tin dịch vụ'}`;
+          }
         }
         
         setError(errorMessage);
@@ -320,11 +372,18 @@ const ServiceDetail = () => {
         setLoading(false);
       }
     };
-
+    
     if (id) {
-      fetchService();
+      fetchService().catch((err) => {
+        // Handle any unhandled errors
+        if (import.meta.env.DEV) {
+          console.error('❌ [ServiceDetail] Unhandled error in fetchService:', err);
+        }
+      });
     }
-  }, [id]);
+    
+    // Cleanup function
+  }, [id, navigate]);
 
   // Fetch similar services (các dịch vụ tương tự)
   useEffect(() => {
@@ -338,10 +397,13 @@ const ServiceDetail = () => {
         const allServices = response.data || [];
         
         // Loại trừ service hiện tại và lấy 4 services khác
+        // Backend trả về status = "approved" cho ServiceCombo đã được duyệt
         const filtered = allServices
           .filter(s => {
             const serviceId = s.Id || s.id;
-            return serviceId !== parseInt(id) && (s.Status || s.status || 'open').toLowerCase() === 'open';
+            const serviceStatus = (s.Status || s.status || 'open').toLowerCase();
+            // Chấp nhận cả "approved" và "open" làm status hợp lệ
+            return serviceId !== parseInt(id) && (serviceStatus === 'open' || serviceStatus === 'approved');
           })
           .slice(0, 4)
           .map(s => {
@@ -430,8 +492,27 @@ const ServiceDetail = () => {
 
       try {
         // Bước 1: Lấy bookings của user cho service combo này
-        const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);
-        const bookings = bookingsResponse.data || [];
+        // LƯU Ý: 404 là trạng thái hợp lệ nếu user chưa có booking nào
+        // Browser có thể hiển thị 404 trong Network tab - đây là hành vi bình thường, không phải lỗi
+        let bookings = [];
+        try {
+          const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);
+          bookings = bookingsResponse.data || [];
+        } catch (bookingsErr: any) {
+          // 404 có nghĩa là user chưa có booking nào - đây là trạng thái hợp lệ, không phải lỗi
+          if (bookingsErr?.response?.status === 404) {
+            // 404 là trạng thái hợp lệ (user chưa có booking)
+            // Axios interceptor đã suppress log error cho endpoint này
+            // Browser Network tab vẫn có thể hiển thị 404 - đây là hành vi mặc định của browser
+            bookings = [];
+          } else {
+            // Lỗi thực sự khác (network, server error, etc.) - chỉ log nếu không phải 404
+            if (import.meta.env.DEV) {
+              console.error('❌ [ServiceDetail] Lỗi khi lấy bookings của user:', bookingsErr);
+            }
+            throw bookingsErr;
+          }
+        }
         
         // Bước 2: Filter bookings có ServiceComboId = id và status = confirmed hoặc completed
         const relevantBookings = bookings.filter(booking => {
@@ -800,13 +881,21 @@ const ServiceDetail = () => {
 
   const getStatusBadge = (status) => {
     const statusLower = (status || '').toLowerCase();
-    if (statusLower === 'open') {
+    // Backend trả về "approved" cho ServiceCombo đã được duyệt
+    if (statusLower === 'open' || statusLower === 'approved') {
       return { text: 'Có sẵn', variant: 'success', color: '#047857' };
     } else if (statusLower === 'closed') {
       return { text: 'Đã đóng', variant: 'danger', color: '#dc2626' };
     } else {
       return { text: 'Đã hủy', variant: 'default', color: '#64748b' };
     }
+  };
+
+  // Helper function để kiểm tra service có thể đặt được không
+  const isServiceAvailable = (serviceStatus: string, slots: number) => {
+    const statusLower = (serviceStatus || '').toLowerCase();
+    // ServiceCombo có thể đặt nếu status = "approved" hoặc "open" và còn chỗ
+    return (statusLower === 'approved' || statusLower === 'open') && slots > 0;
   };
 
   if (loading) {
@@ -828,11 +917,16 @@ const ServiceDetail = () => {
           <div className="sd-service-detail-container">
             <div className="sd-error-container" role="alert">
               <h2 className="sd-error-title">Không tìm thấy dịch vụ</h2>
-              <p className="sd-error-message">{error || 'Dịch vụ không tồn tại'}</p>
-              <Button variant="default" onClick={() => navigate('/services')}>
-                <ArrowLeftIcon className="sd-button-icon" />
-                Quay lại danh sách
-              </Button>
+              <p className="sd-error-message">{error || 'Dịch vụ không tồn tại hoặc chưa được duyệt'}</p>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <Button variant="default" onClick={() => navigate('/services')}>
+                  <ArrowLeftIcon className="sd-button-icon" />
+                  Quay lại danh sách
+                </Button>
+                <Button variant="outline" onClick={() => navigate(-1)}>
+                  Quay lại trang trước
+                </Button>
+              </div>
             </div>
           </div>
         </main>
@@ -852,7 +946,7 @@ const ServiceDetail = () => {
 
   return (
     <div className="sd-service-detail-page">
-      <Header />
+      <ConditionalHeader />
       
       <main className="sd-service-detail-main">
         {/* Hero Section with Image Carousel */}
@@ -1505,7 +1599,7 @@ const ServiceDetail = () => {
                       variant="default" 
                       size="lg" 
                       className="sd-booking-button"
-                      disabled={status.toLowerCase() !== 'open' || availableSlots === 0}
+                      disabled={!isServiceAvailable(status, availableSlots)}
                       onClick={() => {
                         // Debug log
                         if (import.meta.env.DEV) {
@@ -1513,9 +1607,10 @@ const ServiceDetail = () => {
                           console.log('  - Service ID:', id)
                           console.log('  - Service Status:', status)
                           console.log('  - Available Slots:', availableSlots)
+                          console.log('  - Is Available:', isServiceAvailable(status, availableSlots))
                         }
                         
-                        if (status.toLowerCase() !== 'open' || availableSlots === 0) {
+                        if (!isServiceAvailable(status, availableSlots)) {
                           if (import.meta.env.DEV) {
                             console.warn('  - Button disabled: status =', status, ', slots =', availableSlots)
                           }
@@ -1550,14 +1645,14 @@ const ServiceDetail = () => {
                         navigate(`/booking/${id}`);
                       }}
                     >
-                      {status.toLowerCase() === 'open' && availableSlots > 0 
+                      {isServiceAvailable(status, availableSlots)
                         ? 'Đặt dịch vụ ngay' 
                         : status.toLowerCase() === 'closed' 
                         ? 'Dịch vụ đã đóng'
                         : 'Hết chỗ'}
                     </Button>
                     <p className="sd-booking-note">
-                      {status.toLowerCase() === 'open' && availableSlots > 0
+                      {isServiceAvailable(status, availableSlots)
                         ? 'Bạn sẽ được chuyển đến trang đặt dịch vụ để hoàn tất thanh toán'
                         : 'Dịch vụ hiện không khả dụng'}
                     </p>

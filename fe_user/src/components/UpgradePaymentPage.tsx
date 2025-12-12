@@ -95,13 +95,16 @@ const UpgradePaymentPage = () => {
       }
 
       // Gọi API tạo upgrade payment cho Agency
+      // PayOS chỉ cho phép description tối đa 25 ký tự
+      const description = `Nâng cấp Agency`.substring(0, 25)
+      
       const response = await axiosInstance.post(
         `${API_ENDPOINTS.PAYMENT}/create-upgrade-payment`,
         {
           UserId: userId,
           UpgradeType: 'Agency', // Backend yêu cầu chữ hoa
           Amount: paymentData.amount,
-          Description: `Nâng cấp tài khoản lên Agency - ${paymentData.companyName || ''}`
+          Description: description
         }
       )
 

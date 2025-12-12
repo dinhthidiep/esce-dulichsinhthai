@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import type { FormEvent, ChangeEvent } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import './LoginForm.css'
 import googleAuthService from '~/services/googleAuth'
 import { login } from '~/API/instances/Au'
-import { getRedirectUrlByRole } from '~/lib/utils'
 
 interface FormData {
   email: string
@@ -16,13 +15,8 @@ interface Errors {
   password?: string
 }
 
-interface LocationState {
-  returnUrl?: string
-}
-
 const LoginForm = () => {
   const navigate = useNavigate()
-  const location = useLocation()
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -129,20 +123,13 @@ const LoginForm = () => {
       // Trigger custom event để Header tự động cập nhật
       window.dispatchEvent(new CustomEvent('userStorageChange'))
 
-      // Đăng nhập thành công - chuyển hướng hoặc hiển thị thông báo
+      // Đăng nhập thành công - chuyển hướng đến trang landing
       // Set flag để hiển thị welcome message trên landing page
       sessionStorage.setItem('justLoggedIn', 'true')
 
-      // Kiểm tra returnUrl từ location.state
-      const returnUrl = (location.state as LocationState)?.returnUrl
-      if (returnUrl) {
-        // Chuyển về trang ban đầu mà người dùng muốn truy cập
-        navigate(returnUrl, { replace: true })
-      } else {
-        // Chuyển hướng dựa trên role của user
-        const redirectUrl = getRedirectUrlByRole(userInfo)
-        navigate(redirectUrl, { replace: true })
-      }
+      // Luôn chuyển đến trang landing sau khi đăng nhập thành công
+      // Không sử dụng returnUrl, luôn về trang chủ
+      navigate('/', { replace: true })
     } catch (error) {
       console.error('Login error:', error)
       const errorMessage = (error as Error).message || 'Đăng nhập thất bại. Vui lòng thử lại!'
@@ -160,9 +147,14 @@ const LoginForm = () => {
 
       if (result.success) {
         console.log('Google Login Success:', result.user)
-        alert(`Đăng nhập Google thành công! Chào mừng ${result.user.name}!`)
         // Here you would typically send the user data to your backend
         // to create/login the user account
+        
+        // Set flag để hiển thị welcome message trên landing page
+        sessionStorage.setItem('justLoggedIn', 'true')
+        
+        // Chuyển đến trang landing sau khi đăng nhập Google thành công
+        navigate('/', { replace: true })
       } else {
         alert(`Đăng nhập Google thất bại: ${result.error}`)
       }

@@ -8,5 +8,6 @@
         public string ReturnUrl { get; set; } = string.Empty;
         public string CancelUrl { get; set; } = string.Empty;
         public string WebhookUrl { get; set; } = string.Empty;
+        public string FrontendUrl { get; set; } = "http://localhost:3000";
     }
 }

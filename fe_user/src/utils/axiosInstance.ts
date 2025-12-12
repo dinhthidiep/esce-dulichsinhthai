@@ -66,9 +66,26 @@ realAxiosInstance.interceptors.response.use(
     // Chỉ log error trong development mode, và chỉ log lỗi quan trọng
     if (import.meta.env.DEV) {
       const status = error.response?.status
+      const url = error.config?.url || ''
+      
       // Không log chi tiết cho lỗi 500 từ ServiceComboDetail (circular reference - đã xử lý)
-      if (status === 500 && error.config?.url?.includes('ServiceComboDetail')) {
+      if (status === 500 && url.includes('ServiceComboDetail')) {
         // Bỏ qua log chi tiết cho lỗi này
+        return Promise.reject(error)
+      }
+      
+      // Không log 404 cho endpoint Booking/user/{userId} - đây là trường hợp bình thường (user chưa có booking)
+      if (status === 404 && url.includes('/Booking/user/')) {
+        // Bỏ qua log cho trường hợp này - không phải lỗi
+        // User chưa có booking là trạng thái hợp lệ, không cần log error
+        // Component sẽ xử lý 404 này như trạng thái bình thường
+        return Promise.reject(error)
+      }
+      
+      // Không log 404 cho ServiceCombo nếu đã được xử lý trong component (để giảm noise)
+      // Component sẽ hiển thị thông báo phù hợp cho user
+      if (status === 404 && url.includes('/ServiceCombo/')) {
+        // Vẫn reject error để component xử lý, nhưng không log chi tiết
         return Promise.reject(error)
       }
       
@@ -77,7 +94,7 @@ realAxiosInstance.interceptors.response.use(
         code: error.code,
         status: status,
         statusText: error.response?.statusText,
-        url: error.config?.url,
+        url: url,
         baseURL: error.config?.baseURL,
         fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'N/A',
         responseData: error.response?.data,

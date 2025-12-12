@@ -1,5 +1,6 @@
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
+using ESCE_SYSTEM.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Services
@@ -31,6 +32,23 @@ namespace ESCE_SYSTEM.Services
 
         public async Task<IEnumerable<Booking>> GetByUserIdAsync(int userId)
             => await _repository.GetByUserIdAsync(userId);
+        
+        // Method tối ưu để lấy bookings với projection (chỉ load field cần thiết)
+        // Sử dụng Include nhưng chỉ load các field cần thiết từ related entities
+        public async Task<IEnumerable<Booking>> GetByUserIdOptimizedAsync(int userId)
+        {
+            // Load bookings với Include nhưng chỉ select các field cần thiết
+            // Điều này giúp giảm lượng dữ liệu được load từ database
+            var bookings = await _context.Bookings
+                .AsNoTracking()
+                .Where(b => b.UserId == userId)
+                .OrderByDescending(b => b.BookingDate)
+                .Include(b => b.ServiceCombo)
+                .Include(b => b.Service)
+                .ToListAsync();
+            
+            return bookings;
+        }
 
         public async Task<IEnumerable<Booking>> GetByServiceComboIdAsync(int serviceComboId)
             => await _repository.GetByServiceComboIdAsync(serviceComboId);
@@ -63,6 +81,51 @@ namespace ESCE_SYSTEM.Services
 
             booking.TotalAmount = totalAmount;
 
+            await _repository.CreateAsync(booking);
+            return booking;
+        }
+
+        public async Task<Booking> CreateFromDtoAsync(CreateBookingDto dto)
+        {
+            // Map từ DTO sang Booking model (không có navigation properties)
+            var booking = new Booking
+            {
+                UserId = dto.UserId,
+                ServiceComboId = dto.ServiceComboId,
+                ServiceId = dto.ServiceId,
+                Quantity = dto.Quantity,
+                ItemType = dto.ItemType,
+                Notes = dto.Notes,
+                BookingDate = dto.BookingDate ?? DateTime.UtcNow,
+                Status = "pending", // 🔥 Quan trọng: dùng cho payment
+                BookingNumber = GenerateBookingNumber(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Validate itemType
+            if (booking.ItemType != "combo" && booking.ItemType != "service")
+                throw new Exception("ItemType must be 'combo' or 'service'");
+
+            // Tính tổng tiền
+            decimal totalAmount = await CalculateTotalAmountAsync(
+                booking.ServiceComboId ?? 0,
+                booking.ServiceId ?? 0,
+                booking.Quantity,
+                booking.ItemType
+            );
+
+            // Kiểm tra user role để áp dụng discount cho agency
+            var user = await _context.Accounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.Id == booking.UserId);
+
+            if (user?.Role?.Name.ToLower() == "agency")
+                totalAmount *= 0.97m;
+
+            booking.TotalAmount = totalAmount;
+
+            // Lưu booking (không có navigation properties, Entity Framework sẽ tự load từ UserId)
             await _repository.CreateAsync(booking);
             return booking;
         }

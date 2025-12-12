@@ -16,27 +16,79 @@ import './PaymentPage.css'
 interface BookingData {
   Id?: number
   id?: number
+  BookingNumber?: string
+  bookingNumber?: string
   TotalAmount?: number
   totalAmount?: number
+  UnitPrice?: number
+  unitPrice?: number
   Status?: string
   status?: string
   StartDate?: string
   startDate?: string
   EndDate?: string
   endDate?: string
+  BookingDate?: string
+  bookingDate?: string
   Quantity?: number
   quantity?: number
   Notes?: string
   notes?: string
+  ItemType?: string
+  itemType?: string
   ServiceComboId?: number
   serviceComboId?: number
   ServiceCombo?: {
+    Id?: number
+    id?: number
+    Name?: string
+    name?: string
+    Address?: string
+    address?: string
+    Description?: string
+    description?: string
     Price?: number
     price?: number
+    Image?: string
+    image?: string
   }
   serviceCombo?: {
+    Id?: number
+    id?: number
+    Name?: string
+    name?: string
+    Address?: string
+    address?: string
+    Description?: string
+    description?: string
     Price?: number
     price?: number
+    Image?: string
+    image?: string
+  }
+  Service?: {
+    Id?: number
+    id?: number
+    Name?: string
+    name?: string
+    Description?: string
+    description?: string
+    Price?: number
+    price?: number
+    Images?: string
+    images?: string
+  }
+  service?: {
+    Id?: number
+    id?: number
+    Name?: string
+    name?: string
+    Description?: string
+    description?: string
+    Price?: number
+    price?: number
+    Images?: string
+    images?: string
   }
   User?: {
     Role?: {
@@ -181,13 +233,46 @@ const PaymentPage = () => {
         const response = await axiosInstance.get<BookingData>(`${API_ENDPOINTS.BOOKING}/${bookingId}`)
         console.log(' PaymentPage: Nhận được dữ liệu booking:', response.data)
 
-        const bookingData = response.data
+        let bookingData = response.data
         if (!bookingData) {
           setError('Không tìm thấy thông tin đặt dịch vụ')
           return
         }
 
+        // Fallback: Nếu không có ServiceCombo/Service trong response, fetch thêm
+        const serviceComboId = bookingData.ServiceComboId || bookingData.serviceComboId
+        const serviceId = bookingData.ServiceId || bookingData.serviceId
+        
+        if (!bookingData.ServiceCombo && !bookingData.serviceCombo && !bookingData.Service && !bookingData.service) {
+          if (serviceComboId) {
+            try {
+              console.log(' PaymentPage: Fetch ServiceCombo vì không có trong response')
+              const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${serviceComboId}`)
+              bookingData = {
+                ...bookingData,
+                ServiceCombo: serviceComboResponse.data
+              }
+            } catch (err) {
+              console.warn(' PaymentPage: Không thể fetch ServiceCombo:', err)
+            }
+          } else if (serviceId) {
+            try {
+              console.log(' PaymentPage: Fetch Service vì không có trong response')
+              const serviceResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE}/${serviceId}`)
+              bookingData = {
+                ...bookingData,
+                Service: serviceResponse.data
+              }
+            } catch (err) {
+              console.warn(' PaymentPage: Không thể fetch Service:', err)
+            }
+          }
+        }
+
         setBooking(bookingData)
+
+        // Nếu vẫn không có ServiceCombo/Service sau khi fetch, thử fetch lại trong useEffect riêng
+        // (để đảm bảo luôn có dữ liệu)
 
         // Parse Notes để lấy ghi chú và dịch vụ thêm
         const notes = (bookingData.Notes || bookingData.notes || '') as string
@@ -324,6 +409,45 @@ const PaymentPage = () => {
 
     fetchBooking()
   }, [bookingId, navigate])
+
+  // Fetch ServiceCombo nếu booking đã có nhưng thiếu ServiceCombo/Service
+  useEffect(() => {
+    const fetchServiceComboIfNeeded = async () => {
+      if (!booking) return
+
+      const hasServiceCombo = !!(booking.ServiceCombo || booking.serviceCombo || booking.Service || booking.service)
+      if (hasServiceCombo) return
+
+      const serviceComboId = booking.ServiceComboId || booking.serviceComboId
+      const serviceId = booking.ServiceId || booking.serviceId
+
+      if (serviceComboId) {
+        try {
+          console.log(' PaymentPage: Fetch ServiceCombo trong useEffect vì thiếu trong booking')
+          const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${serviceComboId}`)
+          setBooking(prev => ({
+            ...prev!,
+            ServiceCombo: serviceComboResponse.data
+          }))
+        } catch (err) {
+          console.warn(' PaymentPage: Không thể fetch ServiceCombo trong useEffect:', err)
+        }
+      } else if (serviceId) {
+        try {
+          console.log(' PaymentPage: Fetch Service trong useEffect vì thiếu trong booking')
+          const serviceResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE}/${serviceId}`)
+          setBooking(prev => ({
+            ...prev!,
+            Service: serviceResponse.data
+          }))
+        } catch (err) {
+          console.warn(' PaymentPage: Không thể fetch Service trong useEffect:', err)
+        }
+      }
+    }
+
+    fetchServiceComboIfNeeded()
+  }, [booking])
 
   // Coupon handlers
   const handleApplyCoupon = async () => {
@@ -469,10 +593,13 @@ const PaymentPage = () => {
         throw new Error('Số tiền thanh toán phải lớn hơn 0')
       }
 
+      // PayOS chỉ cho phép description tối đa 25 ký tự
+      const description = `TT đặt DV #${bookingIdValue}`.substring(0, 25)
+      
       const paymentRequest = {
         BookingId: bookingIdValue,
         Amount: paymentAmount,
-        Description: `Thanh toán cho đặt dịch vụ #${bookingIdValue}`,
+        Description: description,
       }
 
       console.log(' PaymentPage.handlePayment: Tạo payment intent:', paymentRequest)
@@ -678,11 +805,92 @@ const PaymentPage = () => {
                   <h2 className="pay-card-title">Thông tin đặt dịch vụ</h2>
 
                   <div className="pay-payment-info">
-                    <div className="pay-info-row">
-                      <span className="pay-info-label">Mã đặt dịch vụ</span>
-                      <span className="pay-info-value">#{bookingIdValue}</span>
-                    </div>
+                    {/* 1. Dịch vụ (Tên) */}
+                    {(() => {
+                      const serviceCombo = booking.ServiceCombo || booking.serviceCombo
+                      const service = booking.Service || booking.service
+                      const item = serviceCombo || service
+                      const itemName = item?.Name || item?.name || ''
+                      
+                      // Debug log chi tiết
+                      if (import.meta.env.DEV) {
+                        console.log('🔍 [PaymentPage] Render - Service/Combo info:', {
+                          hasServiceCombo: !!serviceCombo,
+                          hasService: !!service,
+                          itemName,
+                          itemNameLength: itemName?.length || 0,
+                          serviceComboRaw: serviceCombo,
+                          serviceRaw: service,
+                          serviceComboId: booking.ServiceComboId || booking.serviceComboId,
+                          serviceId: booking.ServiceId || booking.serviceId
+                        })
+                      }
+                      
+                      // Luôn hiển thị "Dịch vụ" row, nếu không có tên thì hiển thị placeholder
+                      const serviceComboId = booking.ServiceComboId || booking.serviceComboId
+                      const serviceId = booking.ServiceId || booking.serviceId
+                      
+                      if (!itemName && (serviceComboId || serviceId)) {
+                        // Đang fetch hoặc chưa có dữ liệu
+                        return (
+                          <div className="pay-info-row">
+                            <span className="pay-info-label">Dịch vụ</span>
+                            <span className="pay-info-value">Đang tải thông tin...</span>
+                          </div>
+                        )
+                      }
+                      
+                      if (!itemName) {
+                        // Không có ServiceComboId/ServiceId, không hiển thị
+                        return null
+                      }
+                      
+                      // Có tên dịch vụ, hiển thị
+                      return (
+                        <div className="pay-info-row">
+                          <span className="pay-info-label">Dịch vụ</span>
+                          <span className="pay-info-value" style={{ fontWeight: '600', fontSize: '1.05rem' }}>
+                            {itemName}
+                          </span>
+                        </div>
+                      )
+                    })()}
 
+                    {/* 2. Mô tả */}
+                    {(() => {
+                      const serviceCombo = booking.ServiceCombo || booking.serviceCombo
+                      const service = booking.Service || booking.service
+                      const item = serviceCombo || service
+                      const itemDescription = item?.Description || item?.description || ''
+                      
+                      if (!itemDescription) return null
+                      
+                      return (
+                        <div className="pay-info-row">
+                          <span className="pay-info-label">Mô tả</span>
+                          <div className="pay-info-value" style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: '#6b7280' }}>
+                            {itemDescription}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* 3. Địa chỉ */}
+                    {(() => {
+                      const serviceCombo = booking.ServiceCombo || booking.serviceCombo
+                      const itemAddress = serviceCombo?.Address || serviceCombo?.address || ''
+                      
+                      if (!itemAddress) return null
+                      
+                      return (
+                        <div className="pay-info-row">
+                          <span className="pay-info-label">Địa chỉ</span>
+                          <span className="pay-info-value">{itemAddress}</span>
+                        </div>
+                      )
+                    })()}
+
+                    {/* 4. Trạng thái */}
                     <div className="pay-info-row">
                       <span className="pay-info-label">Trạng thái</span>
                       <span className={`pay-info-value pay-status-badge status-${bookingStatus.toLowerCase()}`}>
@@ -700,42 +908,42 @@ const PaymentPage = () => {
                       </span>
                     </div>
 
-                    {booking.StartDate && (
+                    {/* 5. Ngày đặt */}
+                    {booking.BookingDate && (
                       <div className="pay-info-row">
-                        <span className="pay-info-label">Ngày bắt đầu</span>
+                        <span className="pay-info-label">Ngày đặt</span>
                         <span className="pay-info-value">
-                          {new Date((booking.StartDate || booking.startDate) as string).toLocaleDateString('vi-VN')}
+                          {new Date((booking.BookingDate || booking.bookingDate) as string).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                     )}
 
-                    {booking.EndDate && (
-                      <div className="pay-info-row">
-                        <span className="pay-info-label">Ngày kết thúc</span>
-                        <span className="pay-info-value">
-                          {new Date((booking.EndDate || booking.endDate) as string).toLocaleDateString('vi-VN')}
-                        </span>
-                      </div>
-                    )}
+                    {/* 6. Số lượng */}
+                    <div className="pay-info-row">
+                      <span className="pay-info-label">Số lượng</span>
+                      <span className="pay-info-value">
+                        {(booking.Quantity || booking.quantity || 1) as number} người
+                      </span>
+                    </div>
 
-                    {booking.Quantity && (
-                      <div className="pay-info-row">
-                        <span className="pay-info-label">Số lượng</span>
-                        <span className="pay-info-value">
-                          {(booking.Quantity || booking.quantity) as number} người
-                        </span>
-                      </div>
-                    )}
-
+                    {/* 7. Ghi chú */}
                     {booking.Notes && (() => {
                       const notes = (booking.Notes || booking.notes || '') as string
                       // Tách phần ghi chú thực sự (bỏ phần ADDITIONAL_SERVICES_IDS)
                       const notesWithoutIds = notes.replace(/\n?\[ADDITIONAL_SERVICES_IDS:[^\]]+\]/g, '').trim()
                       
+                      if (!notesWithoutIds) return null
+                      
                       return (
                         <div className="pay-info-row">
                           <span className="pay-info-label">Ghi chú</span>
-                          <div className="pay-info-value" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                          <div className="pay-info-value" style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: '#6b7280' }}>
                             {notesWithoutIds}
                           </div>
                         </div>
@@ -821,7 +1029,7 @@ const PaymentPage = () => {
                       <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column', width: '100%' }}>
                         <Button 
                           variant="default" 
-                          onClick={() => navigate(`/payment-success/${bookingIdValue}`)} 
+                          onClick={() => navigate(`/payment/success/${bookingIdValue}`)} 
                           className="pay-success-button"
                         >
                           Xem chi tiết thanh toán

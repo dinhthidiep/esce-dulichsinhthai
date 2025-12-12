@@ -83,6 +83,29 @@ const BookingPage = () => {
     }
   }, [id]);
 
+  // Auto-fill ngày mặc định để tránh lỗi validateForm khi người dùng chưa chọn
+  useEffect(() => {
+    if (service) {
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Nếu chưa có startDate, set mặc định hôm nay
+      if (!startDate) {
+        setStartDate(todayStr);
+      }
+
+      // Nếu đang ở chế độ multi-day và chưa có endDate, set +1 ngày
+      if (bookingType === 'multi-day') {
+        const start = startDate ? new Date(startDate) : new Date();
+        const next = new Date(start);
+        next.setDate(start.getDate() + 1);
+        const nextStr = next.toISOString().split('T')[0];
+        if (!endDate || new Date(endDate) <= start) {
+          setEndDate(nextStr);
+        }
+      }
+    }
+  }, [service, bookingType, startDate, endDate]);
+
   // Lấy userTier từ user info
   useEffect(() => {
     try {
@@ -146,7 +169,9 @@ const BookingPage = () => {
         }
 
         // Check service status
+        // Accept multiple statuses as "available" for booking
         const status = serviceData.Status || serviceData.status || 'open';
+        const normalizedStatus = String(status).toLowerCase();
         if (import.meta.env.DEV) {
           console.log('  - Service Status:', status)
           console.log('  - Service Data:', {
@@ -158,9 +183,11 @@ const BookingPage = () => {
           })
         }
         
-        if (status.toLowerCase() !== 'open') {
+        // Allow booking when status is one of: open / approved / active
+        const allowedStatuses = ['open', 'approved', 'active', 'available'];
+        if (!allowedStatuses.includes(normalizedStatus)) {
           if (import.meta.env.DEV) {
-            console.warn('⚠️ [BookingPage] Service không có status "open":', status)
+            console.warn('⚠️ [BookingPage] Service không ở trạng thái khả dụng:', status)
           }
           setError('Dịch vụ này hiện không khả dụng để đặt');
           setLoading(false);
@@ -427,7 +454,9 @@ const BookingPage = () => {
 
     // Check service status
     const status = service.Status || service.status || 'open';
-    if (status.toLowerCase() !== 'open') {
+    const normalizedStatus = String(status).toLowerCase();
+    const allowedStatuses = ['open', 'approved', 'active', 'available'];
+    if (!allowedStatuses.includes(normalizedStatus)) {
       setValidationError('Dịch vụ này không khả dụng');
       return false;
     }
@@ -577,11 +606,13 @@ const BookingPage = () => {
       const finalTotal = baseTotal + additionalServicesTotal;
       
       const currentStatus = currentService.Status || currentService.status || 'open';
+      const normalizedCurrentStatus = String(currentStatus).toLowerCase();
+      const allowedStatuses = ['open', 'approved', 'active', 'available'];
       const currentAvailableSlots = currentService.AvailableSlots !== undefined 
         ? currentService.AvailableSlots 
         : (currentService.availableSlots !== undefined ? currentService.availableSlots : 0);
       
-      if (currentStatus.toLowerCase() !== 'open') {
+      if (!allowedStatuses.includes(normalizedCurrentStatus)) {
         setValidationError('Dịch vụ này đã không còn khả dụng');
         setSubmitting(false);
         return;
@@ -874,7 +905,10 @@ const BookingPage = () => {
     ? service.AvailableSlots 
     : (service.availableSlots !== undefined ? service.availableSlots : 0);
   const status = service.Status || service.status || 'open';
-  const isAvailable = status.toLowerCase() === 'open' && (availableSlots === 0 || availableSlots > 0);
+  const normalizedStatus = String(status).toLowerCase();
+  // Cho phép đặt khi status nằm trong danh sách khả dụng
+  const allowedStatuses = ['open', 'approved', 'active', 'available'];
+  const isAvailable = allowedStatuses.includes(normalizedStatus) && (availableSlots === 0 || availableSlots > 0);
   
   if (import.meta.env.DEV) {
     console.log('✅ [BookingPage] Rendering booking form:', {
@@ -986,7 +1020,7 @@ const BookingPage = () => {
                           onChange={handleQuantityChange}
                           min="1"
                           max={availableSlots > 0 ? availableSlots : undefined}
-                          bk-required
+                          required
                           disabled={!isAvailable}
                         />
                         <button
@@ -1081,7 +1115,7 @@ const BookingPage = () => {
                                 setValidationError('');
                               }}
                               min={new Date().toISOString().split('T')[0]}
-                              bk-required
+                              required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />
@@ -1112,7 +1146,7 @@ const BookingPage = () => {
                                 setStartTime(e.target.value);
                                 setValidationError('');
                               }}
-                              bk-required
+                              required
                               disabled={!isAvailable}
                             />
                           </div>
@@ -1151,7 +1185,7 @@ const BookingPage = () => {
                                 setValidationError('');
                               }}
                               min={new Date().toISOString().split('T')[0]}
-                              bk-required
+                              required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />
@@ -1180,7 +1214,7 @@ const BookingPage = () => {
                                 setValidationError('');
                               }}
                               min={startDate || new Date().toISOString().split('T')[0]}
-                              bk-required
+                              required
                               disabled={!isAvailable}
                               placeholder="dd / mm / yyyy"
                             />

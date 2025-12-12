@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import Button from './ui/Button'
@@ -7,15 +7,14 @@ import { Card, CardContent } from './ui/Card'
 import LoadingSpinner from './LoadingSpinner'
 import { 
   XCircleIcon,
-  ArrowRightIcon,
-  AlertCircleIcon,
   RefreshCwIcon,
-  CreditCardIcon
+  MapPinIcon,
+  HomeIcon
 } from './icons/index'
 import { formatPrice } from '~/lib/utils'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
-import './PaymentFailurePage.css'
+import './PaymentSuccessPage.css'
 
 interface BookingData {
   Id?: number
@@ -26,10 +25,6 @@ interface BookingData {
   totalAmount?: number
   Status?: string
   status?: string
-  StartDate?: string
-  startDate?: string
-  EndDate?: string
-  endDate?: string
   Quantity?: number
   quantity?: number
   ServiceCombo?: {
@@ -39,8 +34,6 @@ interface BookingData {
     name?: string
     Address?: string
     address?: string
-    Image?: string
-    image?: string
   }
   serviceCombo?: {
     Id?: number
@@ -49,8 +42,6 @@ interface BookingData {
     name?: string
     Address?: string
     address?: string
-    Image?: string
-    image?: string
   }
   [key: string]: unknown
 }
@@ -64,14 +55,13 @@ interface PaymentData {
   status?: string
   PaymentMethod?: string
   paymentMethod?: string
-  CreatedAt?: string
-  createdAt?: string
   [key: string]: unknown
 }
 
 const PaymentFailurePage = () => {
   const { bookingId } = useParams<{ bookingId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [booking, setBooking] = useState<BookingData | null>(null)
   const [payment, setPayment] = useState<PaymentData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -80,8 +70,26 @@ const PaymentFailurePage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!bookingId || isNaN(parseInt(bookingId))) {
-        setError('Không tìm thấy thông tin đặt dịch vụ')
+      // Kiểm tra query params
+      const reason = searchParams.get('reason')
+      const errorParam = searchParams.get('error')
+      
+      if (reason === 'cancelled') {
+        setFailureReason('Bạn đã hủy giao dịch thanh toán. Vui lòng thử lại nếu bạn muốn tiếp tục.')
+      } else if (errorParam) {
+        if (errorParam === 'missing_order_code') {
+          setFailureReason('Không tìm thấy thông tin giao dịch. Vui lòng thử lại.')
+        } else if (errorParam === 'booking_not_found') {
+          setFailureReason('Không tìm thấy thông tin đặt dịch vụ. Vui lòng liên hệ hỗ trợ.')
+        } else if (errorParam === 'server_error') {
+          setFailureReason('Có lỗi xảy ra từ hệ thống. Vui lòng thử lại sau.')
+        }
+      }
+
+      if (!bookingId || isNaN(parseInt(bookingId)) || parseInt(bookingId) === 0) {
+        if (!errorParam && !reason) {
+          setError('Không tìm thấy thông tin đặt dịch vụ')
+        }
         setLoading(false)
         return
       }
@@ -113,16 +121,24 @@ const PaymentFailurePage = () => {
             setPayment(paymentResponse.data)
             const paymentStatus = paymentResponse.data.Status || paymentResponse.data.status || ''
             if (paymentStatus.toLowerCase() === 'failed' || paymentStatus.toLowerCase() === 'cancelled') {
-              setFailureReason('Giao dịch đã bị hủy hoặc thất bại. Vui lòng thử lại.')
+              if (!failureReason) {
+                setFailureReason('Giao dịch đã bị hủy hoặc thất bại. Vui lòng thử lại.')
+              }
             } else {
-              setFailureReason('Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại.')
+              if (!failureReason) {
+                setFailureReason('Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại.')
+              }
             }
           } else {
-            setFailureReason('Không thể xác nhận trạng thái thanh toán. Vui lòng thử lại.')
+            if (!failureReason) {
+              setFailureReason('Không thể xác nhận trạng thái thanh toán. Vui lòng thử lại.')
+            }
           }
         } catch (err) {
           console.warn('Không thể lấy thông tin thanh toán:', err)
-          setFailureReason('Không thể kết nối đến hệ thống thanh toán. Vui lòng thử lại sau.')
+          if (!failureReason) {
+            setFailureReason('Không thể kết nối đến hệ thống thanh toán. Vui lòng thử lại sau.')
+          }
         }
       } catch (err: unknown) {
         console.error('Lỗi khi tải dữ liệu:', err)
@@ -131,7 +147,7 @@ const PaymentFailurePage = () => {
           setError('Không tìm thấy thông tin đặt dịch vụ')
         } else if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
           setError('Bạn không có quyền xem thông tin này. Vui lòng đăng nhập lại.')
-          navigate('/login', { state: { returnUrl: `/payment-failure/${bookingId}` } })
+          navigate('/login', { state: { returnUrl: `/payment/failure/${bookingId}` } })
         } else {
           setError('Không thể tải thông tin. Vui lòng thử lại sau.')
         }
@@ -141,13 +157,13 @@ const PaymentFailurePage = () => {
     }
 
     fetchData()
-  }, [bookingId, navigate])
+  }, [bookingId, navigate, searchParams])
 
   if (loading) {
     return (
-      <div className="pay-fail-payment-failure-page">
+      <div className="payment-result-page">
         <Header />
-        <main className="pay-fail-payment-failure-main">
+        <main className="payment-result-main">
           <LoadingSpinner message="Đang tải thông tin..." />
         </main>
       </div>
@@ -156,13 +172,13 @@ const PaymentFailurePage = () => {
 
   if (error || !booking) {
     return (
-      <div className="pay-fail-payment-failure-page">
+      <div className="payment-result-page">
         <Header />
-        <main className="pay-fail-payment-failure-main">
-          <div className="pay-fail-payment-failure-container">
-            <div className="pay-fail-error-container" role="alert">
-              <h2 className="pay-fail-error-title">Không thể tải thông tin</h2>
-              <p className="pay-fail-error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
+        <main className="payment-result-main">
+          <div className="payment-result-container">
+            <div className="payment-error-container" role="alert">
+              <h2 className="payment-error-title">Không thể tải thông tin</h2>
+              <p className="payment-error-message">{error || 'Thông tin đặt dịch vụ không tồn tại'}</p>
               <Button variant="default" onClick={() => navigate('/services')}>
                 Quay lại danh sách dịch vụ
               </Button>
@@ -185,153 +201,98 @@ const PaymentFailurePage = () => {
   const paymentMethod = payment?.PaymentMethod || payment?.paymentMethod || 'PayOS'
 
   return (
-    <div className="pay-fail-payment-failure-page">
+    <div className="payment-result-page payment-failure-page">
       <Header />
-      <main className="pay-fail-payment-failure-main">
-        <div className="pay-fail-payment-failure-container">
+      <main className="payment-result-main">
+        <div className="payment-result-container">
           {/* Failure Icon */}
-          <div className="pay-fail-failure-icon-wrapper">
-            <XCircleIcon className="pay-fail-failure-icon" />
+          <div className="payment-result-icon-wrapper">
+            <div className="payment-result-icon-circle payment-failure-icon-circle">
+              <XCircleIcon className="payment-result-icon" />
+            </div>
           </div>
 
-          {/* Failure Message */}
-          <Card className="pay-fail-failure-card">
-            <CardContent>
-              <h1 className="pay-fail-failure-title">Thanh toán thất bại</h1>
-              <p className="pay-fail-failure-message">
-                Rất tiếc, giao dịch thanh toán của bạn không thể hoàn tất. Vui lòng kiểm tra lại thông tin và thử lại.
-              </p>
+          {/* Failure Title */}
+          <h1 className="payment-result-title payment-failure-title">Thanh toán thất bại</h1>
+          <p className="payment-result-subtitle payment-failure-subtitle">
+            Rất tiếc, giao dịch thanh toán của bạn không thể hoàn tất. {failureReason || 'Vui lòng kiểm tra lại thông tin và thử lại.'}
+          </p>
 
-              {/* Failure Reason */}
-              {failureReason && (
-                <div className="pay-fail-failure-reason-box">
-                  <AlertCircleIcon className="pay-fail-alert-icon" />
-                  <p className="pay-fail-failure-reason-text">{failureReason}</p>
+          {/* Details Card */}
+          <Card className="payment-result-card">
+            <CardContent>
+              {/* Booking Code */}
+              <div className="payment-detail-item">
+                <span className="payment-detail-label">Mã đặt dịch vụ:</span>
+                <span className="payment-detail-value payment-booking-code">{bookingNumber}</span>
+              </div>
+
+              {/* Service */}
+              <div className="payment-detail-item">
+                <span className="payment-detail-label">Dịch vụ:</span>
+                <span className="payment-detail-value">{serviceName}</span>
+              </div>
+
+              {/* Location */}
+              {serviceAddress && (
+                <div className="payment-detail-item">
+                  <span className="payment-detail-label">Địa điểm:</span>
+                  <span className="payment-detail-value">{serviceAddress}</span>
                 </div>
               )}
 
-              {/* Booking Details */}
-              <div className="pay-fail-details-section">
-                <h2 className="pay-fail-details-title">Thông tin đặt dịch vụ</h2>
-                <div className="pay-fail-details-list">
-                  <div className="pay-fail-detail-item">
-                    <span className="pay-fail-detail-label">Mã đặt dịch vụ:</span>
-                    <span className="pay-fail-detail-value">{bookingNumber}</span>
-                  </div>
-                  <div className="pay-fail-detail-item">
-                    <span className="pay-fail-detail-label">Dịch vụ:</span>
-                    <span className="pay-fail-detail-value">{serviceName}</span>
-                  </div>
-                  {serviceAddress && (
-                    <div className="pay-fail-detail-item">
-                      <span className="pay-fail-detail-label">Địa điểm:</span>
-                      <span className="pay-fail-detail-value">{serviceAddress}</span>
-                    </div>
-                  )}
-                  {quantity > 0 && (
-                    <div className="pay-fail-detail-item">
-                      <span className="pay-fail-detail-label">Số lượng:</span>
-                      <span className="pay-fail-detail-value">{quantity} người</span>
-                    </div>
-                  )}
+              {/* Quantity */}
+              {quantity > 0 && (
+                <div className="payment-detail-item">
+                  <span className="payment-detail-label">Số lượng:</span>
+                  <span className="payment-detail-value">{quantity} người</span>
                 </div>
+              )}
+
+              {/* Amount */}
+              <div className="payment-detail-item">
+                <span className="payment-detail-label">Số tiền:</span>
+                <span className="payment-detail-value payment-amount">{formatPrice(paymentAmount)}</span>
               </div>
 
-              {/* Payment Details */}
-              <div className="pay-fail-details-section">
-                <h2 className="pay-fail-details-title">Thông tin thanh toán</h2>
-                <div className="pay-fail-details-list">
-                  <div className="pay-fail-detail-item">
-                    <span className="pay-fail-detail-label">Số tiền:</span>
-                    <span className="pay-fail-detail-value pay-fail-amount">
-                      {formatPrice(paymentAmount)}
-                    </span>
-                  </div>
-                  <div className="pay-fail-detail-item">
-                    <span className="pay-fail-detail-label">
-                      <CreditCardIcon className="pay-fail-detail-icon" />
-                      Phương thức thanh toán:
-                    </span>
-                    <span className="pay-fail-detail-value">{paymentMethod}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Common Issues */}
-              <div className="pay-fail-common-issues-section">
-                <h3 className="pay-fail-common-issues-title">Các nguyên nhân thường gặp:</h3>
-                <ul className="pay-fail-issues-list">
-                  <li className="pay-fail-issue-item">
-                    <span className="pay-fail-issue-icon">•</span>
-                    <span className="pay-fail-issue-text">Thông tin thẻ thanh toán không chính xác</span>
-                  </li>
-                  <li className="pay-fail-issue-item">
-                    <span className="pay-fail-issue-icon">•</span>
-                    <span className="pay-fail-issue-text">Số dư tài khoản không đủ</span>
-                  </li>
-                  <li className="pay-fail-issue-item">
-                    <span className="pay-fail-issue-icon">•</span>
-                    <span className="pay-fail-issue-text">Thẻ bị khóa hoặc hết hạn</span>
-                  </li>
-                  <li className="pay-fail-issue-item">
-                    <span className="pay-fail-issue-icon">•</span>
-                    <span className="pay-fail-issue-text">Vượt quá hạn mức giao dịch</span>
-                  </li>
-                  <li className="pay-fail-issue-item">
-                    <span className="pay-fail-issue-icon">•</span>
-                    <span className="pay-fail-issue-text">Lỗi kết nối mạng hoặc hệ thống</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pay-fail-action-buttons">
-                <Button
-                  onClick={() => navigate(`/payment/${bookingIdValue}`)}
-                  variant="default"
-                  size="lg"
-                  className="pay-fail-retry-payment-button"
-                >
-                  <RefreshCwIcon className="pay-fail-button-icon" />
-                  Thử thanh toán lại
-                </Button>
-                <Button
-                  onClick={() => navigate('/profile', { state: { activeTab: 'bookings' } })}
-                  variant="outline"
-                  size="lg"
-                  className="pay-fail-view-booking-button"
-                >
-                  Xem đơn đặt dịch vụ
-                  <ArrowRightIcon className="pay-fail-button-icon" />
-                </Button>
-                <Button
-                  onClick={() => navigate('/services')}
-                  variant="outline"
-                  size="lg"
-                  className="pay-fail-view-services-button"
-                >
-                  Xem thêm dịch vụ
-                </Button>
-                <Button
-                  onClick={() => navigate('/')}
-                  variant="outline"
-                  size="lg"
-                  className="pay-fail-home-button"
-                >
-                  Về trang chủ
-                </Button>
-              </div>
-
-              {/* Support Info */}
-              <div className="pay-fail-support-info-box">
-                <AlertCircleIcon className="pay-fail-support-icon" />
-                <div className="pay-fail-support-content">
-                  <strong>Cần hỗ trợ?</strong>
-                  <p>Nếu bạn gặp vấn đề liên tục, vui lòng liên hệ bộ phận hỗ trợ khách hàng của chúng tôi để được hỗ trợ.</p>
-                </div>
+              {/* Payment Method */}
+              <div className="payment-detail-item">
+                <span className="payment-detail-label">Phương thức thanh toán:</span>
+                <span className="payment-detail-value">{paymentMethod}</span>
               </div>
             </CardContent>
           </Card>
+
+          {/* Action Buttons */}
+          <div className="payment-action-buttons">
+            <Button
+              onClick={() => navigate(`/payment/${bookingIdValue}`)}
+              variant="default"
+              size="lg"
+              className="payment-primary-button payment-retry-button"
+            >
+              <RefreshCwIcon className="payment-button-icon" />
+              Thử thanh toán lại
+            </Button>
+            <Button
+              onClick={() => navigate('/services')}
+              variant="outline"
+              size="lg"
+              className="payment-secondary-button"
+            >
+              <MapPinIcon className="payment-button-icon" />
+              Khám phá thêm điểm đến sinh thái
+            </Button>
+            <Button
+              onClick={() => navigate('/')}
+              variant="outline"
+              size="lg"
+              className="payment-secondary-button"
+            >
+              <HomeIcon className="payment-button-icon" />
+              Về trang chủ
+            </Button>
+          </div>
         </div>
       </main>
       <Footer />
@@ -340,4 +301,3 @@ const PaymentFailurePage = () => {
 }
 
 export default PaymentFailurePage
-
