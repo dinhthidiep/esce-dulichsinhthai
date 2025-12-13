@@ -40,14 +40,20 @@ using System.Threading.Tasks;
 var builder = WebApplication.CreateBuilder(args);
 
 
-// === CORS CHO NGROK + PAYOS ===
+// === CORS CHO NGROK + PAYOS + SIGNALR ===
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                "http://localhost:5173",  // Vite dev server
+                "http://localhost:3000",  // React dev server
+                "http://localhost:5002",  // Backend HTTP
+                "https://localhost:7267"  // Backend HTTPS
+              )
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); // Cần cho SignalR với JWT token
     });
 });
 
@@ -309,7 +315,8 @@ app.MapGet("/", context =>
 
 
 // SignalR
-app.MapHub<NotificationHub>("/notificationhub"); // Đã bật SignalR Hub
+app.MapHub<NotificationHub>("/notificationhub"); // Notification Hub
+app.MapHub<ChatHub>("/chathub"); // Chat Hub cho tin nhắn giữa users
 
 
 app.Run();

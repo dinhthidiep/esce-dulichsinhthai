@@ -205,8 +205,12 @@ namespace ESCE_SYSTEM.Controllers
                     return Unauthorized("Invalid user information");
                 }
 
-                var updatedUser = await _userService.UpdateProfileAsync(userId, updateDto);
-                return Ok(new { message = "Profile updated successfully", user = updatedUser });
+                // Update profile
+                await _userService.UpdateProfileAsync(userId, updateDto);
+                
+                // Reload user với đầy đủ thông tin (bao gồm Role) để trả về
+                var updatedUserDto = await _userService.GetUserDtoByIdAsync(userId);
+                return Ok(new { message = "Profile updated successfully", user = updatedUserDto });
             }
             catch (Exception exception)
             {

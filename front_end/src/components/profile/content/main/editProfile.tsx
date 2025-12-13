@@ -283,6 +283,9 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
       const response = await updateProfileApi(payload)
       const updatedUser = response.user
 
+      console.log('[EditProfile] Updated user from API:', updatedUser)
+      console.log('[EditProfile] Payload sent:', payload)
+
       const updatedUserInfo = {
         ...userInfo,
         id: updatedUser.id,
@@ -296,6 +299,8 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
         dateOfBirth: extractDateOnly(updatedUser.dob),
         dob: updatedUser.dob ?? null
       }
+
+      console.log('[EditProfile] Updated userInfo to save:', updatedUserInfo)
 
       localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
       setFormData((prev) => ({
@@ -678,6 +683,9 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
                   onChange={handleInputChange('dateOfBirth')}
                   InputLabelProps={{
                     shrink: true
+                  }}
+                  inputProps={{
+                    max: new Date().toISOString().split('T')[0] // Giới hạn ngày tối đa là hôm nay
                   }}
                   InputProps={{
                     startAdornment: (

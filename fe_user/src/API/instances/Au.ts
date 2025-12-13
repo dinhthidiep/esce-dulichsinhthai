@@ -233,6 +233,34 @@ export const verifyOtpForRegister = async (email: string, otp: string) => {
   }
 }
 
+export const checkEmail = async (email: string): Promise<{ isExisting: boolean }> => {
+  try {
+    const response = await fetch(`${backend_url}/api/Auth/CheckEmail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ Email: email }),
+    })
+
+    if (!response.ok) {
+      // If API fails, assume email doesn't exist to allow user to proceed
+      return { isExisting: false }
+    }
+
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = await response.json()
+      return { isExisting: data.isExisting || data.IsExisting || false }
+    }
+    return { isExisting: false }
+  } catch (error) {
+    console.error('Check email failed:', error)
+    // If check fails, allow user to proceed
+    return { isExisting: false }
+  }
+}
+
 export const register = async (userEmail: string, password: string, fullName: string, phone: string = '') => {
   try {
     const response = await fetch(`${backend_url}/api/Auth/register`, {

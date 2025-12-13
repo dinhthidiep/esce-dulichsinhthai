@@ -70,8 +70,24 @@ const LoginForm = () => {
       
       // Lưu thông tin user nếu có (backend có thể trả về UserInfo hoặc userInfo)
       const userInfo = response.UserInfo || response.userInfo;
+      
+      // Kiểm tra role_id - chỉ cho phép Admin (role_id = 1) đăng nhập
       if (userInfo) {
+        const roleId = userInfo.RoleId || userInfo.roleId;
+        if (roleId !== 1) {
+          // Nếu không phải Admin, hiển thị lỗi như email/password sai
+          setGeneralError('Email hoặc Mật khẩu không đúng');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Lưu userInfo nếu là Admin
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      } else {
+        // Nếu không có userInfo, không cho đăng nhập
+        setGeneralError('Email hoặc Mật khẩu không đúng');
+        setIsLoading(false);
+        return;
       }
       
       // Step 2: Sign in to Firebase Auth (required for Firebase Storage)

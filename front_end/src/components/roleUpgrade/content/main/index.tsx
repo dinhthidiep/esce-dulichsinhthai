@@ -114,6 +114,8 @@ export default function MainRoleUpgradeContent() {
   const [hostRequests, setHostRequests] = useState<HostCertificate[]>([])
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminError, setAdminError] = useState<string | null>(null)
+  const [adminSuccess, setAdminSuccess] = useState<string | null>(null)
+  const [processingId, setProcessingId] = useState<number | null>(null)
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean
     request: AdminRequest | null
@@ -122,6 +124,13 @@ export default function MainRoleUpgradeContent() {
     open: false,
     request: null,
     comment: ''
+  })
+  const [approveDialog, setApproveDialog] = useState<{
+    open: boolean
+    request: AdminRequest | null
+  }>({
+    open: false,
+    request: null
   })
 
   const loadAdminRequests = async () => {
@@ -155,13 +164,21 @@ export default function MainRoleUpgradeContent() {
     })
   }, [agencyRequests, hostRequests])
 
-  const handleApproveRequest = async (request: AdminRequest) => {
+  const handleApproveRequest = async () => {
+    if (!approveDialog.request) return
+    const request = approveDialog.request
+    
     try {
+      setProcessingId(request.certificateId)
       await approveCertificate({ certificateId: request.certificateId, type: request.type })
       setAdminError(null)
-      loadAdminRequests()
+      setAdminSuccess(`Đã phê duyệt yêu cầu nâng cấp ${request.type === 'Agency' ? 'Agency' : 'Host'} của ${request.applicantName} thành công!`)
+      setApproveDialog({ open: false, request: null })
+      await loadAdminRequests()
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : 'Không thể phê duyệt yêu cầu.')
+    } finally {
+      setProcessingId(null)
     }
   }
 
@@ -171,17 +188,24 @@ export default function MainRoleUpgradeContent() {
       setAdminError('Vui lòng nhập lý do từ chối.')
       return
     }
+    
+    const request = rejectDialog.request
+    
     try {
+      setProcessingId(request.certificateId)
       await rejectCertificate({
-        certificateId: rejectDialog.request.certificateId,
-        type: rejectDialog.request.type,
+        certificateId: request.certificateId,
+        type: request.type,
         comment: rejectDialog.comment.trim()
       })
       setRejectDialog({ open: false, request: null, comment: '' })
       setAdminError(null)
-      loadAdminRequests()
+      setAdminSuccess(`Đã từ chối yêu cầu nâng cấp ${request.type === 'Agency' ? 'Agency' : 'Host'} của ${request.applicantName}.`)
+      await loadAdminRequests()
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : 'Không thể từ chối yêu cầu.')
+    } finally {
+      setProcessingId(null)
     }
   }
 
@@ -229,6 +253,15 @@ export default function MainRoleUpgradeContent() {
           }
         />
         <CardContent>
+          {adminSuccess && (
+            <Alert 
+              severity="success" 
+              sx={{ borderRadius: '1.2rem', mb: 2 }}
+              onClose={() => setAdminSuccess(null)}
+            >
+              {adminSuccess}
+            </Alert>
+          )}
           {adminLoading ? (
             <Skeleton
               variant="rectangular"
@@ -236,7 +269,11 @@ export default function MainRoleUpgradeContent() {
               sx={{ borderRadius: '1.6rem', bgcolor: 'rgba(148,163,184,0.25)' }}
             />
           ) : adminError ? (
-            <Alert severity="error" sx={{ borderRadius: '1.2rem' }}>
+            <Alert 
+              severity="error" 
+              sx={{ borderRadius: '1.2rem' }}
+              onClose={() => setAdminError(null)}
+            >
               {adminError}
             </Alert>
           ) : unifiedRequests.length === 0 ? (
@@ -330,11 +367,11 @@ export default function MainRoleUpgradeContent() {
                                   variant="contained"
                                   color="success"
                                   startIcon={<CheckCircleIcon />}
-                                  disabled={!canModerate(request.status)}
-                                  onClick={() => handleApproveRequest(request)}
+                                  disabled={!canModerate(request.status) || processingId === request.certificateId}
+                                  onClick={() => setApproveDialog({ open: true, request })}
                                   fullWidth
                                 >
-                                  Phê duyệt
+                                  {processingId === request.certificateId ? 'Đang xử lý...' : 'Phê duyệt'}
                                 </Button>
                               </span>
                             </Tooltip>
@@ -344,7 +381,7 @@ export default function MainRoleUpgradeContent() {
                                   variant="outlined"
                                   color="error"
                                   startIcon={<CancelIcon />}
-                                  disabled={!canModerate(request.status)}
+                                  disabled={!canModerate(request.status) || processingId === request.certificateId}
                                   onClick={() =>
                                     setRejectDialog({
                                       open: true,
@@ -370,6 +407,54 @@ export default function MainRoleUpgradeContent() {
         </CardContent>
       </Card>
 
+      {/* Approve Confirmation Dialog */}
+      <Dialog
+        open={approveDialog.open}
+        onClose={() => setApproveDialog({ open: false, request: null })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Xác nhận phê duyệt</DialogTitle>
+        <DialogContent>
+          {approveDialog.request && (
+            <Box>
+              <Typography sx={{ mb: 1 }}>
+                Bạn có chắc chắn muốn phê duyệt yêu cầu nâng cấp này không?
+              </Typography>
+              <Box sx={{ p: 2, bgcolor: 'rgba(76,175,80,0.08)', borderRadius: '0.8rem', mt: 2 }}>
+                <Typography sx={{ fontWeight: 600 }}>{approveDialog.request.applicantName}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '1.4rem' }}>
+                  Email: {approveDialog.request.applicantEmail}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '1.4rem' }}>
+                  Vai trò: {approveDialog.request.type === 'Agency' ? 'Travel Agency' : 'Host'}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '1.4rem' }}>
+                  Doanh nghiệp: {approveDialog.request.businessName}
+                </Typography>
+              </Box>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Sau khi phê duyệt, tài khoản sẽ được nâng cấp vai trò tự động.
+              </Alert>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setApproveDialog({ open: false, request: null })}>
+            Hủy
+          </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            onClick={handleApproveRequest}
+            disabled={processingId !== null}
+          >
+            {processingId !== null ? 'Đang xử lý...' : 'Xác nhận phê duyệt'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reject Dialog */}
       <Dialog
         open={rejectDialog.open}
         onClose={() => setRejectDialog({ open: false, request: null, comment: '' })}
@@ -405,8 +490,13 @@ export default function MainRoleUpgradeContent() {
           <Button onClick={() => setRejectDialog({ open: false, request: null, comment: '' })}>
             Hủy
           </Button>
-          <Button variant="contained" color="error" onClick={handleRejectRequest}>
-            Từ chối
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={handleRejectRequest}
+            disabled={processingId !== null}
+          >
+            {processingId !== null ? 'Đang xử lý...' : 'Từ chối'}
           </Button>
         </DialogActions>
       </Dialog>

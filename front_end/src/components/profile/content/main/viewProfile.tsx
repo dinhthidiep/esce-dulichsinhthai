@@ -117,8 +117,11 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
       setIsLoading(true)
       setError(null)
       try {
+        console.log('[ViewProfile] Loading profile from API...')
         const profile = await fetchProfile()
         if (!isMounted) return
+
+        console.log('[ViewProfile] Profile received from API:', profile)
 
         const normalizedProfile: UserInfo = {
           id: profile.id,
@@ -142,10 +145,11 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
               : undefined)
         }
 
+        console.log('[ViewProfile] Normalized profile:', normalizedProfile)
         setUserInfo(normalizedProfile)
         localStorage.setItem('userInfo', JSON.stringify(normalizedProfile))
       } catch (err) {
-        console.error('Failed to load profile', err)
+        console.error('[ViewProfile] Failed to load profile', err)
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Không thể tải thông tin hồ sơ.')
         }
@@ -157,8 +161,22 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
     }
 
     loadProfile()
+
+    // Listen for profile update events
+    const handleProfileUpdate = () => {
+      console.log('[ViewProfile] Received userProfileUpdated event, reloading...')
+      if (isMounted) {
+        // Delay một chút để đảm bảo API đã update xong
+        setTimeout(() => {
+          loadProfile()
+        }, 500)
+      }
+    }
+    window.addEventListener('userProfileUpdated', handleProfileUpdate)
+
     return () => {
       isMounted = false
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate)
     }
   }, [])
 

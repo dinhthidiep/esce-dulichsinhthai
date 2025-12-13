@@ -9,14 +9,35 @@ export default function HeaderChat() {
   const { chat } = useAdminBadges()
 
   return (
-    <Box className="text-center! py-[3.2rem]!">
-      <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
-        <Typography component="h2" className="text-[3.6rem]! font-bold! drop-shadow-2xl! mb-2!">
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1.5,
+        py: '3.2rem',
+        textAlign: 'center'
+      }}
+    >
+      <ChatBubbleOutlineIcon
+        sx={{
+          fontSize: '4rem',
+          color: 'common.black',
+          filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.35))'
+        }}
+      />
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Typography
+          component="h2"
+          sx={{
+            fontSize: '3.2rem',
+            fontWeight: 800
+          }}
+        >
           Tin nhắn
         </Typography>
         {chat > 0 && (
           <Chip
-            icon={<ChatBubbleOutlineIcon />}
             label={`${chat} mới`}
             color="error"
             sx={{
@@ -28,6 +49,16 @@ export default function HeaderChat() {
           />
         )}
       </Stack>
+      <Typography
+        sx={{
+          fontSize: '1.8rem',
+          fontWeight: 600,
+          maxWidth: 640,
+          color: 'text.secondary'
+        }}
+      >
+        Quản lý tin nhắn và hỗ trợ người dùng
+      </Typography>
     </Box>
   )
 }

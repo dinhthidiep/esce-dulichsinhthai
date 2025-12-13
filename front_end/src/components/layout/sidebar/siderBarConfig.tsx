@@ -3,10 +3,10 @@ import HomeIcon from '@mui/icons-material/Home'
 import PostAddIcon from '@mui/icons-material/PostAdd'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import FeedIcon from '@mui/icons-material/Feed'
-import HeadphonesIcon from '@mui/icons-material/Headphones'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ArticleIcon from '@mui/icons-material/Article'
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices'
 import type { SideBarConfigType } from '~/types/menu'
 export const sidebarConfig = [
   {
@@ -27,7 +27,6 @@ export const sidebarConfig = [
     icon: <PostAddIcon />,
     badge: 0
   },
-  
   {
     title: 'Chat',
     path: '/chat',
@@ -41,15 +40,15 @@ export const sidebarConfig = [
     badge: 0
   },
   {
-    title: 'Hỗ trợ',
-    path: '/supports',
-    icon: <HeadphonesIcon />,
+    title: 'Duyệt Bài viết',
+    path: '/post-approvals',
+    icon: <ArticleIcon />,
     badge: 0
   },
   {
-    title: 'Phê duyệt yêu cầu',
-    path: '/support-approvals',
-    icon: <CheckCircleIcon />,
+    title: 'Duyệt Dịch vụ',
+    path: '/service-approvals',
+    icon: <MiscellaneousServicesIcon />,
     badge: 0
   },
   {
@@ -64,5 +63,4 @@ export const sidebarConfig = [
     icon: <AccountCircleIcon />,
     badge: 0
   }
-  
 ] as SideBarConfigType[]

@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { NotificationProvider } from './contexts/NotificationContext'
 import LoadingSpinner from './components/common/LoadingSpinner'
+import ProtectedRoute from './components/common/ProtectedRoute'
 
 // Lazy load MainLayout - nó chứa SideBar và nhiều dependencies nặng
 const MainLayout = lazy(() => import('~/components/layout/main-layout'))
@@ -13,8 +14,9 @@ const Users = lazy(() => import('~/components/users'))
 const Posts = lazy(() => import('~/components/posts'))
 const Chat = lazy(() => import('~/components/chat'))
 const News = lazy(() => import('~/components/news'))
-const Supports = lazy(() => import('~/components/supports'))
 const SupportApprovals = lazy(() => import('~/components/supportApprovals'))
+const PostApprovals = lazy(() => import('~/components/postApprovals'))
+const ServiceApprovals = lazy(() => import('~/components/serviceApprovals'))
 const Profile = lazy(() => import('~/components/profile'))
 const RoleUpgrade = lazy(() => import('~/components/roleUpgrade'))
 
@@ -48,19 +50,25 @@ function App() {
           <Route path="/review-manager" element={<ReviewManager />} />
           <Route path="/notification" element={<Notification />} /> */}
 
-            {/* Các route DÙNG MainLayout */}
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<DashBoard />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/post" element={<Posts />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/news" element={<News />} />
-              <Route path="/supports" element={<Supports />} />
-              <Route path="/support-approvals" element={<SupportApprovals />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/role-upgrade" element={<RoleUpgrade />} />
-              <Route path="/create-tour" element={<CreateTour />} />
-              <Route path="/social-media" element={<SocialMedia />} />
+            {/* Route gốc - redirect về login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+
+            {/* Các route DÙNG MainLayout - cần đăng nhập */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<MainLayout />}>
+                <Route path="/dashboard" element={<DashBoard />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/post" element={<Posts />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/post-approvals" element={<PostApprovals />} />
+                <Route path="/service-approvals" element={<ServiceApprovals />} />
+                <Route path="/support-approvals" element={<SupportApprovals />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/role-upgrade" element={<RoleUpgrade />} />
+                <Route path="/create-tour" element={<CreateTour />} />
+                <Route path="/social-media" element={<SocialMedia />} />
+              </Route>
             </Route>
 
             {/* 404 */}

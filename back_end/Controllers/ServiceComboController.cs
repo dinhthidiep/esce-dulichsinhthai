@@ -78,8 +78,13 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Host")]
         public async Task<IActionResult> Create(ServiceCombo ServiceCombo)
         {
+            // Chỉ Host mới được tạo ServiceCombo
+            var hostId = _userContextService.GetCurrentUserId();
+            ServiceCombo.HostId = hostId;
+            
             var result = await _service.CreateAsync(ServiceCombo);
             return Ok(result);
         }

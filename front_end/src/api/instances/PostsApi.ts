@@ -179,15 +179,47 @@ const normalizePost = (payload: any): PostDto => {
   const likesCount = Array.isArray(likesArray) ? likesArray.length : (payload?.likesCount ?? payload?.LikesCount ?? 0)
   const commentsCount = Array.isArray(commentsArray) ? commentsArray.length : (payload?.commentsCount ?? payload?.CommentsCount ?? 0)
   
-  // Parse likes array
+  // Parse likes array - map reactionType từ ReactionTypeId hoặc ReactionTypeName
   const likes: PostLikeDto[] = Array.isArray(likesArray)
-    ? likesArray.map((like: any) => ({
-        postLikeId: String(like?.postLikeId ?? like?.PostLikeId ?? like?.id ?? like?.Id ?? ''),
-        accountId: String(like?.accountId ?? like?.AccountId ?? like?.userId ?? like?.UserId ?? ''),
-        fullName: like?.fullName ?? like?.FullName ?? like?.name ?? like?.Name ?? 'Người dùng',
-        createdDate: like?.createdDate ?? like?.CreatedDate ?? like?.createdAt ?? like?.CreatedAt ?? new Date().toISOString(),
-        reactionType: like?.reactionType ?? like?.ReactionType ?? 'like'
-      }))
+    ? likesArray.map((like: any) => {
+        // Lấy ReactionTypeId từ backend (1-6)
+        const reactionTypeId = like?.reactionTypeId ?? like?.ReactionTypeId ?? like?.reactionTypeID ?? like?.ReactionTypeID ?? null
+        
+        // Lấy ReactionTypeName từ backend (nếu có)
+        const reactionTypeName = like?.reactionTypeName ?? like?.ReactionTypeName ?? like?.reactionType ?? like?.ReactionType ?? null
+        
+        // Map ReactionTypeId -> reaction type name
+        let reactionType = 'like' // default
+        if (reactionTypeId !== null && reactionTypeId !== undefined) {
+          const id = typeof reactionTypeId === 'string' ? parseInt(reactionTypeId, 10) : Number(reactionTypeId)
+          switch (id) {
+            case 1: reactionType = 'like'; break
+            case 2: reactionType = 'love'; break
+            case 3: reactionType = 'haha'; break
+            case 4: reactionType = 'wow'; break
+            case 5: reactionType = 'sad'; break
+            case 6: reactionType = 'angry'; break
+            default: reactionType = 'like'
+          }
+        } else if (reactionTypeName) {
+          // Nếu có ReactionTypeName, map từ tên
+          const name = String(reactionTypeName).toLowerCase().trim()
+          if (name === 'like' || name === '1') reactionType = 'like'
+          else if (name === 'love' || name === '2') reactionType = 'love'
+          else if (name === 'haha' || name === '3') reactionType = 'haha'
+          else if (name === 'wow' || name === '4') reactionType = 'wow'
+          else if (name === 'sad' || name === '5') reactionType = 'sad'
+          else if (name === 'angry' || name === '6') reactionType = 'angry'
+        }
+        
+        return {
+          postLikeId: String(like?.postLikeId ?? like?.PostLikeId ?? like?.id ?? like?.Id ?? ''),
+          accountId: String(like?.accountId ?? like?.AccountId ?? like?.userId ?? like?.UserId ?? ''),
+          fullName: like?.fullName ?? like?.FullName ?? like?.name ?? like?.Name ?? 'Người dùng',
+          createdDate: like?.createdDate ?? like?.CreatedDate ?? like?.createdAt ?? like?.CreatedAt ?? new Date().toISOString(),
+          reactionType: reactionType
+        }
+      })
     : []
   
   // Tính isLiked: kiểm tra xem current user có trong likes array không
@@ -431,18 +463,22 @@ export const rejectPost = async (postId: number, comment: string): Promise<void>
   })
 }
 
-// Like/Unlike Post (với nhiều loại reaction)
+// React to Post (với nhiều loại reaction)
 // Backend mới: POST /api/PostReaction/{postId}/{reactionTypeId} và DELETE /api/PostReaction/unlike/{postReactionId}
 // reactionTypeId: 1 = Like, 2 = Love, 3 = Haha, 4 = Wow, 5 = Sad, 6 = Angry
-export const toggleLikePost = async (
+export const reactToPost = async (
   postId: number,
-  post?: PostDto,
   reactionTypeId: number = 1
-): Promise<PostDto> => {
+): Promise<{ message: string }> => {
   // Đảm bảo postId là số nguyên hợp lệ
   const validPostId = parseInt(String(postId), 10)
   if (!validPostId || isNaN(validPostId) || validPostId <= 0) {
     throw new Error('ID bài viết không hợp lệ')
+  }
+
+  // Validate reactionTypeId
+  if (reactionTypeId < 1 || reactionTypeId > 6) {
+    throw new Error('Loại cảm xúc không hợp lệ. Vui lòng chọn từ 1-6.')
   }
 
   const token = getAuthToken()
@@ -450,134 +486,32 @@ export const toggleLikePost = async (
     throw new Error('Vui lòng đăng nhập để tiếp tục.')
   }
 
-  // Lấy userId từ token hoặc localStorage
-  let currentUserId: string | number | null = null
   try {
-    const userInfo = localStorage.getItem('userInfo')
-    if (userInfo) {
-      const parsed = JSON.parse(userInfo)
-      currentUserId = parsed?.id || parsed?.Id || parsed?.userId || parsed?.UserId
-    }
-  } catch (err) {
-    console.warn('Could not get userId from localStorage:', err)
-  }
-
-  // Lấy danh sách like hiện tại của post để biết user đã react chưa và loại gì
-  const likes = Array.isArray(post?.likes) ? post!.likes! : []
-  let postReactionId: string | number | null = null
-  let currentReactionType: string | null = null
-  
-  if (currentUserId && likes.length > 0) {
-    const currentUserIdStr = String(currentUserId)
-    const userLike = likes.find((like: PostLikeDto) => {
-      const likeAccountId = String(like.accountId ?? '')
-      return likeAccountId === currentUserIdStr
-    })
-    if (userLike && userLike.postLikeId) {
-      postReactionId = userLike.postLikeId
-      currentReactionType = (userLike.reactionType ?? '').toString().toLowerCase()
-    }
-  }
-
-  // Mapping reactionTypeId -> tên reaction trong backend
-  const targetReactionName = (() => {
-    switch (reactionTypeId) {
-      case 1: return 'like'
-      case 2: return 'love'
-      case 3: return 'haha'
-      case 4: return 'wow'
-      case 5: return 'sad'
-      case 6: return 'angry'
-      default: return 'like'
-    }
-  })()
-
-  // Nếu user đã có reaction cùng loại -> bỏ reaction (unlike)
-  if (postReactionId && currentReactionType && currentReactionType === targetReactionName) {
-      const response = await fetchWithFallback(`/api/PostReaction/unlike/${postReactionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        const fallbackMessage = `HTTP ${response.status}: ${response.statusText}`
-        const errorMessage = await extractErrorMessage(response, fallbackMessage)
-        throw new Error(errorMessage)
-      }
-
-      console.log('[PostsApi] Successfully unliked post:', validPostId)
-
-    // Lấy lại bài viết đã cập nhật từ backend (bao gồm likes/reactions mới)
-    return await fetchPostById(validPostId)
-  }
-
-  // Nếu chưa có reaction, hoặc đang đổi sang loại khác -> gọi ReactToPost với reactionTypeId tương ứng
-  try {
-    console.log('[PostsApi] Attempting to react to post:', {
+    console.log('[PostsApi] Reacting to post:', {
       postId: validPostId,
-      currentUserId,
-      postLikesCount: likes.length,
-      reactionTypeId,
-      previousReaction: currentReactionType
+      reactionTypeId
     })
 
-    await authorizedRequest(`/api/PostReaction/${validPostId}/${reactionTypeId}`, {
+    const response = await authorizedRequest(`/api/PostReaction/${validPostId}/${reactionTypeId}`, {
       method: 'POST'
     })
     
-    console.log('[PostsApi] Reacted to post:', {
+    console.log('[PostsApi] Reacted to post successfully:', {
       postId: validPostId,
       reactionTypeId,
-      previousReaction: currentReactionType
+      response
     })
 
-    // Lấy lại bài viết đã cập nhật từ backend (bao gồm likes/reactions mới)
-    return await fetchPostById(validPostId)
+    return response
   } catch (error: any) {
     const msg = typeof error?.message === 'string' ? error.message : ''
     
-    console.error('[PostsApi] Error liking post:', {
+    console.error('[PostsApi] Error reacting to post:', {
       postId: validPostId,
+      reactionTypeId,
       error: error,
       message: msg
     })
-    
-    // Nếu backend báo đã thích rồi => tìm postReactionId và gọi unlike
-    if (msg.includes('đã thích bài viết này rồi') || 
-        msg.includes('already liked') ||
-        msg.includes('đã tồn tại') ||
-        msg.includes('Bạn đã thích')) {
-      console.warn('[PostsApi] Post already liked, need to find postReactionId and unlike')
-      
-      // Nếu chưa có postReactionId, cần reload post để lấy danh sách likes mới nhất
-      if (!postReactionId) {
-        throw new Error('Vui lòng thử lại sau khi tải lại trang.')
-      }
-      
-      // Gọi unlike với postReactionId đã tìm được
-      try {
-        const response = await fetchWithFallback(`/api/PostReaction/unlike/${postReactionId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error('Không thể bỏ thích bài viết')
-        }
-
-        // Sau khi unlike, lấy lại bài viết cập nhật
-        return await fetchPostById(validPostId)
-      } catch (unlikeError: any) {
-        console.error('[PostsApi] Error unliking after already liked:', unlikeError)
-        throw new Error('Không thể bỏ thích bài viết. Vui lòng thử lại sau.')
-      }
-    }
     
     // Xử lý lỗi Entity Framework hoặc database
     if (msg.includes('saving the entity changes') || 
@@ -587,7 +521,7 @@ export const toggleLikePost = async (
         msg.includes('foreign key') ||
         msg.includes('duplicate') ||
         msg.includes('unique')) {
-      console.error('[PostsApi] Database error when liking post:', msg)
+      console.error('[PostsApi] Database error when reacting to post:', msg)
       throw new Error('Không thể lưu thay đổi. Vui lòng thử lại sau.')
     }
     
@@ -598,6 +532,17 @@ export const toggleLikePost = async (
     
     throw error
   }
+}
+
+// Backward compatibility: giữ lại toggleLikePost nhưng gọi reactToPost
+export const toggleLikePost = async (
+  postId: number,
+  post?: PostDto,
+  reactionTypeId: number = 1
+): Promise<PostDto> => {
+  await reactToPost(postId, reactionTypeId)
+  // Lấy lại bài viết đã cập nhật từ backend
+  return await fetchPostById(postId)
 }
 
 // Comment interfaces
@@ -869,7 +814,8 @@ export const deleteComment = async (commentId: number): Promise<void> => {
 }
 
 // Toggle like (tim) cho comment - chỉ 1 loại reaction "like"
-export const toggleCommentLike = async (comment: PostComment): Promise<void> => {
+// Trả về thông tin để optimistic update
+export const toggleCommentLike = async (comment: PostComment): Promise<{ isLiked: boolean; reactionId?: string }> => {
   const token = getAuthToken()
   if (!token) {
     throw new Error('Vui lòng đăng nhập để tiếp tục.')
@@ -922,6 +868,8 @@ export const toggleCommentLike = async (comment: PostComment): Promise<void> => 
       const errorMessage = await extractErrorMessage(response, fallbackMessage)
       throw new Error(errorMessage)
     }
+
+    return { isLiked: false }
   } else {
     const response = await fetchWithFallback('/api/CommentReaction/like', {
       method: 'POST',
@@ -930,7 +878,7 @@ export const toggleCommentLike = async (comment: PostComment): Promise<void> => 
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        PostCommentId: commentId,
+        PostCommentId: String(commentId),
         ReplyPostCommentId: null
       })
     })
@@ -940,6 +888,9 @@ export const toggleCommentLike = async (comment: PostComment): Promise<void> => 
       const errorMessage = await extractErrorMessage(response, fallbackMessage)
       throw new Error(errorMessage)
     }
+
+    // Backend không trả về reactionId trong response, sẽ cần reload để lấy
+    return { isLiked: true }
   }
 }
 

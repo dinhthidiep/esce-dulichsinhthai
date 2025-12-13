@@ -67,6 +67,42 @@ const normalizeProfile = (payload: any): UserProfile => {
                    (typeof payload?.role === 'string' ? payload.role : null) ??
                    undefined
   
+  // Format DOB: Backend trả về DateTime? hoặc string, frontend cần format thành yyyy-MM-dd
+  let dobFormatted: string | null = null
+  const dobRaw = payload?.dob ?? payload?.Dob ?? payload?.DOB ?? payload?.dateOfBirth ?? payload?.DateOfBirth ?? (payload?.user?.dob ?? payload?.user?.Dob ?? null)
+  
+  if (dobRaw) {
+    if (typeof dobRaw === 'string') {
+      // Nếu đã là string, kiểm tra format
+      if (/^\d{4}-\d{2}-\d{2}/.test(dobRaw)) {
+        // Đã là yyyy-MM-dd format
+        dobFormatted = dobRaw.split('T')[0] // Lấy phần date nếu có time
+      } else {
+        // Thử parse và format lại
+        try {
+          const date = new Date(dobRaw)
+          if (!isNaN(date.getTime())) {
+            dobFormatted = date.toISOString().split('T')[0]
+          }
+        } catch {
+          dobFormatted = dobRaw // Giữ nguyên nếu không parse được
+        }
+      }
+    } else if (dobRaw instanceof Date) {
+      dobFormatted = dobRaw.toISOString().split('T')[0]
+    } else {
+      // Có thể là DateTime object từ backend (C#)
+      try {
+        const date = new Date(String(dobRaw))
+        if (!isNaN(date.getTime())) {
+          dobFormatted = date.toISOString().split('T')[0]
+        }
+      } catch {
+        dobFormatted = null
+      }
+    }
+  }
+  
   return {
     id: Number(payload?.id ?? payload?.Id ?? 0),
     name: payload?.name ?? payload?.Name ?? '',
@@ -75,12 +111,7 @@ const normalizeProfile = (payload: any): UserProfile => {
     phone: payload?.phone ?? payload?.Phone ?? undefined,
     gender: payload?.gender ?? payload?.Gender ?? undefined,
     address: payload?.address ?? payload?.Address ?? undefined,
-    dob:
-      payload?.dob ??
-      payload?.Dob ??
-      payload?.dateOfBirth ??
-      payload?.DateOfBirth ??
-      (payload?.user?.dob ?? payload?.user?.Dob ?? null),
+    dob: dobFormatted,
     roleId: roleId ? Number(roleId) : undefined,
     roleName: roleName ? String(roleName) : undefined
   }
@@ -157,13 +188,54 @@ export const updateProfile = async (payload: UpdateProfilePayload) => {
       body: JSON.stringify(payload)
     })
 
-    const normalizedUser = normalizeProfile(result?.user ?? result)
+    // Backend trả về Account entity trong result.user, nhưng có thể không có Role navigation property
+    // Luôn reload lại từ GetUserById để đảm bảo có đầy đủ thông tin mới nhất sau khi update
+    let normalizedUser: UserProfile
+    try {
+      // Reload lại từ API để đảm bảo có dữ liệu mới nhất
+      const fullProfile = await fetchProfile()
+      normalizedUser = fullProfile
+      
+      // Merge với dữ liệu từ response nếu có (fallback)
+      if (result?.user) {
+        const responseUser = normalizeProfile(result.user)
+        normalizedUser = {
+          ...normalizedUser,
+          // Ưu tiên dữ liệu từ fullProfile (đã reload), nhưng merge các field có thể thiếu
+          name: fullProfile.name || responseUser.name,
+          email: fullProfile.email || responseUser.email,
+          avatar: fullProfile.avatar || responseUser.avatar,
+          phone: fullProfile.phone || responseUser.phone,
+          gender: fullProfile.gender || responseUser.gender,
+          address: fullProfile.address || responseUser.address,
+          dob: fullProfile.dob || responseUser.dob,
+          roleId: fullProfile.roleId || responseUser.roleId,
+          roleName: fullProfile.roleName || responseUser.roleName
+        }
+      }
+    } catch (reloadError) {
+      console.warn('[UserApi] Không thể reload profile sau update, dùng dữ liệu từ response:', reloadError)
+      // Fallback: dùng dữ liệu từ response
+      normalizedUser = normalizeProfile(result?.user ?? result)
+    }
 
     // Đồng bộ với localStorage để ViewProfile & EditProfile dùng lại sau này
     try {
-      const merged = {
-        ...(JSON.parse(localStorage.getItem('userInfo') || '{}') || {}),
-        ...normalizedUser
+      const currentUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}') || {}
+      const merged: UserProfile = {
+        ...currentUserInfo,
+        ...normalizedUser,
+        // Đảm bảo các field quan trọng được giữ lại
+        id: normalizedUser.id || currentUserInfo.id,
+        name: normalizedUser.name || currentUserInfo.name,
+        email: normalizedUser.email || currentUserInfo.email,
+        avatar: normalizedUser.avatar ?? currentUserInfo.avatar,
+        phone: normalizedUser.phone ?? currentUserInfo.phone,
+        gender: normalizedUser.gender ?? currentUserInfo.gender,
+        address: normalizedUser.address ?? currentUserInfo.address,
+        dob: normalizedUser.dob ?? currentUserInfo.dob,
+        roleId: normalizedUser.roleId || currentUserInfo.roleId,
+        roleName: normalizedUser.roleName || currentUserInfo.roleName
       }
       localStorage.setItem('userInfo', JSON.stringify(merged))
     } catch (err) {

@@ -74,6 +74,10 @@ namespace ESCE_SYSTEM.Services
 
         public async Task<ServiceCombo> CreateAsync(ServiceCombo Servicecombo)
         {
+            // ServiceCombo luôn bắt đầu với status "pending" để Admin duyệt
+            Servicecombo.Status = "pending";
+            Servicecombo.CreatedAt = DateTime.Now;
+            
             await _repository.CreateAsync(Servicecombo);
             return Servicecombo;
         }

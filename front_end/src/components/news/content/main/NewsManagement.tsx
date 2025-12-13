@@ -450,8 +450,24 @@ export default function NewsManagement() {
     }
   }
 
-  // Like Handler
+  // Check if user is authenticated (has token)
+  const isAuthenticated = () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken')
+      return !!token
+    } catch {
+      return false
+    }
+  }
+
+  // Like Handler - chỉ cho phép khi đã đăng nhập
   const handleToggleLike = async (newsId: number) => {
+    // Kiểm tra đăng nhập trước khi like
+    if (!isAuthenticated()) {
+      setError('Vui lòng đăng nhập để thả tim tin tức')
+      return
+    }
+
     try {
       const result = await toggleLikeNews(newsId)
       setNews((prev) =>
@@ -461,8 +477,10 @@ export default function NewsManagement() {
             : item
         )
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error toggling like:', err)
+      const errorMessage = err?.message || 'Không thể thả tim tin tức'
+      setError(errorMessage)
     }
   }
 
@@ -475,9 +493,36 @@ export default function NewsManagement() {
     setMenuAnchor((prev) => ({ ...prev, [newsId]: null }))
   }
 
-  const canEditOrDelete = () => {
-    // Chỉ Admin mới được chỉnh sửa và xóa tin tức
+  // Chỉ có thể edit tin tức của chính mình (kể cả Admin)
+  const canEdit = (newsItem: NewsDto) => {
+    if (!isAdmin || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const newsAuthorId = newsItem.authorId ?? 0
+
+    // Convert to numbers for comparison (handle both string and number)
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof newsAuthorId === 'string' ? parseInt(String(newsAuthorId), 10) : Number(newsAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Admin có thể delete bất kỳ tin tức nào
+  const canDelete = () => {
     return isAdmin
+  }
+
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho menu button)
+  const canEditOrDelete = (newsItem: NewsDto) => {
+    return canEdit(newsItem) || canDelete()
   }
 
   if (loading) {
@@ -649,7 +694,7 @@ export default function NewsManagement() {
                       </Box>
                     </Box>
                   </Box>
-                  {canEditOrDelete() && (
+                  {canEditOrDelete(newsItem) && (
                     <IconButton
                       size="small"
                       onClick={(e) => handleMenuOpen(e, newsItem.newsId)}
@@ -837,11 +882,31 @@ export default function NewsManagement() {
                 <Box display="flex" alignItems="center" gap={2}>
                   <IconButton
                     onClick={() => handleToggleLike(newsItem.newsId)}
+                    disabled={!isAuthenticated()}
+                    title={
+                      !isAuthenticated()
+                        ? 'Vui lòng đăng nhập để thả tim tin tức'
+                        : newsItem.isLiked
+                          ? 'Bỏ thích'
+                          : 'Thích'
+                    }
                     sx={{
                       color: newsItem.isLiked ? 'error.main' : 'text.secondary',
+                      opacity: !isAuthenticated() ? 0.5 : 1,
+                      cursor: !isAuthenticated() ? 'not-allowed' : 'pointer',
                       '&:hover': {
-                        bgcolor: newsItem.isLiked ? 'error.light' : 'grey.100',
-                        color: newsItem.isLiked ? 'error.dark' : 'error.main'
+                        bgcolor:
+                          !isAuthenticated()
+                            ? 'transparent'
+                            : newsItem.isLiked
+                              ? 'error.light'
+                              : 'grey.100',
+                        color:
+                          !isAuthenticated()
+                            ? 'text.secondary'
+                            : newsItem.isLiked
+                              ? 'error.dark'
+                              : 'error.main'
                       }
                     }}
                   >
@@ -859,17 +924,21 @@ export default function NewsManagement() {
                 open={Boolean(menuAnchor[newsItem.newsId])}
                 onClose={() => handleMenuClose(newsItem.newsId)}
               >
-                <MenuItem onClick={() => handleOpenEditDialog(newsItem)}>
-                  <EditIcon sx={{ mr: 1 }} fontSize="small" />
-                  Chỉnh sửa
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleOpenDeleteDialog(newsItem)}
-                  sx={{ color: 'error.main' }}
-                >
-                  <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-                  Xóa
-                </MenuItem>
+                {canEdit(newsItem) && (
+                  <MenuItem onClick={() => handleOpenEditDialog(newsItem)}>
+                    <EditIcon sx={{ mr: 1 }} fontSize="small" />
+                    Chỉnh sửa
+                  </MenuItem>
+                )}
+                {canDelete() && (
+                  <MenuItem
+                    onClick={() => handleOpenDeleteDialog(newsItem)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
+                    Xóa
+                  </MenuItem>
+                )}
               </Menu>
             </Card>
           ))}

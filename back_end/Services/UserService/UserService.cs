@@ -207,6 +207,12 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Check if new password is same as old password
+            if (VerifyPassword(resetPassword.NewPassword, user.PasswordHash))
+            {
+                throw new InvalidOperationException("Mật khẩu mới không được trùng với mật khẩu cũ");
+            }
+
             // Ensure entity is tracked by DbContext
             if (_dbContext.Entry(user).State == EntityState.Detached)
             {
@@ -434,7 +440,7 @@ namespace ESCE_SYSTEM.Services.UserService
         // (Đã fix lỗi CS0535, CS0103 trong Controller GetUserById)
         public async Task<UserResponseDto> GetUserDtoByIdAsync(int accountId)
         {
-            // Sử dụng Projection (Select) để trả về DTO
+            // Sử dụng Projection (Select) để trả về DTO với đầy đủ thông tin
             var userDto = await _dbContext.Accounts
         .Where(account => account.Id == accountId)
         .Include(account => account.Role)
@@ -443,6 +449,11 @@ namespace ESCE_SYSTEM.Services.UserService
             Id = account.Id,
             Name = account.Name,
             Email = account.Email,
+            Avatar = account.Avatar,
+            Phone = account.Phone,
+            Dob = account.Dob,
+            Gender = account.Gender,
+            Address = account.Address,
             RoleId = account.RoleId,
             RoleName = account.Role.Name,
             IsActive = account.IsActive,
@@ -600,9 +611,8 @@ namespace ESCE_SYSTEM.Services.UserService
                 Status = agencyCertificate.Status,
                 RejectComment = agencyCertificate.RejectComment,
 
-                // --- KHẮC PHỤC LỖI CS0104 & CS8601 ---
-                ReviewComments = JsonSerializer.Deserialize<List<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>>(agencyCertificate.ReviewComments)
-                      ?? new List<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>(), // Chỉ định rõ Namespace và dùng ??
+                // --- FIX: Xử lý ReviewComments an toàn ---
+                ReviewComments = ParseReviewComments<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>(agencyCertificate.ReviewComments),
 
                 CreatedAt = agencyCertificate.CreatedAt,
                 UpdatedAt = agencyCertificate.UpdatedAt,
@@ -637,9 +647,8 @@ namespace ESCE_SYSTEM.Services.UserService
                 Status = hostCertificate.Status,
                 RejectComment = hostCertificate.RejectComment,
 
-                // --- KHẮC PHỤC LỖI CS0104 & CS8601 ---
-                ReviewComments = JsonSerializer.Deserialize<List<HostCertificateReViewComment>>(hostCertificate.ReviewComments)
-                      ?? new List<HostCertificateReViewComment>(), // Chỉ định rõ kiểu và dùng ??
+                // --- FIX: Xử lý ReviewComments an toàn ---
+                ReviewComments = ParseReviewComments<HostCertificateReViewComment>(hostCertificate.ReviewComments),
 
                 CreatedAt = hostCertificate.CreatedAt,
                 UpdatedAt = hostCertificate.UpdatedAt,
@@ -854,6 +863,28 @@ namespace ESCE_SYSTEM.Services.UserService
         {
             public DateTime CreatedDate { get; set; }
             public string Content { get; set; } = string.Empty;
+        }
+
+        // Helper method để parse ReviewComments an toàn
+        private List<T> ParseReviewComments<T>(string reviewCommentsJson)
+        {
+            if (string.IsNullOrWhiteSpace(reviewCommentsJson))
+            {
+                return new List<T>();
+            }
+
+            try
+            {
+                // Thử deserialize JSON
+                var result = JsonSerializer.Deserialize<List<T>>(reviewCommentsJson);
+                return result ?? new List<T>();
+            }
+            catch (JsonException)
+            {
+                // Nếu không phải JSON, trả về empty list
+                // (Vì frontend không cần hiển thị ReviewComments dạng text cũ)
+                return new List<T>();
+            }
         }
         #endregion
 

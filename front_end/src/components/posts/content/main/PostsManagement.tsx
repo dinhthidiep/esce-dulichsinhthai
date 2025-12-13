@@ -51,11 +51,13 @@ import {
   deletePost,
   approvePost,
   rejectPost,
-  toggleLikePost,
+  reactToPost,
+  fetchPostById,
   fetchCommentsByPost,
   createComment,
   updateComment,
   deleteComment,
+  toggleCommentLike,
   type PostDto,
   type CreatePostDto,
   type UpdatePostDto,
@@ -150,6 +152,11 @@ export default function PostsManagement() {
   const [likesDialogOpen, setLikesDialogOpen] = useState(false)
   const [selectedPostLikes, setSelectedPostLikes] = useState<PostDto['likes']>([])
   const [_selectedPostTitle, setSelectedPostTitle] = useState('')
+  
+  // Comment Likes Dialog State
+  const [commentLikesDialogOpen, setCommentLikesDialogOpen] = useState(false)
+  const [selectedCommentLikes, setSelectedCommentLikes] = useState<PostComment['likes']>([])
+  const [_selectedCommentContent, setSelectedCommentContent] = useState('')
   // Hiển thị popup reaction khi hover vào nút like
   const [reactionMenuPostId, setReactionMenuPostId] = useState<number | null>(null)
   const reactionHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -656,8 +663,31 @@ export default function PostsManagement() {
     setMenuAnchor((prev) => ({ ...prev, [postId]: null }))
   }
 
-  const canEditOrDelete = (post: PostDto) => {
-    // Admin can edit/delete any post, or user can edit/delete their own posts
+  // Chỉ có thể edit bài viết của chính mình (kể cả Admin)
+  const canEdit = (post: PostDto) => {
+    if (!currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const postAuthorId = post.authorId ?? 0
+
+    // Convert to numbers for comparison (handle both string and number)
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof postAuthorId === 'string' ? parseInt(String(postAuthorId), 10) : Number(postAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Admin có thể delete bất kỳ bài viết nào, user thường chỉ delete của mình
+  const canDelete = (post: PostDto) => {
+    // Admin có thể delete bất kỳ bài viết nào
     if (isAdmin) return true
 
     if (!currentUser) return false
@@ -680,9 +710,15 @@ export default function PostsManagement() {
     return userIdNum === authorIdNum && userIdNum > 0
   }
 
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho menu button)
+  const canEditOrDelete = (post: PostDto) => {
+    return canEdit(post) || canDelete(post)
+  }
+
   // Reaction handler: chọn/bỏ reaction, gửi reactionTypeId tương ứng xuống backend
+  // Optimistic update: cập nhật UI ngay lập tức, không cần reload trang
   const handleReactionClick = async (post: PostDto, reaction: ReactionKey) => {
-    // Double check authentication - giống handleToggleLike
+    // Double check authentication
     if (!isAuthenticated || !currentUser) {
       const message = 'Vui lòng đăng nhập để bày tỏ cảm xúc'
       setError(message)
@@ -690,18 +726,109 @@ export default function PostsManagement() {
       return
     }
 
+    const reactionTypeId = REACTION_ID_MAP[reaction] ?? REACTION_ID_MAP.like
+    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? currentUser?.ID ?? null
+    
+    if (!userId) {
+      setSnackbar({ open: true, message: 'Không thể xác định người dùng', severity: 'error' })
+      return
+    }
+
+    const userIdStr = String(userId)
+    const currentLikes = Array.isArray(post.likes) ? post.likes : []
+    const existingReaction = currentLikes.find((like: any) => String(like.accountId ?? '') === userIdStr)
+    const currentReactionTypeId = existingReaction?.reactionType 
+      ? (() => {
+          const rt = String(existingReaction.reactionType).toLowerCase()
+          if (rt === 'like') return 1
+          if (rt === 'love') return 2
+          if (rt === 'haha') return 3
+          if (rt === 'wow') return 4
+          if (rt === 'sad') return 5
+          if (rt === 'angry') return 6
+          return 1
+        })()
+      : null
+
+    // Nếu đã react với cùng loại -> unlike (xóa reaction)
+    const isUnliking = currentReactionTypeId === reactionTypeId
+
     try {
       setLikingPosts((prev) => new Set(prev).add(post.postId))
-      const reactionTypeId = REACTION_ID_MAP[reaction] ?? REACTION_ID_MAP.like
-      const updatedPost = await toggleLikePost(post.postId, post, reactionTypeId)
 
-      // Chỉ cập nhật lại bài viết đang được react, không reset toàn trang
-      setPosts((prev) => prev.map((p) => (p.postId === updatedPost.postId ? updatedPost : p)))
+      // Optimistic update: cập nhật UI ngay lập tức
+      setPosts((prev) => prev.map((p) => {
+        if (p.postId !== post.postId) return p
+
+        const updatedLikes = Array.isArray(p.likes) ? [...p.likes] : []
+        
+        if (isUnliking) {
+          // Remove reaction
+          const filteredLikes = updatedLikes.filter((like: any) => String(like.accountId ?? '') !== userIdStr)
+          return {
+            ...p,
+            likes: filteredLikes,
+            likesCount: Math.max(0, (p.likesCount ?? 0) - 1),
+            isLiked: false
+          }
+        } else {
+          // Add or update reaction
+          const existingIndex = updatedLikes.findIndex((like: any) => String(like.accountId ?? '') === userIdStr)
+          const reactionTypeNames: Record<number, string> = {
+            1: 'like',
+            2: 'love',
+            3: 'haha',
+            4: 'wow',
+            5: 'sad',
+            6: 'angry'
+          }
+          
+          if (existingIndex >= 0) {
+            // Update existing reaction
+            updatedLikes[existingIndex] = {
+              ...updatedLikes[existingIndex],
+              reactionType: reactionTypeNames[reactionTypeId] ?? 'like'
+            }
+          } else {
+            // Add new reaction
+            updatedLikes.push({
+              postLikeId: `temp-${Date.now()}`,
+              accountId: userIdStr,
+              fullName: currentUser?.name ?? currentUser?.Name ?? 'Người dùng',
+              createdDate: new Date().toISOString(),
+              reactionType: reactionTypeNames[reactionTypeId] ?? 'like'
+            })
+          }
+          
+          return {
+            ...p,
+            likes: updatedLikes,
+            likesCount: existingIndex >= 0 ? (p.likesCount ?? 0) : (p.likesCount ?? 0) + 1,
+            isLiked: true
+          }
+        }
+      }))
+
+      // Gọi API
+      await reactToPost(post.postId, reactionTypeId)
+
+      // Sau khi API thành công, reload post để lấy dữ liệu chính xác từ backend
+      // (để có postReactionId thật, không phải temp)
+      try {
+        const updatedPost = await fetchPostById(post.postId)
+        setPosts((prev) => prev.map((p) => (p.postId === updatedPost.postId ? updatedPost : p)))
+      } catch (reloadError) {
+        console.warn('[PostsManagement] Could not reload post after reaction, using optimistic update:', reloadError)
+        // Giữ optimistic update nếu không reload được
+      }
     } catch (err) {
+      // Revert optimistic update on error
+      setPosts((prev) => prev.map((p) => (p.postId === post.postId ? post : p)))
+      
       const errorMessage = err instanceof Error ? err.message : 'Không thể bày tỏ cảm xúc'
       setError(errorMessage)
       setSnackbar({ open: true, message: errorMessage, severity: 'error' })
-      console.error('Error toggling reaction:', err)
+      console.error('Error reacting to post:', err)
     } finally {
       setLikingPosts((prev) => {
         const next = new Set(prev)
@@ -882,12 +1009,58 @@ export default function PostsManagement() {
     }
   }
 
-  const canEditOrDeleteComment = (comment: PostComment) => {
-    if (!isAuthenticated) return false
-    // User can edit/delete their own comments
+  // Chỉ có thể edit comment của chính mình (kể cả Admin)
+  const canEditComment = (comment: PostComment) => {
+    if (!isAuthenticated || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
     const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
-    const userId = currentUser?.id ?? currentUser?.userId ?? 0
-    return commentAuthorId === userId
+
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof commentAuthorId === 'string'
+        ? parseInt(String(commentAuthorId), 10)
+        : Number(commentAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Admin có thể delete bất kỳ comment nào, user thường chỉ delete của mình
+  const canDeleteComment = (comment: PostComment) => {
+    // Admin có thể delete bất kỳ comment nào
+    if (isAdmin) return true
+
+    if (!isAuthenticated || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
+
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof commentAuthorId === 'string'
+        ? parseInt(String(commentAuthorId), 10)
+        : Number(commentAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho hiển thị buttons)
+  const canEditOrDeleteComment = (comment: PostComment) => {
+    return canEditComment(comment) || canDeleteComment(comment)
   }
 
   const getCommentId = (comment: PostComment): string => {
@@ -956,13 +1129,80 @@ export default function PostsManagement() {
     }
 
     const commentId = getCommentId(comment)
+    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? currentUser?.ID ?? null
+    
+    if (!userId) {
+      setSnackbar({ open: true, message: 'Không thể xác định người dùng', severity: 'error' })
+      return
+    }
+
+    const userIdStr = String(userId)
+    const currentLikes = Array.isArray(comment.likes) ? comment.likes : []
+    const existingLike = currentLikes.find((like: any) => String(like.accountId ?? '') === userIdStr)
+    const isUnliking = !!existingLike
+
     try {
       setLikingComments((prev) => new Set(prev).add(commentId))
 
-      // Reload comments cho post này để đồng bộ likes
-      const comments = await fetchCommentsByPost(postId)
-      setPostComments((prev) => ({ ...prev, [postId]: comments }))
+      // Optimistic update: cập nhật UI ngay lập tức
+      setPostComments((prev) => {
+        const currentComments = prev[postId] || []
+        return {
+          ...prev,
+          [postId]: currentComments.map((c) => {
+            const cId = getCommentId(c)
+            if (cId !== commentId) return c
+
+            const updatedLikes = Array.isArray(c.likes) ? [...c.likes] : []
+            
+            if (isUnliking) {
+              // Remove like
+              const filteredLikes = updatedLikes.filter((like: any) => String(like.accountId ?? '') !== userIdStr)
+              return {
+                ...c,
+                likes: filteredLikes
+              }
+            } else {
+              // Add like
+              updatedLikes.push({
+                postCommentLikeId: `temp-${Date.now()}`,
+                accountId: userIdStr,
+                fullName: currentUser?.name ?? currentUser?.Name ?? 'Người dùng',
+                createdDate: new Date().toISOString()
+              })
+              return {
+                ...c,
+                likes: updatedLikes
+              }
+            }
+          })
+        }
+      })
+
+      // Gọi API
+      await toggleCommentLike(comment)
+
+      // Sau khi API thành công, reload comments để lấy dữ liệu chính xác từ backend
+      try {
+        const comments = await fetchCommentsByPost(postId)
+        setPostComments((prev) => ({ ...prev, [postId]: comments }))
+      } catch (reloadError) {
+        console.warn('[PostsManagement] Could not reload comments after like, using optimistic update:', reloadError)
+        // Giữ optimistic update nếu không reload được
+      }
     } catch (err) {
+      // Revert optimistic update on error
+      setPostComments((prev) => {
+        const currentComments = prev[postId] || []
+        return {
+          ...prev,
+          [postId]: currentComments.map((c) => {
+            const cId = getCommentId(c)
+            return cId === commentId ? comment : c
+          })
+        }
+      })
+
       const errorMessage = err instanceof Error ? err.message : 'Không thể thích bình luận'
       setError(errorMessage)
       setSnackbar({ open: true, message: errorMessage, severity: 'error' })
@@ -1463,7 +1703,6 @@ export default function PostsManagement() {
                         {postComments[post.postId].map((comment) => {
                           const commentId = getCommentId(comment)
                           const isEditing = editingComments[commentId] !== undefined
-                          const canEdit = canEditOrDeleteComment(comment)
 
                           return (
                             <Box
@@ -1501,28 +1740,32 @@ export default function PostsManagement() {
                                     </Typography>
                                   </Box>
                                 </Box>
-                                {canEdit && !isEditing && (
+                                {!isEditing && (
                                   <Box display="flex" gap={0.5}>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() =>
-                                        handleStartEditComment(commentId, comment.content)
-                                      }
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleDeleteComment(commentId, post.postId)}
-                                      disabled={deletingComment.has(commentId)}
-                                      sx={{ color: 'error.main' }}
-                                    >
-                                      {deletingComment.has(commentId) ? (
-                                        <CircularProgress size={16} />
-                                      ) : (
-                                        <DeleteIcon fontSize="small" />
-                                      )}
-                                    </IconButton>
+                                    {canEditComment(comment) && (
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          handleStartEditComment(commentId, comment.content)
+                                        }
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                    )}
+                                    {canDeleteComment(comment) && (
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleDeleteComment(commentId, post.postId)}
+                                        disabled={deletingComment.has(commentId)}
+                                        sx={{ color: 'error.main' }}
+                                      >
+                                        {deletingComment.has(commentId) ? (
+                                          <CircularProgress size={16} />
+                                        ) : (
+                                          <DeleteIcon fontSize="small" />
+                                        )}
+                                      </IconButton>
+                                    )}
                                   </Box>
                                 )}
                               </Box>
@@ -1583,7 +1826,28 @@ export default function PostsManagement() {
                                     >
                                       <FavoriteIcon fontSize="small" />
                                     </IconButton>
-                                    <Typography variant="caption" color="text.secondary">
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      onClick={() => {
+                                        const likesCount = getCommentLikesCount(comment)
+                                        if (likesCount > 0) {
+                                          setSelectedCommentLikes(comment.likes || [])
+                                          setSelectedCommentContent(comment.content || 'Bình luận')
+                                          setCommentLikesDialogOpen(true)
+                                        }
+                                      }}
+                                      sx={{
+                                        cursor: getCommentLikesCount(comment) > 0 ? 'pointer' : 'default',
+                                        '&:hover':
+                                          getCommentLikesCount(comment) > 0
+                                            ? {
+                                                textDecoration: 'underline',
+                                                color: 'primary.main'
+                                              }
+                                            : {}
+                                      }}
+                                    >
                                       {getCommentLikesCount(comment)} lượt thích
                                     </Typography>
                                   </Box>
@@ -1621,20 +1885,20 @@ export default function PostsManagement() {
                     <Divider />
                   </>
                 )}
-                {canEditOrDelete(post) && (
-                  <>
-                    <MenuItem onClick={() => handleOpenEditDialog(post)}>
-                      <EditIcon sx={{ mr: 1 }} fontSize="small" />
-                      Chỉnh sửa
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => handleOpenDeleteDialog(post)}
-                      sx={{ color: 'error.main' }}
-                    >
-                      <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-                      Xóa
-                    </MenuItem>
-                  </>
+                {canEdit(post) && (
+                  <MenuItem onClick={() => handleOpenEditDialog(post)}>
+                    <EditIcon sx={{ mr: 1 }} fontSize="small" />
+                    Chỉnh sửa
+                  </MenuItem>
+                )}
+                {canDelete(post) && (
+                  <MenuItem
+                    onClick={() => handleOpenDeleteDialog(post)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
+                    Xóa
+                  </MenuItem>
                 )}
               </Menu>
             </Card>
@@ -2148,7 +2412,7 @@ export default function PostsManagement() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6" fontWeight="bold">
-              Người đã thích bài viết
+              Người đã phản ứng với bài viết
             </Typography>
             <IconButton
               onClick={() => setLikesDialogOpen(false)}
@@ -2162,15 +2426,103 @@ export default function PostsManagement() {
         <DialogContent sx={{ bgcolor: 'background.default', pt: 2 }}>
           {selectedPostLikes && selectedPostLikes.length > 0 ? (
             <Box>
-              {selectedPostLikes.map((like, index) => (
+              {selectedPostLikes.map((like, index) => {
+                // Map reactionType sang emoji và label
+                const reactionType = (like.reactionType ?? 'like').toLowerCase()
+                const reactionDisplay = REACTIONS.find((r) => r.key === reactionType) ?? REACTIONS[0]
+                
+                return (
+                  <Box
+                    key={like.postLikeId || index}
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    py={1.5}
+                    sx={{
+                      borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        borderRadius: 1
+                      }
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'primary.main'
+                      }}
+                    >
+                      {like.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    </Avatar>
+                    <Box flex={1}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {like.fullName || 'Người dùng'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatTimeAgo(like.createdDate)}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontSize: '2rem' }}>
+                      {reactionDisplay.emoji}
+                    </Typography>
+                  </Box>
+                )
+              })}
+            </Box>
+          ) : (
+            <Box textAlign="center" py={4}>
+              <LikeBorderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="body1" color="text.secondary">
+                Chưa có ai phản ứng với bài viết này
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Comment Likes Dialog */}
+      <Dialog
+        open={commentLikesDialogOpen}
+        onClose={() => setCommentLikesDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.default',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{ bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider' }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight="bold">
+              Người đã thích bình luận
+            </Typography>
+            <IconButton
+              onClick={() => setCommentLikesDialogOpen(false)}
+              size="small"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 2 }}>
+          {selectedCommentLikes && selectedCommentLikes.length > 0 ? (
+            <Box>
+              {selectedCommentLikes.map((like, index) => (
                 <Box
-                  key={like.postLikeId || index}
+                  key={like.postCommentLikeId || index}
                   display="flex"
                   alignItems="center"
                   gap={2}
                   py={1.5}
                   sx={{
-                    borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
+                    borderBottom: index < selectedCommentLikes.length - 1 ? '1px solid' : 'none',
                     borderColor: 'divider',
                     '&:hover': {
                       bgcolor: 'action.hover',
@@ -2195,15 +2547,15 @@ export default function PostsManagement() {
                       {formatTimeAgo(like.createdDate)}
                     </Typography>
                   </Box>
-                  <LikeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                  <FavoriteIcon sx={{ color: 'error.main', fontSize: 20 }} />
                 </Box>
               ))}
             </Box>
           ) : (
             <Box textAlign="center" py={4}>
-              <LikeBorderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <FavoriteIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                Chưa có ai thích bài viết này
+                Chưa có ai thích bình luận này
               </Typography>
             </Box>
           )}

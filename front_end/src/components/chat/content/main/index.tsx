@@ -10,7 +10,6 @@ import {
   ListItemText,
   Divider,
   IconButton,
-  Paper,
   Chip,
   InputAdornment,
   Button,
@@ -25,10 +24,10 @@ import {
 } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import SearchIcon from '@mui/icons-material/Search'
-import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import ImageIcon from '@mui/icons-material/Image'
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon'
 import AddCommentIcon from '@mui/icons-material/AddComment'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import Tooltip from '@mui/material/Tooltip'
 import Popover from '@mui/material/Popover'
 import {
@@ -37,10 +36,12 @@ import {
   getChatHistory,
   sendChatMessage,
   type ChatUser,
-  type ChatMessage
+  type ChatMessage,
+  deleteConversation
 } from '~/api/instances/ChatApi'
 import { onReceiveMessage } from '~/api/instances/chatSignalR'
 import { uploadImageToFirebase } from '~/firebaseClient'
+import MessageBubble, { getMessageDisplayInfo } from './MessageBubble'
 
 type Reaction = {
   emoji: string
@@ -316,6 +317,12 @@ export default function ChatMainContent() {
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number
+    name: string
+  } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const mapApiMessageToUi = useCallback(
     (payload: ChatMessage, participantName: string) =>
@@ -442,79 +449,92 @@ export default function ChatMainContent() {
     setConversationError(null)
     try {
       const users = await getChattedUsers()
-      setConversations((prev) => {
-        const prevMap = new Map(prev.map((conv) => [conv.participantId, conv]))
-        const mapped = users.map((user) => {
-          const participantId = Number(user.userId)
-          const existing = prevMap.get(participantId)
-          if (existing) {
-            // Giữ nguyên messages và lastActivity nếu đã có
+
+      // Tạo danh sách conversations ban đầu
+      const initialConversations = users.map((user) => {
+        const participantId = Number(user.userId)
+        return {
+          id: participantId,
+          participantId,
+          participantName: user.fullName,
+          participantAvatar: '',
+          participantRole: user.role,
+          lastMessage: 'Đang tải...',
+          lastMessageTime: '',
+          unreadCount: 0,
+          messages: [] as Message[],
+          lastActivity: 0,
+          isHistoryLoaded: false
+        }
+      })
+
+      // Set conversations trước để hiển thị danh sách
+      setConversations(initialConversations)
+
+      // Load chat history cho tất cả conversations song song
+      const conversationsWithHistory = await Promise.all(
+        initialConversations.map(async (conv) => {
+          try {
+            const history = await getChatHistory(conv.participantId.toString())
+            if (history.length > 0) {
+              // Sắp xếp messages theo thời gian
+              const sortedHistory = [...history].sort((a, b) => {
+                const timeA = parseTimestamp(a.createdAt)
+                const timeB = parseTimestamp(b.createdAt)
+                return timeA - timeB
+              })
+
+              // Map messages
+              const messages = sortedHistory.map((msg) =>
+                mapChatMessage(msg, conv.participantName, currentUser.id, currentUser.name)
+              )
+
+              const lastMsg = messages[messages.length - 1]
+              return {
+                ...conv,
+                messages,
+                lastMessage: lastMsg?.content || 'Chưa có tin nhắn',
+                lastMessageTime: lastMsg?.timestamp || '',
+                lastActivity: lastMsg?.createdAtMs || 0,
+                isHistoryLoaded: true
+              }
+            }
             return {
-              ...existing,
-              participantName: user.fullName,
-              participantRole: user.role
+              ...conv,
+              lastMessage: 'Chưa có tin nhắn',
+              isHistoryLoaded: true
+            }
+          } catch {
+            return {
+              ...conv,
+              lastMessage: 'Chưa có tin nhắn',
+              isHistoryLoaded: true
             }
           }
-          return {
-            id: participantId,
-            participantId,
-            participantName: user.fullName,
-            participantAvatar: '',
-            participantRole: user.role,
-            lastMessage: 'Chưa có tin nhắn',
-            lastMessageTime: '',
-            unreadCount: 0,
-            messages: [],
-            lastActivity: 0,
-            isHistoryLoaded: false
-          }
         })
+      )
 
-        const incomingIds = new Set(mapped.map((conv) => conv.participantId))
-        const preserved = prev.filter((conv) => !incomingIds.has(conv.participantId))
+      // Sắp xếp theo thời gian tin nhắn cuối cùng
+      conversationsWithHistory.sort((a, b) => {
+        const scoreA = getConversationActivityScore(a)
+        const scoreB = getConversationActivityScore(b)
 
-        // Sắp xếp ngay sau khi load để đảm bảo thứ tự đúng từ đầu
-        // QUAN TRỌNG: Sắp xếp theo thời gian tin nhắn cuối cùng, KHÔNG phải theo tên
-        // Conversation có tin nhắn mới nhất sẽ ở trên cùng
-        const allConversations = [...mapped, ...preserved]
-        allConversations.sort((a, b) => {
-          const scoreA = getConversationActivityScore(a)
-          const scoreB = getConversationActivityScore(b)
-
-          // Nếu cả hai đều có score > 0, sắp xếp theo score (thời gian tin nhắn cuối cùng)
-          if (scoreA > 0 && scoreB > 0) {
-            return scoreB - scoreA // Giảm dần: mới nhất trước
-          }
-
-          // Nếu một trong hai có score = 0 (chưa có tin nhắn hoặc chưa load), đặt nó xuống dưới
-          if (scoreA === 0 && scoreB > 0) return 1 // a xuống dưới
-          if (scoreB === 0 && scoreA > 0) return -1 // b xuống dưới
-
-          // Nếu cả hai đều = 0 (chưa có tin nhắn), giữ nguyên thứ tự từ backend
-          // KHÔNG sắp xếp theo tên - giữ nguyên thứ tự
-          return 0
-        })
-
-        console.log(
-          '[loadConversations] Sorted conversations by time (newest first):',
-          allConversations.map((conv) => ({
-            name: conv.participantName,
-            score: getConversationActivityScore(conv),
-            hasMessages: conv.messages.length > 0,
-            lastActivity: conv.lastActivity,
-            lastMessageTime: conv.messages[conv.messages.length - 1]?.createdAt
-          }))
-        )
-
-        return allConversations
+        if (scoreA > 0 && scoreB > 0) {
+          return scoreB - scoreA
+        }
+        if (scoreA === 0 && scoreB > 0) return 1
+        if (scoreB === 0 && scoreA > 0) return -1
+        return 0
       })
+
+      setConversations(conversationsWithHistory)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể tải danh sách đoạn chat.'
       setConversationError(message)
     } finally {
       setIsLoadingConversations(false)
     }
-  }, [])
+  }, [currentUser.id, currentUser.name])
 
   useEffect(() => {
     loadConversations()
@@ -930,6 +950,55 @@ export default function ChatMainContent() {
     setSelectedChatUser(null)
     setCreateChatError(null)
     setInitialMessage('')
+  }
+
+  // Mở dialog xác nhận xóa đoạn chat
+  const handleDeleteConversation = (
+    e: React.MouseEvent,
+    conversationId: number,
+    participantName: string
+  ) => {
+    e.stopPropagation() // Ngăn không cho click vào conversation
+    setDeleteTarget({ id: conversationId, name: participantName })
+    setDeleteDialogOpen(true)
+  }
+
+  // Xác nhận xóa đoạn chat
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+
+    setIsDeleting(true)
+    try {
+      // Gọi API xóa trong database
+      await deleteConversation(deleteTarget.id.toString())
+
+      // Xóa khỏi UI
+      setConversations((prev) => prev.filter((conv) => conv.id !== deleteTarget.id))
+
+      // Nếu đang xem conversation này, bỏ chọn
+      if (selectedConversationId === deleteTarget.id) {
+        setSelectedConversationId(null)
+      }
+
+      setSnackbarSeverity('success')
+      setSnackbarMessage(`Đã xóa đoạn chat với ${deleteTarget.name}`)
+      setDeleteDialogOpen(false)
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error('[Chat] Failed to delete conversation:', error)
+      setSnackbarSeverity('error')
+      setSnackbarMessage('Không thể xóa đoạn chat. Vui lòng thử lại.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Đóng dialog xóa
+  const handleCloseDeleteDialog = () => {
+    if (!isDeleting) {
+      setDeleteDialogOpen(false)
+      setDeleteTarget(null)
+    }
   }
 
   const handleCreateChatConversation = async () => {
@@ -1624,11 +1693,11 @@ export default function ChatMainContent() {
         }}
         className="rounded-3xl shadow-3xl overflow-hidden"
       >
-        <Box className="flex h-[calc(100vh-20rem)]">
+        <Box className="flex h-[calc(100vh-28rem)]">
           {/* Conversations List */}
           <Box
             sx={{
-              width: '40rem',
+              width: '32rem',
               borderRight: '1px solid',
               borderColor: 'rgba(0, 0, 0, 0.08)',
               display: 'flex',
@@ -1898,17 +1967,44 @@ export default function ChatMainContent() {
                             >
                               {conversation.lastMessage}
                             </Typography>
-                            <Typography
-                              className="text-[1.1rem]!"
-                              sx={{
-                                color: 'text.secondary',
-                                ml: 1,
-                                opacity: 0.6,
-                                fontWeight: 500
-                              }}
-                            >
-                              {conversation.lastMessageTime}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography
+                                className="text-[1.1rem]!"
+                                sx={{
+                                  color: 'text.secondary',
+                                  opacity: 0.6,
+                                  fontWeight: 500,
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {conversation.lastMessageTime}
+                              </Typography>
+                              <Tooltip title="Xóa đoạn chat" arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteConversation(
+                                      e,
+                                      conversation.id,
+                                      conversation.participantName
+                                    )
+                                  }
+                                  sx={{
+                                    opacity: 0.4,
+                                    width: 24,
+                                    height: 24,
+                                    color: 'error.main',
+                                    '&:hover': {
+                                      opacity: 1,
+                                      bgcolor: 'rgba(211, 47, 47, 0.1)'
+                                    }
+                                  }}
+                                >
+                                  <DeleteOutlineIcon sx={{ fontSize: '1.4rem' }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
                           </Box>
                         }
                       />
@@ -2044,314 +2140,152 @@ export default function ChatMainContent() {
                       const currentUserIdNum = Number(currentUser.id)
                       const isCurrentUser = messageSenderId === currentUserIdNum
 
-                      // Debug log nếu có vấn đề
-                      if (
-                        messageSenderId !== message.senderId ||
-                        currentUserIdNum !== currentUser.id
-                      ) {
-                        console.log('[Message Display] Type conversion:', {
-                          messageSenderId: message.senderId,
-                          convertedMessageSenderId: messageSenderId,
-                          currentUserId: currentUser.id,
-                          convertedCurrentUserId: currentUserIdNum,
-                          isCurrentUser,
-                          messageSenderName: message.senderName
-                        })
-                      }
+                      // Lấy thông tin hiển thị cho message (Facebook/Zalo style)
+                      const displayInfo = getMessageDisplayInfo(
+                        selectedConversation.messages,
+                        currentUser.id,
+                        index
+                      )
+
                       return (
-                        <Box
-                          key={message.id}
-                          sx={{
-                            display: 'flex',
-                            justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
-                            mb: 2.5,
-                            animation: 'fadeIn 0.3s ease',
-                            '@keyframes fadeIn': {
-                              from: {
-                                opacity: 0,
-                                transform: 'translateY(10px)'
-                              },
-                              to: {
-                                opacity: 1,
-                                transform: 'translateY(0)'
-                              }
-                            },
-                            animationDelay: `${index * 0.05}s`
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              maxWidth: '70%',
-                              display: 'flex',
-                              flexDirection: isCurrentUser ? 'row-reverse' : 'row',
-                              alignItems: 'flex-end',
-                              gap: 1.5
-                            }}
-                          >
-                            {!isCurrentUser && (
-                              <Avatar
+                        <Box key={message.id || `msg-${index}`}>
+                          <MessageBubble
+                            message={message}
+                            isCurrentUser={isCurrentUser}
+                            showAvatar={displayInfo.showAvatar}
+                            showName={displayInfo.showName}
+                            showTimestamp={displayInfo.showTimestamp}
+                            isFirstInGroup={displayInfo.isFirstInGroup}
+                            isLastInGroup={displayInfo.isLastInGroup}
+                            onReactionClick={(e, msgId) => handleReactionClick(msgId, e)}
+                          />
+
+                          {/* Reactions Display */}
+                          {!isCurrentUser &&
+                            message.reactions &&
+                            message.reactions.length > 0 && (
+                              <Box
                                 sx={{
-                                  width: 36,
-                                  height: 36,
-                                  background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.25)',
-                                  border: '2px solid rgba(255, 255, 255, 0.9)'
+                                  display: 'flex',
+                                  gap: 0.5,
+                                  mt: 0.5,
+                                  ml: 5,
+                                  flexWrap: 'wrap'
                                 }}
                               >
-                                {message.senderName.charAt(0).toUpperCase()}
-                              </Avatar>
+                                {Object.entries(getReactionCounts(message.reactions)).map(
+                                  ([emoji, count]) => {
+                                    const hasUserReaction = message.reactions?.some(
+                                      (r) => r.emoji === emoji && r.userId === currentUser.id
+                                    )
+                                    return (
+                                      <Chip
+                                        key={emoji}
+                                        label={`${emoji} ${count}`}
+                                        size="small"
+                                        onClick={() => handleAddReaction(message.id, emoji)}
+                                        sx={{
+                                          height: '2.4rem',
+                                          fontSize: '1.2rem',
+                                          bgcolor: hasUserReaction
+                                            ? 'rgba(25, 118, 210, 0.15)'
+                                            : 'rgba(0, 0, 0, 0.06)',
+                                          border: hasUserReaction
+                                            ? '1.5px solid rgba(25, 118, 210, 0.3)'
+                                            : '1px solid rgba(0, 0, 0, 0.1)',
+                                          cursor: 'pointer',
+                                          transition: 'all 0.2s ease',
+                                          '&:hover': {
+                                            bgcolor: hasUserReaction
+                                              ? 'rgba(25, 118, 210, 0.25)'
+                                              : 'rgba(0, 0, 0, 0.1)',
+                                            transform: 'scale(1.05)',
+                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                                          },
+                                          '& .MuiChip-label': {
+                                            px: 1,
+                                            fontWeight: hasUserReaction ? 600 : 500
+                                          }
+                                        }}
+                                      />
+                                    )
+                                  }
+                                )}
+                              </Box>
                             )}
-                            <Box
-                              sx={{
-                                position: 'relative',
-                                '&:hover .reaction-button': {
-                                  opacity: 1
+
+                          {/* Reaction Picker Popover */}
+                          {!isCurrentUser && (
+                            <Popover
+                              open={Boolean(reactionAnchorEl[message.id])}
+                              anchorEl={reactionAnchorEl[message.id]}
+                              onClose={() => handleReactionClose(message.id)}
+                              anchorOrigin={{
+                                vertical: 'top',
+                                horizontal: 'left'
+                              }}
+                              transformOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left'
+                              }}
+                              PaperProps={{
+                                sx: {
+                                  p: 1,
+                                  borderRadius: '1.6rem',
+                                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                                  background:
+                                    'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 255, 0.98) 100%)',
+                                  backdropFilter: 'blur(10px)',
+                                  border: '1px solid rgba(0, 0, 0, 0.08)'
                                 }
                               }}
                             >
-                              <Paper
-                                elevation={0}
+                              <Box
                                 sx={{
-                                  p: 2,
-                                  background: isCurrentUser
-                                    ? 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)'
-                                    : 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
-                                  color: isCurrentUser ? 'common.white' : 'text.primary',
-                                  borderRadius: '1.6rem',
-                                  borderTopLeftRadius: isCurrentUser ? '1.6rem' : '0.6rem',
-                                  borderTopRightRadius: isCurrentUser ? '0.6rem' : '1.6rem',
-                                  boxShadow: isCurrentUser
-                                    ? '0 4px 16px rgba(25, 118, 210, 0.3)'
-                                    : '0 2px 12px rgba(0, 0, 0, 0.08)',
-                                  border: isCurrentUser ? 'none' : '1px solid rgba(0, 0, 0, 0.05)',
-                                  transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    boxShadow: isCurrentUser
-                                      ? '0 6px 20px rgba(25, 118, 210, 0.4)'
-                                      : '0 4px 16px rgba(0, 0, 0, 0.12)',
-                                    transform: 'translateY(-2px)'
-                                  }
+                                  display: 'flex',
+                                  gap: 0.5
                                 }}
                               >
-                                {!isCurrentUser && (
-                                  <Typography
-                                    className="text-[1.2rem]! font-semibold! mb-0.5!"
-                                    sx={{
-                                      color: 'primary.main',
-                                      mb: 0.5
-                                    }}
-                                  >
-                                    {message.senderName}
-                                  </Typography>
-                                )}
-                                {message.image && (
-                                  <Box
-                                    sx={{
-                                      mb: message.content ? 1.5 : 0,
-                                      borderRadius: '1.2rem',
-                                      overflow: 'hidden',
-                                      maxWidth: '100%',
-                                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                                    }}
-                                  >
-                                    <img
-                                      src={message.image}
-                                      alt="Message attachment"
-                                      style={{
-                                        width: '100%',
-                                        maxWidth: '400px',
-                                        height: 'auto',
-                                        display: 'block'
-                                      }}
-                                    />
-                                  </Box>
-                                )}
-                                {message.content && (
-                                  <Typography
-                                    className="text-[1.4rem]! whitespace-pre-wrap!"
-                                    sx={{
-                                      lineHeight: 1.6,
-                                      wordBreak: 'break-word'
-                                    }}
-                                  >
-                                    {message.content}
-                                  </Typography>
-                                )}
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'flex-end',
-                                    mt: 1.5,
-                                    gap: 1
-                                  }}
-                                >
-                                  <Typography
-                                    className="text-[1rem]!"
-                                    sx={{
-                                      color: isCurrentUser
-                                        ? 'rgba(255,255,255,0.75)'
-                                        : 'text.secondary',
-                                      opacity: 0.8,
-                                      fontSize: '1.1rem',
-                                      fontWeight: 500
-                                    }}
-                                  >
-                                    {message.timestamp}
-                                  </Typography>
-                                  {!isCurrentUser && (
-                                    <Tooltip title="Thả cảm xúc" arrow>
+                                {commonReactions.map((emoji) => {
+                                  const hasReaction = message.reactions?.some(
+                                    (r) => r.emoji === emoji && r.userId === currentUser.id
+                                  )
+                                  return (
+                                    <Tooltip
+                                      key={emoji}
+                                      title={hasReaction ? 'Gỡ cảm xúc' : 'Thả cảm xúc'}
+                                      arrow
+                                    >
                                       <IconButton
-                                        className="reaction-button"
-                                        size="small"
-                                        onClick={(e) => handleReactionClick(message.id, e)}
+                                        onClick={() => handleAddReaction(message.id, emoji)}
                                         sx={{
-                                          opacity: 0,
+                                          width: 40,
+                                          height: 40,
+                                          fontSize: '2rem',
+                                          bgcolor: hasReaction
+                                            ? 'rgba(25, 118, 210, 0.15)'
+                                            : 'transparent',
+                                          border: hasReaction
+                                            ? '2px solid rgba(25, 118, 210, 0.3)'
+                                            : '1px solid transparent',
                                           transition: 'all 0.2s ease',
-                                          color: 'primary.main',
-                                          width: 28,
-                                          height: 28,
                                           '&:hover': {
-                                            bgcolor: 'rgba(25, 118, 210, 0.1)',
-                                            transform: 'scale(1.1)'
+                                            bgcolor: hasReaction
+                                              ? 'rgba(25, 118, 210, 0.25)'
+                                              : 'rgba(0, 0, 0, 0.05)',
+                                            transform: 'scale(1.15)',
+                                            borderColor: 'rgba(25, 118, 210, 0.4)'
                                           }
                                         }}
                                       >
-                                        <EmojiEmotionsIcon sx={{ fontSize: 18 }} />
+                                        {emoji}
                                       </IconButton>
                                     </Tooltip>
-                                  )}
-                                </Box>
-                              </Paper>
-
-                              {/* Reactions Display */}
-                              {!isCurrentUser &&
-                                message.reactions &&
-                                message.reactions.length > 0 && (
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      gap: 0.5,
-                                      mt: 0.5,
-                                      ml: 0.5,
-                                      flexWrap: 'wrap'
-                                    }}
-                                  >
-                                    {Object.entries(getReactionCounts(message.reactions)).map(
-                                      ([emoji, count]) => {
-                                        const hasUserReaction = message.reactions?.some(
-                                          (r) => r.emoji === emoji && r.userId === currentUser.id
-                                        )
-                                        return (
-                                          <Chip
-                                            key={emoji}
-                                            label={`${emoji} ${count}`}
-                                            size="small"
-                                            onClick={() => handleAddReaction(message.id, emoji)}
-                                            sx={{
-                                              height: '2.4rem',
-                                              fontSize: '1.2rem',
-                                              bgcolor: hasUserReaction
-                                                ? 'rgba(25, 118, 210, 0.15)'
-                                                : 'rgba(0, 0, 0, 0.06)',
-                                              border: hasUserReaction
-                                                ? '1.5px solid rgba(25, 118, 210, 0.3)'
-                                                : '1px solid rgba(0, 0, 0, 0.1)',
-                                              cursor: 'pointer',
-                                              transition: 'all 0.2s ease',
-                                              '&:hover': {
-                                                bgcolor: hasUserReaction
-                                                  ? 'rgba(25, 118, 210, 0.25)'
-                                                  : 'rgba(0, 0, 0, 0.1)',
-                                                transform: 'scale(1.05)',
-                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                                              },
-                                              '& .MuiChip-label': {
-                                                px: 1,
-                                                fontWeight: hasUserReaction ? 600 : 500
-                                              }
-                                            }}
-                                          />
-                                        )
-                                      }
-                                    )}
-                                  </Box>
-                                )}
-
-                              {/* Reaction Picker Popover */}
-                              {!isCurrentUser && (
-                                <Popover
-                                  open={Boolean(reactionAnchorEl[message.id])}
-                                  anchorEl={reactionAnchorEl[message.id]}
-                                  onClose={() => handleReactionClose(message.id)}
-                                  anchorOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'left'
-                                  }}
-                                  transformOrigin={{
-                                    vertical: 'bottom',
-                                    horizontal: 'left'
-                                  }}
-                                  PaperProps={{
-                                    sx: {
-                                      p: 1,
-                                      borderRadius: '1.6rem',
-                                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-                                      background:
-                                        'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 255, 0.98) 100%)',
-                                      backdropFilter: 'blur(10px)',
-                                      border: '1px solid rgba(0, 0, 0, 0.08)'
-                                    }
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      gap: 0.5
-                                    }}
-                                  >
-                                    {commonReactions.map((emoji) => {
-                                      const hasReaction = message.reactions?.some(
-                                        (r) => r.emoji === emoji && r.userId === currentUser.id
-                                      )
-                                      return (
-                                        <Tooltip
-                                          key={emoji}
-                                          title={hasReaction ? 'Gỡ cảm xúc' : 'Thả cảm xúc'}
-                                          arrow
-                                        >
-                                          <IconButton
-                                            onClick={() => handleAddReaction(message.id, emoji)}
-                                            sx={{
-                                              width: 40,
-                                              height: 40,
-                                              fontSize: '2rem',
-                                              bgcolor: hasReaction
-                                                ? 'rgba(25, 118, 210, 0.15)'
-                                                : 'transparent',
-                                              border: hasReaction
-                                                ? '2px solid rgba(25, 118, 210, 0.3)'
-                                                : '1px solid transparent',
-                                              transition: 'all 0.2s ease',
-                                              '&:hover': {
-                                                bgcolor: hasReaction
-                                                  ? 'rgba(25, 118, 210, 0.25)'
-                                                  : 'rgba(0, 0, 0, 0.05)',
-                                                transform: 'scale(1.15)',
-                                                borderColor: 'rgba(25, 118, 210, 0.4)'
-                                              }
-                                            }}
-                                          >
-                                            {emoji}
-                                          </IconButton>
-                                        </Tooltip>
-                                      )
-                                    })}
-                                  </Box>
-                                </Popover>
-                              )}
-                            </Box>
-                          </Box>
+                                  )
+                                })}
+                              </Box>
+                            </Popover>
+                          )}
                         </Box>
                       )
                     })
@@ -2537,12 +2471,13 @@ export default function ChatMainContent() {
                     onClose={handleEmojiClose}
                     anchorOrigin={{
                       vertical: 'top',
-                      horizontal: 'left'
+                      horizontal: 'center'
                     }}
                     transformOrigin={{
                       vertical: 'bottom',
-                      horizontal: 'left'
+                      horizontal: 'center'
                     }}
+                    sx={{ zIndex: 9999 }}
                     PaperProps={{
                       sx: {
                         p: 2,
@@ -2748,6 +2683,124 @@ export default function ChatMainContent() {
             disabled={isLoadingChatUsers || !selectedChatUser || isCreatingChat}
           >
             {isCreatingChat ? 'Đang tạo...' : 'Bắt đầu chat'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        PaperProps={{
+          sx: {
+            borderRadius: '1.6rem',
+            minWidth: '400px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #ff5252 0%, #f44336 100%)',
+            p: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              bgcolor: 'rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <DeleteOutlineIcon sx={{ fontSize: '2.4rem', color: 'white' }} />
+          </Box>
+          <Typography
+            sx={{
+              fontSize: '1.8rem',
+              fontWeight: 700,
+              color: 'white'
+            }}
+          >
+            Xóa đoạn chat
+          </Typography>
+        </Box>
+        <DialogContent sx={{ p: 3, pt: 3 }}>
+          <Typography sx={{ fontSize: '1.4rem', color: 'text.primary', mb: 2 }}>
+            Bạn có chắc muốn xóa đoạn chat với{' '}
+            <strong style={{ color: '#1976d2' }}>{deleteTarget?.name}</strong>?
+          </Typography>
+          <Box
+            sx={{
+              bgcolor: 'rgba(244, 67, 54, 0.08)',
+              borderRadius: '1rem',
+              p: 2,
+              border: '1px solid rgba(244, 67, 54, 0.2)'
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '1.3rem',
+                color: 'error.main',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              ⚠️ Tất cả tin nhắn trong đoạn chat này sẽ bị xóa vĩnh viễn và không thể khôi phục.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0, gap: 1 }}>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            disabled={isDeleting}
+            sx={{
+              borderRadius: '1rem',
+              px: 3,
+              py: 1,
+              fontSize: '1.3rem',
+              textTransform: 'none',
+              color: 'text.secondary',
+              '&:hover': {
+                bgcolor: 'rgba(0, 0, 0, 0.05)'
+              }
+            }}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+            variant="contained"
+            color="error"
+            sx={{
+              borderRadius: '1rem',
+              px: 3,
+              py: 1,
+              fontSize: '1.3rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(244, 67, 54, 0.4)'
+              }
+            }}
+          >
+            {isDeleting ? (
+              <>
+                <CircularProgress size={18} color="inherit" sx={{ mr: 1 }} />
+                Đang xóa...
+              </>
+            ) : (
+              'Xóa đoạn chat'
+            )}
           </Button>
         </DialogActions>
       </Dialog>

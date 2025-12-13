@@ -35,6 +35,12 @@ export type HostCertificate = {
 
 export type CertificateType = 'Agency' | 'Host'
 
+// Backend enum values
+const CertificateTypeEnum = {
+  Agency: 1,
+  Host: 2
+} as const
+
 // Kết nối backend thật
 const USE_MOCK_ROLE_UPGRADE = false
 
@@ -130,7 +136,15 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
     return null as T
   }
 
-  return response.json()
+  // Check content type to handle both JSON and text responses
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return response.json()
+  }
+  
+  // If not JSON, return text as-is (backend returns plain string for success messages)
+  const text = await response.text()
+  return text as T
 }
 
 const normalizeAgencyCertificate = (payload: any): AgencyCertificate => {
@@ -532,7 +546,7 @@ export const approveCertificate = async (payload: { certificateId: number; type:
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type
+        Type: CertificateTypeEnum[payload.type] // Convert string to enum number
       })
     })
     
@@ -580,7 +594,7 @@ export const rejectCertificate = async (payload: { certificateId: number; type: 
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type,
+        Type: CertificateTypeEnum[payload.type], // Convert string to enum number
         Comment: payload.comment.trim()
       })
     })
@@ -629,7 +643,7 @@ export const reviewCertificate = async (payload: { certificateId: number; type: 
       headers: ensureAuthHeaders(),
       body: JSON.stringify({
         CertificateId: payload.certificateId,
-        Type: payload.type,
+        Type: CertificateTypeEnum[payload.type], // Convert string to enum number
         Comment: payload.comment.trim()
       })
     })

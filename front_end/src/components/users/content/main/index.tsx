@@ -354,12 +354,12 @@ export default function MainUsersContent() {
     const verifiedUsers = filteredUsers.filter((u) => u.verified).length
     const blockedUsers = filteredUsers.filter((u) => u.status === 'blocked').length
 
-    // Users mới: trong 30 ngày gần đây
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    // Users mới: chỉ tính những user tham gia trong vòng 1 ngày (24 giờ)
+    const oneDayAgo = new Date()
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1)
     const newUsers = filteredUsers.filter((u) => {
       const joinDate = new Date(u.joinDate)
-      return joinDate >= thirtyDaysAgo
+      return joinDate >= oneDayAgo
     }).length
 
     return {

@@ -21,8 +21,9 @@
 
 import { fetchWithFallback, extractErrorMessage, getAuthToken, DISABLE_BACKEND } from './httpClient'
 
-// Kết nối backend thật
-const USE_MOCK_SUPPORT = false
+// ⚠️ Backend chưa có SupportController, dùng mock data tạm thời
+// Khi backend implement xong, đổi thành false
+const USE_MOCK_SUPPORT = true
 
 export type SupportStatus = 'Pending' | 'InProgress' | 'Resolved' | 'Closed' | string | null | undefined
 

@@ -56,15 +56,29 @@ const LoginForm = () => {
               return
             }
 
-            // Lưu token và userInfo
-            localStorage.setItem('token', token)
+            // Kiểm tra userInfo và role_id - chỉ cho phép Admin (role_id = 1) đăng nhập
             const userInfo = data.UserInfo || data.userInfo
             if (userInfo) {
+              const roleId = userInfo.RoleId || userInfo.roleId
+              if (roleId !== 1) {
+                // Nếu không phải Admin, hiển thị lỗi như email/password sai
+                setGeneralError('Email hoặc Mật khẩu không đúng')
+                return
+              }
+              
+              // Lưu userInfo nếu là Admin
               localStorage.setItem('userInfo', JSON.stringify(userInfo))
+            } else {
+              // Nếu không có userInfo, không cho đăng nhập
+              setGeneralError('Email hoặc Mật khẩu không đúng')
+              return
             }
 
-            // Chuyển đến trang chủ
-            navigate('/')
+            // Lưu token
+            localStorage.setItem('token', token)
+
+            // Chuyển đến trang dashboard
+            navigate('/dashboard')
           } catch (err) {
             // Bỏ qua lỗi network/fetch và cho phép đăng nhập mock
             console.error('Google login error:', err)
@@ -160,24 +174,40 @@ const LoginForm = () => {
     try {
       const response = await login(formData.email, formData.password)
 
+      // Lưu thông tin user nếu có (backend có thể trả về UserInfo hoặc userInfo)
+      const userInfo = response.UserInfo || response.userInfo
+      
+      // Kiểm tra role_id - chỉ cho phép Admin (role_id = 1) đăng nhập
+      if (userInfo) {
+        const roleId = userInfo.RoleId || userInfo.roleId
+        if (roleId !== 1) {
+          // Nếu không phải Admin, hiển thị lỗi như email/password sai
+          setGeneralError('Email hoặc Mật khẩu không đúng')
+          setIsLoading(false)
+          return
+        }
+        
+        // Lưu userInfo nếu là Admin
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      } else {
+        // Nếu không có userInfo, không cho đăng nhập
+        setGeneralError('Email hoặc Mật khẩu không đúng')
+        setIsLoading(false)
+        return
+      }
+
       // Lưu token vào localStorage
       if (response.Token || response.token) {
         localStorage.setItem('token', response.Token || response.token)
       }
 
-      // Lưu thông tin user nếu có (backend có thể trả về UserInfo hoặc userInfo)
-      const userInfo = response.UserInfo || response.userInfo
-      if (userInfo) {
-        localStorage.setItem('userInfo', JSON.stringify(userInfo))
-      }
-
-      navigate('/')
+      navigate('/dashboard')
     } catch (error) {
       // Bỏ qua lỗi network/fetch
       if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch'))) {
         console.warn('Network error ignored:', error)
         // Cho phép đăng nhập thành công (mock) khi không có backend
-        navigate('/')
+        navigate('/dashboard')
         return
       }
       console.error('Login error:', error)

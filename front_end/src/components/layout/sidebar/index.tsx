@@ -67,9 +67,6 @@ const SideBar = ({ open, setOpen }: SideBarProps) => {
               case '/chat':
                 dynamicBadge = badges.chat
                 break
-              case '/supports':
-                dynamicBadge = badges.supports
-                break
               case '/support-approvals':
                 dynamicBadge = badges.supportApprovals
                 break

@@ -297,6 +297,49 @@ export const getChatHistory = async (toUserId: string): Promise<ChatMessage[]> =
 }
 
 /**
+ * Xóa đoạn chat với một người dùng
+ * Endpoint: DELETE /api/chat/DeleteConversation/{otherUserId}
+ * Requires: Authentication (Bearer token)
+ * @param otherUserId - ID của người dùng muốn xóa đoạn chat
+ */
+export const deleteConversation = async (otherUserId: string): Promise<boolean> => {
+  if (USE_MOCK_CHAT) {
+    console.warn('[ChatApi] deleteConversation using MOCK (no backend)')
+    return true
+  }
+
+  try {
+    const token = ensureToken()
+    const endpoint = `/api/chat/DeleteConversation/${otherUserId}`
+    console.log('[ChatApi] Deleting conversation:', { otherUserId })
+
+    const response = await fetchWithFallback(endpoint, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      console.log('[ChatApi] Conversation deleted successfully')
+      return true
+    }
+
+    if (response.status === 404) {
+      console.log('[ChatApi] No conversation found to delete')
+      return true // Vẫn coi như thành công vì không có gì để xóa
+    }
+
+    const errorMessage = await extractErrorMessage(response, 'Không thể xóa đoạn chat')
+    throw new Error(errorMessage)
+  } catch (error: any) {
+    console.error('[ChatApi] deleteConversation failed:', error)
+    throw error
+  }
+}
+
+/**
  * Gửi tin nhắn qua SignalR ChatHub (realtime)
  * @param payload - { receiverId: string, content: string, imageUrl?: string }
  * @returns Promise<ChatMessage> - Tin nhắn đã gửi

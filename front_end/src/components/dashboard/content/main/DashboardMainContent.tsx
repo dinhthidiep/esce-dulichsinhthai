@@ -4,9 +4,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import ActivityCard from '~/components/common/ActivityCard'
 import QuickStatic from '~/components/common/QuickStaticCard'
-import PriorityTaskCard from '~/components/common/PriorityTaskCard'
-import PopularPostCard from '~/components/common/PopularPostCard'
-import { fetchDashboardData, type DashboardDto } from '~/api/instances/DashboardApi'
+import { fetchDashboardData, fetchTimeSeriesData, type DashboardDto, type TimeSeriesDto } from '~/api/instances/DashboardApi'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -22,15 +20,13 @@ import type {
   QuickStaticFeedProps,
   QuickStaticCardProps,
   ActivityFeedProps,
-  ActivityCardProps,
-  PriorityTaskCardFeedProps,
-  PriorityTaskCardProps,
-  PopularPostFeedProps,
-  PopularPostProps
+  ActivityCardProps
 } from '~/types/common'
 
 export default function MainDashBoardContent() {
   const [dashboardData, setDashboardData] = useState<DashboardDto | null>(null)
+  const [monthlyTimeSeriesData, setMonthlyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'month', startDate: '', endDate: '', data: [] })
+  const [dailyTimeSeriesData, setDailyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'day', startDate: '', endDate: '', data: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,18 +35,42 @@ export default function MainDashBoardContent() {
       try {
         setLoading(true)
         setError(null)
-        const data = await fetchDashboardData()
+        
+        // Load dashboard statistics
+        const data = await fetchDashboardData('day')
         console.log('Dashboard main data loaded:', data)
         setDashboardData(data)
+
+        // Load time series data for charts in parallel
+        try {
+          const [monthlyData, dailyData] = await Promise.all([
+            fetchTimeSeriesData('month'), // Last 12 months
+            fetchTimeSeriesData('day') // Last 30 days
+          ])
+          console.log('Monthly time series data loaded:', monthlyData)
+          console.log('Daily time series data loaded:', dailyData)
+          setMonthlyTimeSeriesData(monthlyData)
+          setDailyTimeSeriesData(dailyData)
+        } catch (timeSeriesError) {
+          // Nếu time series API fail, giữ empty data (đã khởi tạo ban đầu)
+          console.warn('Time series API failed, using empty data:', timeSeriesError)
+        }
       } catch (error) {
         console.error('Error loading dashboard:', error)
         setError(error instanceof Error ? error.message : 'Không thể tải dữ liệu')
+        // Time series data đã được khởi tạo với empty array, không cần set lại
         // Set fallback data
         setDashboardData({
           totalUsers: 0,
           userGrowth: '',
           totalPosts: 0,
           postGrowth: '',
+          totalServiceCombos: 0,
+          serviceComboGrowth: '',
+          totalRevenue: 0,
+          revenueGrowth: '',
+          totalBookings: 0,
+          bookingGrowth: '',
           pendingSupports: 0,
           totalViews: 0,
           todayComments: 0,
@@ -76,44 +96,6 @@ export default function MainDashBoardContent() {
     return (
       <Box className="flex flex-col gap-[2.4rem]">
         <Box className="grid grid-cols-2 p-[2.4rem] gap-x-[2.4rem]">
-          <Box
-            sx={{
-              height: '300px',
-              bgcolor: 'grey.200',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Box sx={{ color: 'grey.400' }}>Đang tải...</Box>
-          </Box>
-          <Box
-            sx={{
-              height: '300px',
-              bgcolor: 'grey.200',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Box sx={{ color: 'grey.400' }}>Đang tải...</Box>
-          </Box>
-        </Box>
-        <Box className="grid grid-cols-3 gap-x-[2.4rem]">
-          <Box
-            sx={{
-              height: '300px',
-              bgcolor: 'grey.200',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Box sx={{ color: 'grey.400' }}>Đang tải...</Box>
-          </Box>
           <Box
             sx={{
               height: '300px',
@@ -222,124 +204,30 @@ export default function MainDashBoardContent() {
     bgClassName: 'bg-white'
   }
 
-  // Priority Task Config
-  const priorityTaskFeeds: PriorityTaskCardFeedProps[] = [
-    {
-      title: `${dashboardData.urgentSupports} tickets hỗ trợ`,
-      subTitle: 'Chờ xử lí',
-      status: 'Urgent',
-      titleClassName: 'text-red-800',
-      bgClassName: 'bg-red-50 border-red-200! border! border-solid',
-      subTitleClassName: 'text-red-600',
-      statusClassName: 'bg-red-600 border! border-solid! border-red-200!'
-    },
-    {
-      title: `${dashboardData.pendingUpgradeRequests} yêu cầu nâng cấp`,
-      titleClassName: 'text-yellow-800',
-      subTitle: 'Chờ duyệt',
-      subTitleClassName: 'text-yellow-600',
-      status: 'Medium',
-      statusClassName: 'bg-green-600 border! border-solid! border-yellow-200!',
-      bgClassName: 'bg-yellow-50 border-yellow-200! border! border-solid'
-    },
-    {
-      title: `${dashboardData.unreadMessages} tin nhắn chat`,
-      titleClassName: 'text-blue-800',
-      subTitle: 'Chưa đọc',
-      subTitleClassName: 'text-blue-600',
-      status: 'Low',
-      statusClassName: 'bg-white! border! border-solid! border-green-600! text-green-600!',
-      bgClassName: 'bg-blue-50 border-blue-200! border! border-solid'
-    }
-  ]
-
-  const priorityTaskConfig: PriorityTaskCardProps = {
-    title: 'Cần xử lý ưu tiên',
-    data: priorityTaskFeeds
-  }
-
-  // Popular Posts Config
-  const popularPostFeeds: PopularPostFeedProps[] =
-    dashboardData.popularPosts.length > 0
-      ? dashboardData.popularPosts.map((post) => ({
-          title: post.title,
-          subtitle: `${post.commentsCount} comments`,
-          value: <span className="text-[1.4rem]! font-medium!">{post.reactionsCount} ❤️</span>
-        }))
-      : [
-          {
-            title: 'Chưa có bài viết nào',
-            subtitle: '',
-            value: <span className="text-[1.4rem]! font-medium!">-</span>
-          }
-        ]
-
-  const popularPostConfig: PopularPostProps = {
-    data: popularPostFeeds,
-    title: 'Bài viết phổ biến'
-  }
-
-  // User Activity Config (using recent active users - simplified)
-  const userActivityFeeds: PopularPostFeedProps[] =
-    dashboardData.popularPosts.length > 0
-      ? dashboardData.popularPosts.slice(0, 3).map((post) => ({
-          title: post.authorName,
-          subtitle: 'Author',
-          value: (
-            <span className="text-white text-[1.2rem]! bg-yellow-500 rounded-xl p-[0.2rem_0.8rem]! font-medium!">
-              Active
-            </span>
-          )
-        }))
-      : [
-          {
-            title: 'Chưa có user nào',
-            subtitle: '',
-            value: (
-              <span className="text-white text-[1.2rem]! bg-gray-500 rounded-xl p-[0.2rem_0.8rem]! font-medium!">
-                -
-              </span>
-            )
-          }
-        ]
-
-  const userActivityConfig: PopularPostProps = {
-    data: userActivityFeeds,
-    title: 'Users hoạt động'
-  }
-
   // ============================
-  // MOCK BIỂU ĐỒ DOANH THU
+  // BIỂU ĐỒ DOANH THU TỪ API
   // ============================
-  // Do backend đang tắt, ta dùng dữ liệu mock để hiển thị 2 biểu đồ:
-  // 1. Doanh thu theo từng tháng (12 tháng)
-  // 2. Doanh thu theo từng ngày trong tháng hiện tại (30 ngày)
+  // Sử dụng dữ liệu từ time-series API
+  // 1. Doanh thu theo từng tháng (từ time-series với period=month)
+  // 2. Doanh thu theo từng ngày trong tháng hiện tại (từ time-series với period=day)
 
-  const monthlyRevenueData = [
-    { month: 'Tháng 1', revenue: 120_000_000 },
-    { month: 'Tháng 2', revenue: 150_000_000 },
-    { month: 'Tháng 3', revenue: 180_000_000 },
-    { month: 'Tháng 4', revenue: 160_000_000 },
-    { month: 'Tháng 5', revenue: 210_000_000 },
-    { month: 'Tháng 6', revenue: 240_000_000 },
-    { month: 'Tháng 7', revenue: 230_000_000 },
-    { month: 'Tháng 8', revenue: 260_000_000 },
-    { month: 'Tháng 9', revenue: 220_000_000 },
-    { month: 'Tháng 10', revenue: 280_000_000 },
-    { month: 'Tháng 11', revenue: 300_000_000 },
-    { month: 'Tháng 12', revenue: 320_000_000 }
-  ]
+  // Prepare monthly revenue data from time-series
+  const monthlyRevenueData = monthlyTimeSeriesData.data
+    .filter((item) => item.revenue > 0) // Only show months with revenue
+    .slice(-12) // Last 12 months
+    .map((item) => ({
+      month: item.label || 'N/A',
+      revenue: Number(item.revenue) || 0
+    }))
 
-  const dailyRevenueData = Array.from({ length: 30 }, (_, idx) => {
-    const day = idx + 1
-    // Tạo pattern nhẹ: cuối tuần cao hơn
-    const base = 3_000_000 + (day % 7 === 0 || day % 7 === 6 ? 4_000_000 : 0)
-    const fluctuation = (day % 5) * 500_000
-    return {
-      day: `Ngày ${day}`,
-      revenue: base + fluctuation
-    }
-  })
+  // Prepare daily revenue data from time-series
+  const dailyRevenueData = dailyTimeSeriesData.data
+    .filter((item) => item.revenue > 0) // Only show days with revenue
+    .slice(-30) // Last 30 days
+    .map((item) => ({
+      day: item.label || 'N/A',
+      revenue: Number(item.revenue) || 0
+    }))
 
   return (
     <Box className="flex flex-col gap-[2.4rem]">
@@ -359,12 +247,12 @@ export default function MainDashBoardContent() {
             Doanh thu theo từng tháng
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ area thể hiện tổng doanh thu mock theo từng tháng trong năm.
+            Biểu đồ area thể hiện tổng doanh thu theo từng tháng trong năm.
           </Typography>
           <Box sx={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={monthlyRevenueData}
+                data={monthlyRevenueData.length > 0 ? monthlyRevenueData : [{ month: 'Chưa có dữ liệu', revenue: 0 }]}
                 margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
               >
                 <defs>
@@ -410,12 +298,12 @@ export default function MainDashBoardContent() {
             Doanh thu theo ngày trong tháng
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ cột thể hiện doanh thu mock theo từng ngày trong tháng.
+            Biểu đồ cột thể hiện doanh thu theo từng ngày trong tháng.
           </Typography>
           <Box sx={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={dailyRevenueData}
+                data={dailyRevenueData.length > 0 ? dailyRevenueData : [{ day: 'Chưa có dữ liệu', revenue: 0 }]}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -439,13 +327,6 @@ export default function MainDashBoardContent() {
       <Box className="grid grid-cols-2 p-[2.4rem] gap-x-[2.4rem]">
         <ActivityCard {...activityConfig} />
         <QuickStatic {...quickStaticConfig} />
-      </Box>
-
-      {/* Hàng 3: Các khối ưu tiên & bài viết phổ biến */}
-      <Box className="grid grid-cols-3 gap-x-[2.4rem] px-[2.4rem] pb-[2.4rem]">
-        <PriorityTaskCard {...priorityTaskConfig} />
-        <PopularPostCard {...popularPostConfig} />
-        <PopularPostCard {...userActivityConfig} />
       </Box>
     </Box>
   )

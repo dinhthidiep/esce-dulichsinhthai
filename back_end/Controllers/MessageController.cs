@@ -64,5 +64,23 @@ namespace ESCE_SYSTEM.Controllers
                 return BadRequest("Lỗi khi lấy lịch sử chat.");
             }
         }
+
+        [HttpDelete("DeleteConversation/{otherUserId}")]
+        public async Task<ActionResult> DeleteConversation(string otherUserId)
+        {
+            try
+            {
+                var result = await _messageService.DeleteConversation(_userContextService.UserId, otherUserId);
+                if (result)
+                {
+                    return Ok(new { message = "Đã xóa đoạn chat thành công." });
+                }
+                return NotFound(new { message = "Không tìm thấy đoạn chat để xóa." });
+            }
+            catch (Exception)
+            {
+                return BadRequest("Lỗi khi xóa đoạn chat.");
+            }
+        }
     }
 }

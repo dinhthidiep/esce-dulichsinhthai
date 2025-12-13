@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Box from '@mui/material/Box'
 import {
   Typography,
@@ -204,8 +204,8 @@ export default function MainSupportsContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const replyFileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load tickets
-  const loadTickets = async () => {
+  // Load tickets - wrapped in useCallback to prevent infinite loop
+  const loadTickets = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -239,11 +239,11 @@ export default function MainSupportsContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, isAdmin])
 
   useEffect(() => {
     loadTickets()
-  }, [statusFilter, isAdmin, loadTickets])
+  }, [loadTickets])
 
   // Load responses when ticket is selected
   const loadResponses = async (ticketId: number) => {

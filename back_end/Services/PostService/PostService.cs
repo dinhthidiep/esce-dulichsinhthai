@@ -66,6 +66,10 @@ namespace ESCE_SYSTEM.Services
             var currentUserId = _userContextService.GetCurrentUserId();
             var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
 
+            // Admin (RoleId = 1) đăng bài thì tự động Approved
+            // Các role khác (Host=2, Agency=3, Customer=4) cần duyệt
+            var isAdmin = currentUser?.RoleId == 1;
+
             var post = new Post
             {
                 Title = postDto.ArticleTitle ?? "Không có tiêu đề",
@@ -73,7 +77,7 @@ namespace ESCE_SYSTEM.Services
                 AuthorId = currentUserId,
                 Image = postDto.Images != null && postDto.Images.Any() ? string.Join(",", postDto.Images) : null,
                 CreatedAt = DateTime.Now,
-                Status = "Pending",
+                Status = isAdmin ? "Approved" : "Pending",
                 IsDeleted = false,
                 CommentsCount = 0,
                 ReactionsCount = 0,
@@ -82,8 +86,11 @@ namespace ESCE_SYSTEM.Services
 
             var createdPost = await _postRepository.AddAsync(post);
 
-            // Gửi thông báo cho tất cả Admin
-            await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            // Chỉ gửi thông báo cho Admin nếu bài viết cần duyệt (không phải Admin đăng)
+            if (!isAdmin)
+            {
+                await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            }
 
             return await GetPostDetail(createdPost.Id);
         }
@@ -144,7 +151,9 @@ namespace ESCE_SYSTEM.Services
                         PostLikeId = reaction.Id.ToString(),
                         AccountId = reaction.UserId.ToString(),
                         FullName = reaction.User?.Name ?? string.Empty,
-                        CreatedDate = reaction.CreatedAt ?? DateTime.Now
+                        CreatedDate = reaction.CreatedAt ?? DateTime.Now,
+                        ReactionTypeId = reaction.ReactionTypeId,
+                        ReactionTypeName = reaction.ReactionType?.Name ?? string.Empty
                     });
                 }
 
@@ -230,7 +239,9 @@ namespace ESCE_SYSTEM.Services
                 {
                     AccountId = r.UserId.ToString(),
                     FullName = r.User?.Name ?? string.Empty,
-                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm")
+                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm"),
+                    ReactionTypeId = r.ReactionTypeId,
+                    ReactionTypeName = r.ReactionType?.Name ?? string.Empty
                 }).ToList(),
                 Comments = comments.Select(c => new PostCommentDetailDto
                 {

@@ -159,19 +159,33 @@ export const sendChatMessageViaSignalR = async (
     })
 
     // Gọi method SendMessage trên ChatHub
-    // Backend ChatHub.SendMessage(string toUserId, string content, string? imageUrl) sẽ:
+    // Backend ChatHub.SendMessage(string toUserId, string content) sẽ:
     // 1. Lưu vào DB
     // 2. Gửi ReceiveMessage event cho cả sender và receiver
-    await connection.invoke('SendMessage', toUserId, content, imageUrl || null)
+    // Note: Backend hiện tại chưa hỗ trợ imageUrl
+    await connection.invoke('SendMessage', toUserId, content)
 
     // Tạo ChatMessage tạm từ dữ liệu đã gửi
     // Backend sẽ gửi ReceiveMessage event với format:
     // { senderId, receiverId, content, imageUrl, timestamp }
     // Nhưng vì đây là async, ta tạo message tạm để UI cập nhật ngay
     const now = new Date().toISOString()
+    
+    // Lấy currentUserId từ localStorage để set senderId đúng
+    let currentUserId = 0
+    try {
+      const userInfoStr = localStorage.getItem('userInfo')
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr)
+        currentUserId = Number(userInfo.id ?? userInfo.userId ?? 0)
+      }
+    } catch {
+      console.warn('[ChatSignalR] Could not get currentUserId from localStorage')
+    }
+    
     return {
       id: 0, // Sẽ được cập nhật khi nhận ReceiveMessage từ server
-      senderId: 0, // Sẽ được cập nhật khi nhận ReceiveMessage từ server
+      senderId: currentUserId, // Đặt senderId = currentUserId để UI hiển thị đúng bên phải
       receiverId: Number(toUserId),
       content,
       imageUrl,
