@@ -168,6 +168,9 @@ namespace ESCE_SYSTEM.Services
                         Content = comment.Content,
                         Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
                         CreatedDate = comment.CreatedAt,
+                        ParentCommentId = comment.ParentCommentId,
+                        AuthorId = comment.AuthorId,
+                        ReactionsCount = comment.ReactionsCount,
                         Likes = new List<PostCommentLikeResponseDto>(),
                         Replies = new List<ReplyPostCommentResponseDto>()
                     };

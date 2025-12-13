@@ -40,6 +40,9 @@ namespace ESCE_SYSTEM.DTOs
         public string Content { get; set; } = null!;
         public List<string>? Images { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public int? ParentCommentId { get; set; }
+        public int? AuthorId { get; set; }
+        public int ReactionsCount { get; set; }
 
         public List<PostCommentLikeResponseDto> Likes { get; set; } = new List<PostCommentLikeResponseDto>();
         public List<ReplyPostCommentResponseDto> Replies { get; set; } = new List<ReplyPostCommentResponseDto>();

@@ -143,10 +143,13 @@ const ForumPage = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editCommentInputs, setEditCommentInputs] = useState<Record<string, string>>({})
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({}) // key: postId-commentId
+  const [showPendingModal, setShowPendingModal] = useState(false) // Modal thông báo bài viết đang chờ duyệt
   const [submittingReply, setSubmittingReply] = useState<string | null>(null)
   const [deletingComment, setDeletingComment] = useState<string | null>(null)
   const [showReplyInputs, setShowReplyInputs] = useState<Set<string>>(new Set()) // key: postId-commentId
   const [showCommentMenu, setShowCommentMenu] = useState<Record<string, boolean>>({}) // key: postId-commentId
+  const [showLikersModal, setShowLikersModal] = useState<Post | null>(null) // Modal danh sách người thích bài viết
+  const [showCommentLikersModal, setShowCommentLikersModal] = useState<PostComment | null>(null) // Modal danh sách người thích comment
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -184,9 +187,10 @@ const ForumPage = () => {
     { id: 6, name: 'Angry', emoji: '😠' },
   ]
 
-  // Map reaction type name to ID
+  // Map reaction type name to ID (case-insensitive)
   const getReactionTypeId = (reactionTypeName: string): number => {
-    const reaction = REACTION_TYPES.find(r => r.name === reactionTypeName)
+    const normalizedName = reactionTypeName?.toLowerCase() || 'like'
+    const reaction = REACTION_TYPES.find(r => r.name.toLowerCase() === normalizedName)
     return reaction ? reaction.id : 1 // Default to Like
   }
 
@@ -278,18 +282,19 @@ const ForumPage = () => {
     let likes: PostLike[] = []
     if (post.Likes && Array.isArray(post.Likes) && post.Likes.length > 0) {
       // Đã là PostLikeResponseDto format từ GetAllPost
+      // Backend có thể trả về PascalCase hoặc camelCase tùy config
       likes = post.Likes.map((like: any) => ({
-        PostLikeId: like.PostLikeId || String(like.Id || ''),
-        AccountId: String(like.AccountId || ''),
-        FullName: like.FullName || 'Người dùng',
-        CreatedDate: like.CreatedDate 
-          ? (typeof like.CreatedDate === 'string' 
-              ? like.CreatedDate 
-              : like.CreatedDate instanceof Date
-                ? like.CreatedDate.toISOString()
-                : new Date(like.CreatedDate).toISOString())
+        PostLikeId: like.PostLikeId || like.postLikeId || String(like.Id || like.id || ''),
+        AccountId: String(like.AccountId || like.accountId || like.UserId || like.userId || ''),
+        FullName: like.FullName || like.fullName || 'Người dùng',
+        CreatedDate: like.CreatedDate || like.createdDate
+          ? (typeof (like.CreatedDate || like.createdDate) === 'string' 
+              ? (like.CreatedDate || like.createdDate)
+              : (like.CreatedDate || like.createdDate) instanceof Date
+                ? (like.CreatedDate || like.createdDate).toISOString()
+                : new Date(like.CreatedDate || like.createdDate).toISOString())
           : '',
-        ReactionType: like.ReactionType || 'Like', // Lấy ReactionType từ backend
+        ReactionType: like.ReactionTypeName || like.reactionTypeName || like.ReactionType || like.reactionType || 'Like',
       }))
     } else if (post.Postreactions && Array.isArray(post.Postreactions)) {
       // Convert từ Post model (nếu dùng /approved endpoint)
@@ -408,8 +413,13 @@ const ForumPage = () => {
         
         if (userInfo) {
           const userId = userInfo.Id || userInfo.id
+          // Tìm reaction của user hiện tại - so sánh cả string và number
           const userReaction = normalized.Likes?.find(
-            (like) => like.AccountId === String(userId)
+            (like) => {
+              const likeAccountId = String(like.AccountId || '').trim()
+              const currentUserId = String(userId || '').trim()
+              return likeAccountId === currentUserId && likeAccountId !== ''
+            }
           )
           
           // Nếu preserveSavedState và có state hiện tại, giữ lại state đó
@@ -424,8 +434,11 @@ const ForumPage = () => {
           if (userReaction && userReaction.ReactionType) {
             const reactionTypeId = getReactionTypeId(userReaction.ReactionType)
             newUserReactions[postId] = reactionTypeId
+          } else if (userReaction) {
+            // Có reaction nhưng không có ReactionType -> mặc định là Like (1)
+            newUserReactions[postId] = 1
           } else if (userReactionId) {
-            // Fallback: nếu không có ReactionType, giữ lại từ state hoặc mặc định là Like (1)
+            // Fallback: giữ lại từ state hoặc mặc định là Like (1)
             newUserReactions[postId] = userReactions[postId] || 1
           }
           
@@ -480,8 +493,13 @@ const ForumPage = () => {
       // Kiểm tra user đã like chưa
       const userId = userInfo.Id || userInfo.id
       const savedWithUserStatus = savedApprovedPosts.map((post) => {
+        // Tìm reaction của user hiện tại - so sánh cả string và number
         const userReaction = post.Likes?.find(
-          (like) => like.AccountId === String(userId)
+          (like) => {
+            const likeAccountId = String(like.AccountId || '').trim()
+            const currentUserId = String(userId || '').trim()
+            return likeAccountId === currentUserId && likeAccountId !== ''
+          }
         )
         
         // Lấy reaction type từ backend
@@ -489,7 +507,7 @@ const ForumPage = () => {
         if (userReaction && userReaction.ReactionType) {
           reactionTypeId = getReactionTypeId(userReaction.ReactionType)
         } else if (userReaction) {
-          reactionTypeId = userReactions[post.PostId || ''] || 1
+          reactionTypeId = 1 // Mặc định là Like
         }
         
         return {
@@ -503,12 +521,19 @@ const ForumPage = () => {
       // Update user reactions for forum-saved posts
       savedWithUserStatus.forEach((post) => {
         const userReaction = post.Likes?.find(
-          (like) => like.AccountId === String(userId)
+          (like) => {
+            const likeAccountId = String(like.AccountId || '').trim()
+            const currentUserId = String(userId || '').trim()
+            return likeAccountId === currentUserId && likeAccountId !== ''
+          }
         )
-        if (userReaction && userReaction.ReactionType && post.PostId) {
+        if (userReaction && post.PostId) {
+          const reactionTypeId = userReaction.ReactionType 
+            ? getReactionTypeId(userReaction.ReactionType) 
+            : 1
           setUserReactions((prev) => ({
             ...prev,
-            [post.PostId]: getReactionTypeId(userReaction.ReactionType || 'Like'),
+            [post.PostId]: reactionTypeId,
           }))
         }
       })
@@ -559,8 +584,12 @@ const ForumPage = () => {
     const previousUserReactions = { ...userReactions }
 
     try {
-      // Nếu đã có reaction và chọn lại cùng loại, thì unlike
-      if (currentReactionId && userReactions[postId] === reactionTypeId) {
+      // Kiểm tra xem user đang chọn cùng reaction type hay khác
+      const currentUserReactionType = userReactions[postId]
+      const isSameReactionType = currentReactionId && currentUserReactionType === reactionTypeId
+      
+      // Nếu đã có reaction VÀ chọn cùng loại → unlike (bỏ thích)
+      if (currentReactionId && isSameReactionType) {
         // Kiểm tra xem currentReactionId có phải là temporary ID không (timestamp)
         const isTemporaryId = String(currentReactionId).length > 10 // Temporary ID thường là timestamp dài
         
@@ -604,10 +633,13 @@ const ForumPage = () => {
           return newReactions
         })
         
+        // Filter bỏ like của user hiện tại (dùng AccountId thay vì PostLikeId vì PostLikeId có thể là temporary)
+        const currentUserId = String(userId)
+        
         setPosts((prev) =>
           prev.map((post) => {
             if (post.PostId === postId) {
-              const newLikes = post.Likes?.filter((like) => like.PostLikeId !== String(currentReactionId)) || []
+              const newLikes = post.Likes?.filter((like) => String(like.AccountId) !== currentUserId) || []
               return {
                 ...post,
                 isLiked: false,
@@ -622,7 +654,7 @@ const ForumPage = () => {
         setSavedPosts((prev) =>
           prev.map((post) => {
             if (post.PostId === postId) {
-              const newLikes = post.Likes?.filter((like) => like.PostLikeId !== String(currentReactionId)) || []
+              const newLikes = post.Likes?.filter((like) => String(like.AccountId) !== currentUserId) || []
               return {
                 ...post,
                 isLiked: false,
@@ -637,8 +669,15 @@ const ForumPage = () => {
         // Không refresh, chỉ dùng optimistic update
       } else {
         // Thêm hoặc thay đổi reaction
-        // Backend chỉ hỗ trợ Like (reactionTypeId = 1), luôn gọi endpoint like
-        await axiosInstance.post(`${API_ENDPOINTS.POST_REACTION}/like/${postId}`)
+        // Backend đã xử lý việc đổi reaction: nếu đã có reaction khác, backend sẽ tự update
+        // Không cần unlike trước, chỉ cần gọi ReactToPost với reactionTypeId mới
+        
+        // Gọi endpoint với reactionTypeId cụ thể
+        // Backend sẽ tự động:
+        // - Nếu chưa có reaction -> tạo mới
+        // - Nếu đã có reaction khác -> update reaction type
+        // - Nếu cùng reaction type -> unlike (nhưng case này đã xử lý ở trên)
+        await axiosInstance.post(`${API_ENDPOINTS.POST_REACTION}/${postId}/${reactionTypeId}`)
         
         // Optimistic update - cập nhật state ngay lập tức
         setUserReactions((prev) => ({
@@ -930,6 +969,13 @@ const ForumPage = () => {
         fileInputRef.current.value = ''
       }
       
+      // Kiểm tra role - nếu không phải Admin thì hiển thị thông báo chờ duyệt
+      const roleId = userInfo.RoleId || userInfo.roleId
+      if (roleId !== 1) {
+        // Không phải Admin - hiển thị modal thông báo chờ duyệt
+        setShowPendingModal(true)
+      }
+      
       // Refresh posts
       await fetchPosts()
     } catch (err: any) {
@@ -1195,10 +1241,9 @@ const ForumPage = () => {
     try {
       setSubmittingComment(postId)
       await axiosInstance.post(API_ENDPOINTS.COMMENT, {
-        PostId: parseInt(postId),
+        PostId: postId, // Backend expect string
         Content: commentText,
         Images: null, // Không có ảnh trong comment input hiện tại
-        ParentCommentId: null, // Không phải reply
       })
       
       // Optimistic update
@@ -1378,10 +1423,10 @@ const ForumPage = () => {
       )
 
       await axiosInstance.post(API_ENDPOINTS.COMMENT, {
-        PostId: parseInt(postId),
+        PostId: postId, // Backend expect string
         Content: replyText,
         Images: null,
-        ParentCommentId: parseInt(parentCommentId),
+        PostCommentId: parentCommentId, // Backend dùng PostCommentId để xác định parent comment (reply)
       })
 
       // Clear reply input
@@ -1415,32 +1460,140 @@ const ForumPage = () => {
   }
 
   const handleCommentReaction = async (postId: string, commentId: string, currentReactionId?: number) => {
+    console.log('handleCommentReaction called:', { postId, commentId, currentReactionId })
+    
     if (!userInfo) {
       navigate('/login', { state: { returnUrl: '/forum' } })
       return
     }
 
+    const userId = userInfo.Id || userInfo.id
+    const userName = userInfo.Name || userInfo.name || 'Bạn'
+    console.log('User info:', { userId, userName })
+
+    // Lưu state trước khi thay đổi để revert nếu có lỗi
+    const previousPosts = posts
+    const previousSavedPosts = savedPosts
+
+    // Helper function để update comment likes trong posts
+    const updateCommentLikes = (postsList: Post[], isLiking: boolean): Post[] => {
+      return postsList.map((post) => {
+        if (post.PostId !== postId) return post
+        
+        const updateComments = (comments: PostComment[]): PostComment[] => {
+          return comments.map((comment) => {
+            if (comment.PostCommentId === commentId) {
+              if (isLiking) {
+                // Thêm like mới
+                const newLike = {
+                  PostCommentLikeId: String(Date.now()),
+                  AccountId: String(userId),
+                  FullName: userName,
+                  CreatedDate: new Date().toISOString(),
+                }
+                return {
+                  ...comment,
+                  Likes: [...(comment.Likes || []), newLike],
+                  ReactionsCount: (comment.ReactionsCount || 0) + 1,
+                  UserReactionId: Date.now(), // Temporary ID
+                }
+              } else {
+                // Bỏ like
+                const newLikes = (comment.Likes || []).filter(
+                  (like: any) => String(like.AccountId) !== String(userId)
+                )
+                return {
+                  ...comment,
+                  Likes: newLikes,
+                  ReactionsCount: Math.max(0, (comment.ReactionsCount || 0) - 1),
+                  UserReactionId: undefined,
+                }
+              }
+            }
+            // Recursively update replies
+            if (comment.Replies && comment.Replies.length > 0) {
+              return {
+                ...comment,
+                Replies: updateComments(comment.Replies),
+              }
+            }
+            return comment
+          })
+        }
+        
+        return {
+          ...post,
+          Comments: updateComments(post.Comments || []),
+        }
+      })
+    }
+
     try {
       if (currentReactionId) {
-        // Unlike
-        await axiosInstance.delete(`${API_ENDPOINTS.COMMENT_REACTION}/unlike/${currentReactionId}`)
+        // Optimistic update - unlike
+        setPosts((prev) => updateCommentLikes(prev, false))
+        setSavedPosts((prev) => updateCommentLikes(prev, false))
+        
+        // Unlike - cần fetch reactionId thực nếu là temporary
+        const isTemporaryId = String(currentReactionId).length > 10
+        if (isTemporaryId) {
+          // Fetch để lấy reactionId thực
+          const response = await axiosInstance.get<Post[]>(`${API_ENDPOINTS.POST}/GetAllPost`)
+          const approvedPosts = (response.data || []).filter(post => post.Status === 'Approved')
+          const postData = approvedPosts.find(p => String(p.PostId || p.Id) === postId)
+          if (postData) {
+            const normalized = normalizePost(postData)
+            // Tìm comment và reaction của user
+            const findCommentReaction = (comments: PostComment[]): number | null => {
+              for (const comment of comments) {
+                if (comment.PostCommentId === commentId) {
+                  const userReaction = comment.Likes?.find(
+                    (like: any) => String(like.AccountId) === String(userId)
+                  )
+                  if (userReaction) {
+                    return parseInt(userReaction.PostCommentLikeId || userReaction.Id)
+                  }
+                }
+                if (comment.Replies && comment.Replies.length > 0) {
+                  const found = findCommentReaction(comment.Replies)
+                  if (found) return found
+                }
+              }
+              return null
+            }
+            const realReactionId = findCommentReaction(normalized.Comments || [])
+            if (realReactionId) {
+              await axiosInstance.delete(`${API_ENDPOINTS.COMMENT_REACTION}/unlike/${realReactionId}`)
+            }
+          }
+        } else {
+          await axiosInstance.delete(`${API_ENDPOINTS.COMMENT_REACTION}/unlike/${currentReactionId}`)
+        }
       } else {
-        // Like
-        await axiosInstance.post(`${API_ENDPOINTS.COMMENT_REACTION}/like`, {
-          PostCommentId: parseInt(commentId),
+        // Optimistic update - like
+        setPosts((prev) => updateCommentLikes(prev, true))
+        setSavedPosts((prev) => updateCommentLikes(prev, true))
+        
+        // Like - Backend expect PostCommentId as string
+        console.log('Calling like API:', `${API_ENDPOINTS.COMMENT_REACTION}/like`, { PostCommentId: commentId })
+        const response = await axiosInstance.post(`${API_ENDPOINTS.COMMENT_REACTION}/like`, {
+          PostCommentId: commentId,
         })
-      }
-
-      // Refresh posts
-      await fetchPosts(true)
-      if (activeTab === 'forum-saved') {
-        await fetchSavedPosts(true)
+        console.log('Like API response:', response.data)
+        
+        // Không refresh ngay - dùng optimistic update
+        // ReactionId thực sẽ được lấy khi cần unlike
       }
     } catch (err: any) {
+      console.error('Comment reaction error:', err.response?.data || err.message)
       console.error('Error reacting to comment:', err)
+      // Revert optimistic update on error
+      setPosts(previousPosts)
+      setSavedPosts(previousSavedPosts)
+      
       // Không hiển thị alert cho lỗi "đã thích rồi"
       if (!err.response?.data?.message?.includes('đã thích')) {
-        alert(err.response?.data?.message || 'Không thể thả cảm xúc. Vui lòng thử lại.')
+        console.error(err.response?.data?.message || 'Không thể thả cảm xúc. Vui lòng thử lại.')
       }
     }
   }
@@ -1457,9 +1610,45 @@ const ForumPage = () => {
     })
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined | null) => {
+    // Kiểm tra dateString có hợp lệ không
+    if (!dateString || dateString.trim() === '') {
+      return 'Không rõ thời gian'
+    }
+    
     try {
-      const date = new Date(dateString)
+      let date: Date
+      
+      // Backend trả về format "dd/MM/yyyy HH:mm", cần parse thủ công
+      if (dateString.includes('/')) {
+        const parts = dateString.split(' ')
+        const dateParts = parts[0].split('/')
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10)
+          const month = parseInt(dateParts[1], 10) - 1 // Month is 0-indexed
+          const year = parseInt(dateParts[2], 10)
+          
+          if (parts.length > 1 && parts[1].includes(':')) {
+            const timeParts = parts[1].split(':')
+            const hours = parseInt(timeParts[0], 10)
+            const minutes = parseInt(timeParts[1], 10)
+            date = new Date(year, month, day, hours, minutes)
+          } else {
+            date = new Date(year, month, day)
+          }
+        } else {
+          date = new Date(dateString)
+        }
+      } else {
+        // ISO format hoặc format khác
+        date = new Date(dateString)
+      }
+      
+      // Kiểm tra date có hợp lệ không
+      if (isNaN(date.getTime())) {
+        return 'Không rõ thời gian'
+      }
+      
       const now = new Date()
       const diffMs = now.getTime() - date.getTime()
       const diffMins = Math.floor(diffMs / 60000)
@@ -1477,7 +1666,7 @@ const ForumPage = () => {
         day: 'numeric',
       })
     } catch {
-      return dateString
+      return 'Không rõ thời gian'
     }
   }
 
@@ -1544,16 +1733,40 @@ const ForumPage = () => {
                   Bài viết yêu thích
                 </button>
               </div>
-              {userInfo && (
-                <button
-                  className="forum-forum-create-post-btn"
-                  onClick={() => setShowCreatePostModal(true)}
-                >
-                  <PlusIcon className="forum-forum-create-post-icon" />
-                  Đăng bài
-                </button>
-              )}
             </div>
+
+            {/* Create Post Form - Facebook style */}
+            {userInfo && (
+              <div className="forum-forum-create-post-card">
+                <div className="forum-forum-create-post-header">
+                  <div className="forum-forum-create-post-avatar">
+                    {(userInfo.Name || userInfo.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div 
+                    className="forum-forum-create-post-input-placeholder"
+                    onClick={() => setShowCreatePostModal(true)}
+                  >
+                    <span>{userInfo.Name || userInfo.name || 'Bạn'} ơi, bạn đang nghĩ gì thế?</span>
+                  </div>
+                </div>
+                <div className="forum-forum-create-post-actions">
+                  <button 
+                    className="forum-forum-create-post-action-btn"
+                    onClick={() => setShowCreatePostModal(true)}
+                  >
+                    <ImageIcon className="forum-forum-create-post-action-icon forum-icon-image" />
+                    <span>Ảnh/Video</span>
+                  </button>
+                  <button 
+                    className="forum-forum-create-post-action-btn"
+                    onClick={() => setShowCreatePostModal(true)}
+                  >
+                    <EditIcon className="forum-forum-create-post-action-icon forum-icon-edit" />
+                    <span>Viết bài</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Posts List */}
             {loading ? (
@@ -1630,6 +1843,8 @@ const ForumPage = () => {
                     showCommentMenu={showCommentMenu}
                     setShowCommentMenu={setShowCommentMenu}
                     deletingComment={deletingComment}
+                    onShowLikers={() => setShowLikersModal(post)}
+                    setShowCommentLikersModal={setShowCommentLikersModal}
                   />
                 ))}
               </div>
@@ -1817,6 +2032,108 @@ const ForumPage = () => {
         </div>
       )}
 
+      {/* Modal thông báo bài viết đang chờ duyệt */}
+      {showPendingModal && (
+        <div className="forum-forum-modal-overlay" onClick={() => setShowPendingModal(false)}>
+          <div className="forum-forum-pending-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="forum-forum-pending-modal-icon">⏳</div>
+            <h3 className="forum-forum-pending-modal-title">Bài viết đang chờ duyệt</h3>
+            <p className="forum-forum-pending-modal-message">
+              Bài viết của bạn đã được gửi thành công và đang chờ Admin duyệt. 
+              Bài viết sẽ được hiển thị sau khi được phê duyệt.
+            </p>
+            <button 
+              className="forum-forum-pending-modal-btn"
+              onClick={() => setShowPendingModal(false)}
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal danh sách người đã thích bài viết */}
+      {showLikersModal && (
+        <div className="forum-forum-modal-overlay" onClick={() => setShowLikersModal(null)}>
+          <div className="forum-forum-likers-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="forum-forum-likers-modal-header">
+              <h3 className="forum-forum-likers-modal-title">Người đã phản ứng với bài viết</h3>
+              <button 
+                className="forum-forum-likers-modal-close"
+                onClick={() => setShowLikersModal(null)}
+                aria-label="Đóng"
+              >
+                <XIcon />
+              </button>
+            </div>
+            <div className="forum-forum-likers-modal-content">
+              {showLikersModal.Likes && showLikersModal.Likes.length > 0 ? (
+                showLikersModal.Likes.map((like, index) => {
+                  const reactionEmoji = REACTION_TYPES.find(
+                    r => r.name.toLowerCase() === (like.ReactionType || 'like').toLowerCase()
+                  )?.emoji || '👍'
+                  
+                  return (
+                    <div key={like.PostLikeId || index} className="forum-forum-liker-modal-item">
+                      <div className="forum-forum-liker-avatar">
+                        {like.FullName?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <div className="forum-forum-liker-info">
+                        <span className="forum-forum-liker-modal-name">{like.FullName}</span>
+                        <span className="forum-forum-liker-time">{formatDate(like.CreatedDate)}</span>
+                      </div>
+                      <span className="forum-forum-liker-reaction" role="img" aria-label="reaction">
+                        {reactionEmoji}
+                      </span>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="forum-forum-likers-empty">Chưa có ai thích bài viết này</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal danh sách người đã thích comment */}
+      {showCommentLikersModal && (
+        <div className="forum-forum-modal-overlay" onClick={() => setShowCommentLikersModal(null)}>
+          <div className="forum-forum-likers-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="forum-forum-likers-modal-header">
+              <h3 className="forum-forum-likers-modal-title">Người đã thích bình luận</h3>
+              <button 
+                className="forum-forum-likers-modal-close"
+                onClick={() => setShowCommentLikersModal(null)}
+                aria-label="Đóng"
+              >
+                <XIcon />
+              </button>
+            </div>
+            <div className="forum-forum-likers-modal-content">
+              {showCommentLikersModal.Likes && showCommentLikersModal.Likes.length > 0 ? (
+                showCommentLikersModal.Likes.map((like: any, index: number) => (
+                  <div key={like.PostCommentLikeId || like.Id || index} className="forum-forum-liker-modal-item">
+                    <div className="forum-forum-liker-avatar">
+                      {like.FullName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="forum-forum-liker-info">
+                      <span className="forum-forum-liker-modal-name">{like.FullName || 'Người dùng'}</span>
+                      <span className="forum-forum-liker-time">{formatDate(like.CreatedDate)}</span>
+                    </div>
+                    <span className="forum-forum-liker-reaction" role="img" aria-label="love">
+                      ❤️
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="forum-forum-likers-empty">Chưa có ai thích bình luận này</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   )
@@ -1862,6 +2179,8 @@ interface PostCardProps {
   showCommentMenu?: Record<string, boolean>
   setShowCommentMenu?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
   deletingComment?: string | null
+  onShowLikers?: () => void
+  setShowCommentLikersModal?: React.Dispatch<React.SetStateAction<PostComment | null>>
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -1903,13 +2222,39 @@ const PostCard: React.FC<PostCardProps> = ({
   showCommentMenu = {},
   setShowCommentMenu,
   deletingComment = null,
+  onShowLikers,
+  setShowCommentLikersModal,
 }) => {
   const isCommentsExpanded = expandedComments.has(post.PostId || '')
   const reactionCount = post.Likes?.length || 0
   const commentCount = post.Comments?.length || 0
-  const currentReaction = userReactionTypeId 
-    ? reactionTypes.find(r => r.id === userReactionTypeId)
-    : null
+  
+  // Tìm reaction của user hiện tại từ post.Likes (backup nếu userReactionTypeId không có)
+  const userLike = useMemo(() => {
+    if (!userInfo) return null
+    const userId = userInfo.Id || userInfo.id
+    return post.Likes?.find(like => {
+      const likeAccountId = String(like.AccountId || '').trim()
+      const currentUserId = String(userId || '').trim()
+      return likeAccountId === currentUserId && likeAccountId !== ''
+    })
+  }, [post.Likes, userInfo])
+  
+  // Tính currentReaction từ userReactionTypeId hoặc từ userLike
+  const currentReaction = useMemo(() => {
+    if (userReactionTypeId) {
+      return reactionTypes.find(r => r.id === userReactionTypeId) || null
+    }
+    if (userLike && userLike.ReactionType) {
+      const typeId = getReactionTypeId(userLike.ReactionType)
+      return reactionTypes.find(r => r.id === typeId) || null
+    }
+    if (userLike) {
+      // Có like nhưng không có ReactionType -> mặc định là Like
+      return reactionTypes.find(r => r.id === 1) || null
+    }
+    return null
+  }, [userReactionTypeId, userLike, reactionTypes, getReactionTypeId])
 
   // Tính toán các loại cảm xúc để hiển thị icon
   const reactionCountsByType = useMemo(() => {
@@ -2104,9 +2449,16 @@ const PostCard: React.FC<PostCardProps> = ({
         )}
       </div>
 
-      {/* Reaction summary - hiển thị icon cảm xúc + số lượng */}
+      {/* Reaction summary - hiển thị icon cảm xúc + số lượng, click để xem danh sách */}
       {reactionCount > 0 && (
-        <div className="forum-forum-reaction-summary">
+        <button 
+          className="forum-forum-reaction-summary-btn"
+          onClick={(e) => {
+            e.stopPropagation()
+            onShowLikers?.()
+          }}
+          title="Xem danh sách người đã thích"
+        >
           <div className="forum-forum-reaction-icons">
             {reactionIcons.map((icon) => (
               <span key={icon.id} className="forum-forum-reaction-icon" role="img" aria-label={reactionTypes.find(r => r.id === icon.id)?.name}>
@@ -2115,7 +2467,7 @@ const PostCard: React.FC<PostCardProps> = ({
             ))}
           </div>
           <span className="forum-forum-reaction-count">{reactionCount}</span>
-        </div>
+        </button>
       )}
 
       <div className="forum-forum-post-actions">
@@ -2127,8 +2479,9 @@ const PostCard: React.FC<PostCardProps> = ({
               onClick={(e) => {
                 e.stopPropagation()
                 // Unlike: click vào icon cảm xúc hiện tại
-                // handleReaction sẽ kiểm tra userInfo và yêu cầu đăng nhập nếu cần
-                onReaction(post.PostId || '', userReactionTypeId || 1, post.userReactionId)
+                // Lấy reactionId từ post.userReactionId hoặc từ userLike
+                const reactionId = post.userReactionId || (userLike ? parseInt(userLike.PostLikeId) : undefined)
+                onReaction(post.PostId || '', userReactionTypeId || currentReaction.id, reactionId)
               }}
               onMouseEnter={() => userInfo && setShowReactionPicker(true)}
               onMouseLeave={() => {
@@ -2147,18 +2500,13 @@ const PostCard: React.FC<PostCardProps> = ({
               <span>Thích</span>
             </button>
           ) : (
-            // Nếu chưa có reaction, click để hiện picker hoặc yêu cầu đăng nhập
+            // Nếu chưa có reaction, click để like ngay (reactionTypeId = 1)
             <button
               className="forum-forum-action-btn forum-forum-reaction-btn"
               onClick={(e) => {
                 e.stopPropagation()
-                if (userInfo) {
-                  setShowReactionPicker(!showReactionPicker)
-                } else {
-                  // Nếu chưa đăng nhập, gọi onReaction để yêu cầu đăng nhập
-                  // onReaction sẽ kiểm tra userInfo và yêu cầu đăng nhập
-                  onReaction(post.PostId || '', 1, undefined)
-                }
+                // Click để like ngay với reactionTypeId = 1 (Like)
+                onReaction(post.PostId || '', 1, undefined)
               }}
               onMouseEnter={() => userInfo && setShowReactionPicker(true)}
               onMouseLeave={() => {
@@ -2168,10 +2516,10 @@ const PostCard: React.FC<PostCardProps> = ({
                   }
                 }, 100)
               }}
-              title={userInfo ? 'Bày tỏ cảm xúc' : 'Bạn cần đăng nhập để thả cảm xúc'}
-              aria-label={userInfo ? 'Bày tỏ cảm xúc' : 'Bạn cần đăng nhập để thả cảm xúc'}
+              title={userInfo ? 'Thích bài viết' : 'Bạn cần đăng nhập để thích'}
+              aria-label={userInfo ? 'Thích bài viết' : 'Bạn cần đăng nhập để thích'}
             >
-              <HeartIcon className="forum-forum-action-icon" />
+              <span className="forum-forum-like-icon" role="img" aria-label="like">👍</span>
               <span>Thích</span>
             </button>
           )}
@@ -2279,8 +2627,16 @@ const PostCard: React.FC<PostCardProps> = ({
                   const isEditing = editingCommentId === comment.PostCommentId
                   const isCommentAuthor = userInfo && comment.AuthorId && (comment.AuthorId === userInfo.Id || comment.AuthorId === userInfo.id)
                   const isReplyOpen = showReplyInputs.has(commentKey)
-                  const reactionCount = comment.ReactionsCount || 0
-                  const hasUserReaction = !!comment.UserReactionId
+                  const reactionCount = comment.ReactionsCount || comment.Likes?.length || 0
+                  
+                  // Tính hasUserReaction từ Likes array hoặc UserReactionId
+                  const userId = userInfo?.Id || userInfo?.id
+                  const userLikeInComment = userId ? comment.Likes?.find(
+                    (like: any) => String(like.AccountId) === String(userId)
+                  ) : null
+                  const hasUserReaction = !!comment.UserReactionId || !!userLikeInComment
+                  const userReactionId = comment.UserReactionId || (userLikeInComment ? parseInt(userLikeInComment.PostCommentLikeId || userLikeInComment.Id) : undefined)
+                  
                   const isReply = depth > 0
 
                   return (
@@ -2435,19 +2791,65 @@ const PostCard: React.FC<PostCardProps> = ({
                           {comment.CreatedDate && (
                             <span className="forum-forum-comment-time">{formatDate(comment.CreatedDate)}</span>
                           )}
-                          <button
-                            className={`forum-forum-comment-action-btn ${hasUserReaction ? 'forum-liked' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (onCommentReaction && post.PostId) {
-                                onCommentReaction(post.PostId, comment.PostCommentId, comment.UserReactionId)
-                              }
-                            }}
-                            title={hasUserReaction ? 'Bỏ thích' : 'Thích'}
-                          >
-                            <HeartIcon className="forum-forum-comment-action-icon" filled={hasUserReaction} />
-                            {reactionCount > 0 && <span className="forum-forum-comment-reaction-count">{reactionCount}</span>}
-                          </button>
+                          <div className="forum-forum-comment-like-wrapper">
+                            <button
+                              className={`forum-forum-comment-action-btn forum-forum-comment-heart-btn ${hasUserReaction ? 'forum-liked' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                console.log('Heart button clicked!', { 
+                                  postId: post.PostId, 
+                                  commentId: comment.PostCommentId, 
+                                  userReactionId: userReactionId,
+                                  hasUserReaction,
+                                  hasOnCommentReaction: !!onCommentReaction 
+                                })
+                                if (onCommentReaction && post.PostId) {
+                                  onCommentReaction(post.PostId, comment.PostCommentId, userReactionId)
+                                }
+                              }}
+                              title={hasUserReaction ? 'Bỏ thích' : 'Thích'}
+                            >
+                              <span className={`forum-forum-comment-heart-icon ${hasUserReaction ? 'forum-liked' : ''}`} role="img" aria-label="love">
+                                {hasUserReaction ? '❤️' : '🤍'}
+                              </span>
+                            </button>
+                            {reactionCount > 0 && (
+                              <div className="forum-forum-comment-likers-wrapper">
+                                <span 
+                                  className="forum-forum-comment-reaction-count"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (setShowCommentLikersModal) {
+                                      setShowCommentLikersModal(comment)
+                                    }
+                                  }}
+                                  title={
+                                    comment.Likes && comment.Likes.length > 0
+                                      ? comment.Likes.slice(0, 3).map((like: any) => like.FullName || 'Người dùng').join(', ') + 
+                                        (comment.Likes.length > 3 ? ` và ${comment.Likes.length - 3} người khác` : '')
+                                      : 'Xem danh sách'
+                                  }
+                                >
+                                  {reactionCount}
+                                </span>
+                                {/* Tooltip hiển thị 3 tên đầu tiên */}
+                                {comment.Likes && comment.Likes.length > 0 && (
+                                  <div className="forum-forum-comment-likers-tooltip">
+                                    {comment.Likes.slice(0, 3).map((like: any, idx: number) => (
+                                      <div key={idx} className="forum-forum-comment-liker-name">
+                                        ❤️ {like.FullName || 'Người dùng'}
+                                      </div>
+                                    ))}
+                                    {comment.Likes.length > 3 && (
+                                      <div className="forum-forum-comment-liker-more">
+                                        và {comment.Likes.length - 3} người khác...
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           <button
                             className="forum-forum-comment-action-btn"
                             onClick={(e) => {

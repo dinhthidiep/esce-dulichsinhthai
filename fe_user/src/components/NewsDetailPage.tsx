@@ -139,9 +139,42 @@ const NewsDetailPage = () => {
     }
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString || dateString.trim() === '') {
+      return 'Không rõ thời gian'
+    }
+    
     try {
-      const date = new Date(dateString)
+      let date: Date
+      
+      // Backend trả về format "dd/MM/yyyy HH:mm", cần parse thủ công
+      if (dateString.includes('/')) {
+        const parts = dateString.split(' ')
+        const dateParts = parts[0].split('/')
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10)
+          const month = parseInt(dateParts[1], 10) - 1
+          const year = parseInt(dateParts[2], 10)
+          
+          if (parts.length > 1 && parts[1].includes(':')) {
+            const timeParts = parts[1].split(':')
+            const hours = parseInt(timeParts[0], 10)
+            const minutes = parseInt(timeParts[1], 10)
+            date = new Date(year, month, day, hours, minutes)
+          } else {
+            date = new Date(year, month, day)
+          }
+        } else {
+          date = new Date(dateString)
+        }
+      } else {
+        date = new Date(dateString)
+      }
+      
+      if (isNaN(date.getTime())) {
+        return 'Không rõ thời gian'
+      }
+      
       return date.toLocaleDateString('vi-VN', {
         year: 'numeric',
         month: 'long',
@@ -150,7 +183,7 @@ const NewsDetailPage = () => {
         minute: '2-digit',
       })
     } catch {
-      return dateString
+      return 'Không rõ thời gian'
     }
   }
 
@@ -343,7 +376,7 @@ const NewsDetailPage = () => {
                       <div className="news-detail-news-related-meta">
                         <CalendarIcon className="news-detail-news-related-meta-icon" />
                         <span>
-                          {new Date(item.createdAt || item.updatedAt || '').toLocaleDateString('vi-VN')}
+                          {formatDate(item.createdAt || item.updatedAt || '')}
                         </span>
                       </div>
                     </div>
