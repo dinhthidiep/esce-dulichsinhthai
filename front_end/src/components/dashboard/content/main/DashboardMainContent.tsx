@@ -264,6 +264,7 @@ export default function MainDashBoardContent() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis
+                  domain={[0, 'auto']}
                   tickFormatter={(v) => `${Math.round(v / 1_000_000)}tr`}
                   tick={{ fontSize: 12 }}
                 />
@@ -309,6 +310,7 @@ export default function MainDashBoardContent() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={3} tickMargin={8} />
                 <YAxis
+                  domain={[0, 'auto']}
                   tickFormatter={(v) => `${Math.round(v / 1_000_000)}tr`}
                   tick={{ fontSize: 10 }}
                 />

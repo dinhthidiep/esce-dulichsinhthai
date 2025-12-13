@@ -32,6 +32,12 @@ realAxiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // Nếu data là FormData, xóa Content-Type để axios tự set với boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
+    
     // Chỉ log trong development mode để tránh spam console
     if (import.meta.env.DEV) {
       console.log('📤 [axiosInstance] Request:', {
@@ -39,6 +45,7 @@ realAxiosInstance.interceptors.request.use(
         url: config.url,
         baseURL: config.baseURL,
         fullURL: `${config.baseURL}${config.url}`,
+        isFormData: config.data instanceof FormData,
       })
     }
     return config

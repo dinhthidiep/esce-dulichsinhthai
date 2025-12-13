@@ -1,5 +1,8 @@
-// Backend is running on HTTP port 5002
-const backend_url = "http://localhost:5002";
+// Import API config - sử dụng cùng config với các API khác
+import { API_BASE_URL } from '~/config/api';
+
+// API_BASE_URL đã bao gồm /api, nên backend_url không cần thêm /api
+const backend_url = API_BASE_URL;
 
 // Helper function to get token from either storage
 const getToken = () =>
@@ -77,7 +80,7 @@ export const createService = async (formData) => {
         Images: imageUrl, // Send Firebase Storage URL
     };
 
-    const res = await fetch(`${backend_url}/api/Service`, {
+    const res = await fetch(`${backend_url}/Service`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -133,7 +136,7 @@ export const getMyServices = async () => {
     }
 
     // Fetch only approved services
-    const res = await fetch(`${backend_url}/api/Service?status=Approved`, {
+    const res = await fetch(`${backend_url}/Service?status=Approved`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok)
@@ -159,7 +162,7 @@ export const getMyServices = async () => {
 export const getAllServices = async () => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
-    const res = await fetch(`${backend_url}/api/Service`, {
+    const res = await fetch(`${backend_url}/Service`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok)
@@ -171,7 +174,7 @@ export const getAllServices = async () => {
 export const getServiceById = async (serviceId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required");
-    const res = await fetch(`${backend_url}/api/Service/${serviceId}`, {
+    const res = await fetch(`${backend_url}/Service/${serviceId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok)
@@ -214,7 +217,7 @@ export const updateService = async (formData) => {
                   Price: parseFloat(formData.price || 0),
                   Images: imageUrl || formData.Images, // Use new image URL or existing one
               };
-    const res = await fetch(`${backend_url}/api/Service/${serviceId}`, {
+    const res = await fetch(`${backend_url}/Service/${serviceId}`, {
         method: "PUT",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -230,7 +233,7 @@ export const updateService = async (formData) => {
 export const deleteService = async (serviceId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required");
-    const res = await fetch(`${backend_url}/api/Service/${serviceId}`, {
+    const res = await fetch(`${backend_url}/Service/${serviceId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -247,7 +250,7 @@ export const deleteService = async (serviceId) => {
 export const addServiceToCombo = async (comboId, serviceId, quantity = 1) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
-    const res = await fetch(`${backend_url}/api/ServiceComboDetail`, {
+    const res = await fetch(`${backend_url}/ServiceComboDetail`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -271,7 +274,7 @@ export const getServiceComboDetailByComboAndService = async (
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/combo/${comboId}`,
+        `${backend_url}/ServiceComboDetail/combo/${comboId}`,
         {
             headers: { Authorization: `Bearer ${token}` },
         }
@@ -299,7 +302,7 @@ export const updateServiceComboDetail = async (
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/${detailId}`,
+        `${backend_url}/ServiceComboDetail/${detailId}`,
         {
             method: "PUT",
             headers: {
@@ -324,7 +327,7 @@ export const deleteServiceComboDetail = async (detailId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/${detailId}`,
+        `${backend_url}/ServiceComboDetail/${detailId}`,
         {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -346,7 +349,7 @@ export const getServiceComboDetailsByComboId = async (comboId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/combo/${comboId}`,
+        `${backend_url}/ServiceComboDetail/combo/${comboId}`,
         {
             headers: { Authorization: `Bearer ${token}` },
         }
@@ -361,7 +364,7 @@ export const getServiceComboDetailsByComboId = async (comboId) => {
 export const getAllServiceComboDetails = async () => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
-    const res = await fetch(`${backend_url}/api/ServiceComboDetail`, {
+    const res = await fetch(`${backend_url}/ServiceComboDetail`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok)
@@ -376,7 +379,7 @@ export const getServiceComboDetailById = async (detailId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/${detailId}`,
+        `${backend_url}/ServiceComboDetail/${detailId}`,
         {
             headers: { Authorization: `Bearer ${token}` },
         }
@@ -392,7 +395,7 @@ export const getServiceComboDetailsByServiceId = async (serviceId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/service/${serviceId}`,
+        `${backend_url}/ServiceComboDetail/service/${serviceId}`,
         {
             headers: { Authorization: `Bearer ${token}` },
         }
@@ -409,7 +412,7 @@ export const deleteServiceComboDetailsByComboId = async (comboId) => {
     const token = getToken();
     if (!token) throw new Error("Authentication required.");
     const res = await fetch(
-        `${backend_url}/api/ServiceComboDetail/combo/${comboId}`,
+        `${backend_url}/ServiceComboDetail/combo/${comboId}`,
         {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },

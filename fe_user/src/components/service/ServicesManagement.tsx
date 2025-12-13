@@ -2,7 +2,6 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallbac
 import Button from '../ui/Button';
 import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon } from '../icons/index';
-import { getImageUrl } from '../../lib/utils';
 import CreateServiceModal from './CreateServiceModal';
 import EditServiceModal from './EditServiceModal';
 import axiosInstance from '../../utils/axiosInstance';
@@ -34,12 +33,10 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
   const [createServiceFormData, setCreateServiceFormData] = useState({
     name: '',
     description: '',
-    price: '',
-    image: null
+    price: ''
   });
   const [createServiceErrors, setCreateServiceErrors] = useState({});
   const [isCreatingService, setIsCreatingService] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
   
   // Edit Service Modal states
   const [isEditServiceModalOpen, setIsEditServiceModalOpen] = useState(false);
@@ -48,12 +45,16 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
   const [editServiceFormData, setEditServiceFormData] = useState({
     name: '',
     description: '',
-    price: '',
-    image: null
+    price: ''
   });
   const [editServiceErrors, setEditServiceErrors] = useState({});
   const [isEditingService, setIsEditingService] = useState(false);
-  const [editImagePreview, setEditImagePreview] = useState(null);
+  
+  // Delete Confirm Modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingServiceId, setDeletingServiceId] = useState<number | null>(null);
+  const [deletingServiceName, setDeletingServiceName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filter and sort function for services
   const applyServiceFilters = (serviceList, nameFilter, order) => {
@@ -143,20 +144,38 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     setServicePageInput('');
   };
 
-  // Handle delete service
-  const handleDeleteService = async (serviceId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) {
-      try {
-        await axiosInstance.delete(`${API_ENDPOINTS.SERVICE}/${serviceId}`);
-        setServices(prevServices => prevServices.filter(s => (s.Id || s.id) !== serviceId));
-        setFilteredServices(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== serviceId));
-        if (onSuccess) onSuccess('Dịch vụ đã được xóa thành công!');
-      } catch (err) {
-        console.error('Error deleting service:', err);
-        if (onError) {
-          onError('Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.');
-        }
+  // Handle open delete confirm modal
+  const handleOpenDeleteModal = (serviceId: number, serviceName: string) => {
+    setDeletingServiceId(serviceId);
+    setDeletingServiceName(serviceName);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle close delete confirm modal
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDeletingServiceId(null);
+    setDeletingServiceName('');
+  };
+
+  // Handle confirm delete service
+  const handleConfirmDelete = async () => {
+    if (!deletingServiceId) return;
+    
+    setIsDeleting(true);
+    try {
+      await axiosInstance.delete(`${API_ENDPOINTS.SERVICE}/${deletingServiceId}`);
+      setServices(prevServices => prevServices.filter(s => (s.Id || s.id) !== deletingServiceId));
+      setFilteredServices(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== deletingServiceId));
+      if (onSuccess) onSuccess('Dịch vụ đã được xóa thành công!');
+      handleCloseDeleteModal();
+    } catch (err) {
+      console.error('Error deleting service:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.');
       }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -175,49 +194,6 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       setCreateServiceErrors(prev => ({
         ...prev,
         [name]: ''
-      }));
-    }
-  };
-
-  const handleCreateServiceImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        setCreateServiceErrors(prev => ({ ...prev, image: 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)' }));
-        setImagePreview(null);
-        return;
-      }
-
-      // Validate file size (5MB max)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        setCreateServiceErrors(prev => ({ ...prev, image: 'Kích thước file không được vượt quá 5MB' }));
-        setImagePreview(null);
-        return;
-      }
-
-      // Clear svc-admin-error
-      setCreateServiceErrors(prev => ({ ...prev, image: '' }));
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Update formData
-      setCreateServiceFormData(prev => ({
-        ...prev,
-        image: file
-      }));
-    } else {
-      setImagePreview(null);
-      setCreateServiceFormData(prev => ({
-        ...prev,
-        image: null
       }));
     }
   };
@@ -256,16 +232,10 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       formData.append('Name', createServiceFormData.name);
       formData.append('Description', createServiceFormData.description || '');
       formData.append('Price', createServiceFormData.price);
-      if (createServiceFormData.image) {
-        formData.append('Image', createServiceFormData.image);
-      }
       formData.append('HostId', userId.toString());
 
-      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Không set Content-Type thủ công - để axios tự xử lý boundary cho multipart/form-data
+      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE, formData);
       const newService = response.data;
       
       // Add new service to the list
@@ -278,9 +248,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       
       // Close modal and reset form
       setIsCreateServiceModalOpen(false);
-      setCreateServiceFormData({ name: '', description: '', price: '', image: null });
+      setCreateServiceFormData({ name: '', description: '', price: '' });
       setCreateServiceErrors({});
-      setImagePreview(null);
     } catch (err) {
       console.error('Error creating service:', err);
       if (onError) {
@@ -293,9 +262,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
 
   const handleCloseCreateServiceModal = () => {
     setIsCreateServiceModalOpen(false);
-    setCreateServiceFormData({ name: '', description: '', price: '', image: null });
+    setCreateServiceFormData({ name: '', description: '', price: '' });
     setCreateServiceErrors({});
-    setImagePreview(null);
   };
 
   // Edit Service Modal handlers
@@ -303,7 +271,6 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     setEditingServiceId(serviceId);
     setIsEditServiceModalOpen(true);
     setEditServiceErrors({});
-    setEditImagePreview(null);
     setLoadingEditServiceData(true);
     
     try {
@@ -322,21 +289,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       setEditServiceFormData({
         name: service.Name || service.name || '',
         description: service.Description || service.description || '',
-        price: service.Price || service.price || '',
-        image: null
+        price: service.Price || service.price || ''
       });
-      
-      // Set image preview if service has images
-      if (service.Images || service.images) {
-        let imagePath = service.Images || service.images;
-        if (typeof imagePath === 'string' && imagePath.includes(',')) {
-          imagePath = imagePath.split(',')[0].trim();
-        }
-        if (imagePath) {
-          const imageUrl = getImageUrl(imagePath, '/img/banahills.jpg');
-          setEditImagePreview(imageUrl);
-        }
-      }
       
     } catch (err) {
       console.error('Error loading service:', err);
@@ -367,49 +321,6 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     }
   };
 
-  const handleEditServiceImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        setEditServiceErrors(prev => ({ ...prev, image: 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)' }));
-        setEditImagePreview(null);
-        return;
-      }
-
-      // Validate file size (5MB max)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        setEditServiceErrors(prev => ({ ...prev, image: 'Kích thước file không được vượt quá 5MB' }));
-        setEditImagePreview(null);
-        return;
-      }
-
-      // Clear svc-admin-error
-      setEditServiceErrors(prev => ({ ...prev, image: '' }));
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditImagePreview(event.target.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Update formData
-      setEditServiceFormData(prev => ({
-        ...prev,
-        image: file
-      }));
-    } else {
-      setEditImagePreview(null);
-      setEditServiceFormData(prev => ({
-        ...prev,
-        image: null
-      }));
-    }
-  };
-
   const handleEditServiceSubmit = async (e) => {
     e.preventDefault();
     
@@ -435,15 +346,9 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
       formData.append('Name', editServiceFormData.name);
       formData.append('Description', editServiceFormData.description || '');
       formData.append('Price', editServiceFormData.price);
-      if (editServiceFormData.image) {
-        formData.append('Image', editServiceFormData.image);
-      }
 
-      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE}/${editingServiceId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Không set Content-Type thủ công - để axios tự xử lý boundary cho multipart/form-data
+      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE}/${editingServiceId}`, formData);
       const updatedService = response.data;
       
       // Update services
@@ -481,9 +386,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
   const handleCloseEditServiceModal = () => {
     setIsEditServiceModalOpen(false);
     setEditingServiceId(null);
-    setEditServiceFormData({ name: '', description: '', price: '', image: null });
+    setEditServiceFormData({ name: '', description: '', price: '' });
     setEditServiceErrors({});
-    setEditImagePreview(null);
   };
 
   // Expose function to open create modal
@@ -561,28 +465,9 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                   const paginatedServices = filteredServices.slice(startIndex, endIndex);
                   
                   return paginatedServices.map(s => {
-                    // Handle service images - get first image if multiple
-                    let serviceImagePath = s.Images || s.images || '';
-                    if (serviceImagePath && typeof serviceImagePath === 'string' && serviceImagePath.includes(',')) {
-                      serviceImagePath = serviceImagePath.split(',')[0].trim();
-                    }
-                    const serviceImage = getImageUrl(serviceImagePath, '/img/banahills.jpg');
-                    
                     return (
                       <div key={s.Id || s.id} className="svc-admin-service-card">
                         <div className="svc-admin-service-card-left">
-                          <div className="svc-admin-service-image">
-                            <img
-                              src={serviceImage || '/img/banahills.jpg'}
-                              alt={s.Name || s.name}
-                              className="svc-admin-service-image-img"
-                              onError={(e) => {
-                                if (e.currentTarget.src !== '/img/banahills.jpg') {
-                                  e.currentTarget.src = '/img/banahills.jpg';
-                                }
-                              }}
-                            />
-                          </div>
                           <div className="svc-admin-service-details">
                             <h3 className="svc-admin-service-name">{s.Name || s.name}</h3>
                             {s.Description || s.description ? (
@@ -608,7 +493,7 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
                             variant="outline"
                             size="sm"
                             className="cancel-booking-btn"
-                            onClick={() => handleDeleteService(s.Id || s.id)}
+                            onClick={() => handleOpenDeleteModal(s.Id || s.id, s.Name || s.name)}
                           >
                             Xóa
                           </Button>
@@ -712,10 +597,8 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         onClose={handleCloseCreateServiceModal}
         formData={createServiceFormData}
         errors={createServiceErrors}
-        imagePreview={imagePreview}
         isSubmitting={isCreatingService}
         onInputChange={handleCreateServiceInputChange}
-        onImageChange={handleCreateServiceImageChange}
         onSubmit={handleCreateServiceSubmit}
       />
 
@@ -726,12 +609,50 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         loading={loadingEditServiceData}
         formData={editServiceFormData}
         errors={editServiceErrors}
-        imagePreview={editImagePreview}
         isSubmitting={isEditingService}
         onInputChange={handleEditServiceInputChange}
-        onImageChange={handleEditServiceImageChange}
         onSubmit={handleEditServiceSubmit}
       />
+
+      {/* Delete Confirm Modal */}
+      {isDeleteModalOpen && (
+        <div className="svc-admin-modal-overlay" onClick={handleCloseDeleteModal}>
+          <div className="svc-admin-delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="svc-admin-delete-modal-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 className="svc-admin-delete-modal-title">Xác nhận xóa dịch vụ</h3>
+            <p className="svc-admin-delete-modal-message">
+              Bạn có chắc chắn muốn xóa dịch vụ <strong>"{deletingServiceName}"</strong>?
+            </p>
+            <p className="svc-admin-delete-modal-warning">
+              Hành động này không thể hoàn tác.
+            </p>
+            <div className="svc-admin-delete-modal-actions">
+              <button
+                type="button"
+                className="svc-admin-delete-modal-btn svc-admin-delete-modal-btn-cancel"
+                onClick={handleCloseDeleteModal}
+                disabled={isDeleting}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="svc-admin-delete-modal-btn svc-admin-delete-modal-btn-confirm"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Đang xóa...' : 'Xóa dịch vụ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

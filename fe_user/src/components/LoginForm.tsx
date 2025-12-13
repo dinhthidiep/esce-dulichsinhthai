@@ -4,6 +4,7 @@ import './LoginForm.css'
 import { login } from '~/API/instances/Au'
 import { useNavigate } from 'react-router-dom'
 import { fetchWithFallback, extractErrorMessage } from '~/API/instances/httpClient'
+import { API_BASE_URL } from '~/config/api'
 
 interface FormData {
   email: string
@@ -25,6 +26,39 @@ const LoginForm = () => {
   const [errors, setErrors] = useState<Errors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [generalError, setGeneralError] = useState('')
+  const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
+  const [checkingBackend, setCheckingBackend] = useState(true)
+
+  // Kiểm tra backend có đang chạy không
+  useEffect(() => {
+    const checkBackendStatus = async () => {
+      setCheckingBackend(true)
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // Timeout 5 giây
+        
+        // API_BASE_URL đã bao gồm /api rồi, nên chỉ cần thêm /Auth/health
+        const response = await fetch(`${API_BASE_URL}/Auth/health`, {
+          method: 'GET',
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        
+        setIsBackendOnline(response.ok)
+      } catch (error) {
+        console.warn('Backend không khả dụng:', error)
+        setIsBackendOnline(false)
+      } finally {
+        setCheckingBackend(false)
+      }
+    }
+
+    checkBackendStatus()
+    
+    // Kiểm tra lại mỗi 30 giây
+    const interval = setInterval(checkBackendStatus, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const initGoogle = () => {
@@ -182,6 +216,18 @@ const LoginForm = () => {
     }
   }
 
+  // Kiểm tra backend trước khi submit
+  const handleSubmitWithCheck = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    
+    if (!isBackendOnline) {
+      setGeneralError('Hệ thống đang bảo trì. Vui lòng thử lại sau!')
+      return
+    }
+    
+    handleSubmit(e)
+  }
+
   return (
     <div className="auth-background w-full flex justify-center">
       <div className="login-container max-w-[65%] grid grid-col-1 gap-[2.4rem] lg:gap-0 lg:grid-cols-[1fr_1fr] w-full place-content-center text-[160%]!">
@@ -191,7 +237,48 @@ const LoginForm = () => {
         <div className="login-card rounded-none! lg:rounded-r-2xl">
           <div className="brand"></div>
           <h3 className="title">Đăng nhập</h3>
-          <form onSubmit={handleSubmit} className="login-form">
+          
+          {/* Thông báo khi backend offline */}
+          {checkingBackend && (
+            <div
+              className="backend-status-message"
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+                borderRadius: '4px',
+                textAlign: 'center',
+                border: '1px solid #ffc107'
+              }}
+            >
+              <div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }}></div>
+              Đang kiểm tra kết nối hệ thống...
+            </div>
+          )}
+          
+          {!checkingBackend && isBackendOnline === false && (
+            <div
+              className="backend-offline-message"
+              style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: '#f8d7da',
+                color: '#721c24',
+                borderRadius: '4px',
+                textAlign: 'center',
+                border: '1px solid #f5c6cb'
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⚠️</div>
+              <strong>Hệ thống đang bảo trì</strong>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>
+                Không thể kết nối đến máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên.
+              </p>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmitWithCheck} className="login-form">
             <div className="form-group">
               <label htmlFor="email">Email</label>
               <div className="input-wrapper">
@@ -252,14 +339,21 @@ const LoginForm = () => {
             </div>
             <button
               type="submit"
-              className={`login-button ${isLoading ? 'loading' : ''}`}
-              disabled={isLoading}
+              className={`login-button ${isLoading ? 'loading' : ''} ${!isBackendOnline && !checkingBackend ? 'disabled' : ''}`}
+              disabled={isLoading || checkingBackend || !isBackendOnline}
             >
-              {isLoading ? (
+              {checkingBackend ? (
+                <>
+                  <div className="spinner"></div>
+                  Đang kiểm tra...
+                </>
+              ) : isLoading ? (
                 <>
                   <div className="spinner"></div>
                   Đang đăng nhập...
                 </>
+              ) : !isBackendOnline ? (
+                'Không thể đăng nhập'
               ) : (
                 'Đăng nhập'
               )}

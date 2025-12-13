@@ -28,6 +28,15 @@ namespace ESCE_SYSTEM.Controllers
             _jwtHelper = jwtHelper;
         }
 
+        /// <summary>
+        /// Health check endpoint để kiểm tra backend có đang chạy không
+        /// </summary>
+        [HttpGet("health")]
+        public IActionResult HealthCheck()
+        {
+            return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDto loginRequest)
         {

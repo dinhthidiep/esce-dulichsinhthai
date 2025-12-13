@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
   COMMENT: '/Comment',
   COMMENT_REACTION: '/CommentReaction',
   NOTIFICATION: '/notification',
+  BONUS_SERVICE: '/BonusService',
   // PROMOTION: '/Promotion', // TODO: Backend chưa có PromotionController
 } as const
 

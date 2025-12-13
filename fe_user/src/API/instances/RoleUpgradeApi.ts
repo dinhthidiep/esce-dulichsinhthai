@@ -46,17 +46,20 @@ const ensureAuthHeaders = () => {
   }
 }
 
-const handleResponse = async <T>(response: Response): Promise<T> => {
-  if (!response.ok) {
-    const fallbackMessage = `HTTP ${response.status}: ${response.statusText}`
-    throw new Error(await extractErrorMessage(response, fallbackMessage))
+const handleResponse = async <T>(response: Response, clonedResponse?: Response): Promise<T> => {
+  // Sử dụng clonedResponse nếu có (khi đã đọc body để log)
+  const res = clonedResponse || response
+  
+  if (!res.ok) {
+    const fallbackMessage = `HTTP ${res.status}: ${res.statusText}`
+    throw new Error(await extractErrorMessage(res, fallbackMessage))
   }
 
-  if (response.status === 204) {
+  if (res.status === 204) {
     return null as T
   }
 
-  return response.json()
+  return res.json()
 }
 
 export const requestAgencyUpgrade = async (payload: {
@@ -74,12 +77,31 @@ export const requestAgencyUpgrade = async (payload: {
     Email: payload.email,
     Website: payload.website || ''
   }
+  
+  const token = getAuthToken()
+  console.log('🚀 [requestAgencyUpgrade] Sending request:', {
+    url: '/user/request-upgrade-to-agency',
+    hasToken: !!token,
+    body: { ...requestBody, LicenseFile: requestBody.LicenseFile?.substring(0, 50) + '...' }
+  })
+  
   const response = await fetchWithFallback('/user/request-upgrade-to-agency', {
     method: 'POST',
     headers: ensureAuthHeaders(),
     body: JSON.stringify(requestBody)
   })
-  return await handleResponse(response)
+  
+  console.log('📥 [requestAgencyUpgrade] Response status:', response.status, response.statusText)
+  
+  // Clone response để có thể đọc body nhiều lần
+  const clonedResponse = response.clone()
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('❌ [requestAgencyUpgrade] Error response:', errorText)
+  }
+  
+  return await handleResponse(clonedResponse)
 }
 
 export const requestHostUpgrade = async (payload: {
@@ -96,8 +118,10 @@ export const requestHostUpgrade = async (payload: {
     Email: payload.email
   }
   
+  const token = getAuthToken()
   console.log('🚀 [requestHostUpgrade] Sending request:', {
     url: '/user/request-upgrade-to-host',
+    hasToken: !!token,
     body: { ...requestBody, BusinessLicenseFile: requestBody.BusinessLicenseFile?.substring(0, 50) + '...' }
   })
   
@@ -107,8 +131,34 @@ export const requestHostUpgrade = async (payload: {
     body: JSON.stringify(requestBody)
   })
   
-  console.log('📥 [requestHostUpgrade] Response status:', response.status)
+  console.log('📥 [requestHostUpgrade] Response status:', response.status, response.statusText)
   
-  return await handleResponse(response)
+  // Clone response để có thể đọc body nhiều lần
+  const clonedResponse = response.clone()
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('❌ [requestHostUpgrade] Error response:', errorText)
+  }
+  
+  return await handleResponse(clonedResponse)
+}
+
+export const requestAgencyUpgradeWithPayment = async (payload: {
+  companyName: string
+  licenseFile: string
+  phone: string
+  email: string
+  website?: string
+}) => {
+  // Bước 1: Gửi yêu cầu nâng cấp
+  const upgradeResponse = await requestAgencyUpgrade(payload)
+  
+  // Bước 2: Trả về thông tin để frontend xử lý thanh toán
+  return {
+    ...upgradeResponse,
+    requiresPayment: true,
+    amount: 1000000 // 1,000,000 VND
+  }
 }
 

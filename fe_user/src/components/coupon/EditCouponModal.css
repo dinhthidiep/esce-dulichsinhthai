@@ -18,9 +18,9 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  max-width: 600px;
+  max-width: 900px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -70,7 +70,27 @@
 }
 
 .edit-coupon-modal-body {
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
+}
+
+.edit-coupon-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.edit-coupon-form-grid .edit-coupon-field {
+  margin-bottom: 0;
+}
+
+.edit-coupon-field-full {
+  grid-column: 1 / -1;
+}
+
+.edit-coupon-target-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
 .edit-coupon-disclaimer-text {
@@ -214,4 +234,140 @@
 .edit-coupon-btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+
+/* Checkbox group styles */
+.edit-coupon-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.edit-coupon-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.edit-coupon-checkbox-label:hover {
+  background-color: #ecfdf5;
+  transform: translateX(4px);
+}
+
+.edit-coupon-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #10b981;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.edit-coupon-checkbox-label input[type="checkbox"]:checked {
+  transform: scale(1.1);
+}
+
+.edit-coupon-checkbox-label span {
+  user-select: none;
+}
+
+.edit-coupon-role-icon {
+  font-size: 1.25rem;
+}
+
+.edit-coupon-level-icon {
+  font-size: 1rem;
+  min-width: 1.25rem;
+}
+
+/* Role section styles */
+.edit-coupon-role-section {
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transition: all 0.3s ease;
+}
+
+.edit-coupon-role-section:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.edit-coupon-role-section.active {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.edit-coupon-role-header {
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  padding: 0.25rem 0 !important;
+}
+
+.edit-coupon-role-header:hover {
+  background-color: transparent !important;
+  transform: none !important;
+}
+
+.edit-coupon-level-group {
+  margin-left: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0 0.5rem 1rem;
+  border-left: 3px solid #10b981;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: editSlideDown 0.3s ease-out;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+@keyframes editSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 300px;
+  }
+}
+
+.edit-coupon-level-group .edit-coupon-checkbox-label {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.edit-coupon-level-group .edit-coupon-checkbox-label:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Disabled state for level checkboxes when "Tất cả" is selected */
+.edit-coupon-checkbox-label.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.edit-coupon-checkbox-label.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.edit-coupon-checkbox-label.disabled:hover {
+  background-color: transparent;
+  transform: none;
 }

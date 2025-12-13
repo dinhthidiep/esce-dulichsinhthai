@@ -80,7 +80,17 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     discountValue: '',
     usageLimit: '',
     startDate: '',
-    expiryDate: ''
+    expiryDate: '',
+    forAgency: false,
+    agencyLevel0: false,
+    agencyLevel1: false,
+    agencyLevel2: false,
+    agencyLevel3: false,
+    forTourist: false,
+    touristLevel0: false,
+    touristLevel1: false,
+    touristLevel2: false,
+    touristLevel3: false
   });
   const [createCouponErrors, setCreateCouponErrors] = useState({});
   const [isCreatingCoupon, setIsCreatingCoupon] = useState(false);
@@ -97,10 +107,26 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     usageLimit: '',
     startDate: '',
     expiryDate: '',
-    isActive: true
+    isActive: true,
+    forAgency: false,
+    agencyLevel0: false,
+    agencyLevel1: false,
+    agencyLevel2: false,
+    agencyLevel3: false,
+    forTourist: false,
+    touristLevel0: false,
+    touristLevel1: false,
+    touristLevel2: false,
+    touristLevel3: false
   });
   const [editCouponErrors, setEditCouponErrors] = useState<{ code?: string; description?: string; discountType?: string; discountValue?: string; usageLimit?: string; startDate?: string; expiryDate?: string; isActive?: boolean }>({});
   const [isEditingCoupon, setIsEditingCoupon] = useState(false);
+
+  // Delete Confirm Modal states
+  const [isDeleteCouponModalOpen, setIsDeleteCouponModalOpen] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState<number | null>(null);
+  const [deletingCouponCode, setDeletingCouponCode] = useState('');
+  const [isDeletingCoupon, setIsDeletingCoupon] = useState(false);
 
   // Load coupons from API
   useEffect(() => {
@@ -204,31 +230,49 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     }
   };
 
-  // Handle delete coupon
-  const handleDeleteCoupon = async (couponId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa coupon này?')) {
-      try {
-        await axiosInstance.delete(`${API_ENDPOINTS.COUPON}/${couponId}`);
-        setCoupons(prevCoupons => prevCoupons.filter(c => (c.Id || c.id) !== couponId));
-        setFilteredCoupons(prevFiltered => prevFiltered.filter(c => (c.Id || c.id) !== couponId));
-        if (onSuccess) {
-          onSuccess('Coupon đã được xóa thành công!');
-        }
-      } catch (err) {
-        console.error('Error deleting coupon:', err);
-        if (onError) {
-          onError('Có lỗi xảy ra khi xóa coupon. Vui lòng thử lại.');
-        }
+  // Handle open delete confirm modal
+  const handleOpenDeleteCouponModal = (couponId: number, couponCode: string) => {
+    setDeletingCouponId(couponId);
+    setDeletingCouponCode(couponCode);
+    setIsDeleteCouponModalOpen(true);
+  };
+
+  // Handle close delete confirm modal
+  const handleCloseDeleteCouponModal = () => {
+    setIsDeleteCouponModalOpen(false);
+    setDeletingCouponId(null);
+    setDeletingCouponCode('');
+  };
+
+  // Handle confirm delete coupon
+  const handleConfirmDeleteCoupon = async () => {
+    if (!deletingCouponId) return;
+    
+    setIsDeletingCoupon(true);
+    try {
+      await axiosInstance.delete(`${API_ENDPOINTS.COUPON}/${deletingCouponId}`);
+      setCoupons(prevCoupons => prevCoupons.filter(c => (c.Id || c.id) !== deletingCouponId));
+      setFilteredCoupons(prevFiltered => prevFiltered.filter(c => (c.Id || c.id) !== deletingCouponId));
+      if (onSuccess) {
+        onSuccess('Coupon đã được xóa thành công!');
       }
+      handleCloseDeleteCouponModal();
+    } catch (err) {
+      console.error('Error deleting coupon:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi xóa coupon. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsDeletingCoupon(false);
     }
   };
 
   // Helper functions
   const getCouponStatusDisplay = (isActive) => {
     if (isActive === true || isActive === 1 || isActive === 'true' || isActive === '1') {
-      return { text: 'Hoạt động', className: 'coupon-status-confirmed' };
+      return { text: 'Khả dụng', className: 'coupon-status-confirmed' };
     } else {
-      return { text: 'Hết hạn', className: 'coupon-status-expired' };
+      return { text: 'Khóa', className: 'coupon-status-expired' };
     }
   };
 
@@ -277,17 +321,41 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
 
   // Create Coupon Modal handlers
   const handleCreateCouponInputChange = (e) => {
-    const { name, value, type } = e.target;
-    let fieldValue = value;
+    const { name, value, type, checked } = e.target;
+    let fieldValue: string | boolean = value;
     
     if (type === 'radio') {
       fieldValue = value;
+    } else if (type === 'checkbox') {
+      fieldValue = checked;
     }
     
-    setCreateCouponFormData(prev => ({
-      ...prev,
-      [name]: fieldValue
-    }));
+    setCreateCouponFormData(prev => {
+      const newData = { ...prev, [name]: fieldValue };
+      
+      // Logic: Nếu chọn "Tất cả" (level0) thì bỏ tick các hạng khác
+      // Nếu chọn hạng cụ thể (level1/2/3) thì bỏ tick "Tất cả"
+      if (type === 'checkbox' && checked) {
+        // Agency levels
+        if (name === 'agencyLevel0') {
+          newData.agencyLevel1 = false;
+          newData.agencyLevel2 = false;
+          newData.agencyLevel3 = false;
+        } else if (['agencyLevel1', 'agencyLevel2', 'agencyLevel3'].includes(name)) {
+          newData.agencyLevel0 = false;
+        }
+        // Tourist levels
+        if (name === 'touristLevel0') {
+          newData.touristLevel1 = false;
+          newData.touristLevel2 = false;
+          newData.touristLevel3 = false;
+        } else if (['touristLevel1', 'touristLevel2', 'touristLevel3'].includes(name)) {
+          newData.touristLevel0 = false;
+        }
+      }
+      
+      return newData;
+    });
 
     if (createCouponErrors[name]) {
       setCreateCouponErrors(prev => ({
@@ -402,7 +470,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     setIsCreatingCoupon(true);
     setCreateCouponErrors({});
 
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     Object.keys(createCouponFormData).forEach(key => {
       if (key !== 'discountType') {
         const fieldError = validateCreateCouponField(key, createCouponFormData[key]);
@@ -411,6 +479,20 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         }
       }
     });
+
+    // Validate target audience - phải chọn ít nhất 1 role và 1 hạng
+    const hasAgencyLevel = createCouponFormData.forAgency && (
+      createCouponFormData.agencyLevel0 || createCouponFormData.agencyLevel1 || 
+      createCouponFormData.agencyLevel2 || createCouponFormData.agencyLevel3
+    );
+    const hasTouristLevel = createCouponFormData.forTourist && (
+      createCouponFormData.touristLevel0 || createCouponFormData.touristLevel1 || 
+      createCouponFormData.touristLevel2 || createCouponFormData.touristLevel3
+    );
+    
+    if (!hasAgencyLevel && !hasTouristLevel) {
+      newErrors['targetAudience'] = 'Vui lòng chọn ít nhất 1 vai trò và 1 hạng';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setCreateCouponErrors(newErrors);
@@ -428,19 +510,44 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         return;
       }
 
+      // Parse values with fallbacks
+      const usageLimit = parseInt(createCouponFormData.usageLimit) || 1;
+      const discountValue = parseFloat(createCouponFormData.discountValue) || 0;
+      
+      // Build target audience JSON
+      const targetAudience = {
+        forAgency: createCouponFormData.forAgency,
+        agencyLevels: createCouponFormData.forAgency ? {
+          level0: createCouponFormData.agencyLevel0,
+          level1: createCouponFormData.agencyLevel1,
+          level2: createCouponFormData.agencyLevel2,
+          level3: createCouponFormData.agencyLevel3
+        } : null,
+        forTourist: createCouponFormData.forTourist,
+        touristLevels: createCouponFormData.forTourist ? {
+          level0: createCouponFormData.touristLevel0,
+          level1: createCouponFormData.touristLevel1,
+          level2: createCouponFormData.touristLevel2,
+          level3: createCouponFormData.touristLevel3
+        } : null
+      };
+      
       const couponData = {
         Code: createCouponFormData.code.trim(),
         Description: createCouponFormData.description.trim() || null,
-        DiscountPercent: createCouponFormData.discountType === 'percentage' ? parseFloat(createCouponFormData.discountValue) : null,
-        DiscountAmount: createCouponFormData.discountType === 'amount' ? parseFloat(createCouponFormData.discountValue) : null,
-        UsageLimit: parseInt(createCouponFormData.usageLimit),
+        DiscountPercent: createCouponFormData.discountType === 'percentage' ? discountValue : null,
+        DiscountAmount: createCouponFormData.discountType === 'amount' ? discountValue : null,
+        UsageLimit: usageLimit,
         UsageCount: 0,
         IsActive: true,
         StartDate: createCouponFormData.startDate ? new Date(createCouponFormData.startDate).toISOString() : null,
-        EndDate: createCouponFormData.expiryDate ? new Date(createCouponFormData.expiryDate).toISOString() : null,
-        HostId: userId
+        ExpiryDate: createCouponFormData.expiryDate ? new Date(createCouponFormData.expiryDate).toISOString() : null,
+        HostId: userId,
+        RequiredLevel: 0,
+        TargetAudience: JSON.stringify(targetAudience)
       };
 
+      console.log('📤 Creating coupon with data:', JSON.stringify(couponData, null, 2));
       const response = await axiosInstance.post(API_ENDPOINTS.COUPON, couponData);
       const newCoupon = response.data;
 
@@ -453,10 +560,28 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         onSuccess('Coupon đã được tạo thành công!');
       }
       handleCloseCreateCouponModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating coupon:', err);
+      console.error('Error response data:', err.response?.data);
+      console.error('Error response status:', err.response?.status);
+      console.error('Validation errors detail:', JSON.stringify(err.response?.data?.errors, null, 2));
+      let errorMessage = 'Có lỗi xảy ra khi tạo coupon. Vui lòng thử lại.';
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (err.response.data.errors) {
+          // Handle validation errors
+          const errors = err.response.data.errors;
+          console.error('Parsed validation errors:', errors);
+          errorMessage = Object.entries(errors)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('; ');
+        } else if (err.response.data.title) {
+          errorMessage = err.response.data.title;
+        }
+      }
       if (onError) {
-        onError('Có lỗi xảy ra khi tạo coupon. Vui lòng thử lại.');
+        onError(errorMessage);
       }
     } finally {
       setIsCreatingCoupon(false);
@@ -465,7 +590,25 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
 
   const handleCloseCreateCouponModal = () => {
     setIsCreateCouponModalOpen(false);
-    setCreateCouponFormData({ code: '', description: '', discountType: 'percentage', discountValue: '', usageLimit: '', startDate: '', expiryDate: '' });
+    setCreateCouponFormData({ 
+      code: '', 
+      description: '', 
+      discountType: 'percentage', 
+      discountValue: '', 
+      usageLimit: '', 
+      startDate: '', 
+      expiryDate: '',
+      forAgency: false,
+      agencyLevel0: false,
+      agencyLevel1: false,
+      agencyLevel2: false,
+      agencyLevel3: false,
+      forTourist: false,
+      touristLevel0: false,
+      touristLevel1: false,
+      touristLevel2: false,
+      touristLevel3: false
+    });
     setCreateCouponErrors({});
   };
 
@@ -482,22 +625,60 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
       const coupon = response.data;
       
       if (coupon) {
-      const startDate = coupon.StartDate || coupon.startDate;
-      const startDateValue = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
-      const endDate = coupon.EndDate || coupon.endDate;
-      const expiryDateValue = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
-      setEditCouponFormData({
-        code: coupon.Code || coupon.code || '',
-        description: coupon.Description || coupon.description || '',
-        discountType: (coupon.DiscountPercent || coupon.discountPercent) !== null && (coupon.DiscountPercent || coupon.discountPercent) !== undefined ? 'percentage' : 'amount',
-        discountValue: (coupon.DiscountPercent || coupon.discountPercent) !== null && (coupon.DiscountPercent || coupon.discountPercent) !== undefined 
-          ? String(coupon.DiscountPercent || coupon.discountPercent || '')
-          : String(coupon.DiscountAmount || coupon.discountAmount || ''),
-        usageLimit: String(coupon.UsageLimit || coupon.usageLimit || ''),
-        startDate: startDateValue,
-        expiryDate: expiryDateValue,
-        isActive: coupon.IsActive !== undefined ? coupon.IsActive : (coupon.isActive !== undefined ? coupon.isActive : true)
-      });
+        // Helper function to format date without timezone conversion
+        const formatDateForInput = (dateStr: string | null | undefined): string => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          // Use local date parts to avoid timezone issues
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        
+        // Parse StartDate - backend returns StartDate
+        const startDate = coupon.StartDate || coupon.startDate;
+        const startDateValue = formatDateForInput(startDate);
+        
+        // Parse ExpiryDate - backend returns ExpiryDate (not EndDate)
+        const expiryDate = coupon.ExpiryDate || coupon.expiryDate;
+        const expiryDateValue = formatDateForInput(expiryDate);
+        
+        console.log('📥 Loaded coupon data:', { startDate, expiryDate, startDateValue, expiryDateValue });
+        
+        // Parse target audience
+        let targetAudience = { forAgency: false, agencyLevels: null, forTourist: true, touristLevels: { level0: true, level1: false, level2: false, level3: false } };
+        try {
+          const taStr = coupon.TargetAudience || coupon.targetAudience;
+          if (taStr) {
+            targetAudience = JSON.parse(taStr);
+          }
+        } catch (e) {
+          console.log('Could not parse TargetAudience, using defaults');
+        }
+        
+        setEditCouponFormData({
+          code: coupon.Code || coupon.code || '',
+          description: coupon.Description || coupon.description || '',
+          discountType: (coupon.DiscountPercent || coupon.discountPercent) !== null && (coupon.DiscountPercent || coupon.discountPercent) !== undefined ? 'percentage' : 'amount',
+          discountValue: (coupon.DiscountPercent || coupon.discountPercent) !== null && (coupon.DiscountPercent || coupon.discountPercent) !== undefined 
+            ? String(coupon.DiscountPercent || coupon.discountPercent || '')
+            : String(coupon.DiscountAmount || coupon.discountAmount || ''),
+          usageLimit: String(coupon.UsageLimit || coupon.usageLimit || ''),
+          startDate: startDateValue,
+          expiryDate: expiryDateValue,
+          isActive: coupon.IsActive !== undefined ? coupon.IsActive : (coupon.isActive !== undefined ? coupon.isActive : true),
+          forAgency: targetAudience.forAgency || false,
+          agencyLevel0: targetAudience.agencyLevels?.level0 ?? true,
+          agencyLevel1: targetAudience.agencyLevels?.level1 ?? false,
+          agencyLevel2: targetAudience.agencyLevels?.level2 ?? false,
+          agencyLevel3: targetAudience.agencyLevels?.level3 ?? false,
+          forTourist: targetAudience.forTourist ?? true,
+          touristLevel0: targetAudience.touristLevels?.level0 ?? true,
+          touristLevel1: targetAudience.touristLevels?.level1 ?? false,
+          touristLevel2: targetAudience.touristLevels?.level2 ?? false,
+          touristLevel3: targetAudience.touristLevels?.level3 ?? false
+        });
       }
     } catch (err) {
       console.error('Error loading coupon:', err);
@@ -511,21 +692,45 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   };
 
   const handleEditCouponInputChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     let fieldValue;
     
     if (type === 'radio') {
       fieldValue = value;
+    } else if (type === 'checkbox') {
+      fieldValue = checked;
     } else if (type === 'select-one' && name === 'isActive') {
       fieldValue = value === 'true';
     } else {
       fieldValue = value;
     }
     
-    setEditCouponFormData(prev => ({
-      ...prev,
-      [name]: fieldValue
-    }));
+    setEditCouponFormData(prev => {
+      const newData = { ...prev, [name]: fieldValue };
+      
+      // Logic: Nếu chọn "Tất cả" (level0) thì bỏ tick các hạng khác
+      // Nếu chọn hạng cụ thể (level1/2/3) thì bỏ tick "Tất cả"
+      if (type === 'checkbox' && checked) {
+        // Agency levels
+        if (name === 'agencyLevel0') {
+          newData.agencyLevel1 = false;
+          newData.agencyLevel2 = false;
+          newData.agencyLevel3 = false;
+        } else if (['agencyLevel1', 'agencyLevel2', 'agencyLevel3'].includes(name)) {
+          newData.agencyLevel0 = false;
+        }
+        // Tourist levels
+        if (name === 'touristLevel0') {
+          newData.touristLevel1 = false;
+          newData.touristLevel2 = false;
+          newData.touristLevel3 = false;
+        } else if (['touristLevel1', 'touristLevel2', 'touristLevel3'].includes(name)) {
+          newData.touristLevel0 = false;
+        }
+      }
+      
+      return newData;
+    });
 
     if (editCouponErrors[name]) {
       setEditCouponErrors(prev => ({
@@ -640,7 +845,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     setIsEditingCoupon(true);
     setEditCouponErrors({});
 
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     Object.keys(editCouponFormData).forEach(key => {
       if (key !== 'discountType' && key !== 'isActive') {
         const fieldError = validateEditCouponField(key, editCouponFormData[key]);
@@ -650,6 +855,20 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
       }
     });
 
+    // Validate target audience - phải chọn ít nhất 1 role và 1 hạng
+    const hasAgencyLevel = editCouponFormData.forAgency && (
+      editCouponFormData.agencyLevel0 || editCouponFormData.agencyLevel1 || 
+      editCouponFormData.agencyLevel2 || editCouponFormData.agencyLevel3
+    );
+    const hasTouristLevel = editCouponFormData.forTourist && (
+      editCouponFormData.touristLevel0 || editCouponFormData.touristLevel1 || 
+      editCouponFormData.touristLevel2 || editCouponFormData.touristLevel3
+    );
+    
+    if (!hasAgencyLevel && !hasTouristLevel) {
+      newErrors['targetAudience'] = 'Vui lòng chọn ít nhất 1 vai trò và 1 hạng';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setEditCouponErrors(newErrors);
       setIsEditingCoupon(false);
@@ -657,15 +876,35 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
     }
 
     try {
+      // Build target audience JSON
+      const targetAudience = {
+        forAgency: editCouponFormData.forAgency,
+        agencyLevels: editCouponFormData.forAgency ? {
+          level0: editCouponFormData.agencyLevel0,
+          level1: editCouponFormData.agencyLevel1,
+          level2: editCouponFormData.agencyLevel2,
+          level3: editCouponFormData.agencyLevel3
+        } : null,
+        forTourist: editCouponFormData.forTourist,
+        touristLevels: editCouponFormData.forTourist ? {
+          level0: editCouponFormData.touristLevel0,
+          level1: editCouponFormData.touristLevel1,
+          level2: editCouponFormData.touristLevel2,
+          level3: editCouponFormData.touristLevel3
+        } : null
+      };
+      
       const couponData = {
         Code: editCouponFormData.code.trim(),
         Description: editCouponFormData.description.trim() || null,
         DiscountPercent: editCouponFormData.discountType === 'percentage' ? parseFloat(editCouponFormData.discountValue) : null,
         DiscountAmount: editCouponFormData.discountType === 'amount' ? parseFloat(editCouponFormData.discountValue) : null,
-        UsageLimit: parseInt(editCouponFormData.usageLimit),
+        UsageLimit: parseInt(editCouponFormData.usageLimit) || 1,
         StartDate: editCouponFormData.startDate ? new Date(editCouponFormData.startDate).toISOString() : null,
-        EndDate: editCouponFormData.expiryDate ? new Date(editCouponFormData.expiryDate).toISOString() : null,
-        IsActive: editCouponFormData.isActive
+        ExpiryDate: editCouponFormData.expiryDate ? new Date(editCouponFormData.expiryDate).toISOString() : null,
+        IsActive: editCouponFormData.isActive,
+        RequiredLevel: 0,
+        TargetAudience: JSON.stringify(targetAudience)
       };
 
       const response = await axiosInstance.put(`${API_ENDPOINTS.COUPON}/${editingCouponId}`, couponData);
@@ -699,7 +938,26 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   const handleCloseEditCouponModal = () => {
     setIsEditCouponModalOpen(false);
     setEditingCouponId(null);
-    setEditCouponFormData({ code: '', description: '', discountType: 'percentage', discountValue: '', usageLimit: '', startDate: '', expiryDate: '', isActive: true });
+    setEditCouponFormData({ 
+      code: '', 
+      description: '', 
+      discountType: 'percentage', 
+      discountValue: '', 
+      usageLimit: '', 
+      startDate: '', 
+      expiryDate: '', 
+      isActive: true,
+      forAgency: false,
+      agencyLevel0: false,
+      agencyLevel1: false,
+      agencyLevel2: false,
+      agencyLevel3: false,
+      forTourist: false,
+      touristLevel0: false,
+      touristLevel1: false,
+      touristLevel2: false,
+      touristLevel3: false
+    });
     setEditCouponErrors({});
   };
 
@@ -721,34 +979,6 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   return (
     <div className="coupon-management">
       <>
-          {/* Toggle Buttons */}
-          <div className="coupon-coupon-toggle-buttons">
-            <button
-              className={`coupon-toggle-btn ${!showCouponPromotionsList ? 'coupon-active' : ''}`}
-              onClick={() => {
-                setShowCouponPromotionsList(false);
-                if (onToggleChange) {
-                  onToggleChange(false);
-                }
-              }}
-            >
-              Danh sách mã giảm giá
-            </button>
-            <button
-              className={`coupon-toggle-btn ${showCouponPromotionsList ? 'coupon-active' : ''}`}
-              onClick={() => {
-                setShowCouponPromotionsList(true);
-                if (onToggleChange) {
-                  onToggleChange(true);
-                }
-              }}
-            >
-              Danh sách ưu đãi
-            </button>
-          </div>
-
-          {!showCouponPromotionsList ? (
-            <>
               {/* Filter Section */}
               <div className="coupon-coupon-filter-container">
                 <div className="coupon-filter-row">
@@ -777,8 +1007,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                       onChange={(e) => setCouponFilterStatus(e.target.value)}
                     >
                       <option value="all">Tất cả</option>
-                      <option value="coupon-active">Hoạt động</option>
-                      <option value="expired">Hết hạn</option>
+                      <option value="coupon-active">Khả dụng</option>
+                      <option value="expired">Khóa</option>
                     </select>
                   </div>
                   <div className="coupon-filter-field">
@@ -885,7 +1115,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                                       variant="outline"
                                       size="sm"
                                       className="cancel-booking-btn"
-                                      onClick={() => handleDeleteCoupon(coupon.Id || coupon.id)}
+                                      onClick={() => handleOpenDeleteCouponModal(coupon.Id || coupon.id, coupon.Code || coupon.code)}
                                     >
                                       Xóa
                                     </Button>
@@ -983,177 +1213,12 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
                   })()}
                 </>
               )}
-            </>
-          ) : (
-            /* Promotions List in Coupon Tab */
-            <div className="coupon-promotions-list">
-              {couponRankRules.length === 0 ? (
-                <div className="coupon-empty-state">
-                  <GridIcon className="coupon-empty-state-icon" />
-                  <h3>Chưa có ưu đãi nào</h3>
-                  <p>Bạn chưa áp dụng ưu đãi cho coupon nào. Hãy tạo ưu đãi mới để bắt đầu!</p>
-                  {onApplyPromotionClick && (
-                    <Button variant="default" onClick={onApplyPromotionClick}>
-                      Áp dụng ưu đãi
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="coupon-promotions-table">
-                    <table className="coupon-promotions-table-content">
-                      <thead>
-                        <tr>
-                          <th>Mã giảm giá</th>
-                          <th>Hạng</th>
-                          <th>Loại người dùng</th>
-                          <th>Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const totalPages = Math.ceil(couponRankRules.length / couponPromotionItemsPerPage);
-                          const startIndex = (couponPromotionCurrentPage - 1) * couponPromotionItemsPerPage;
-                          const endIndex = startIndex + couponPromotionItemsPerPage;
-                          const currentPageData = couponRankRules.slice(startIndex, endIndex);
-                          
-                          return currentPageData.map((rule: any) => {
-                            const couponId = rule.CouponID || rule.couponId;
-                            const coupon = coupons.find(c => (c.Id || c.id) === couponId);
-                            const rankId = rule.RankID || rule.rankId || '';
-                            const userType = rule.UserType || rule.userType || '';
-                            const ruleId = rule.RuleID || rule.ruleId || rule.id;
-                            const couponCode = rule.CouponCode || (coupon ? (coupon.Code || coupon.code) : `Mã giảm giá ID: ${couponId}`);
-                            
-                            return (
-                              <tr key={ruleId}>
-                                <td className="coupon-service-name-cell">
-                                  <span className="coupon-service-name-text" title={couponCode}>
-                                    {couponCode}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className={`coupon-rank-badge coupon-rank-${rankId.toLowerCase().replace(/\s+/g, '-')}`}>
-                                    {rankId || 'Không có'}
-                                  </span>
-                                </td>
-                                <td className="coupon-user-type-cell">
-                                  {userType || 'Không có'}
-                                </td>
-                                <td>
-                                  <button
-                                    className="coupon-btn-delete-rule"
-                                    onClick={() => {
-                                      setCouponRankRules(prev => prev.filter((r: any) => (r.RuleID || r.ruleId || r.id) !== ruleId));
-                                      const newTotalPages = Math.ceil((couponRankRules.length - 1) / couponPromotionItemsPerPage);
-                                      if (couponPromotionCurrentPage > newTotalPages && newTotalPages > 0) {
-                                        setCouponPromotionCurrentPage(newTotalPages);
-                                      }
-                                    }}
-                                  >
-                                    Xóa
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          });
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  {/* Pagination */}
-                  {(() => {
-                    const totalPages = Math.ceil(couponRankRules.length / couponPromotionItemsPerPage);
-                    if (totalPages <= 1) return null;
-                    
-                    return (
-                      <div className="coupon-pagination">
-                        <button
-                          type="button"
-                          className="coupon-pagination-btn"
-                          onClick={() => {
-                            const newPage = Math.max(1, couponPromotionCurrentPage - 1);
-                            setCouponPromotionCurrentPage(newPage);
-                            setCouponPromotionPageInput('');
-                          }}
-                          disabled={couponPromotionCurrentPage === 1}
-                        >
-                          <span>←</span> Trước
-                        </button>
-                        
-                        <div className="coupon-pagination-controls">
-                          <div className="coupon-pagination-numbers">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                              <button
-                                key={page}
-                                type="button"
-                                className={`coupon-pagination-number ${couponPromotionCurrentPage === page ? 'coupon-active' : ''}`}
-                                onClick={() => {
-                                  setCouponPromotionCurrentPage(page);
-                                  setCouponPromotionPageInput('');
-                                }}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Đến trang:</span>
-                          <input
-                            type="text"
-                            value={couponPromotionPageInput}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === '' || /^\d+$/.test(value)) {
-                                setCouponPromotionPageInput(value);
-                                const pageNum = parseInt(value);
-                                if (value !== '' && pageNum >= 1 && pageNum <= totalPages) {
-                                  setCouponPromotionCurrentPage(pageNum);
-                                  setCouponPromotionPageInput('');
-                                }
-                              }
-                            }}
-                            placeholder={couponPromotionCurrentPage.toString()}
-                            style={{
-                              width: '60px',
-                              padding: '0.375rem',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              textAlign: 'center'
-                            }}
-                            inputMode="numeric"
-                          />
-                        </div>
-                        
-                        <button
-                          type="button"
-                          className="coupon-pagination-btn"
-                          onClick={() => {
-                            const newPage = Math.min(totalPages, couponPromotionCurrentPage + 1);
-                            setCouponPromotionCurrentPage(newPage);
-                            setCouponPromotionPageInput('');
-                          }}
-                          disabled={couponPromotionCurrentPage === totalPages}
-                        >
-                          Sau <span>→</span>
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
-            </div>
-          )}
 
           {/* Create Coupon Modal */}
           <CreateCouponModal
             isOpen={isCreateCouponModalOpen}
             onClose={handleCloseCreateCouponModal}
-            formData={createCouponFormData as { code: string; description: string; discountType: 'percentage' | 'amount'; discountValue: string; usageLimit: string; startDate: string; expiryDate: string }}
+            formData={createCouponFormData as any}
             errors={createCouponErrors}
             isSubmitting={isCreatingCoupon}
             onInputChange={handleCreateCouponInputChange}
@@ -1165,12 +1230,52 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
             isOpen={isEditCouponModalOpen}
             onClose={handleCloseEditCouponModal}
             loading={loadingEditCouponData}
-            formData={editCouponFormData as { code: string; description: string; discountType: 'percentage' | 'amount'; discountValue: string; usageLimit: string; startDate: string; expiryDate: string; isActive: boolean }}
+            formData={editCouponFormData as any}
             errors={editCouponErrors as Record<string, string>}
             isSubmitting={isEditingCoupon}
             onInputChange={handleEditCouponInputChange}
             onSubmit={handleEditCouponSubmit}
           />
+
+          {/* Delete Confirm Modal */}
+          {isDeleteCouponModalOpen && (
+            <div className="coupon-modal-overlay" onClick={handleCloseDeleteCouponModal}>
+              <div className="coupon-delete-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="coupon-delete-modal-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </div>
+                <h3 className="coupon-delete-modal-title">Xác nhận xóa coupon</h3>
+                <p className="coupon-delete-modal-message">
+                  Bạn có chắc chắn muốn xóa coupon <strong>"{deletingCouponCode}"</strong>?
+                </p>
+                <p className="coupon-delete-modal-warning">
+                  Hành động này không thể hoàn tác.
+                </p>
+                <div className="coupon-delete-modal-actions">
+                  <button
+                    type="button"
+                    className="coupon-delete-modal-btn coupon-delete-modal-btn-cancel"
+                    onClick={handleCloseDeleteCouponModal}
+                    disabled={isDeletingCoupon}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    className="coupon-delete-modal-btn coupon-delete-modal-btn-confirm"
+                    onClick={handleConfirmDeleteCoupon}
+                    disabled={isDeletingCoupon}
+                  >
+                    {isDeletingCoupon ? 'Đang xóa...' : 'Xóa coupon'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
     </div>
   );

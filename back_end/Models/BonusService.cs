@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESCE_SYSTEM.Models
 {
@@ -19,6 +20,11 @@ namespace ESCE_SYSTEM.Models
         public DateTime? UpdatedAt { get; set; }
         public string? Image { get; set; }
         public string? Status { get; set; } = "active";
+        
+        // Target audience - JSON string lưu thông tin hạng người dùng được sử dụng
+        // Format: {"forAgency":true,"agencyLevels":{"level1":true,"level2":false,"level3":false},"forTourist":true,"touristLevels":{"level1":true,"level2":false,"level3":false}}
+        [Column("TARGET_AUDIENCE")]
+        public string? TargetAudience { get; set; }
 
         public virtual Account Host { get; set; } = null!;
         public virtual Service? Service { get; set; }

@@ -70,7 +70,7 @@ const HostSidebar: React.FC<HostSidebarProps> = ({
           className={`sidebar-menu-item ${activeTab === 'promotions' ? 'active' : ''}`}
         >
           <GridIcon className="sidebar-menu-icon" />
-          <span>Ưu đãi của bạn</span>
+          <span>Ưu đãi<br />(Dịch vụ tặng kèm)</span>
         </button>
         <button
           onClick={() => onTabChange('bookings')}

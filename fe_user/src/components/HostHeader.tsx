@@ -295,14 +295,14 @@ const HostHeader = React.memo(() => {
                   <UserIcon style={{ width: '18px', height: '18px' }} />
                   <span>Hồ sơ của tôi</span>
                 </Link>
-                <Link
+                {/* <Link
                   to="/host-dashboard"
                   className="host-header-user-menu-item"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   <SettingsIcon style={{ width: '18px', height: '18px' }} />
                   <span>Cài đặt Dashboard</span>
-                </Link>
+                </Link> */}
                 <div className="host-header-user-menu-divider" />
                 <button
                   className="host-header-user-menu-item host-header-user-menu-item-logout"

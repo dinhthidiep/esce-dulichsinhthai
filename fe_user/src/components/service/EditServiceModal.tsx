@@ -11,13 +11,10 @@ interface EditServiceModalProps {
     name: string;
     description: string;
     price: string;
-    image: File | null;
   };
   errors: Record<string, string>;
-  imagePreview: string | null;
   isSubmitting: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -27,10 +24,8 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({
   loading,
   formData,
   errors,
-  imagePreview,
   isSubmitting,
   onInputChange,
-  onImageChange,
   onSubmit
 }) => {
   if (!isOpen) return null;
@@ -110,30 +105,6 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({
                     inputMode="decimal"
                   />
                   {errors.price && <div className="edit-service-error">{errors.price}</div>}
-                </div>
-
-                {/* Image Upload Field */}
-                <div className="edit-service-field">
-                  <label htmlFor="edit-service-image">Chọn ảnh (Image)</label>
-                  <input
-                    id="edit-service-image"
-                    name="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={onImageChange}
-                  />
-                  <div className="edit-service-hint">
-                    Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP), tối đa 5MB
-                  </div>
-                  {errors.image && <div className="edit-service-error">{errors.image}</div>}
-                  {imagePreview && (
-                    <img
-                      src={imagePreview}
-                      className="edit-service-img-preview"
-                      alt="Xem trước ảnh"
-                      loading="lazy"
-                    />
-                  )}
                 </div>
 
                 {/* Form Actions */}

@@ -1,24 +1,13 @@
-// Backend is running on HTTP port 5002
-const backend_url = "http://localhost:5002";
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 // Helper function to get token from either storage
 const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
-// Helper function to get userInfo from either storage
-const getUserInfo = () => {
-  const info = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
-  if (!info) return null;
-  try {
-    return JSON.parse(info);
-  } catch {
-    return null;
-  }
-};
 
 // Get all coupons
 export const getAllCoupons = async () => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(await res.text() || 'Failed to load coupons');
@@ -29,7 +18,7 @@ export const getAllCoupons = async () => {
 export const getActiveCoupons = async () => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/active`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/active`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(await res.text() || 'Failed to load active coupons');
@@ -40,7 +29,7 @@ export const getActiveCoupons = async () => {
 export const getCouponByCode = async (code) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/code/${encodeURIComponent(code)}`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/code/${encodeURIComponent(code)}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (!res.ok) {
@@ -54,7 +43,7 @@ export const getCouponByCode = async (code) => {
 export const getCouponsByHostId = async (hostId) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/host/${hostId}`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/host/${hostId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(await res.text() || 'Failed to load coupons');
@@ -68,7 +57,7 @@ export const getCouponsByComboId = async (comboId) => {
     throw new Error('Authentication required');
   }
 
-  const response = await fetch(`${backend_url}/api/Coupon/combo/${comboId}`, {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/combo/${comboId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -117,7 +106,7 @@ export const createCoupon = async (couponData) => {
     throw new Error('Authentication required');
   }
 
-  const response = await fetch(`${backend_url}/api/Coupon`, {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -164,7 +153,7 @@ export const deleteCoupon = async (couponId) => {
     throw new Error('Authentication required');
   }
 
-  const response = await fetch(`${backend_url}/api/Coupon/${couponId}`, {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/${couponId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -197,7 +186,7 @@ export const deleteCoupon = async (couponId) => {
 export const getCouponById = async (id) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/${id}`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/${id}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -216,7 +205,7 @@ export const getCouponById = async (id) => {
 export const updateCoupon = async (id, updateData) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/${id}`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/${id}`, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -238,7 +227,7 @@ export const updateCoupon = async (id, updateData) => {
 export const validateCoupon = async (code, serviceComboId = null) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/validate`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/validate`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -258,7 +247,7 @@ export const validateCoupon = async (code, serviceComboId = null) => {
 export const calculateDiscount = async (code, originalAmount) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/calculate-discount`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/calculate-discount`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -278,7 +267,7 @@ export const calculateDiscount = async (code, originalAmount) => {
 export const applyCoupon = async (bookingId, couponCode) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/apply`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/apply`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -300,7 +289,7 @@ export const applyCoupon = async (bookingId, couponCode) => {
 export const removeCoupon = async (bookingId, couponCode) => {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
-  const res = await fetch(`${backend_url}/api/Coupon/remove`, {
+  const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUPON}/remove`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,

@@ -9,13 +9,10 @@ interface CreateServiceModalProps {
     name: string;
     description: string;
     price: string;
-    image: File | null;
   };
   errors: Record<string, string>;
-  imagePreview: string | null;
   isSubmitting: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -24,10 +21,8 @@ const CreateServiceModal: React.FC<CreateServiceModalProps> = ({
   onClose,
   formData,
   errors,
-  imagePreview,
   isSubmitting,
   onInputChange,
-  onImageChange,
   onSubmit
 }) => {
   if (!isOpen) return null;
@@ -103,30 +98,6 @@ const CreateServiceModal: React.FC<CreateServiceModalProps> = ({
                 inputMode="decimal"
               />
               {errors.price && <div className="create-service-error">{errors.price}</div>}
-            </div>
-
-            {/* Image Upload Field */}
-            <div className="create-service-field">
-              <label htmlFor="create-service-image">Chọn ảnh (Image)</label>
-              <input
-                id="create-service-image"
-                name="image"
-                type="file"
-                accept="image/*"
-                onChange={onImageChange}
-              />
-              <div className="create-service-hint">
-                Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP), tối đa 5MB
-              </div>
-              {errors.image && <div className="create-service-error">{errors.image}</div>}
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  className="create-service-img-preview"
-                  alt="Xem trước ảnh"
-                  loading="lazy"
-                />
-              )}
             </div>
 
             {/* Form Actions */}

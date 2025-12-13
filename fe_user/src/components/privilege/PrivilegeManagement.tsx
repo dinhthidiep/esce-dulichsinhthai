@@ -4,8 +4,9 @@ import LoadingSpinner from '../LoadingSpinner';
 import { GridIcon } from '../icons/index';
 import CreatePrivilegeModal from './CreatePrivilegeModal';
 import EditPrivilegeModal from './EditPrivilegeModal';
+import DeletePrivilegeModal from './DeletePrivilegeModal';
 import axiosInstance from '../../utils/axiosInstance';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../../config/api';
 import './PrivilegeManagement.css';
 
 interface PrivilegeManagementProps {
@@ -31,24 +32,15 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
   
   // Create Promotion Modal states
   const [isCreatePromotionModalOpen, setIsCreatePromotionModalOpen] = useState(false);
-  const [createPromotionFormData, setCreatePromotionFormData] = useState({
-    serviceName: '',
-    rank: '',
-    userType: ''
-  });
-  const [createPromotionErrors, setCreatePromotionErrors] = useState({});
-  const [isCreatingPromotion, setIsCreatingPromotion] = useState(false);
   
   // Edit Promotion Modal states
   const [isEditPromotionModalOpen, setIsEditPromotionModalOpen] = useState(false);
-  const [editingPromotionId, setEditingPromotionId] = useState(null);
-  const [editPromotionFormData, setEditPromotionFormData] = useState({
-    serviceName: '',
-    rank: '',
-    userType: ''
-  });
-  const [editPromotionErrors, setEditPromotionErrors] = useState({});
-  const [isEditingPromotion, setIsEditingPromotion] = useState(false);
+  const [editingPromotionId, setEditingPromotionId] = useState<number | null>(null);
+  
+  // Delete Promotion Modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Filter and sort function for promotions
   const applyPromotionFilters = useCallback((promotionList, nameFilter, statusFilter, order) => {
@@ -82,14 +74,41 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
     return filtered;
   }, []);
 
-  // Load promotions from API
+  // Get user ID helper
+  const getUserId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.Id || userInfo.id;
+        if (userId) {
+          const parsedId = parseInt(userId);
+          if (!isNaN(parsedId) && parsedId > 0) {
+            return parsedId;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return null;
+    }
+  }, []);
+
+  // Load promotions (bonus services) from API
   useEffect(() => {
     const loadPromotions = async () => {
       try {
         setLoadingPromotions(true);
-        // TODO: Implement promotion API endpoint
-        // For now, set empty array
-        setPromotions([]);
+        const userId = getUserId();
+        if (!userId) {
+          setPromotions([]);
+          return;
+        }
+
+        const response = await axiosInstance.get(`${API_BASE_URL}/BonusService/host/${userId}`);
+        const bonusServices = response.data || [];
+        setPromotions(bonusServices);
       } catch (err) {
         console.error('Error loading promotions:', err);
         if (onError) {
@@ -102,7 +121,7 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
     };
 
     loadPromotions();
-  }, [onError]);
+  }, [onError, getUserId]);
 
   // Apply filters when filter values change
   useEffect(() => {
@@ -153,114 +172,46 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
   // Handle open create promotion modal
   const handleOpenCreatePromotionModal = () => {
     setIsCreatePromotionModalOpen(true);
-    setCreatePromotionFormData({
-      serviceName: '',
-      rank: '',
-      userType: ''
-    });
-    setCreatePromotionErrors({});
   };
 
   // Handle close create promotion modal
   const handleCloseCreatePromotionModal = () => {
     setIsCreatePromotionModalOpen(false);
-    setCreatePromotionFormData({
-      serviceName: '',
-      rank: '',
-      userType: ''
-    });
-    setCreatePromotionErrors({});
-  };
-
-  // Handle create promotion submit
-  const handleCreatePromotionSubmit = (formData, errors) => {
-    if (isCreatingPromotion) return;
-    
-    setIsCreatingPromotion(true);
-    setCreatePromotionErrors(errors);
-    
-    if (Object.keys(errors).length > 0) {
-      setIsCreatingPromotion(false);
-      return;
-    }
-    
-    try {
-      // TODO: Implement promotion API endpoint
-      // For now, just show success message
-      if (onSuccess) {
-        onSuccess('Ưu đãi đã được tạo thành công!');
-      }
-      handleCloseCreatePromotionModal();
-    } catch (err) {
-      console.error('Error creating promotion:', err);
-      if (onError) {
-        onError('Có lỗi xảy ra khi tạo ưu đãi. Vui lòng thử lại.');
-      }
-    } finally {
-      setIsCreatingPromotion(false);
-    }
   };
 
   // Handle open edit promotion modal
-  const handleOpenEditPromotionModal = (promotionId) => {
-    const promotion = promotions.find(p => (p.Id || p.id) === promotionId);
-    if (promotion) {
-      setEditingPromotionId(promotionId);
-      setIsEditPromotionModalOpen(true);
-      setEditPromotionFormData({
-        serviceName: promotion.ServiceName || promotion.serviceName || '',
-        rank: promotion.Rank || promotion.rank || '',
-        userType: promotion.UserType || promotion.userType || ''
-      });
-      setEditPromotionErrors({});
-    }
+  const handleOpenEditPromotionModal = (promotionId: number) => {
+    setEditingPromotionId(promotionId);
+    setIsEditPromotionModalOpen(true);
   };
 
   // Handle close edit promotion modal
   const handleCloseEditPromotionModal = () => {
     setIsEditPromotionModalOpen(false);
     setEditingPromotionId(null);
-    setEditPromotionFormData({
-      serviceName: '',
-      rank: '',
-      userType: ''
-    });
-    setEditPromotionErrors({});
   };
 
-  // Handle edit promotion submit
-  const handleEditPromotionSubmit = (formData, errors) => {
-    if (isEditingPromotion || !editingPromotionId) return;
+  // Handle open delete modal
+  const handleOpenDeleteModal = (promotionId: number, promotionName: string) => {
+    setDeletingPromotion({ id: promotionId, name: promotionName });
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle close delete modal
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDeletingPromotion(null);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    if (!deletingPromotion) return;
     
-    setIsEditingPromotion(true);
-    setEditPromotionErrors(errors);
-    
-    if (Object.keys(errors).length > 0) {
-      setIsEditingPromotion(false);
-      return;
-    }
-    
+    setIsDeleting(true);
     try {
-      // TODO: Implement promotion API endpoint
-      // For now, just show success message
-      if (onSuccess) {
-        onSuccess('Ưu đãi đã được cập nhật thành công!');
-      }
-      handleCloseEditPromotionModal();
-    } catch (err) {
-      console.error('Error updating promotion:', err);
-      if (onError) {
-        onError('Có lỗi xảy ra khi cập nhật ưu đãi. Vui lòng thử lại.');
-      }
-    } finally {
-      setIsEditingPromotion(false);
-    }
-  };
-
-  // Handle delete promotion
-  const handleDeletePromotion = (promotionId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa ưu đãi này?')) {
-      const updatedPromotions = promotions.filter(p => (p.Id || p.id) !== promotionId);
+      await axiosInstance.delete(`${API_BASE_URL}/BonusService/${deletingPromotion.id}`);
+      
+      const updatedPromotions = promotions.filter(p => (p.Id || p.id) !== deletingPromotion.id);
       setPromotions(updatedPromotions);
       const filtered = applyPromotionFilters(updatedPromotions, promotionFilterName, promotionFilterStatus, promotionSortOrder);
       setFilteredPromotions(filtered);
@@ -268,6 +219,14 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
       if (onSuccess) {
         onSuccess('Ưu đãi đã được xóa thành công!');
       }
+      handleCloseDeleteModal();
+    } catch (err) {
+      console.error('Error deleting promotion:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi xóa ưu đãi. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -340,25 +299,55 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                   <thead>
                     <tr>
                       <th>Tên dịch vụ</th>
-                      <th>Hạng người dùng</th>
-                      <th>Loại người dùng</th>
+                      <th>Giá gốc</th>
+                      <th>Đối tượng</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginationData.paginatedPromotions.map(promotion => {
+                      const name = promotion.Name || promotion.name || 'Không có';
+                      const price = promotion.Price || promotion.price || 0;
+                      const targetAudienceStr = promotion.TargetAudience || promotion.targetAudience;
+                      
+                      // Parse target audience
+                      let targetDisplay = 'Chưa thiết lập';
+                      if (targetAudienceStr) {
+                        try {
+                          const ta = JSON.parse(targetAudienceStr);
+                          const parts: string[] = [];
+                          if (ta.forAgency) {
+                            const levels: string[] = [];
+                            if (ta.agencyLevels?.level1) levels.push('Đồng');
+                            if (ta.agencyLevels?.level2) levels.push('Bạc');
+                            if (ta.agencyLevels?.level3) levels.push('Vàng');
+                            if (levels.length > 0) parts.push(`🏢 Agency (${levels.join(', ')})`);
+                          }
+                          if (ta.forTourist) {
+                            const levels: string[] = [];
+                            if (ta.touristLevels?.level1) levels.push('Đồng');
+                            if (ta.touristLevels?.level2) levels.push('Bạc');
+                            if (ta.touristLevels?.level3) levels.push('Vàng');
+                            if (levels.length > 0) parts.push(`🧳 Tourist (${levels.join(', ')})`);
+                          }
+                          if (parts.length > 0) targetDisplay = parts.join(' | ');
+                        } catch (e) {
+                          console.error('Error parsing target audience:', e);
+                        }
+                      }
+                      
                       return (
                         <tr key={promotion.Id || promotion.id}>
                           <td className="priv-mgr-promotion-service-name-cell">
-                            {promotion.ServiceName || promotion.serviceName || 'Không có'}
+                            {name}
                           </td>
-                          <td className="priv-mgr-promotion-rank-cell">
-                            <span className={`priv-mgr-rank-badge priv-mgr-rank-${(promotion.Rank || promotion.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
-                              {promotion.Rank || promotion.rank || 'Không có'}
+                          <td className="priv-mgr-promotion-price-cell">
+                            {price.toLocaleString('vi-VN')} VNĐ
+                          </td>
+                          <td className="priv-mgr-promotion-target-cell">
+                            <span className="priv-mgr-target-badge">
+                              {targetDisplay}
                             </span>
-                          </td>
-                          <td className="priv-mgr-promotion-user-type-cell">
-                            {promotion.UserType || promotion.userType || 'Không có'}
                           </td>
                           <td className="priv-mgr-promotion-actions-cell">
                             <div className="priv-mgr-coupon-table-actions">
@@ -374,7 +363,7 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                                 variant="outline"
                                 size="sm"
                                 className="cancel-booking-btn"
-                                onClick={() => handleDeletePromotion(promotion.Id || promotion.id)}
+                                onClick={() => handleOpenDeleteModal(promotion.Id || promotion.id, name)}
                               >
                                 Xóa
                               </Button>
@@ -475,20 +464,56 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
       <CreatePrivilegeModal
         isOpen={isCreatePromotionModalOpen}
         onClose={handleCloseCreatePromotionModal}
-        formData={createPromotionFormData}
-        errors={createPromotionErrors}
-        isSubmitting={isCreatingPromotion}
-        onSubmit={handleCreatePromotionSubmit}
+        hostId={getUserId()}
+        onSuccess={onSuccess}
+        onError={onError}
+        onCreated={() => {
+          // Reload promotions after creation
+          const loadPromotions = async () => {
+            try {
+              const userId = getUserId();
+              if (!userId) return;
+              const response = await axiosInstance.get(`${API_BASE_URL}/BonusService/host/${userId}`);
+              setPromotions(response.data || []);
+            } catch (err) {
+              console.error('Error reloading promotions:', err);
+            }
+          };
+          loadPromotions();
+        }}
       />
 
       {/* Edit Promotion Modal */}
       <EditPrivilegeModal
         isOpen={isEditPromotionModalOpen}
         onClose={handleCloseEditPromotionModal}
-        formData={editPromotionFormData}
-        errors={editPromotionErrors}
-        isSubmitting={isEditingPromotion}
-        onSubmit={handleEditPromotionSubmit}
+        hostId={getUserId()}
+        bonusService={promotions.find(p => (p.Id || p.id) === editingPromotionId) || null}
+        onSuccess={onSuccess}
+        onError={onError}
+        onUpdated={() => {
+          // Reload promotions after update
+          const loadPromotions = async () => {
+            try {
+              const userId = getUserId();
+              if (!userId) return;
+              const response = await axiosInstance.get(`${API_BASE_URL}/BonusService/host/${userId}`);
+              setPromotions(response.data || []);
+            } catch (err) {
+              console.error('Error reloading promotions:', err);
+            }
+          };
+          loadPromotions();
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeletePrivilegeModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        serviceName={deletingPromotion?.name || ''}
+        isDeleting={isDeleting}
       />
     </div>
   );

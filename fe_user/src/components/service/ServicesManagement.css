@@ -79,11 +79,11 @@
   transform: translateY(0);
 }
 
-/* Services Grid */
+/* Services Grid - Mỗi dịch vụ 1 hàng */
 .svc-admin-services-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
+  display: flex !important;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1.25rem 0;
   width: 100%;
   margin: 0 auto;
@@ -100,29 +100,30 @@
   font-size: 1rem;
 }
 
-/* Service Card */
+/* Service Card - Layout ngang cho mỗi dịch vụ */
 .svc-admin-service-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   display: flex !important;
   flex-direction: row;
-  align-items: flex-start;
-  gap: 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   visibility: visible !important;
   opacity: 1 !important;
-  min-height: 100px;
 }
 
 .svc-admin-service-card-left {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.25rem;
   flex: 1;
   min-width: 0;
 }
@@ -138,14 +139,17 @@
 }
 
 .svc-admin-service-card .svc-admin-service-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
   overflow: hidden;
   border-radius: 8px;
   transition: transform 0.3s ease;
 }
 
 .svc-admin-service-card .svc-admin-service-image-img {
-  width: 100%;
-  height: 100%;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   border-radius: 8px;
   transition: transform 0.3s ease;
@@ -162,7 +166,7 @@
 .svc-admin-service-details {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -170,29 +174,31 @@
 
 .svc-admin-service-name {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.2;
+  line-height: 1.3;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .svc-admin-service-description {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  max-width: 400px;
 }
 
 .svc-admin-service-date {
   margin: 0;
-  font-size: 0.9rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #94a3b8;
   font-weight: 500;
 }
 
@@ -200,21 +206,21 @@
   margin: 0;
   font-size: 1rem;
   color: #10b981;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .svc-admin-service-actions {
   display: flex;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-  flex-direction: column;
-  align-items: flex-start;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: center;
   flex-shrink: 0;
 }
 
 .svc-admin-service-actions button {
-  width: 160px;
-  padding: 0.5rem 0.75rem;
+  min-width: 100px;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -223,9 +229,10 @@
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 0.3125rem;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Pagination */
@@ -514,21 +521,33 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .svc-admin-services-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .svc-admin-service-card {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .svc-admin-service-card-left {
+    width: 100%;
+  }
+  
+  .svc-admin-service-description {
+    max-width: 100%;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
   }
   
   .svc-admin-service-actions {
     flex-direction: row;
     width: 100%;
+    justify-content: flex-end;
   }
   
   .svc-admin-service-actions button {
     flex: 1;
+    max-width: 120px;
   }
   
   .svc-admin-filter-row {
@@ -542,4 +561,97 @@
   .svc-admin-btn-search {
     width: 100%;
   }
+}
+
+
+/* Delete Confirm Modal */
+.svc-admin-delete-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: svc-admin-modal-appear 0.2s ease-out;
+}
+
+@keyframes svc-admin-modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.svc-admin-delete-modal-icon {
+  margin-bottom: 1rem;
+}
+
+.svc-admin-delete-modal-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.svc-admin-delete-modal-message {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.svc-admin-delete-modal-message strong {
+  color: #1e293b;
+}
+
+.svc-admin-delete-modal-warning {
+  margin: 0 0 1.5rem;
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.svc-admin-delete-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.svc-admin-delete-modal-btn {
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.svc-admin-delete-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.svc-admin-delete-modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svc-admin-delete-modal-btn-cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.svc-admin-delete-modal-btn-confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.svc-admin-delete-modal-btn-confirm:hover:not(:disabled) {
+  background: #b91c1c;
 }

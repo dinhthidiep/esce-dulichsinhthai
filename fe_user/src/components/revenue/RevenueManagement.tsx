@@ -32,10 +32,43 @@ interface RevenueManagementProps {
   onError?: (message: string) => void;
 }
 
+// ========== MOCK DATA - Đặt USE_MOCK_DATA = true để xem demo ==========
+const USE_MOCK_DATA = true;
+
+const MOCK_PAYMENTS = [
+  // Tháng 12/2025
+  { Id: 1, Status: 'success', Amount: 2500000, PaymentDate: '2025-12-01T10:00:00' },
+  { Id: 2, Status: 'success', Amount: 3200000, PaymentDate: '2025-12-03T14:30:00' },
+  { Id: 3, Status: 'success', Amount: 1800000, PaymentDate: '2025-12-05T09:15:00' },
+  { Id: 4, Status: 'success', Amount: 4500000, PaymentDate: '2025-12-07T16:45:00' },
+  { Id: 5, Status: 'success', Amount: 2100000, PaymentDate: '2025-12-10T11:20:00' },
+  { Id: 6, Status: 'success', Amount: 5800000, PaymentDate: '2025-12-12T08:00:00' },
+  { Id: 7, Status: 'success', Amount: 3600000, PaymentDate: '2025-12-14T13:30:00' },
+  // Tháng 11/2025
+  { Id: 8, Status: 'success', Amount: 2800000, PaymentDate: '2025-11-05T10:00:00' },
+  { Id: 9, Status: 'success', Amount: 4200000, PaymentDate: '2025-11-12T14:30:00' },
+  { Id: 10, Status: 'success', Amount: 3100000, PaymentDate: '2025-11-20T09:15:00' },
+  { Id: 11, Status: 'success', Amount: 5500000, PaymentDate: '2025-11-25T16:45:00' },
+  // Tháng 10/2025
+  { Id: 12, Status: 'success', Amount: 3800000, PaymentDate: '2025-10-08T11:20:00' },
+  { Id: 13, Status: 'success', Amount: 2900000, PaymentDate: '2025-10-15T08:00:00' },
+  { Id: 14, Status: 'success', Amount: 4100000, PaymentDate: '2025-10-22T13:30:00' },
+  // Tháng 9/2025
+  { Id: 15, Status: 'success', Amount: 2200000, PaymentDate: '2025-09-10T10:00:00' },
+  { Id: 16, Status: 'success', Amount: 3500000, PaymentDate: '2025-09-18T14:30:00' },
+  // Tháng 8/2025
+  { Id: 17, Status: 'success', Amount: 4800000, PaymentDate: '2025-08-05T09:15:00' },
+  { Id: 18, Status: 'success', Amount: 2600000, PaymentDate: '2025-08-20T16:45:00' },
+  // Tháng 7/2025
+  { Id: 19, Status: 'success', Amount: 3300000, PaymentDate: '2025-07-12T11:20:00' },
+  { Id: 20, Status: 'success', Amount: 5100000, PaymentDate: '2025-07-25T08:00:00' },
+];
+// ========== END MOCK DATA ==========
+
 const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onError }) => {
   // Revenue states
   const [revenueSubTab, setRevenueSubTab] = useState('revenue'); // 'revenue' or 'statistics'
-  const [payments, setPayments] = useState([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [chartViewBy, setChartViewBy] = useState('month'); // 'month' or 'year'
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -73,6 +106,13 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
   // Load payments from API
   useEffect(() => {
     const loadPayments = async () => {
+      // Sử dụng mock data nếu USE_MOCK_DATA = true
+      if (USE_MOCK_DATA) {
+        console.log('📊 [RevenueManagement] Using MOCK_PAYMENTS data');
+        setPayments(MOCK_PAYMENTS);
+        return;
+      }
+
       try {
         const userId = getUserId();
         if (!userId) {
@@ -329,6 +369,8 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
         }
       },
       y: {
+        beginAtZero: true,
+        min: 0,
         grid: {
           display: true,
           color: 'rgba(0, 0, 0, 0.05)',

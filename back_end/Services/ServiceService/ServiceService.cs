@@ -24,6 +24,11 @@ namespace ESCE_SYSTEM.Services
         }
         public async Task<Service> CreateAsync(Service service)
         {
+            // Set default values for new service
+            service.Status = "Pending"; // Dịch vụ mới cần được Admin duyệt
+            service.CreatedAt = DateTime.UtcNow;
+            service.UpdatedAt = DateTime.UtcNow;
+            
             await _repository.CreateAsync(service);
             return service;
         }
@@ -35,7 +40,13 @@ namespace ESCE_SYSTEM.Services
             existing.Name = service.Name;
             existing.Description = service.Description;
             existing.Price = service.Price;
-            existing.UpdatedAt = DateTime.Now;
+            existing.UpdatedAt = DateTime.UtcNow;
+            
+            // Cập nhật ảnh nếu có
+            if (!string.IsNullOrEmpty(service.Images))
+            {
+                existing.Images = service.Images;
+            }
 
             await _repository.UpdateAsync(existing);
             return existing;

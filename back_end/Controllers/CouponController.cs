@@ -1,5 +1,6 @@
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Services;
+using ESCE_SYSTEM.DTOs.Post;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ESCE_SYSTEM.Controllers
@@ -62,15 +63,79 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Coupon coupon)
+        public async Task<IActionResult> Create([FromBody] CreateCouponDto dto)
         {
-            var result = await _service.CreateAsync(coupon);
-            return Ok(result);
+            try
+            {
+                if (dto == null)
+                {
+                    return BadRequest("Dữ liệu coupon không hợp lệ");
+                }
+                
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(dto.Code))
+                {
+                    return BadRequest("Mã coupon không được để trống");
+                }
+                
+                if (!dto.HostId.HasValue || dto.HostId <= 0)
+                {
+                    return BadRequest("HostId không hợp lệ");
+                }
+                
+                // Map DTO to Coupon entity
+                var coupon = new Coupon
+                {
+                    Code = dto.Code ?? string.Empty,
+                    Description = dto.Description,
+                    DiscountPercent = dto.DiscountPercent,
+                    DiscountAmount = dto.DiscountAmount,
+                    UsageLimit = dto.UsageLimit ?? 1,
+                    UsageCount = dto.UsageCount ?? 0,
+                    HostId = dto.HostId ?? 0,
+                    ServiceComboId = dto.ServiceComboId,
+                    IsActive = dto.IsActive ?? true,
+                    StartDate = dto.StartDate,
+                    ExpiryDate = dto.ExpiryDate,
+                    RequiredLevel = dto.RequiredLevel ?? 0,
+                    TargetAudience = dto.TargetAudience,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                
+                var result = await _service.CreateAsync(coupon);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Lỗi khi tạo coupon: {ex.Message}");
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Coupon coupon)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateCouponDto dto)
         {
+            if (dto == null)
+            {
+                return BadRequest("Dữ liệu coupon không hợp lệ");
+            }
+            
+            // Map DTO to Coupon entity for update
+            var coupon = new Coupon
+            {
+                Code = dto.Code ?? string.Empty,
+                Description = dto.Description,
+                DiscountPercent = dto.DiscountPercent,
+                DiscountAmount = dto.DiscountAmount,
+                UsageLimit = dto.UsageLimit ?? 1,
+                ServiceComboId = dto.ServiceComboId,
+                IsActive = dto.IsActive,
+                StartDate = dto.StartDate,
+                ExpiryDate = dto.ExpiryDate,
+                RequiredLevel = dto.RequiredLevel ?? 0,
+                TargetAudience = dto.TargetAudience
+            };
+            
             var result = await _service.UpdateAsync(id, coupon);
             if (result == null) return NotFound();
             return Ok(result);

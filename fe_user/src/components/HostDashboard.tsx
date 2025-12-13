@@ -997,7 +997,7 @@ const HostDashboard = () => {
       case 'service-combos':
         return 'Gói dịch vụ';
       case 'promotions':
-        return 'Ưu đãi của bạn';
+        return 'Ưu đãi (Dịch vụ tặng kèm)';
       case 'settings':
         return 'Cài đặt';
       default:

@@ -62,7 +62,10 @@ namespace ESCE_SYSTEM.Services
             existing.UsageLimit = coupon.UsageLimit;
             existing.ServiceComboId = coupon.ServiceComboId;
             existing.IsActive = coupon.IsActive;
+            existing.StartDate = coupon.StartDate;
             existing.ExpiryDate = coupon.ExpiryDate;
+            existing.RequiredLevel = coupon.RequiredLevel;
+            existing.TargetAudience = coupon.TargetAudience;
             existing.UpdatedAt = DateTime.Now;
 
             await _repository.UpdateAsync(existing);
@@ -83,7 +86,7 @@ namespace ESCE_SYSTEM.Services
             var coupon = await _repository.GetByCodeAsync(code);
             if (coupon == null) return false;
 
-            // Ki?m tra coupon có active không
+            // Ki?m tra coupon cï¿½ active khï¿½ng
             if (!coupon.IsActive.HasValue || !coupon.IsActive.Value) return false;
 
             // Ki?m tra h?n s? d?ng
@@ -92,7 +95,7 @@ namespace ESCE_SYSTEM.Services
             // Ki?m tra gi?i h?n s? d?ng
             if (coupon.UsageCount >= coupon.UsageLimit) return false;
 
-            // Ki?m tra coupon có áp d?ng cho combo c? th? không
+            // Ki?m tra coupon cï¿½ ï¿½p d?ng cho combo c? th? khï¿½ng
             if (coupon.ServiceComboId.HasValue && coupon.ServiceComboId != ServicecomboId) return false;
 
             return true;
@@ -116,7 +119,7 @@ namespace ESCE_SYSTEM.Services
                 discount = coupon.DiscountAmount.Value;
             }
 
-            // Ð?m b?o discount không vu?t quá original amount
+            // ï¿½?m b?o discount khï¿½ng vu?t quï¿½ original amount
             return Math.Min(discount, originalAmount);
         }
 
@@ -128,7 +131,7 @@ namespace ESCE_SYSTEM.Services
             var coupon = await _repository.GetByCodeAsync(couponCode);
             if (coupon == null) return false;
 
-            // Ki?m tra coupon dã du?c áp d?ng chua
+            // Ki?m tra coupon dï¿½ du?c ï¿½p d?ng chua
             var existingBookingCoupon = booking.BookingCoupons.FirstOrDefault(bc => bc.CouponId == coupon.Id);
             if (existingBookingCoupon != null) return false;
 
@@ -147,7 +150,7 @@ namespace ESCE_SYSTEM.Services
             coupon.UsageCount++;
             await _repository.UpdateAsync(coupon);
 
-            // Thêm vào booking (c?n c?p nh?t context)
+            // Thï¿½m vï¿½o booking (c?n c?p nh?t context)
             booking.BookingCoupons.Add(bookingCoupon);
             await _bookingRepository.UpdateAsync(booking);
 
@@ -169,7 +172,7 @@ namespace ESCE_SYSTEM.Services
             coupon.UsageCount--;
             await _repository.UpdateAsync(coupon);
 
-            // Xóa BookingCoupon
+            // Xï¿½a BookingCoupon
             booking.BookingCoupons.Remove(bookingCoupon);
             await _bookingRepository.UpdateAsync(booking);
 

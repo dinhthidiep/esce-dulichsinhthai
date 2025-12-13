@@ -42,6 +42,7 @@ const EditService = lazy(() => import('~/components/EditService'))
 const CreateServiceCombo = lazy(() => import('~/components/CreateServiceCombo'))
 const EditServiceCombo = lazy(() => import('~/components/EditServiceCombo'))
 const CreateCoupon = lazy(() => import('~/components/CreateCoupon'))
+const EditCoupon = lazy(() => import('~/components/EditCoupon'))
 const BookingManager = lazy(() => import('~/components/BookingManager'))
 const CouponManager = lazy(() => import('~/components/CouponManager'))
 const Revenue = lazy(() => import('~/components/Revenue'))
@@ -113,6 +114,7 @@ function App() {
           
           {/* Quản lý coupon */}
           <Route path="/create-coupon" element={<CreateCoupon />} />
+          <Route path="/edit-coupon" element={<EditCoupon />} />
           <Route path="/coupon-manager" element={<CouponManager />} />
           
           {/* Quản lý khác */}

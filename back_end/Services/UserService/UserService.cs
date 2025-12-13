@@ -664,27 +664,67 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(requestDto.CompanyName))
+            {
+                throw new ArgumentException("Tên công ty không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Phone))
+            {
+                throw new ArgumentException("Số điện thoại không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Email))
+            {
+                throw new ArgumentException("Email không được để trống");
+            }
+
             var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Kiểm tra user đã là Agency chưa
+            if (user.RoleId == 3) // Assuming RoleId 3 is Agency
+            {
+                throw new InvalidOperationException("Bạn đã là Agency rồi");
+            }
+
+            // Kiểm tra đã có certificate pending chưa
+            var existingCertificate = await _dbContext.AgencieCertificates
+                .FirstOrDefaultAsync(c => c.AccountId == userId && (c.Status == "Pending" || c.Status == "Review"));
+            
+            if (existingCertificate != null)
+            {
+                throw new InvalidOperationException("Bạn đã có yêu cầu nâng cấp đang chờ xử lý. Vui lòng đợi Admin xét duyệt.");
+            }
+
+            // Xử lý file license - lưu base64 thành file thực
+            var licenseFilePath = await SaveBase64FileAsync(requestDto.LicenseFile, "certificates/agency", $"agency_{userId}");
+
             var agencyCertificate = new Models.AgencieCertificate
             {
                 AccountId = userId,
                 Status = "Pending",
-                Companyname = requestDto.CompanyName,
-                LicenseFile = requestDto.LicenseFile,
-                Phone = requestDto.Phone,
-                Email = requestDto.Email,
-                Website = requestDto.Website,
+                Companyname = requestDto.CompanyName.Trim(),
+                LicenseFile = licenseFilePath,
+                Phone = requestDto.Phone.Trim(),
+                Email = requestDto.Email.Trim(),
+                Website = requestDto.Website?.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.AgencieCertificates.Add(agencyCertificate);
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                _dbContext.AgencieCertificates.Add(agencyCertificate);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"[RequestUpgradeToAgencyAsync] DbUpdateException: {ex.InnerException?.Message ?? ex.Message}");
+                throw new InvalidOperationException($"Không thể tạo yêu cầu nâng cấp: {ex.InnerException?.Message ?? ex.Message}");
+            }
 
             await SendWebNotificationAsync(user, "Pending", "Agency Certificate", agencyCertificate.AgencyId.ToString(),
               $"User {user.Name} has submitted an upgrade request to Agency.");
@@ -697,29 +737,133 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(requestDto.BusinessName))
+            {
+                throw new ArgumentException("Tên doanh nghiệp không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Phone))
+            {
+                throw new ArgumentException("Số điện thoại không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Email))
+            {
+                throw new ArgumentException("Email không được để trống");
+            }
+
             var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Kiểm tra user đã là Host chưa
+            if (user.RoleId == 2) // Assuming RoleId 2 is Host
+            {
+                throw new InvalidOperationException("Bạn đã là Host rồi");
+            }
+
+            // Kiểm tra đã có certificate pending chưa
+            var existingCertificate = await _dbContext.HostCertificates
+                .FirstOrDefaultAsync(c => c.HostId == userId && (c.Status == "Pending" || c.Status == "Review"));
+            
+            if (existingCertificate != null)
+            {
+                throw new InvalidOperationException("Bạn đã có yêu cầu nâng cấp đang chờ xử lý. Vui lòng đợi Admin xét duyệt.");
+            }
+
+            // Xử lý file license - lưu base64 thành file thực
+            var licenseFilePath = await SaveBase64FileAsync(requestDto.BusinessLicenseFile, "certificates/host", $"host_{userId}");
+
             var hostCertificate = new Models.HostCertificate
             {
                 HostId = userId,
                 Status = "Pending",
-                BusinessLicenseFile = requestDto.BusinessLicenseFile,
-                Phone = requestDto.Phone,
-                Email = requestDto.Email,
-                BusinessName = requestDto.BusinessName,
+                BusinessLicenseFile = licenseFilePath,
+                Phone = requestDto.Phone.Trim(),
+                Email = requestDto.Email.Trim(),
+                BusinessName = requestDto.BusinessName.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.HostCertificates.Add(hostCertificate);
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                _dbContext.HostCertificates.Add(hostCertificate);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"[RequestUpgradeToHostAsync] DbUpdateException: {ex.InnerException?.Message ?? ex.Message}");
+                throw new InvalidOperationException($"Không thể tạo yêu cầu nâng cấp: {ex.InnerException?.Message ?? ex.Message}");
+            }
 
             await SendWebNotificationAsync(user, "Pending", "Host Certificate", hostCertificate.CertificateId.ToString(),
               $"User {user.Name} has submitted an upgrade request to Host.");
+        }
+
+        /// <summary>
+        /// Lưu file base64 thành file thực trong wwwroot/uploads
+        /// </summary>
+        private async Task<string> SaveBase64FileAsync(string base64Data, string subFolder, string filePrefix)
+        {
+            // Nếu không có data hoặc không phải base64, trả về placeholder
+            if (string.IsNullOrWhiteSpace(base64Data) || base64Data == "pending_upload")
+            {
+                return "pending_upload";
+            }
+
+            // Nếu không phải base64 (có thể là URL), trả về nguyên
+            if (!base64Data.StartsWith("data:"))
+            {
+                return base64Data;
+            }
+
+            try
+            {
+                // Parse base64 data
+                // Format: data:image/jpeg;base64,/9j/4AAQ...
+                var parts = base64Data.Split(',');
+                if (parts.Length != 2)
+                {
+                    return "pending_upload";
+                }
+
+                var header = parts[0]; // data:image/jpeg;base64
+                var data = parts[1];   // actual base64 data
+
+                // Xác định extension từ MIME type
+                var extension = ".jpg"; // default
+                if (header.Contains("image/png"))
+                    extension = ".png";
+                else if (header.Contains("image/jpeg") || header.Contains("image/jpg"))
+                    extension = ".jpg";
+                else if (header.Contains("application/pdf"))
+                    extension = ".pdf";
+
+                // Tạo tên file unique
+                var fileName = $"{filePrefix}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+
+                // Tạo đường dẫn thư mục
+                var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", subFolder);
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Lưu file
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                var fileBytes = Convert.FromBase64String(data);
+                await File.WriteAllBytesAsync(filePath, fileBytes);
+
+                // Trả về đường dẫn relative để lưu vào database
+                return $"/uploads/{subFolder}/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SaveBase64FileAsync] Error saving file: {ex.Message}");
+                return "pending_upload";
+            }
         }
 
         public async Task ApproveUpgradeCertificateAsync(ApproveCertificateDto dto)
