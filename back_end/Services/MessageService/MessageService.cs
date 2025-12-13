@@ -62,10 +62,10 @@ namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
         {
             var currentUserId = ParseUserId(userId);
 
-            // Lấy tất cả user (trừ Admin và chính mình) và join với Role
-            // RoleId = 1 là Admin (từ SeedData cũ)
+            // Lấy tất cả user (trừ chính mình) và join với Role
+            // Bao gồm cả Admin để user có thể chat với Admin
             var users = await _dbContext.Accounts
-                .Where(a => a.Id != currentUserId && a.RoleId != 1)
+                .Where(a => a.Id != currentUserId)
                 .Include(a => a.Role) // Cần Include Role để lấy tên Role
                 .ToListAsync();
 
@@ -93,17 +93,33 @@ namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
             // 2. Lấy thông tin Account và Role
             var users = await _dbContext.Accounts
                 .Where(a => chattedIds.Contains(a.Id))
-                .Include(a => a.Role) // Cần Include Role để lấy tên Role
+                .Include(a => a.Role)
                 .ToListAsync();
 
-            return users.Select(u => new ChatUserDto
+            // 3. Lấy tin nhắn cuối cùng cho mỗi user
+            var result = new List<ChatUserDto>();
+            foreach (var u in users)
             {
-                UserId = u.Id.ToString(),
-                FullName = u.Name,
-                Role = u.Role?.Name ?? "Unknown", // Null-safe access
-                RoleId = u.RoleId,
-                Email = u.Email
-            });
+                var lastMessage = await _dbContext.Messages
+                    .Where(m => (m.SenderId == currentUserId && m.ReceiverId == u.Id) ||
+                                (m.SenderId == u.Id && m.ReceiverId == currentUserId))
+                    .OrderByDescending(m => m.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                result.Add(new ChatUserDto
+                {
+                    UserId = u.Id.ToString(),
+                    FullName = u.Name,
+                    Role = u.Role?.Name ?? "Unknown",
+                    RoleId = u.RoleId,
+                    Email = u.Email,
+                    LastMessage = lastMessage?.Content,
+                    LastMessageTime = lastMessage?.CreatedAt
+                });
+            }
+
+            // Sắp xếp theo thời gian tin nhắn cuối (mới nhất lên đầu)
+            return result.OrderByDescending(u => u.LastMessageTime);
         }
 
         public async Task<bool> DeleteConversation(string currentUserId, string otherUserId)
@@ -125,6 +141,34 @@ namespace ESCE_SYSTEM.Services.MessageService // 👈 Đã thêm namespace
             _dbContext.Messages.RemoveRange(messagesToDelete);
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<int> GetUnreadMessageCount(string userId)
+        {
+            var userIntId = ParseUserId(userId);
+
+            // Đếm số tin nhắn chưa đọc (tin nhắn gửi đến user hiện tại và chưa đọc)
+            return await _dbContext.Messages
+                .Where(m => m.ReceiverId == userIntId && m.IsRead == false)
+                .CountAsync();
+        }
+
+        public async Task MarkMessagesAsRead(string currentUserId, string otherUserId)
+        {
+            var currentUserIntId = ParseUserId(currentUserId);
+            var otherUserIntId = ParseUserId(otherUserId);
+
+            // Đánh dấu tất cả tin nhắn từ otherUser gửi đến currentUser là đã đọc
+            var unreadMessages = await _dbContext.Messages
+                .Where(m => m.SenderId == otherUserIntId && m.ReceiverId == currentUserIntId && m.IsRead == false)
+                .ToListAsync();
+
+            foreach (var msg in unreadMessages)
+            {
+                msg.IsRead = true;
+            }
+
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

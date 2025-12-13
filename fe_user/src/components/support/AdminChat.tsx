@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import * as signalR from '@microsoft/signalr'
 import { ArrowLeftIcon, XIcon } from '~/components/icons'
 import axiosInstance from '~/utils/axiosInstance'
 import './AdminChat.css'
@@ -8,6 +9,25 @@ interface Message {
   text: string
   isUser: boolean
   timestamp: Date
+  senderId?: string
+  receiverId?: string
+}
+
+interface ChatUser {
+  UserId?: string
+  userId?: string
+  FullName?: string
+  fullName?: string
+  Role?: string
+  role?: string
+  RoleId?: number
+  roleId?: number
+  Avatar?: string
+  avatar?: string
+  LastMessage?: string
+  lastMessage?: string
+  LastMessageTime?: string
+  lastMessageTime?: string
 }
 
 interface AdminChatProps {
@@ -16,7 +36,11 @@ interface AdminChatProps {
   onBack: () => void
   userName?: string
   userRole?: string
+  onRefreshUnread?: () => void
 }
+
+// Common emojis
+const EMOJI_LIST = ['😀', '😂', '😍', '🥰', '😊', '😎', '🤔', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉', '✨', '🙏', '👋', '🤝', '💪', '🌟']
 
 const AdminChat: React.FC<AdminChatProps> = ({
   isOpen,
@@ -24,110 +48,176 @@ const AdminChat: React.FC<AdminChatProps> = ({
   onBack,
   userName = 'Nguyễn Văn A',
   userRole = 'Du khách',
+  onRefreshUnread,
 }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(false)
-  const [chattedUsers, setChattedUsers] = useState<any[]>([])
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [allUsers, setAllUsers] = useState<ChatUser[]>([])
+  const [chattedUsers, setChattedUsers] = useState<ChatUser[]>([])
+  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [connection, setConnection] = useState<signalR.HubConnection | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<ChatUser | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Get userId helper
-  const getUserId = () => {
+  const getUserId = useCallback(() => {
     try {
       const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
       if (userInfoStr) {
         const userInfo = JSON.parse(userInfoStr)
-        const userId = userInfo.Id || userInfo.id
-        if (userId) {
-          return String(userId)
-        }
+        const id = userInfo.Id || userInfo.id
+        if (id) return String(id)
       }
       return null
-    } catch (error) {
-      console.error('Error getting user ID:', error)
+    } catch {
       return null
     }
-  }
+  }, [])
 
-  // Fetch chatted users on mount
+  // Setup SignalR connection
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    if (!token || !isOpen) return
+
+    const apiUrl = import.meta.env.VITE_API_URL || ''
+    const hubUrl = apiUrl.replace('/api', '') + '/chathub'
+
+    const newConnection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, { accessTokenFactory: () => token })
+      .withAutomaticReconnect()
+      .build()
+
+    newConnection.on('ReceiveMessage', (message: any) => {
+      const currentUserId = getUserId()
+      const senderId = String(message.senderId || message.SenderId || '')
+      const receiverId = String(message.receiverId || message.ReceiverId || '')
+
+      // Only add message if it's from someone else (not our own message)
+      if (senderId !== currentUserId) {
+        const newMsg: Message = {
+          id: Date.now().toString(),
+          text: message.content || message.Content || '',
+          isUser: false,
+          timestamp: new Date(message.timestamp || Date.now()),
+          senderId,
+          receiverId
+        }
+        setMessages(prev => [...prev, newMsg])
+      }
+    })
+
+    newConnection.onclose(() => setIsConnected(false))
+    newConnection.onreconnected(() => setIsConnected(true))
+
+    newConnection.start()
+      .then(() => {
+        console.log('SignalR Connected')
+        setIsConnected(true)
+      })
+      .catch(err => console.error('SignalR Error:', err))
+
+    setConnection(newConnection)
+
+    return () => {
+      newConnection.stop()
+    }
+  }, [isOpen, getUserId])
+
+  // Fetch users on mount
   useEffect(() => {
     if (isOpen) {
-      fetchChattedUsers()
+      fetchUsers()
     }
   }, [isOpen])
 
-  // Fetch chat history when user is selected
+  // Fetch chat history when user is selected + auto-refresh every 3 seconds
   useEffect(() => {
-    if (isOpen && selectedUserId) {
-      fetchChatHistory(selectedUserId)
-    } else if (isOpen && !selectedUserId && chattedUsers.length > 0) {
-      // Auto-select first user if available
-      setSelectedUserId(chattedUsers[0].userId || chattedUsers[0].UserId)
-    }
-  }, [isOpen, selectedUserId, chattedUsers])
-
-  const fetchChattedUsers = async () => {
-    try {
-      const response = await axiosInstance.get('/api/chat/GetChattedUser')
-      const users = response.data || []
-      setChattedUsers(users)
-      
-      // Auto-select first user if available
-      if (users.length > 0 && !selectedUserId) {
-        const firstUserId = users[0].userId || users[0].UserId || users[0].Id
-        if (firstUserId) {
-          setSelectedUserId(String(firstUserId))
-        }
+    if (isOpen && selectedUser) {
+      const userId = selectedUser.UserId || selectedUser.userId
+      if (userId) {
+        fetchChatHistory(userId)
+        
+        // Auto-refresh every 3 seconds to get new messages
+        const interval = setInterval(() => {
+          fetchChatHistorySilent(userId)
+        }, 3000)
+        
+        return () => clearInterval(interval)
       }
+    }
+  }, [isOpen, selectedUser])
+
+  const fetchUsers = async () => {
+    setLoading(true)
+    try {
+      const [allRes, chattedRes] = await Promise.all([
+        axiosInstance.get('/chat/GetUserForChat'),
+        axiosInstance.get('/chat/GetChattedUser')
+      ])
+      setAllUsers(Array.isArray(allRes.data) ? allRes.data : [])
+      setChattedUsers(Array.isArray(chattedRes.data) ? chattedRes.data : [])
     } catch (err) {
-      console.error('Error fetching chatted users:', err)
-      // Set default welcome message if no users
-      setMessages([{
-        id: '1',
-        text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
-        isUser: false,
-        timestamp: new Date(),
-      }])
+      console.error('Error fetching users:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
   const fetchChatHistory = async (toUserId: string) => {
+    setLoading(true)
     try {
-      setLoading(true)
-      const response = await axiosInstance.get(`/api/chat/GetHistory/${toUserId}`)
+      const response = await axiosInstance.get(`/chat/GetHistory/${toUserId}`)
       const history = response.data || []
-      
-      // Transform backend messages to frontend format
-      const transformedMessages: Message[] = history.map((msg: any) => ({
-        id: String(msg.Id || msg.id || Date.now()),
-        text: msg.Content || msg.content || msg.Message || msg.message || '',
-        isUser: (msg.SenderId || msg.senderId || msg.UserId || msg.userId) === getUserId(),
-        timestamp: new Date(msg.CreatedAt || msg.createdAt || msg.Timestamp || msg.timestamp || Date.now()),
+      const currentUserId = getUserId()
+
+      const transformedMessages: Message[] = history.map((msg: any, index: number) => ({
+        id: String(msg.Id || msg.id || index),
+        text: msg.Content || msg.content || '',
+        isUser: String(msg.SenderId || msg.senderId) === currentUserId,
+        timestamp: new Date(msg.CreatedAt || msg.createdAt || Date.now()),
+        senderId: String(msg.SenderId || msg.senderId || ''),
+        receiverId: String(msg.ReceiverId || msg.receiverId || '')
       }))
-      
-      if (transformedMessages.length === 0) {
-        // Show welcome message if no history
-        setMessages([{
-          id: '1',
-          text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
-          isUser: false,
-          timestamp: new Date(),
-        }])
-      } else {
-        setMessages(transformedMessages)
-      }
+
+      setMessages(transformedMessages)
     } catch (err) {
       console.error('Error fetching chat history:', err)
-      // Show default message on error
-      setMessages([{
-        id: '1',
-        text: 'Xin chào! Tôi là Admin Support. Bạn cần hỗ trợ gì ạ?',
-        isUser: false,
-        timestamp: new Date(),
-      }])
+      setMessages([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Silent fetch - no loading indicator, only update if there are new messages
+  const fetchChatHistorySilent = async (toUserId: string) => {
+    try {
+      const response = await axiosInstance.get(`/chat/GetHistory/${toUserId}`)
+      const history = response.data || []
+      const currentUserId = getUserId()
+
+      const transformedMessages: Message[] = history.map((msg: any, index: number) => ({
+        id: String(msg.Id || msg.id || index),
+        text: msg.Content || msg.content || '',
+        isUser: String(msg.SenderId || msg.senderId) === currentUserId,
+        timestamp: new Date(msg.CreatedAt || msg.createdAt || Date.now()),
+        senderId: String(msg.SenderId || msg.senderId || ''),
+        receiverId: String(msg.ReceiverId || msg.receiverId || '')
+      }))
+
+      // Only update if message count changed (new messages)
+      setMessages(prev => {
+        if (transformedMessages.length !== prev.length) {
+          return transformedMessages
+        }
+        return prev
+      })
+    } catch (err) {
+      // Silent fail - don't show error
     }
   }
 
@@ -139,45 +229,96 @@ const AdminChat: React.FC<AdminChatProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || loading) return
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputValue,
-      isUser: true,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    const messageText = inputValue
-    setInputValue('')
-    setLoading(true)
-
-    try {
-      // TODO: Implement send message API when backend is ready
-      // For now, show auto-response
-      setTimeout(() => {
-        const adminMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể.',
-          isUser: false,
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, adminMessage])
-        setLoading(false)
-      }, 1000)
-    } catch (err) {
-      console.error('Error sending message:', err)
-      setLoading(false)
+  const handleSelectUser = async (user: ChatUser) => {
+    setSelectedUser(user)
+    setMessages([])
+    
+    // Mark messages as read when selecting a user
+    const userId = user.UserId || user.userId
+    if (userId) {
+      try {
+        await axiosInstance.post(`/chat/MarkAsRead/${userId}`)
+        onRefreshUnread?.()
+      } catch (err) {
+        // Silent fail
+      }
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleBackToList = () => {
+    setSelectedUser(null)
+    setMessages([])
+  }
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || !selectedUser) return
+
+    const toUserId = selectedUser.UserId || selectedUser.userId
+    if (!toUserId) return
+
+    const messageText = inputValue
+    const currentUserId = getUserId()
+    const msgId = Date.now().toString()
+    
+    // Optimistic update - show message immediately
+    const newMsg: Message = {
+      id: msgId,
+      text: messageText,
+      isUser: true,
+      timestamp: new Date(),
+      senderId: currentUserId || '',
+      receiverId: toUserId
+    }
+    setMessages(prev => [...prev, newMsg])
+    setInputValue('')
+    setShowEmojiPicker(false)
+
+    // Save to database via API
+    try {
+      await axiosInstance.post('/chat/SendMessage', {
+        toUserId,
+        content: messageText
+      })
+    } catch (err) {
+      console.error('Error sending message:', err)
+      // Remove message from UI if failed
+      setMessages(prev => prev.filter(m => m.id !== msgId))
+      setInputValue(messageText)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  const handleDeleteClick = (user: ChatUser, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setUserToDelete(user)
+    setShowDeleteDialog(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return
+    
+    const userId = userToDelete.UserId || userToDelete.userId
+    if (!userId) return
+
+    try {
+      await axiosInstance.delete(`/chat/DeleteConversation/${userId}`)
+      // Remove from chatted users list
+      setChattedUsers(prev => prev.filter(u => (u.UserId || u.userId) !== userId))
+      setShowDeleteDialog(false)
+      setUserToDelete(null)
+    } catch (err) {
+      console.error('Error deleting conversation:', err)
+    }
+  }
+
+  const handleEmojiClick = (emoji: string) => {
+    setInputValue(prev => prev + emoji)
   }
 
   const formatTime = (date: Date) => {
@@ -187,12 +328,51 @@ const AdminChat: React.FC<AdminChatProps> = ({
     })
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    if (role === 'Du khách' || role === 'Tourist') return 'badge-tourist'
-    if (role === 'Host') return 'badge-host'
-    if (role === 'Agency') return 'badge-agency'
+  const formatRelativeTime = (dateStr?: string) => {
+    if (!dateStr) return ''
+    // Parse UTC time from server and convert to local
+    let date = new Date(dateStr)
+    // If the date string doesn't have timezone info, treat it as UTC
+    if (!dateStr.includes('Z') && !dateStr.includes('+')) {
+      date = new Date(dateStr + 'Z')
+    }
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Vừa xong'
+    if (diffMins < 60) return `${diffMins} phút`
+    if (diffHours < 24) return `${diffHours} giờ`
+    if (diffDays < 7) return `${diffDays} ngày`
+    return date.toLocaleDateString('vi-VN')
+  }
+
+  const getRoleBadgeColor = (roleId?: number) => {
+    if (roleId === 1) return 'badge-admin'
+    if (roleId === 2) return 'badge-host'
+    if (roleId === 3) return 'badge-agency'
+    if (roleId === 4) return 'badge-tourist'
     return 'badge-default'
   }
+
+  const getRoleName = (user: ChatUser) => {
+    const role = user.Role || user.role
+    if (role) return role
+    const roleId = user.RoleId || user.roleId
+    if (roleId === 1) return 'Admin'
+    if (roleId === 2) return 'Host'
+    if (roleId === 3) return 'Agency'
+    if (roleId === 4) return 'Customer'
+    return 'User'
+  }
+
+  // Filter users by search
+  const filteredUsers = allUsers.filter(user => {
+    const name = user.FullName || user.fullName || ''
+    return name.toLowerCase().includes(searchQuery.toLowerCase())
+  })
 
   if (!isOpen) return null
 
@@ -202,96 +382,250 @@ const AdminChat: React.FC<AdminChatProps> = ({
         {/* Header */}
         <div className="admin-chat-header">
           <div className="admin-chat-header-left">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span>Chat với Admin</span>
+            <span>{selectedUser ? (selectedUser.FullName || selectedUser.fullName) : 'Chat với mọi người'}</span>
           </div>
           <button className="admin-chat-close" onClick={onClose} aria-label="Đóng">
             <XIcon className="admin-chat-close-icon" />
           </button>
         </div>
 
-        {/* User Info */}
-        <div className="admin-chat-user-info">
-          <button className="admin-chat-back-btn" onClick={onBack}>
-            <ArrowLeftIcon className="admin-chat-back-icon" />
-            <span>Quay lại</span>
-          </button>
-          <div className="admin-chat-user-details">
-            <div className="admin-chat-user-label">Tài khoản của bạn</div>
-            <div className="admin-chat-user-name-row">
-              <span className="admin-chat-user-name">{userName}</span>
-              <span className={`admin-chat-user-badge ${getRoleBadgeColor(userRole)}`}>
-                {userRole}
-              </span>
+        {selectedUser ? (
+          <>
+            {/* Chat Header with selected user */}
+            <div className="admin-chat-user-info">
+              <button className="admin-chat-back-btn" onClick={handleBackToList}>
+                <ArrowLeftIcon className="admin-chat-back-icon" />
+                <span>Danh sách</span>
+              </button>
+              <div className="admin-chat-user-details">
+                <div className="admin-chat-user-name-row">
+                  <span className="admin-chat-user-name">{selectedUser.FullName || selectedUser.fullName}</span>
+                  <span className={`admin-chat-user-badge ${getRoleBadgeColor(selectedUser.RoleId || selectedUser.roleId)}`}>
+                    {getRoleName(selectedUser)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="admin-chat-messages">
+              {loading ? (
+                <div className="admin-chat-loading">Đang tải...</div>
+              ) : messages.length === 0 ? (
+                <div className="admin-chat-empty">Bắt đầu cuộc trò chuyện!</div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`admin-chat-message ${message.isUser ? 'admin-chat-message-user' : 'admin-chat-message-admin'}`}
+                  >
+                    {!message.isUser && (
+                      <div className="admin-chat-avatar">
+                        <span>{(selectedUser.FullName || selectedUser.fullName || 'U')[0]}</span>
+                      </div>
+                    )}
+                    <div className="admin-chat-message-content">
+                      <div className="admin-chat-message-bubble">{message.text}</div>
+                      <div className="admin-chat-message-time">{formatTime(message.timestamp)}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="admin-chat-emoji-picker">
+                {EMOJI_LIST.map((emoji, index) => (
+                  <button
+                    key={index}
+                    className="admin-chat-emoji-btn"
+                    onClick={() => handleEmojiClick(emoji)}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Input */}
+            <div className="admin-chat-input-container">
+              <button
+                className="admin-chat-action-btn"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title="Emoji"
+              >
+                😊
+              </button>
+              <input
+                type="text"
+                className="admin-chat-input"
+                placeholder="Nhập tin nhắn..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                className="admin-chat-send-btn"
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim()}
+                aria-label="Gửi tin nhắn"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            </div>
+            <div className="admin-chat-input-hint">Nhấn Enter để gửi</div>
+          </>
+        ) : (
+          <>
+            {/* User List View */}
+            <div className="admin-chat-user-info">
+              <button className="admin-chat-back-btn" onClick={onBack}>
+                <ArrowLeftIcon className="admin-chat-back-icon" />
+                <span>Quay lại</span>
+              </button>
+              <div className="admin-chat-user-details">
+                <div className="admin-chat-user-label">Tài khoản của bạn</div>
+                <div className="admin-chat-user-name-row">
+                  <span className="admin-chat-user-name">{userName}</span>
+                  <span className={`admin-chat-user-badge ${getRoleBadgeColor(userRole === 'Host' ? 2 : userRole === 'Agency' ? 3 : 4)}`}>
+                    {userRole}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="admin-chat-search">
+              <input
+                type="text"
+                placeholder="Tìm kiếm người dùng..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="admin-chat-search-input"
+              />
+            </div>
+
+            {/* User List */}
+            <div className="admin-chat-user-list">
+              {loading ? (
+                <div className="admin-chat-loading">Đang tải...</div>
+              ) : (
+                <>
+                  {chattedUsers.length > 0 && (
+                    <div className="admin-chat-section">
+                      <div className="admin-chat-section-title">Lịch sử đoạn chat</div>
+                      {chattedUsers
+                        .filter(u => (u.FullName || u.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((user) => (
+                          <div
+                            key={user.UserId || user.userId}
+                            className="admin-chat-user-item"
+                            onClick={() => handleSelectUser(user)}
+                          >
+                            <div className="admin-chat-user-avatar-small">
+                              {(user.FullName || user.fullName || 'U')[0]}
+                            </div>
+                            <div className="admin-chat-user-item-info">
+                              <div className="admin-chat-user-item-header">
+                                <span className="admin-chat-user-item-name">{user.FullName || user.fullName}</span>
+                                <span className="admin-chat-user-item-time">
+                                  {formatRelativeTime(user.LastMessageTime || user.lastMessageTime)}
+                                </span>
+                              </div>
+                              <div className="admin-chat-user-item-preview">
+                                <span className={`admin-chat-user-badge-small ${getRoleBadgeColor(user.RoleId || user.roleId)}`}>
+                                  {getRoleName(user)}
+                                </span>
+                                <span className="admin-chat-last-message">
+                                  {user.LastMessage || user.lastMessage || 'Chưa có tin nhắn'}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              className="admin-chat-delete-btn"
+                              onClick={(e) => handleDeleteClick(user, e)}
+                              title="Xóa đoạn chat"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  {/* Chỉ hiện kết quả tìm kiếm khi user nhập search */}
+                  {searchQuery.trim() && (
+                    <div className="admin-chat-section">
+                      <div className="admin-chat-section-title">Kết quả tìm kiếm</div>
+                      {filteredUsers.length === 0 ? (
+                        <div className="admin-chat-empty">Không tìm thấy người dùng</div>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <div
+                            key={user.UserId || user.userId}
+                            className="admin-chat-user-item"
+                            onClick={() => handleSelectUser(user)}
+                          >
+                            <div className="admin-chat-user-avatar-small">
+                              {(user.FullName || user.fullName || 'U')[0]}
+                            </div>
+                            <div className="admin-chat-user-item-info">
+                              <span className="admin-chat-user-item-name">{user.FullName || user.fullName}</span>
+                              <span className={`admin-chat-user-badge-small ${getRoleBadgeColor(user.RoleId || user.roleId)}`}>
+                                {getRoleName(user)}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Hiện gợi ý khi chưa có lịch sử chat và chưa search */}
+                  {!searchQuery.trim() && chattedUsers.length === 0 && (
+                    <div className="admin-chat-empty">
+                      Nhập tên để tìm kiếm người dùng
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && userToDelete && (
+        <div className="admin-chat-dialog-overlay" onClick={() => setShowDeleteDialog(false)}>
+          <div className="admin-chat-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-chat-dialog-title">Xóa đoạn chat?</div>
+            <div className="admin-chat-dialog-message">
+              Bạn có chắc muốn xóa toàn bộ tin nhắn với {userToDelete.FullName || userToDelete.fullName}? Hành động này không thể hoàn tác.
+            </div>
+            <div className="admin-chat-dialog-actions">
+              <button
+                className="admin-chat-dialog-btn admin-chat-dialog-btn-cancel"
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className="admin-chat-dialog-btn admin-chat-dialog-btn-delete"
+                onClick={handleConfirmDelete}
+              >
+                Xóa
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Messages */}
-        <div className="admin-chat-messages">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`admin-chat-message ${message.isUser ? 'admin-chat-message-user' : 'admin-chat-message-admin'}`}
-            >
-              {!message.isUser && (
-                <div className="admin-chat-avatar">
-                  <span>A</span>
-                </div>
-              )}
-              <div className="admin-chat-message-content">
-                <div className="admin-chat-message-bubble">{message.text}</div>
-                <div className="admin-chat-message-time">{formatTime(message.timestamp)}</div>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="admin-chat-input-container">
-          <input
-            type="text"
-            className="admin-chat-input"
-            placeholder="Nhập tin nhắn..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <button
-            className="admin-chat-send-btn"
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim()}
-            aria-label="Gửi tin nhắn"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </div>
-        <div className="admin-chat-input-hint">Nhấn Enter để gửi</div>
-      </div>
+      )}
     </div>
   )
 }

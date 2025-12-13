@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import ConditionalHeader from './ConditionalHeader';
 import Button from './ui/Button';
@@ -174,6 +174,8 @@ const getUserId = () => {
 const ServiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const reviewSectionRef = useRef<HTMLDivElement>(null);
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -186,7 +188,7 @@ const ServiceDetail = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [userBookings, setUserBookings] = useState([]);
   const [canReview, setCanReview] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState(null); // BookingId để dùng cho can-review check
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null); // BookingId để dùng cho can-review check
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'highest', 'lowest'
   const [filterRating, setFilterRating] = useState(0); // 0 = all, 1-5 = filter by rating
   const [openMenuId, setOpenMenuId] = useState(null); // ID of review with open menu
@@ -514,11 +516,11 @@ const ServiceDetail = () => {
           }
         }
         
-        // Bước 2: Filter bookings có ServiceComboId = id và status = confirmed hoặc completed
+        // Bước 2: Filter bookings có ServiceComboId = id và status = completed (chỉ cho phép review sau khi hoàn thành chuyến)
         const relevantBookings = bookings.filter(booking => {
           const comboId = booking.ServiceComboId || booking.serviceComboId;
           const status = (booking.Status || booking.status || '').toLowerCase();
-          return comboId === parseInt(id) && (status === 'confirmed' || status === 'completed');
+          return comboId === parseInt(id) && status === 'completed';
         });
 
         if (relevantBookings.length === 0) {
@@ -587,6 +589,27 @@ const ServiceDetail = () => {
   useEffect(() => {
     checkCanReview();
   }, [checkCanReview]);
+
+  // Xử lý state từ navigation (openReview từ ProfilePage)
+  useEffect(() => {
+    const state = location.state as { openReview?: boolean; bookingId?: number } | null;
+    if (state?.openReview && state?.bookingId) {
+      // Set bookingId từ state
+      setSelectedBookingId(state.bookingId);
+      setCanReview(true);
+      
+      // Mở form review và scroll đến phần review
+      setShowReviewForm(true);
+      
+      // Scroll đến phần review sau khi component render
+      setTimeout(() => {
+        reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+      
+      // Clear state để tránh mở lại khi refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -721,34 +744,29 @@ const ServiceDetail = () => {
     try {
       setSubmittingReview(true);
       
-      // Backend Review model cần: BookingId, UserId, Rating, Comment
-      // Cần tìm BookingId từ bookings của user cho service combo này
-      const userId = getUserId();
-      if (!userId) {
-        alert('Vui lòng đăng nhập để đánh giá');
-        navigate('/login', { state: { returnUrl: `/services/${id}` } });
-        setSubmittingReview(false);
-        return;
+      // Ưu tiên sử dụng selectedBookingId (từ ProfilePage hoặc checkCanReview)
+      let bookingId = selectedBookingId;
+      
+      // Nếu không có selectedBookingId, tìm từ API
+      if (!bookingId) {
+        const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);
+        const userBookingsData = bookingsResponse.data || [];
+        
+        // Tìm booking có ServiceComboId = id và status = completed (chỉ cho phép review khi hoàn thành)
+        const validBooking = userBookingsData.find((booking: any) => {
+          const comboId = booking.ServiceComboId || booking.serviceComboId;
+          const status = (booking.Status || booking.status)?.toLowerCase();
+          return comboId === parseInt(id as string) && status === 'completed';
+        });
+        
+        if (!validBooking) {
+          alert('Bạn chỉ có thể đánh giá sau khi hoàn thành chuyến du lịch.');
+          setSubmittingReview(false);
+          return;
+        }
+        
+        bookingId = validBooking.Id || validBooking.id;
       }
-      
-      // Lấy bookings của user cho service combo này
-      const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);
-      const userBookings = bookingsResponse.data || [];
-      
-      // Tìm booking có ServiceComboId = id và status = confirmed hoặc completed
-      const validBooking = userBookings.find((booking: any) => {
-        const comboId = booking.ServiceComboId || booking.serviceComboId;
-        const status = booking.Status || booking.status;
-        return comboId === parseInt(id) && (status === 'confirmed' || status === 'completed');
-      });
-      
-      if (!validBooking) {
-        alert('Bạn chưa có booking đã xác nhận cho dịch vụ này. Vui lòng đặt và thanh toán trước khi đánh giá.');
-        setSubmittingReview(false);
-        return;
-      }
-      
-      const bookingId = validBooking.Id || validBooking.id;
       
       // Gửi theo format database: BookingId, UserId, Rating, Comment
       const reviewData = {
@@ -1129,7 +1147,7 @@ const ServiceDetail = () => {
               </div>
 
               {/* Reviews Section */}
-              <Card className="sd-reviews-card">
+              <Card className="sd-reviews-card" ref={reviewSectionRef}>
                 <CardContent>
                   <div className="sd-reviews-header">
                     <div className="sd-reviews-header-left">

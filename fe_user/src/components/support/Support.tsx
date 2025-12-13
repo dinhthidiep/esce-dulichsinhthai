@@ -1,14 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import ChatButton from './ChatButton'
 import SupportModal from './SupportModal'
 import AdminChat from './AdminChat'
 import AIChatbot from './AIChatbot'
+import axiosInstance from '~/utils/axiosInstance'
 
 const Support: React.FC = () => {
   const [showSupportModal, setShowSupportModal] = useState(false)
   const [showAdminChat, setShowAdminChat] = useState(false)
   const [showAIChatbot, setShowAIChatbot] = useState(false)
   const [userInfo, setUserInfo] = useState<{ name?: string; role?: string }>({})
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  const fetchUnreadCount = useCallback(async () => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    if (!token) {
+      setIsLoggedIn(false)
+      return
+    }
+    
+    setIsLoggedIn(true)
+    try {
+      const response = await axiosInstance.get('/chat/UnreadCount')
+      setUnreadCount(response.data?.count || 0)
+    } catch (err) {
+      // Silent fail
+    }
+  }, [])
 
   useEffect(() => {
     // Get user info from localStorage/sessionStorage
@@ -24,7 +43,14 @@ const Support: React.FC = () => {
         console.error('Error parsing userInfo:', e)
       }
     }
-  }, [])
+
+    // Fetch unread count on mount
+    fetchUnreadCount()
+
+    // Poll for unread count every 10 seconds
+    const interval = setInterval(fetchUnreadCount, 10000)
+    return () => clearInterval(interval)
+  }, [fetchUnreadCount])
 
   const getRoleName = (user: any): string => {
     if (user.Role?.Name || user.role?.name) {
@@ -83,9 +109,15 @@ const Support: React.FC = () => {
     setShowAIChatbot(false)
   }
 
+  // Refresh unread count when chat is closed
+  const handleCloseAdminChatWithRefresh = () => {
+    setShowAdminChat(false)
+    fetchUnreadCount()
+  }
+
   return (
     <>
-      <ChatButton onClick={handleChatButtonClick} />
+      <ChatButton onClick={handleChatButtonClick} unreadCount={unreadCount} />
       <SupportModal
         isOpen={showSupportModal}
         onClose={handleCloseSupportModal}
@@ -94,10 +126,11 @@ const Support: React.FC = () => {
       />
       <AdminChat
         isOpen={showAdminChat}
-        onClose={handleCloseAdminChat}
+        onClose={handleCloseAdminChatWithRefresh}
         onBack={handleBackFromAdminChat}
         userName={userInfo.name}
         userRole={userInfo.role}
+        onRefreshUnread={fetchUnreadCount}
       />
       <AIChatbot
         isOpen={showAIChatbot}

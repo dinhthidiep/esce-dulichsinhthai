@@ -14,7 +14,6 @@ import {
   UserIcon, 
   CalendarIcon, 
   BellIcon, 
-  SettingsIcon,
   EditIcon,
   SaveIcon,
   XIcon,
@@ -1023,19 +1022,33 @@ const ProfilePage = () => {
   }, [reviews, reviewFilterRating, reviewSortBy]);
 
   // Helper function để enrich reviews (tái sử dụng)
+  // Backend đã Include ServiceCombo trong Booking, nên không cần gọi thêm API
   const enrichReviews = useCallback(async (reviewsData) => {
     if (!reviewsData || reviewsData.length === 0) return [];
     
-    // Batch load ServiceCombo
-    const comboIds = [...new Set(
-      reviewsData
-        .map(review => review.ComboId || review.comboId)
-        .filter(id => id != null)
-    )];
+    const userId = getUserId();
     
+    // Lấy ServiceCombo từ Booking (backend đã Include)
+    // Nếu backend chưa Include, fallback sang gọi API
+    const comboIdsToFetch: number[] = [];
+    
+    reviewsData.forEach(review => {
+      const booking = review.Booking || review.booking;
+      const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
+      
+      // Nếu không có ServiceCombo trong Booking, cần fetch
+      if (!serviceCombo) {
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
+        if (comboId && !comboIdsToFetch.includes(comboId)) {
+          comboIdsToFetch.push(comboId);
+        }
+      }
+    });
+    
+    // Fetch ServiceCombo nếu cần (fallback)
     const comboMap = new Map();
-    if (comboIds.length > 0) {
-      const comboPromises = comboIds.map(async (comboId) => {
+    if (comboIdsToFetch.length > 0) {
+      const comboPromises = comboIdsToFetch.map(async (comboId) => {
         try {
           const comboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${comboId}`);
           return { id: comboId, data: comboResponse.data };
@@ -1053,21 +1066,30 @@ const ProfilePage = () => {
     }
     
     // Enrich reviews
-    const userId = getUserId();
     return reviewsData.map(review => {
       const enrichedReview = { ...review };
-      const comboId = enrichedReview.ComboId || enrichedReview.comboId;
+      const booking = enrichedReview.Booking || enrichedReview.booking;
       
-      if (comboId && comboMap.has(comboId)) {
-        enrichedReview.ServiceCombo = comboMap.get(comboId);
-      } else if (comboId) {
-        enrichedReview.ServiceCombo = null;
+      // Lấy ServiceCombo từ Booking (ưu tiên) hoặc từ comboMap (fallback)
+      let serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
+      if (!serviceCombo) {
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
+        if (comboId && comboMap.has(comboId)) {
+          serviceCombo = comboMap.get(comboId);
+        }
       }
       
-      // User info từ storage
-      if (enrichedReview.AuthorId || enrichedReview.authorId) {
-        const authorId = enrichedReview.AuthorId || enrichedReview.authorId;
-        if (authorId === userId) {
+      // Gán ServiceCombo vào review để frontend dễ truy cập
+      if (serviceCombo) {
+        enrichedReview.ServiceCombo = serviceCombo;
+        // Cũng gán ComboId để tương thích với code hiển thị
+        enrichedReview.ComboId = serviceCombo.Id || serviceCombo.id;
+      }
+      
+      // User info từ storage (nếu là review của chính user)
+      if (enrichedReview.UserId || enrichedReview.userId) {
+        const reviewUserId = enrichedReview.UserId || enrichedReview.userId;
+        if (reviewUserId === userId && !enrichedReview.User) {
           const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
           if (userInfoStr) {
             try {
@@ -1120,7 +1142,7 @@ const ProfilePage = () => {
       
       const reviewData = {
         Rating: editReviewForm.rating,
-        Content: editReviewForm.comment || ''
+        Comment: editReviewForm.comment || ''
       };
 
       await axiosInstance.put(`${API_ENDPOINTS.REVIEW}/${editingReviewId}`, reviewData);
@@ -1275,10 +1297,6 @@ const ProfilePage = () => {
         return 'Lịch sử đặt dịch vụ';
       case 'reviews':
         return 'Đánh giá của tôi';
-      case 'notifications':
-        return 'Thông báo';
-      case 'settings':
-        return 'Cài đặt';
       default:
         return 'Thông tin cá nhân';
     }
@@ -1329,20 +1347,6 @@ const ProfilePage = () => {
               >
                 <StarIcon className="profile-sidebar-menu-icon" />
                 <span>Đánh giá của tôi</span>
-              </button>
-              <button
-                onClick={() => handleTabChange('notifications')}
-                className={`profile-sidebar-menu-item ${activeTab === 'notifications' ? 'profile-active' : ''}`}
-              >
-                <BellIcon className="profile-sidebar-menu-icon" />
-                <span>Thông báo</span>
-              </button>
-              <button
-                onClick={() => handleTabChange('settings')}
-                className={`profile-sidebar-menu-item ${activeTab === 'settings' ? 'profile-active' : ''}`}
-              >
-                <SettingsIcon className="profile-sidebar-menu-icon" />
-                <span>Cài đặt</span>
               </button>
             </nav>
           </aside>
@@ -1696,12 +1700,11 @@ const ProfilePage = () => {
                                 <div className="profile-booking-info">
                                   <h3 className="profile-booking-service-name">{serviceName}</h3>
                                   <div className="profile-booking-details">
-                                    {booking.StartDate && (
+                                    {(booking.BookingDate || booking.bookingDate) && (
                                       <div className="profile-booking-detail-item">
                                         <CalendarIcon className="profile-detail-icon" />
                                         <span>
-                                          {formatDate(booking.StartDate || booking.startDate)}
-                                          {booking.EndDate && ` - ${formatDate(booking.EndDate || booking.endDate)}`}
+                                          Ngày đặt: {formatDate(booking.BookingDate || booking.bookingDate)}
                                         </span>
                                       </div>
                                     )}
@@ -1774,8 +1777,18 @@ const ProfilePage = () => {
                                     variant="default"
                                     size="sm"
                                     onClick={() => {
-                                      // Navigate to review page or show review form
-                                      navigate(`/services/${serviceCombo?.Id || serviceCombo?.id}/review`);
+                                      // Navigate đến trang chi tiết service với bookingId để review
+                                      const comboId = serviceCombo?.Id || serviceCombo?.id;
+                                      if (comboId) {
+                                        navigate(`/services/${comboId}`, {
+                                          state: { 
+                                            openReview: true,
+                                            bookingId: bookingId,
+                                            returnUrl: '/profile',
+                                            returnTab: 'bookings'
+                                          }
+                                        });
+                                      }
                                     }}
                                   >
                                     Đánh giá
@@ -2088,27 +2101,6 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Notifications Tab */}
-            {activeTab === 'notifications' && (
-              <div className="profile-tab-content">
-                <div className="profile-empty-state">
-                  <BellIcon className="profile-empty-state-icon" />
-                  <h3>Chức năng đang phát triển</h3>
-                  <p>Chức năng thông báo đang được phát triển. Vui lòng quay lại sau!</p>
-                </div>
-              </div>
-            )}
-
-            {/* Settings Tab */}
-            {activeTab === 'settings' && (
-              <div className="profile-tab-content">
-                <div className="profile-empty-state">
-                  <SettingsIcon className="profile-empty-state-icon" />
-                  <h3>Chức năng đang phát triển</h3>
-                  <p>Chức năng cài đặt đang được phát triển. Vui lòng quay lại sau!</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </main>

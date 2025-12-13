@@ -44,10 +44,14 @@ interface NewsItem {
   image?: string
   author?: string
   authorId?: number
+  authorAvatar?: string
+  authorRole?: string
   createdAt: string
   updatedAt?: string
   status?: string
   views?: number
+  likesCount: number
+  isLiked: boolean
 }
 
 const NewsPage = () => {
@@ -110,8 +114,7 @@ const NewsPage = () => {
       const response = await axiosInstance.get<any[]>(API_ENDPOINTS.NEWS)
       
       // Transform backend NewsDto to frontend NewsItem
-      // Backend returns: NewsId, Content (which is NewsTitle), Images (array), CreatedDate, AuthorName, etc.
-      // Frontend expects: id, title, content, summary, image (string), createdAt, author, etc.
+      // Backend returns: NewsId, Content (which is NewsTitle), Images (array), CreatedDate, AuthorName, LikesCount, IsLiked
       const transformedNews: NewsItem[] = (response.data || []).map((news: any) => {
         const content = news.Content || news.content || ''
         const images = news.Images || news.images || []
@@ -128,10 +131,14 @@ const NewsPage = () => {
           image: firstImage,
           author: news.AuthorName || news.authorName || news.author || '',
           authorId: news.AuthorId || news.authorId,
+          authorAvatar: news.AuthorAvatar || news.authorAvatar,
+          authorRole: news.AuthorRole || news.authorRole || '',
           createdAt: news.CreatedDate || news.createdDate || news.createdAt || '',
           updatedAt: news.CreatedDate || news.createdDate || news.updatedAt || '',
           status: 'published',
-          views: 0
+          views: 0,
+          likesCount: news.LikesCount || news.likesCount || 0,
+          isLiked: news.IsLiked || news.isLiked || false,
         }
       })
       
@@ -215,6 +222,52 @@ const NewsPage = () => {
     } catch (err: any) {
       console.error('Error deleting news:', err)
       alert(err.response?.data?.message || 'Không thể xóa tin tức. Vui lòng thử lại sau.')
+    }
+  }
+
+  const handleToggleLike = async (id: number) => {
+    if (!userInfo) {
+      // Redirect to login
+      window.location.href = '/login?returnUrl=/news'
+      return
+    }
+
+    try {
+      // Optimistic update
+      setNewsList((prev) =>
+        prev.map((news) => {
+          if (news.id === id) {
+            return {
+              ...news,
+              isLiked: !news.isLiked,
+              likesCount: news.isLiked ? news.likesCount - 1 : news.likesCount + 1,
+            }
+          }
+          return news
+        })
+      )
+
+      // Call API
+      const response = await axiosInstance.post(`${API_ENDPOINTS.NEWS}/${id}/like`)
+      
+      // Update with actual data from server
+      const { liked, likesCount } = response.data
+      setNewsList((prev) =>
+        prev.map((news) => {
+          if (news.id === id) {
+            return {
+              ...news,
+              isLiked: liked,
+              likesCount: likesCount,
+            }
+          }
+          return news
+        })
+      )
+    } catch (err: any) {
+      console.error('Error toggling like:', err)
+      // Revert optimistic update
+      await fetchNews()
     }
   }
 
@@ -378,6 +431,7 @@ const NewsPage = () => {
                       isVisible={isVisible}
                       isAdmin={isAdmin}
                       onDelete={handleDeleteNews}
+                      onToggleLike={handleToggleLike}
                       formatDate={formatDate}
                     />
                   ))}
@@ -526,10 +580,11 @@ interface NewsCardProps {
   isVisible: boolean
   isAdmin: boolean
   onDelete: (id: number) => void
+  onToggleLike: (id: number) => void
   formatDate: (date: string) => string
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ news, index, isVisible, isAdmin, onDelete, formatDate }) => {
+const NewsCard: React.FC<NewsCardProps> = ({ news, index, isVisible, isAdmin, onDelete, onToggleLike, formatDate }) => {
   const newsImage = news.image || defaultNewsImage
 
   return (
@@ -577,6 +632,24 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, index, isVisible, isAdmin, on
           <h3 className="news-news-title">{news.title}</h3>
 
           <div className="news-news-footer">
+            <div className="news-news-actions">
+              <button
+                className={`news-news-like-btn ${news.isLiked ? 'news-liked' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onToggleLike(news.id)
+                }}
+                aria-label={news.isLiked ? 'Bỏ thích' : 'Thích'}
+              >
+                <span className="news-news-like-icon" role="img" aria-label="like">
+                  {news.isLiked ? '❤️' : '🤍'}
+                </span>
+                {news.likesCount > 0 && (
+                  <span className="news-news-like-count">{news.likesCount}</span>
+                )}
+              </button>
+            </div>
             <Link to={`/news/${news.id}`} className="news-news-read-more">
               Đọc thêm
               <ArrowRightIcon className="news-news-read-more-icon" />

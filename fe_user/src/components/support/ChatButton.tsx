@@ -3,9 +3,10 @@ import './ChatButton.css'
 
 interface ChatButtonProps {
   onClick: () => void
+  unreadCount?: number
 }
 
-const ChatButton: React.FC<ChatButtonProps> = ({ onClick }) => {
+const ChatButton: React.FC<ChatButtonProps> = ({ onClick, unreadCount = 0 }) => {
   return (
     <button className="support-chat-button" onClick={onClick} aria-label="Mở hỗ trợ trực tuyến">
       <div className="support-chat-button-icon">
@@ -22,7 +23,11 @@ const ChatButton: React.FC<ChatButtonProps> = ({ onClick }) => {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       </div>
-      <div className="support-chat-notification-dot"></div>
+      {unreadCount > 0 && (
+        <div className="support-chat-badge">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </div>
+      )}
     </button>
   )
 }

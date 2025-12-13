@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { getNotifications, markNotificationAsRead, type NotificationDto } from '~/API/NotificationApi'
+import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, type NotificationDto } from '~/API/NotificationApi'
 import './NotificationDropdown.css'
 
 interface NotificationDropdownProps {
   isOpen: boolean
   onClose: () => void
+  onUnreadCountChange?: (count: number) => void
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState<NotificationDto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,10 +65,47 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         })
       )
     } catch (err) {
-      console.error('Error marking notification as notif-read:', err)
-      alert('Không thể đánh dấu thông báo là đã đọc')
+      console.error('Error marking notification as read:', err)
     }
   }
+
+  // Đánh dấu tất cả đã đọc
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead()
+      // Cập nhật local state
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, IsRead: true, isRead: true }))
+      )
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err)
+    }
+  }
+
+  // Xóa thông báo
+  const handleDelete = async (notification: NotificationDto, e: React.MouseEvent) => {
+    e.stopPropagation() // Ngăn trigger handleMarkAsRead
+    const notificationId = notification.Id || notification.id
+    if (!notificationId) return
+
+    try {
+      await deleteNotification(notificationId)
+      // Xóa khỏi local state
+      setNotifications(prev => prev.filter(n => (n.Id || n.id) !== notificationId))
+    } catch (err) {
+      console.error('Error deleting notification:', err)
+    }
+  }
+
+  // Đếm số thông báo chưa đọc
+  const unreadCount = notifications.filter(n => !(n.IsRead || n.isRead)).length
+
+  // Thông báo cho Header khi unreadCount thay đổi
+  useEffect(() => {
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount)
+    }
+  }, [unreadCount, onUnreadCountChange])
 
 
   // Format ngày tháng
@@ -96,10 +134,21 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
   return (
     <div className="notif-notification-dropdown" ref={dropdownRef}>
       <div className="notif-notification-dropdown-header">
-        <h3>Thông báo</h3>
-        <button className="notif-notification-close-btn" onClick={onClose} aria-label="Đóng">
-          ×
-        </button>
+        <h3>Thông báo {unreadCount > 0 && <span className="notif-header-badge">{unreadCount}</span>}</h3>
+        <div className="notif-header-actions">
+          {unreadCount > 0 && (
+            <button 
+              className="notif-mark-all-read-btn" 
+              onClick={handleMarkAllAsRead}
+              title="Đánh dấu tất cả đã đọc"
+            >
+              ✓ Đọc tất cả
+            </button>
+          )}
+          <button className="notif-notification-close-btn" onClick={onClose} aria-label="Đóng">
+            ×
+          </button>
+        </div>
       </div>
 
       <div className="notif-notification-dropdown-content">
@@ -132,7 +181,16 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                   <div className="notif-notification-item-content">
                     <div className="notif-notification-item-header">
                       <h4 className="notif-notification-item-title">{title}</h4>
-                      {!isRead && <span className="notif-notification-unread-badge">Mới</span>}
+                      <div className="notif-notification-item-actions">
+                        {!isRead && <span className="notif-notification-unread-badge">Mới</span>}
+                        <button 
+                          className="notif-delete-btn" 
+                          onClick={(e) => handleDelete(notification, e)}
+                          title="Xóa thông báo"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                     <p className="notif-notification-item-message">{message}</p>
                     {createdAt && (

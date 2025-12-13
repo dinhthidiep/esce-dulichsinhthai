@@ -86,10 +86,10 @@ namespace ESCE_SYSTEM.Services
                 throw new Exception("User can only review their own bookings");
             }
 
-            // Ki?m tra xem booking d� thanh to�n v� du?c confirmed chua
-            if (booking.Status != "confirmed" && booking.Status != "completed")
+            // Chỉ cho phép review khi đã hoàn thành chuyến du lịch
+            if (booking.Status != "completed")
             {
-                throw new Exception("Can only review bookings that have been paid (confirmed or completed)");
+                throw new Exception("Chỉ có thể đánh giá sau khi hoàn thành chuyến du lịch");
             }
 
             // Ki?m tra xem user d� review booking n�y chua
@@ -141,13 +141,13 @@ namespace ESCE_SYSTEM.Services
             var booking = await _bookingRepository.GetByIdAsync(bookingId);
             if (booking == null) return false;
 
-            // Ki?m tra booking thu?c v? user
+            // Kiểm tra booking thuộc về user
             if (booking.UserId != userId) return false;
 
-            // Ki?m tra booking d� thanh to�n chua (confirmed ho?c completed)
-            if (booking.Status != "confirmed" && booking.Status != "completed") return false;
+            // Chỉ cho phép review khi đã hoàn thành chuyến du lịch
+            if (booking.Status != "completed") return false;
 
-            // Ki?m tra user d� review chua
+            // Kiểm tra user đã review chưa
             var existingReview = await GetByBookingIdAndUserIdAsync(bookingId, userId);
             if (existingReview != null) return false;
 
