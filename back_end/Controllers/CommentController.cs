@@ -21,7 +21,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,tourist")]
         public async Task<ActionResult> CreateComment([FromBody] PostCommentDto commentDto)
         {
             try
@@ -51,7 +51,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,tourist")]
         public async Task<ActionResult> UpdateComment(int id, [FromBody] UpdatePostCommentDto commentDto)
         {
             try
@@ -70,7 +70,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,tourist")]
         public async Task<ActionResult> DeleteComment(int id)
         {
             try

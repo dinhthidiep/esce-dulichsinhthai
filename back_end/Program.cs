@@ -31,14 +31,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-
 // ===============================
-//     STARTUP (PROGRAM.CS) CLEAN
+//      STARTUP (PROGRAM.CS) FIXED
 // ===============================
-
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // === CORS CHO NGROK + PAYOS + SIGNALR ===
 builder.Services.AddCors(options =>
@@ -57,7 +54,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 // === Controllers + JSON FIX CYCLE ===
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -66,18 +62,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
         System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 
-
 builder.Services.AddSignalR();
 
-
 // ===== Database =====
-// Đã thay đổi ConnectionString sang "ESCE" để khớp với các file khác
 builder.Services.AddDbContext<ESCEContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ESCE")));
 
-
 // ===== PayOS & external services =====
-// Cần đảm bảo sử dụng PayOSOptions (số nhiều) để khớp với PayOSPaymentService.cs
 builder.Services.Configure<PayOSOptions>(builder.Configuration.GetSection("PayOS"));
 
 builder.Services.AddHttpClient<IPaymentService, PayOSPaymentService>((sp, client) =>
@@ -90,14 +81,6 @@ builder.Services.AddHttpClient<IPaymentService, PayOSPaymentService>((sp, client
     client.DefaultRequestHeaders.Add("x-client-id", payos.ClientId);
     client.DefaultRequestHeaders.Add("x-api-key", payos.ApiKey);
 });
-
-
-// Loại bỏ các cấu hình DNS/Proxy phức tạp nếu không cần thiết
-// System.Net.ServicePointManager.DnsRefreshTimeout = 0;
-// System.Net.ServicePointManager.Expect100Continue = false;
-
-
-
 
 // ===== Repositories & Services =====
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -136,23 +119,17 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<INewsService, NewsService>();
-builder.Services.AddScoped<INewsRepository, NewsRepository>(); // ĐÃ THÊM: News Repository
-/*builder.Services.AddScoped<ChatbotService>(); // ĐÃ THÊM: Chatbot Service*/
-
+builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<ChatbotService>();
 
-
-// --- Helpers và Options còn thiếu ---
+// --- Helpers và Options ---
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddSingleton<EmailHelper>();
 builder.Services.AddSingleton<OTPGenerator>();
 builder.Services.Configure<JwtSetting>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<SmtpSetting>(builder.Configuration.GetSection("Email"));
-builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("EmailConfig")); // ĐÃ THÊM: EmailConfig
-
-
-
+builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("EmailConfig"));
 
 // === Authentication (JWT) ===
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -162,9 +139,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         if (string.IsNullOrEmpty(jwtSettings?.Key))
             throw new InvalidOperationException("Missing Jwt:Key in appsettings.json");
 
-
         var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
-
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -173,16 +148,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience
+            ValidAudience = jwtSettings.Audience,
+
+            // [QUAN TRỌNG] Dòng này để sửa lỗi 403:
+            // Nó báo cho .NET biết Role nằm ở key "role" trong Token
+            RoleClaimType = "role"
         };
 
-        // ĐÃ THÊM: Logic xử lý token từ query string cho SignalR
+        // Logic xử lý token từ query string cho SignalR
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];
-
 
                 var path = context.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) &&
@@ -195,9 +173,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 builder.Services.AddAuthorization();
-
 
 // === Swagger ===
 builder.Services.AddEndpointsApiExplorer();
@@ -233,14 +209,11 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
 // ===============================
-//     BUILD APP
+//      BUILD APP
 // ===============================
-
 
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -251,13 +224,10 @@ if (app.Environment.IsDevelopment())
         var db = services.GetRequiredService<ESCEContext>();
         await db.Database.MigrateAsync();
 
-
         var logger = services.GetRequiredService<ILogger<Program>>();
         var config = services.GetRequiredService<IConfiguration>();
 
-
         var seedDemo = config.GetValue<bool>("Demo:SeedDemoAccounts");
-
 
         if (seedDemo)
         {
@@ -266,45 +236,32 @@ if (app.Environment.IsDevelopment())
             var roleRepository = services.GetRequiredService<IRoleRepository>();
             var userRepository = services.GetRequiredService<IUserRepository>();
 
-
             await ESCE_SYSTEM.SeedData.SeedData.Initialize(
                 userService, roleService, roleRepository, userRepository
             );
         }
 
-
         logger.LogInformation("Database + Seed completed.");
     }
-
 
     // Swagger
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-
 // static files
 app.UseStaticFiles();
 
-
-// VERY IMPORTANT: DO NOT enable HTTPS redirection for NGROK
-// app.UseHttpsRedirection();
-
-
 app.UseRouting();
-
 
 // CORS phải đứng trước Authentication
 app.UseCors("AllowAll");
 
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-
 // Controllers
 app.MapControllers();
-
 
 // Redirect root → Swagger
 app.MapGet("/", context =>
@@ -313,11 +270,8 @@ app.MapGet("/", context =>
     return Task.CompletedTask;
 });
 
-
 // SignalR
 app.MapHub<NotificationHub>("/notificationhub"); // Notification Hub
 app.MapHub<ChatHub>("/chathub"); // Chat Hub cho tin nhắn giữa users
 
-
 app.Run();
-

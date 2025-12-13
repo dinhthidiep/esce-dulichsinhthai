@@ -80,7 +80,7 @@ namespace ESCE_SYSTEM.Models
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Accounts)
                     .HasForeignKey(d => d.RoleId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                   .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_ACCOUNTS_ROLES");
             });
 

@@ -186,11 +186,10 @@ const Register = () => {
     // Email
     if (!form.email) err.email = 'Email là bắt buộc'
     else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = 'Email không hợp lệ'
-    // Số điện thoại: tùy chọn, nhưng nếu nhập phải đủ 10 số và chỉ chứa số
-    if (form.phone) {
-      if (!/^\d+$/.test(form.phone)) err.phone = 'Số điện thoại chỉ được chứa số'
-      else if (form.phone.length !== 10) err.phone = 'Số điện thoại phải đủ 10 số'
-    }
+    // Số điện thoại: bắt buộc, phải đủ 10 số và chỉ chứa số
+    if (!form.phone) err.phone = 'Số điện thoại là bắt buộc'
+    else if (!/^\d+$/.test(form.phone)) err.phone = 'Số điện thoại chỉ được chứa số'
+    else if (form.phone.length !== 10) err.phone = 'Số điện thoại phải đủ 10 số'
     // Mật khẩu
     if (!form.password) err.password = 'Mật khẩu là bắt buộc'
     else if (!isPasswordStrong) err.password = 'Mật khẩu chưa đủ mạnh'
@@ -317,7 +316,7 @@ const Register = () => {
                   {errors.email && <span className="error-message">{errors.email}</span>}
                 </div>
                 <div className="form-group">
-                  <label htmlFor="phone">Số điện thoại (tùy chọn)</label>
+                  <label htmlFor="phone">Số điện thoại</label>
                   <div className="input-wrapper">
                     <input
                       id="phone"
@@ -327,6 +326,7 @@ const Register = () => {
                       value={form.phone}
                       onChange={handleChange}
                       className={errors.phone ? 'error' : ''}
+                      required
                     />
                   </div>
                   {errors.phone && <span className="error-message">{errors.phone}</span>}

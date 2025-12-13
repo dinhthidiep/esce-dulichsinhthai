@@ -54,14 +54,14 @@ namespace ESCE_SYSTEM.SeedData
                 });
             }
 
-            // Role 4: Customer
-            var roleCustomer = await roleService.GetRoleById(4);
-            if (roleCustomer == null)
+            // Role 4: Tourist
+            var roleTourist = await roleService.GetRoleById(4);
+            if (roleTourist == null)
             {
                 await roleRepository.AddAsync(new Role
                 {
                    /* Id = 4,*/
-                    Name = "Customer",
+                    Name = "Tourist",
                     Description = "Người dùng tham gia tour cá nhân"
                 });
             }

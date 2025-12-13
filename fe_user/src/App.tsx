@@ -86,8 +86,10 @@ function App() {
           
           {/* Nâng cấp tài khoản */}
           <Route path="/upgrade" element={<UpgradeAccount />} />
+          <Route path="/upgrade-account" element={<UpgradeAccount />} />
           <Route path="/upgrade/payment/:upgradeRequestId" element={<UpgradePaymentPage />} />
           <Route path="/upgrade/payment/success/:upgradeRequestId" element={<UpgradePaymentSuccessPage />} />
+          <Route path="/upgrade-payment-success" element={<UpgradePaymentSuccessPage />} />
           <Route path="/subscription-packages" element={<SubscriptionPackages />} />
           
           {/* Trang người dùng */}

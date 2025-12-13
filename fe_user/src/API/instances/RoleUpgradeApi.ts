@@ -66,10 +66,18 @@ export const requestAgencyUpgrade = async (payload: {
   email: string
   website?: string
 }) => {
-  const response = await fetchWithFallback('/api/user/request-upgrade-to-agency', {
+  // Convert to PascalCase for C# backend
+  const requestBody = {
+    CompanyName: payload.companyName,
+    LicenseFile: payload.licenseFile,
+    Phone: payload.phone,
+    Email: payload.email,
+    Website: payload.website || ''
+  }
+  const response = await fetchWithFallback('/user/request-upgrade-to-agency', {
     method: 'POST',
     headers: ensureAuthHeaders(),
-    body: JSON.stringify(payload)
+    body: JSON.stringify(requestBody)
   })
   return await handleResponse(response)
 }
@@ -80,11 +88,27 @@ export const requestHostUpgrade = async (payload: {
   phone: string
   email: string
 }) => {
-  const response = await fetchWithFallback('/api/user/request-upgrade-to-host', {
+  // Convert to PascalCase for C# backend
+  const requestBody = {
+    BusinessName: payload.businessName,
+    BusinessLicenseFile: payload.businessLicenseFile,
+    Phone: payload.phone,
+    Email: payload.email
+  }
+  
+  console.log('🚀 [requestHostUpgrade] Sending request:', {
+    url: '/user/request-upgrade-to-host',
+    body: { ...requestBody, BusinessLicenseFile: requestBody.BusinessLicenseFile?.substring(0, 50) + '...' }
+  })
+  
+  const response = await fetchWithFallback('/user/request-upgrade-to-host', {
     method: 'POST',
     headers: ensureAuthHeaders(),
-    body: JSON.stringify(payload)
+    body: JSON.stringify(requestBody)
   })
+  
+  console.log('📥 [requestHostUpgrade] Response status:', response.status)
+  
   return await handleResponse(response)
 }
 

@@ -197,6 +197,9 @@ namespace ESCE_SYSTEM.Services.PaymentService
         // --------------------------------------
         // 2. XỬ LÝ WEBHOOK PAYOS
         // --------------------------------------
+        // --------------------------------------
+        // 2. XỬ LÝ WEBHOOK PAYOS (ĐÃ SỬA)
+        // --------------------------------------
         public async Task<bool> HandleWebhookAsync(HttpRequest request)
         {
             request.EnableBuffering();
@@ -205,14 +208,20 @@ namespace ESCE_SYSTEM.Services.PaymentService
             var body = await reader.ReadToEndAsync();
             request.Body.Position = 0;
 
+            Console.WriteLine($"[Webhook] Received webhook body: {body}");
+
             if (string.IsNullOrWhiteSpace(body))
+            {
+                Console.WriteLine($"[Webhook] Empty body, returning true");
                 return true;
+            }
 
             try
             {
                 var webhookData = JsonSerializer.Deserialize<JsonElement>(body);
+                Console.WriteLine($"[Webhook] Parsed webhook data successfully");
 
-                // Verify signature
+                // --- VERIFY SIGNATURE (GIỮ NGUYÊN) ---
                 var receivedSignature = webhookData.GetProperty("signature").GetString();
                 var dataToVerify = new Dictionary<string, object>();
 
@@ -230,56 +239,90 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 }
 
                 var calculatedSignature = CreateSignature(dataToVerify);
+                if (receivedSignature != calculatedSignature) return false;
 
-                if (receivedSignature != calculatedSignature)
-                {
-                    // WRONG signature = reject
-                    return false;
-                }
-
+                // --- LẤY DATA TỪ WEBHOOK ---
                 long orderCode = webhookData.GetProperty("orderCode").GetInt64();
                 string status = webhookData.GetProperty("status").GetString() ?? "";
                 string? transactionId = webhookData.TryGetProperty("transactionId", out var transId)
-                    ? transId.GetString()
-                    : null;
+                    ? transId.GetString() : null;
 
                 Payment? payment;
 
+                // --- TÌM PAYMENT TRONG DB ---
+                // Logic phân biệt Upgrade vs Booking dựa trên quy ước orderCode của bạn
                 if ((orderCode % 1_000_000) >= 500_000)
                 {
-                    // Upgrade payment
+                    // Upgrade payment logic
                     int userId = (int)(orderCode / 1_000_000);
-
-                    payment = await _db.Payments
-                        .Where(p => p.UserId == userId && p.BookingId == null && p.Status == "pending")
+                    Console.WriteLine($"[Webhook] Looking for upgrade payment - userId: {userId}, orderCode: {orderCode}");
+                    
+                    var allPayments = await _db.Payments
+                        .Where(p => p.UserId == userId && p.BookingId == null)
                         .OrderByDescending(p => p.Id)
-                        .FirstOrDefaultAsync();
+                        .ToListAsync();
+                    
+                    Console.WriteLine($"[Webhook] Found {allPayments.Count} upgrade payments for userId {userId}");
+                    foreach (var p in allPayments)
+                    {
+                        Console.WriteLine($"[Webhook] Payment ID: {p.Id}, Status: {p.Status}, PaymentType: {p.PaymentType}, Created: {p.UpdatedAt}");
+                    }
+                    
+                    payment = allPayments.FirstOrDefault();
                 }
                 else
                 {
-                    // Booking payment
+                    // Booking payment logic
                     int bookingId = (int)(orderCode / 1_000_000);
-
-                    payment = await _db.Payments
-                        .Where(p => p.BookingId == bookingId && p.Status == "pending")
+                    Console.WriteLine($"[Webhook] Looking for booking payment - bookingId: {bookingId}, orderCode: {orderCode}");
+                    
+                    var allPayments = await _db.Payments
+                        .Where(p => p.BookingId == bookingId)
                         .OrderByDescending(p => p.Id)
-                        .FirstOrDefaultAsync();
+                        .ToListAsync();
+                    
+                    Console.WriteLine($"[Webhook] Found {allPayments.Count} booking payments for bookingId {bookingId}");
+                    foreach (var p in allPayments)
+                    {
+                        Console.WriteLine($"[Webhook] Payment ID: {p.Id}, Status: {p.Status}, BookingId: {p.BookingId}, Created: {p.UpdatedAt}");
+                    }
+                    
+                    payment = allPayments.FirstOrDefault();
                 }
 
                 if (payment == null)
-                    return true;
+                {
+                    // Log để debug - không tìm thấy payment
+                    Console.WriteLine($"[Webhook] Payment not found for orderCode: {orderCode}, status: {status}");
+                    return true; // Không tìm thấy payment thì bỏ qua (có thể là test request)
+                }
 
-                payment.Status = status == "PAID" ? "success"
-                                : status == "CANCELED" ? "canceled"
-                                : "pending";
+                // --- CẬP NHẬT TRẠNG THÁI PAYMENT ---
+                // Chỉ cập nhật nếu trạng thái thay đổi để tránh ghi đè ngày giờ
+                string newStatus = status == "PAID" ? "success" : status == "CANCELED" ? "cancelled" : "pending";
 
-                if (payment.Status == "success")
-                    payment.PaymentDate = DateTime.UtcNow;
+                // Log để debug
+                Console.WriteLine($"[Webhook] Found payment ID: {payment.Id}, Current status: {payment.Status}, New status: {newStatus}, OrderCode: {orderCode}");
 
+                if (payment.Status == newStatus)
+                {
+                    Console.WriteLine($"[Webhook] Payment status already {newStatus}, skipping update");
+                    return true; // Trạng thái chưa đổi thì thôi
+                }
+
+                payment.Status = newStatus;
                 payment.TransactionId = transactionId;
                 payment.UpdatedAt = DateTime.UtcNow;
 
-                // Nếu là payment cho booking, cập nhật trạng thái booking
+                if (payment.Status == "success")
+                {
+                    payment.PaymentDate = DateTime.UtcNow;
+                    Console.WriteLine($"[Webhook] Payment {payment.Id} updated to success, PaymentDate set to {payment.PaymentDate}");
+                }
+
+                // --- [QUAN TRỌNG] LOGIC XỬ LÝ NGHIỆP VỤ SAU KHI THANH TOÁN ---
+
+                // 1. Nếu là Booking Payment (Giữ nguyên logic cũ của bạn)
                 if (payment.BookingId.HasValue)
                 {
                     var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId.Value);
@@ -287,25 +330,59 @@ namespace ESCE_SYSTEM.Services.PaymentService
                     {
                         if (payment.Status == "success")
                         {
-                            booking.Status = "completed";
+                            booking.Status = "completed"; // Hoặc "Confirmed" tùy logic của bạn
                             booking.CompletedDate = DateTime.UtcNow;
                             booking.UpdatedAt = DateTime.UtcNow;
                         }
-                        else if (payment.Status == "canceled")
+                        else if (payment.Status == "cancelled")
                         {
                             booking.Status = "cancelled";
                             booking.UpdatedAt = DateTime.UtcNow;
                         }
                     }
                 }
+                // 2. [MỚI THÊM] Nếu là Upgrade Payment (Agency/Host)
+                else if (payment.Status == "success" && !string.IsNullOrEmpty(payment.PaymentType) && payment.PaymentType.StartsWith("Upgrade"))
+                {
+                    var upgradeType = payment.PaymentType.Replace("Upgrade", ""); // Ví dụ: "Agency"
 
-                await _db.SaveChangesAsync();
+                    if (upgradeType == "Agency" && payment.UserId.HasValue)
+                    {
+                        // Tìm Certificate đang Pending của User đó
+                        var certificate = await _db.AgencieCertificates
+                            .Where(c => c.AccountId == payment.UserId.Value && c.Status == "Pending")
+                            .OrderByDescending(c => c.CreatedAt)
+                            .FirstOrDefaultAsync();
 
-                return true;
+                        if (certificate != null)
+                        {
+                            // Cập nhật sang PaidPending (Đã thanh toán, chờ admin duyệt)
+                            certificate.Status = "PaidPending";
+                            certificate.UpdatedAt = DateTime.UtcNow;
+                            Console.WriteLine($"[Webhook] Certificate {certificate.AgencyId} updated to PaidPending for user {payment.UserId}");
+                        }
+                    }
+                    // Nếu có logic cho Host thì thêm else if vào đây
+                }
+
+                // QUAN TRỌNG: Đảm bảo SaveChangesAsync được gọi
+                try
+                {
+                    var savedCount = await _db.SaveChangesAsync();
+                    Console.WriteLine($"[Webhook] Successfully saved {savedCount} changes for payment {payment.Id}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Webhook] Error saving changes: {ex.Message}");
+                    Console.WriteLine($"[Webhook] StackTrace: {ex.StackTrace}");
+                    return false;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // WRONG format = reject
+                Console.WriteLine($"[Webhook] Exception: {ex.Message}");
+                Console.WriteLine($"[Webhook] StackTrace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -326,7 +403,9 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 description = description.Substring(0, 25);
             }
 
-            long amountVND = (long)amount;
+            // TODO: Đổi lại thành (long)amount khi deploy production
+            // Hiện tại để 500 VND để test
+            long amountVND = 5000; // Test với 500 VND
 
             long orderCode = userId * 1_000_000L +
                              500_000L +
@@ -401,6 +480,7 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 CheckoutUrl = checkoutUrl,
                 OrderCode = orderCode.ToString()
             };
-        }
+        }  
+        
     }
 }

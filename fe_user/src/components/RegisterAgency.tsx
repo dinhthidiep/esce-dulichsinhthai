@@ -105,9 +105,10 @@ const RegisterAgency = () => {
     if (form.website && !/^https?:\/\/.+/.test(form.website)) {
       err.website = 'Website phải bắt đầu bằng http:// hoặc https://'
     }
-    if (!form.licenseFile) {
-      err.licenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
-    }
+    // Tạm thời không bắt buộc upload file
+    // if (!form.licenseFile) {
+    //   err.licenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
+    // }
     return err
   }
 
@@ -123,31 +124,38 @@ const RegisterAgency = () => {
     setErrors({})
 
     try {
-      const fileBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64String = reader.result as string
-          resolve(base64String)
-        }
-        reader.onerror = reject
-        reader.readAsDataURL(form.licenseFile!)
-      })
+      let fileBase64 = ''
+      
+      // Chỉ convert file nếu có upload
+      if (form.licenseFile) {
+        fileBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64String = reader.result as string
+            resolve(base64String)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(form.licenseFile!)
+        })
+      }
 
       const response = await requestAgencyUpgrade({
         companyName: form.companyName,
-        licenseFile: fileBase64,
+        licenseFile: fileBase64 || 'pending_upload',
         phone: form.phone,
         email: form.email,
         website: form.website || undefined
-      })
+      }) as any
 
-      // Chuyển tới trang thanh toán
-      navigate('/upgrade-payment', {
+      // Chuyển tới trang thành công
+      // Lưu ý: Agency cần thanh toán 1,000,000 VND - Admin sẽ xác nhận thanh toán
+      navigate('/upgrade-payment-success', {
         state: {
           type: 'agency',
           amount: 1000000,
           companyName: form.companyName,
-          certificateId: (response as any)?.agencyId || (response as any)?.id
+          certificateId: response?.agencyId || response?.id,
+          paymentMethod: 'bank_transfer' // Chuyển khoản ngân hàng
         }
       })
     } catch (error: any) {

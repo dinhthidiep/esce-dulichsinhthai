@@ -99,9 +99,10 @@ const RegisterHost = () => {
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
       err.email = 'Email không hợp lệ'
     }
-    if (!form.businessLicenseFile) {
-      err.businessLicenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
-    }
+    // Tạm thời không bắt buộc upload ảnh
+    // if (!form.businessLicenseFile) {
+    //   err.businessLicenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
+    // }
     return err
   }
 
@@ -117,19 +118,24 @@ const RegisterHost = () => {
     setErrors({})
 
     try {
-      const fileBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64String = reader.result as string
-          resolve(base64String)
-        }
-        reader.onerror = reject
-        reader.readAsDataURL(form.businessLicenseFile!)
-      })
+      let fileBase64 = ''
+      
+      // Chỉ convert file nếu có upload
+      if (form.businessLicenseFile) {
+        fileBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64String = reader.result as string
+            resolve(base64String)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(form.businessLicenseFile!)
+        })
+      }
 
       const response = await requestHostUpgrade({
         businessName: form.businessName,
-        businessLicenseFile: fileBase64,
+        businessLicenseFile: fileBase64 || 'pending_upload', // Placeholder nếu chưa có file
         phone: form.phone,
         email: form.email
       })

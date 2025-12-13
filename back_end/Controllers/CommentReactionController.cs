@@ -19,7 +19,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("like")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,tourist")]
         public async Task<IActionResult> LikeComment([FromBody] PostCommentLikeDto postCommentLikeDto)
         {
             try
@@ -34,7 +34,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpDelete("unlike/{commentReactionId}")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,tourist")]
         public async Task<IActionResult> UnlikeComment(int commentReactionId)
         {
             try

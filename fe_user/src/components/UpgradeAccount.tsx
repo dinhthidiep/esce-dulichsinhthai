@@ -136,7 +136,7 @@ const UpgradeAccount = () => {
                     </ul>
 
                     <Button
-                      onClick={() => option.id === 'host' ? navigate('/register-host') : navigate('/register-agency')}
+                      onClick={() => option.id === 'host' ? navigate('/register/host') : navigate('/register/agency')}
                       variant="default"
                       size="lg"
                       className="upg-upgrade-button"
