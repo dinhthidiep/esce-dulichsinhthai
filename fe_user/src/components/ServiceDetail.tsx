@@ -197,6 +197,9 @@ const ServiceDetail = () => {
   const [deletingReviewId, setDeletingReviewId] = useState(null); // ID of review being deleted
   const [similarServices, setSimilarServices] = useState([]);
   const [loadingSimilarServices, setLoadingSimilarServices] = useState(false);
+  const [availableServices, setAvailableServices] = useState([]); // Dịch vụ đơn lẻ của host
+  const [selectedServices, setSelectedServices] = useState<number[]>([]); // ID các dịch vụ đã chọn
+  const [loadingServices, setLoadingServices] = useState(false);
 
   // Helper function để enrich reviews (batch load Users thay vì N+1 queries)
   const enrichReviews = useCallback(async (reviewsData) => {
@@ -438,6 +441,61 @@ const ServiceDetail = () => {
 
     fetchSimilarServices();
   }, [id]);
+
+  // Fetch available services của host từ ServiceCombo.HostId
+  useEffect(() => {
+    const fetchHostServices = async () => {
+      if (!service || !id || isNaN(parseInt(id))) return;
+      
+      try {
+        setLoadingServices(true);
+        
+        // Lấy HostId từ ServiceCombo
+        const hostId = service.HostId || service.hostId;
+        if (!hostId) {
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ [ServiceDetail] ServiceCombo không có HostId, không thể load dịch vụ thêm');
+          }
+          setAvailableServices([]);
+          return;
+        }
+        
+        // Lấy tất cả Service của host đó
+        const url = `${API_ENDPOINTS.SERVICE}/host/${hostId}`;
+        
+        if (import.meta.env.DEV) {
+          console.log(`🔍 [ServiceDetail] Đang load dịch vụ của host ${hostId}`);
+        }
+        
+        const response = await axiosInstance.get(url);
+        
+        if (response.data && Array.isArray(response.data)) {
+          // Chỉ lấy các Service có status = "Approved"
+          const approvedServices = response.data.filter((svc: any) => {
+            const status = (svc.Status || svc.status || '').toLowerCase();
+            return status === 'approved';
+          });
+          
+          if (import.meta.env.DEV) {
+            console.log(`✅ [ServiceDetail] Tìm thấy ${approvedServices.length} dịch vụ đơn lẻ của host ${hostId}`);
+          }
+          setAvailableServices(approvedServices);
+        } else {
+          setAvailableServices([]);
+        }
+      } catch (err: any) {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [ServiceDetail] Không thể tải dịch vụ thêm của host:', err?.message || 'Unknown error');
+        }
+        // Đặt services = [] và tiếp tục (ServiceDetail vẫn hoạt động bình thường)
+        setAvailableServices([]);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchHostServices();
+  }, [service, id]);
 
   // Fetch reviews for this service combo
   useEffect(() => {
@@ -916,6 +974,19 @@ const ServiceDetail = () => {
     return (statusLower === 'approved' || statusLower === 'open') && slots > 0;
   };
 
+  // Tính tổng tiền bao gồm cả dịch vụ thêm đã chọn - Phải đặt trước các điều kiện return sớm
+  const selectedServicesTotal = useMemo(() => {
+    if (!service || availableServices.length === 0) return 0;
+    return selectedServices.reduce((total, svcId) => {
+      const svc = availableServices.find((s: any) => (s.Id || s.id) === svcId);
+      if (svc) {
+        const price = Number(svc.Price || svc.price || 0);
+        return total + price;
+      }
+      return total;
+    }, 0);
+  }, [selectedServices, availableServices, service]);
+
   if (loading) {
     return (
       <div className="sd-service-detail-page">
@@ -952,6 +1023,7 @@ const ServiceDetail = () => {
     );
   }
 
+  // Map tất cả các trường từ API response (hỗ trợ cả PascalCase và camelCase)
   const serviceName = service.Name || service.name || 'Dịch vụ';
   const serviceImages = parseServiceImages(service.Image || service.image, baNaHillImage);
   const servicePrice = service.Price || service.price || 0;
@@ -959,8 +1031,12 @@ const ServiceDetail = () => {
   const serviceDescription = service.Description || service.description || '';
   const availableSlots = service.AvailableSlots !== undefined ? service.AvailableSlots : (service.availableSlots !== undefined ? service.availableSlots : 0);
   const status = service.Status || service.status || 'open';
+  const cancellationPolicy = service.CancellationPolicy || service.cancellationPolicy || null;
   const statusBadge = getStatusBadge(status);
   const rating = averageRating > 0 ? averageRating : 4.5; // Fallback rating
+
+  // Tính tổng tiền (đã được tính trong useMemo ở trên)
+  const totalPrice = servicePrice + selectedServicesTotal;
 
   return (
     <div className="sd-service-detail-page">
@@ -1114,40 +1190,123 @@ const ServiceDetail = () => {
                 <Card className="sd-policy-card-detail">
                   <CardContent>
                     <h2 className="sd-section-title">Chính sách hủy</h2>
-                    <div className="sd-policy-detail-list">
-                      <div className="sd-policy-detail-item policy-item-48h-before">
-                        <svg className="sd-policy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"/>
-                          <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span className="sd-policy-detail-text">Hủy trước 48h được hoàn 90%</span>
+                    {cancellationPolicy ? (
+                      // Hiển thị CancellationPolicy từ API nếu có
+                      <div className="sd-policy-detail-list">
+                        <div className="sd-policy-detail-item">
+                          <svg className="sd-policy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          <span className="sd-policy-detail-text">{cancellationPolicy}</span>
+                        </div>
                       </div>
-                      <div className="sd-policy-detail-item policy-item-48h-within">
-                        <svg className="sd-policy-icon sd-warning" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                          <path d="M12 9v4"/>
-                          <path d="M12 17h.01"/>
-                        </svg>
-                        <span className="sd-policy-detail-text">Hủy trong vòng 48h hoàn 50%</span>
+                    ) : (
+                      // Fallback: Hiển thị policy mặc định nếu API không có
+                      <div className="sd-policy-detail-list">
+                        <div className="sd-policy-detail-item policy-item-48h-before">
+                          <svg className="sd-policy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          <span className="sd-policy-detail-text">Hủy trước 48h được hoàn 90%</span>
+                        </div>
+                        <div className="sd-policy-detail-item policy-item-48h-within">
+                          <svg className="sd-policy-icon sd-warning" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                            <path d="M12 9v4"/>
+                            <path d="M12 17h.01"/>
+                          </svg>
+                          <span className="sd-policy-detail-text">Hủy trong vòng 48h hoàn 50%</span>
+                        </div>
+                        <div className="sd-policy-detail-item policy-item-24h-within">
+                          <svg className="sd-policy-icon sd-danger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                          </svg>
+                          <span className="sd-policy-detail-text">Hủy trong vòng 24h không hoàn tiền</span>
+                        </div>
                       </div>
-                      <div className="sd-policy-detail-item policy-item-24h-within">
-                        <svg className="sd-policy-icon sd-danger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="15" y1="9" x2="9" y2="15"/>
-                          <line x1="9" y1="9" x2="15" y2="15"/>
-                        </svg>
-                        <span className="sd-policy-detail-text">Hủy trong vòng 24h không hoàn tiền</span>
+                    )}
+                    {!cancellationPolicy && (
+                      <div className="sd-policy-note">
+                        <span className="sd-policy-note-text">* Thời gian tính từ lúc check-in</span>
                       </div>
-                    </div>
-                    <div className="sd-policy-note">
-                      <span className="sd-policy-note-text">* Thời gian tính từ lúc check-in</span>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
 
+              {/* Additional Services Section - Chỉ hiển thị khi có dịch vụ thêm */}
+              {(!loadingServices && availableServices.length > 0) || loadingServices ? (
+                <Card className="sd-additional-services-card">
+                  <CardContent>
+                    <h2 className="sd-section-title">Dịch vụ thêm (tùy chọn)</h2>
+                    {loadingServices ? (
+                      <div style={{ padding: '1rem', textAlign: 'center' }}>
+                        <LoadingSpinner message="Đang tải dịch vụ thêm..." />
+                      </div>
+                    ) : availableServices.length > 0 ? (
+                      <div className="sd-additional-services-list">
+                        {availableServices.map((svc: any) => {
+                          const svcId = svc.Id || svc.id;
+                          const svcName = svc.Name || svc.name || 'Dịch vụ';
+                          const svcPrice = Number(svc.Price || svc.price || 0);
+                          const isSelected = selectedServices.includes(svcId);
+                          
+                          return (
+                            <label
+                              key={svcId}
+                              className="sd-additional-service-item"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '0.75rem',
+                                marginBottom: '0.5rem',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                backgroundColor: isSelected ? '#f0fdf4' : 'white',
+                                borderColor: isSelected ? '#10b981' : '#e5e7eb'
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedServices([...selectedServices, svcId]);
+                                  } else {
+                                    setSelectedServices(selectedServices.filter(id => id !== svcId));
+                                  }
+                                }}
+                                style={{
+                                  marginRight: '0.75rem',
+                                  width: '18px',
+                                  height: '18px',
+                                  cursor: 'pointer'
+                                }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{svcName}</div>
+                                <div style={{ color: '#10b981', fontWeight: 600 }}>
+                                  {formatPrice(svcPrice)} / người
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ) : null}
+
               {/* Reviews Section */}
-              <Card className="sd-reviews-card" ref={reviewSectionRef}>
+              <div ref={reviewSectionRef}>
+              <Card className="sd-reviews-card">
                 <CardContent>
                   <div className="sd-reviews-header">
                     <div className="sd-reviews-header-left">
@@ -1542,6 +1701,7 @@ const ServiceDetail = () => {
                   )}
                 </CardContent>
               </Card>
+              </div>
 
               {/* Similar Services Section */}
               {similarServices.length > 0 && (
@@ -1611,6 +1771,85 @@ const ServiceDetail = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Selected Additional Services */}
+                  {selectedServices.length > 0 && (
+                    <div className="sd-booking-selected-services" style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '1px solid #e5e7eb'
+                    }}>
+                      <div style={{ 
+                        fontSize: '0.875rem', 
+                        fontWeight: 600, 
+                        marginBottom: '0.5rem',
+                        color: '#374151'
+                      }}>
+                        Dịch vụ thêm đã chọn:
+                      </div>
+                      {selectedServices.map((svcId) => {
+                        const svc = availableServices.find((s: any) => (s.Id || s.id) === svcId);
+                        if (!svc) return null;
+                        const svcName = svc.Name || svc.name || 'Dịch vụ';
+                        const svcPrice = Number(svc.Price || svc.price || 0);
+                        return (
+                          <div 
+                            key={svcId}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '0.5rem 0',
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            <span style={{ color: '#6b7280' }}>{svcName}</span>
+                            <span style={{ fontWeight: 600, color: '#10b981' }}>
+                              {formatPrice(svcPrice)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {selectedServicesTotal > 0 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginTop: '0.5rem',
+                          paddingTop: '0.5rem',
+                          borderTop: '1px solid #e5e7eb',
+                          fontSize: '0.875rem',
+                          fontWeight: 600
+                        }}>
+                          <span>Tổng dịch vụ thêm:</span>
+                          <span style={{ color: '#10b981' }}>
+                            {formatPrice(selectedServicesTotal)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Total Price */}
+                  {selectedServices.length > 0 && (
+                    <div className="sd-booking-total-price" style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '2px solid #10b981'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '1.125rem',
+                        fontWeight: 700,
+                        color: '#10b981'
+                      }}>
+                        <span>Tổng cộng:</span>
+                        <span>{formatPrice(totalPrice)}</span>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="sd-booking-section">
                     <Button 
@@ -1656,11 +1895,19 @@ const ServiceDetail = () => {
                           return;
                         }
                         
-                        // Đã đăng nhập - chuyển đến trang booking
+                        // Đã đăng nhập - chuyển đến trang booking với selected services
                         if (import.meta.env.DEV) {
                           console.log('  - Navigating to booking page:', `/booking/${id}`)
+                          console.log('  - Selected services:', selectedServices)
                         }
-                        navigate(`/booking/${id}`);
+                        navigate(`/booking/${id}`, {
+                          state: {
+                            selectedServices: selectedServices.map(svcId => {
+                              const svc = availableServices.find((s: any) => (s.Id || s.id) === svcId);
+                              return svc || null;
+                            }).filter(svc => svc !== null)
+                          }
+                        });
                       }}
                     >
                       {isServiceAvailable(status, availableSlots)

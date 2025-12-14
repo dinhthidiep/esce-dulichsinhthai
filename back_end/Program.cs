@@ -54,12 +54,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// === Controllers + JSON FIX CYCLE ===
+// === Controllers + JSON FIX CYCLE + UTF-8 ===
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = null;
     options.JsonSerializerOptions.ReferenceHandler =
         System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    // Hỗ trợ tiếng Việt UTF-8
+    options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
 });
 
 builder.Services.AddSignalR();
@@ -256,6 +258,16 @@ app.UseRouting();
 
 // CORS phải đứng trước Authentication
 app.UseCors("AllowAll");
+
+// Fix Cross-Origin-Opener-Policy cho Google OAuth
+app.Use(async (context, next) =>
+{
+    // Cho phép Google OAuth popup hoạt động
+    context.Response.Headers.Remove("Cross-Origin-Opener-Policy");
+    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    context.Response.Headers.Remove("Cross-Origin-Embedder-Policy");
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

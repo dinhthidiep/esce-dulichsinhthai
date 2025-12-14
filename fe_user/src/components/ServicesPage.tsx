@@ -51,9 +51,9 @@ const ServicesPage = () => {
   const [favorites, setFavorites] = useState<Set<number>>(new Set())
   const [ratings, setRatings] = useState<Record<number, number>>({}) // Map serviceId -> rating
   const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const [showServices, setShowServices] = useState(true) // true = Service, false = ServiceCombo
+  const [showServices] = useState(false) // Luôn hiển thị ServiceCombo, không hiển thị Service đơn lẻ
   const { tours, loading: toursLoading, error: toursError } = useTours()
-  const { services, loading: servicesLoading, error: servicesError } = useServices('Approved')
+  // Không cần load services nữa vì chỉ hiển thị ServiceCombo
 
   useEffect(() => {
     setIsVisible(true)
@@ -76,37 +76,38 @@ const ServicesPage = () => {
     }
   }, [])
 
-  // Fetch ratings for all services
+  // Fetch ratings cho ServiceCombo
   useEffect(() => {
     const fetchRatings = async () => {
-      if (!tours || tours.length === 0) return
+      // Fetch ratings cho ServiceCombo (tours)
+      if (tours && tours.length > 0) {
+        const tourRatingPromises = tours.map(async (tour) => {
+          const id = tour.Id
+          if (!id) return null
 
-      const ratingPromises = tours.map(async (tour) => {
-        const id = tour.Id
-        if (!id) return null
-
-        try {
-          const response = await axiosInstance.get<{ AverageRating?: number }>(
-            `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
-          )
-          const rating = response.data.AverageRating || 0
-          return { id, rating: parseFloat(String(rating)) || 0 }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.warn(`Không thể lấy rating cho service ${id}:`, error)
+          try {
+            const response = await axiosInstance.get<{ AverageRating?: number }>(
+              `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
+            )
+            const rating = response.data.AverageRating || 0
+            return { id, rating: parseFloat(String(rating)) || 0 }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.warn(`Không thể lấy rating cho ServiceCombo ${id}:`, error)
+            }
+            return { id, rating: 0 }
           }
-          return { id, rating: 0 }
-        }
-      })
+        })
 
-      const ratingResults = await Promise.all(ratingPromises)
-      const ratingsMap: Record<number, number> = {}
-      ratingResults.forEach((result) => {
-        if (result) {
-          ratingsMap[result.id] = result.rating
-        }
-      })
-      setRatings(ratingsMap)
+        const tourRatingResults = await Promise.all(tourRatingPromises)
+        const ratingsMap: Record<number, number> = {}
+        tourRatingResults.forEach((result) => {
+          if (result) {
+            ratingsMap[result.id] = result.rating
+          }
+        })
+        setRatings((prev) => ({ ...prev, ...ratingsMap }))
+      }
     }
 
     fetchRatings()
@@ -114,108 +115,68 @@ const ServicesPage = () => {
 
 
   // Transform API data to display format
-  // Hỗ trợ cả Service (dịch vụ đơn lẻ) và ServiceCombo (tour combo)
+  // Chỉ hiển thị ServiceCombo (dịch vụ đơn lẻ sẽ hiển thị trong trang đặt dịch vụ)
   const allServices = useMemo(() => {
-    if (showServices) {
-      // Hiển thị Service (dịch vụ đơn lẻ)
-      console.log('🔄 [ServicesPage] Processing services data:')
-      console.log('  - services:', services)
-      console.log('  - services length:', services?.length || 0)
-      console.log('  - servicesLoading:', servicesLoading)
-      console.log('  - servicesError:', servicesError)
-      
-      if (!services || services.length === 0) {
-        console.warn('⚠️ [ServicesPage] Không có services từ API hoặc mảng rỗng')
-        return []
-      }
-
-      console.log(`✅ [ServicesPage] Nhận được ${services.length} service(s) từ API`)
-      
-      // Map ServiceResponse sang ServiceItem
-      const mappedServices: ServiceItem[] = services
-        .filter((service: ServiceResponse) => {
-          // Chỉ hiển thị services đã được approved
-          const status = (service.Status || '').toLowerCase().trim()
-          return status === 'approved'
-        })
-        .map((service: ServiceResponse) => {
-          const id = service.Id
-          const name = service.Name || 'Dịch vụ chưa có tên'
-          
-          // Xử lý Images - có thể là string hoặc null
-          let imagePath = service.Images || ''
-          if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
-            imagePath = imagePath.split(',')[0].trim()
-          }
-          const image = getImageUrl(imagePath, baNaHillImage)
-          
-          const address = 'Đà Nẵng' // Service không có Address, dùng mặc định
-          const price = Number(service.Price) || 0
-          const availableSlots = 0 // Service không có AvailableSlots
-          const status = service.Status || 'Approved'
-          const description = service.Description || ''
-
-          // Lấy rating từ state, mặc định là 0 nếu chưa có
-          const serviceRating = id !== null && ratings[id] !== undefined ? ratings[id] : 0
-
-          const mappedService: ServiceItem = {
-            id: id,
-            name: name,
-            slug: createSlug(name) || `service-${id}`,
-            image: image,
-            rating: serviceRating,
-            price: price,
-            address: address,
-            availableSlots: availableSlots,
-            status: status,
-            description: description,
-          }
-
-          return mappedService
-        })
-
-      console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} service(s)`)
-      return mappedServices
-    } else {
-      // Hiển thị ServiceCombo (tour combo) - code cũ
-    console.log('🔄 [ServicesPage] Processing tours data:')
+    // Hiển thị ServiceCombo (tour combo)
+    console.log('🔄 [ServicesPage] Processing ServiceCombo data:')
     console.log('  - tours:', tours)
     console.log('  - tours length:', tours?.length || 0)
     console.log('  - toursLoading:', toursLoading)
     console.log('  - toursError:', toursError)
     
     if (!tours || tours.length === 0) {
-      console.warn('⚠️ [ServicesPage] Không có tours từ API hoặc mảng rỗng')
+      console.warn('⚠️ [ServicesPage] Không có ServiceCombo từ API hoặc mảng rỗng')
       return []
     }
 
-    console.log(`✅ [ServicesPage] Nhận được ${tours.length} tour(s) từ API`)
+    console.log(`✅ [ServicesPage] Nhận được ${tours.length} ServiceCombo(s) từ API`)
 
-    // Backend trả về PascalCase (Id, Name, Status, etc.) vì PropertyNamingPolicy = null
-    // Filter các service có status = 'open' (theo database schema default)
-    const mappedServices: ServiceItem[] = tours
-      .filter((tour: ServiceComboResponse) => {
-        const status = (tour.Status || 'open').toLowerCase().trim()
-        const isOpen = status === 'open'
-        return isOpen
-      })
+      // Backend trả về PascalCase (Id, Name, Status, etc.) vì PropertyNamingPolicy = null
+      // Chỉ hiển thị các ServiceCombo đã được admin duyệt (status = "approved")
+      const mappedServices: ServiceItem[] = tours
+        .filter((tour: ServiceComboResponse) => {
+          const status = (tour.Status || '').toLowerCase().trim()
+          // Chỉ hiển thị các combo đã được duyệt
+          return status === 'approved'
+        })
       .map((tour: ServiceComboResponse) => {
+        // Map tất cả các trường từ API response (PascalCase từ backend)
         const id = tour.Id
-        const name = tour.Name || 'Tour chưa có tên'
+        const name = tour.Name || 'Combo dịch vụ chưa có tên'
         
+        // Xử lý Image - có thể là string, null, hoặc nhiều ảnh phân cách bởi dấu phẩy
+        // Nếu Image = null hoặc rỗng, sẽ dùng fallback image
         let imagePath = tour.Image || ''
         if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
+          // Lấy ảnh đầu tiên nếu có nhiều ảnh
           imagePath = imagePath.split(',')[0].trim()
         }
+        // getImageUrl sẽ xử lý trường hợp imagePath rỗng/null và trả về fallback
         const image = getImageUrl(imagePath, baNaHillImage)
         
+        // Map các trường khác từ API
         const address = tour.Address || 'Đà Nẵng'
         const price = Number(tour.Price) || 0
-        const availableSlots = tour.AvailableSlots || 0
+        const availableSlots = tour.AvailableSlots !== undefined ? tour.AvailableSlots : 0
         const status = tour.Status || 'open'
         const description = tour.Description || ''
 
+        // Lấy rating từ state (đã fetch từ API Review), mặc định là 0 nếu chưa có
         const serviceRating = id !== null && ratings[id] !== undefined ? ratings[id] : 0
+
+        // Log để debug (chỉ trong dev mode)
+        if (import.meta.env.DEV) {
+          console.log(`📦 [ServicesPage] Mapping ServiceCombo ${id}:`, {
+            name,
+            address,
+            price,
+            availableSlots,
+            status,
+            imagePath: tour.Image,
+            hasImage: !!tour.Image,
+            finalImage: image,
+          })
+        }
 
         const mappedService: ServiceItem = {
           id: id,
@@ -233,10 +194,9 @@ const ServicesPage = () => {
         return mappedService
       })
 
-    console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} service(s) từ ${tours.length} tour(s)`)
-      return mappedServices
-    }
-  }, [showServices, services, tours, ratings, servicesLoading, servicesError, toursLoading, toursError])
+    console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} ServiceCombo(s) từ ${tours.length} tour(s)`)
+    return mappedServices
+  }, [tours, ratings, toursLoading, toursError])
 
   // Filter and sort services
   const filteredAndSortedServices = useMemo(() => {
@@ -490,44 +450,13 @@ const ServicesPage = () => {
                 </div>
               </div>
 
-              {/* Toggle between Service and ServiceCombo */}
-              <div className="service-type-toggle" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-                <button
-                  className={`toggle-btn ${showServices ? 'svc-active' : ''}`}
-                  onClick={() => setShowServices(true)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    background: showServices ? '#059669' : 'white',
-                    color: showServices ? 'white' : '#374151',
-                    cursor: 'pointer',
-                    fontWeight: showServices ? '600' : '400',
-                  }}
-                >
-                  Dịch vụ đơn lẻ
-                </button>
-                <button
-                  className={`toggle-btn ${!showServices ? 'svc-active' : ''}`}
-                  onClick={() => setShowServices(false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    background: !showServices ? '#059669' : 'white',
-                    color: !showServices ? 'white' : '#374151',
-                    cursor: 'pointer',
-                    fontWeight: !showServices ? '600' : '400',
-                  }}
-                >
-                  Tour Combo
-                </button>
-              </div>
+              {/* Chỉ hiển thị ServiceCombo - không hiển thị Service đơn lẻ */}
+              {/* Service đơn lẻ sẽ được hiển thị trong trang đặt dịch vụ (BookingPage) */}
 
               {/* Tour Cards */}
-              {(showServices ? servicesLoading : toursLoading) ? (
+              {toursLoading ? (
                 <LoadingSpinner message="Đang tải danh sách dịch vụ..." />
-              ) : (showServices ? servicesError : toursError) ? (
+              ) : toursError ? (
                 <div className="svc-error-container" role="alert" style={{ 
                   padding: '2rem', 
                   textAlign: 'center',
@@ -538,7 +467,7 @@ const ServicesPage = () => {
                 }}>
                   <h3 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>❌ Lỗi tải dữ liệu</h3>
                   <p className="svc-error-message" style={{ color: '#991b1b', whiteSpace: 'pre-line' }}>
-                    {showServices ? servicesError : toursError}
+                    {toursError}
                   </p>
                   <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
                     <p>🔍 Kiểm tra:</p>
@@ -659,8 +588,12 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
             <div className="svc-tour-location-duration">
               <MapPinIcon className="svc-location-icon" />
               <span>{tour.address}</span>
-              <ClockIcon className="svc-clock-icon" />
-              <span>1 ngày</span>
+              {tour.availableSlots > 0 && (
+                <>
+                  <ClockIcon className="svc-clock-icon" />
+                  <span>Còn {tour.availableSlots} chỗ</span>
+                </>
+              )}
             </div>
 
             <div className="svc-tour-rating">

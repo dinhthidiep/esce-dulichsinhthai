@@ -387,24 +387,24 @@ namespace ESCE_SYSTEM.Services.UserService
             await _dbContext.SaveChangesAsync();
 
             await SendUserEmailAsync(account, "BanAccount.html",
-              "NOTIFICATION: Your account has been BANNED", reason);
+              "THÔNG BÁO: Tài khoản của bạn đã bị khóa", reason);
 
             await SendWebNotificationAsync(account, "Ban", "Account",
-              accountId, $"Your account has been banned. Reason: {reason}");
+              accountId, $"Tài khoản của bạn đã bị khóa. Lý do: {reason}");
         }
 
         public async Task UnbanAccount(string accountId)
         {
             if (!int.TryParse(accountId, out int id))
             {
-                throw new ArgumentException($"Invalid account ID: {accountId}");
+                throw new ArgumentException($"ID tài khoản không hợp lệ: {accountId}");
             }
 
             var account = await GetAccountByIdAsync(id);
 
             if (account.IsActive == true && !account.IS_BANNED)
             {
-                throw new InvalidOperationException("Account is not banned");
+                throw new InvalidOperationException("Tài khoản không bị khóa");
             }
 
             account.IsActive = true;
@@ -414,10 +414,10 @@ namespace ESCE_SYSTEM.Services.UserService
             await _dbContext.SaveChangesAsync();
 
             await SendUserEmailAsync(account, "UnbanAccount.html",
-              "NOTIFICATION: Your account has been RESTORED");
+              "THÔNG BÁO: Tài khoản của bạn đã được khôi phục");
 
             await SendWebNotificationAsync(account, "Unban", "Account",
-              accountId, "Your account has been unbanned");
+              accountId, "Tài khoản của bạn đã được mở khóa");
         }
 
         // KHÔI PHỤC: Phương thức GetAccountByIdAsync trả về Entity Model
@@ -727,7 +727,7 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             await SendWebNotificationAsync(user, "Pending", "Agency Certificate", agencyCertificate.AgencyId.ToString(),
-              $"User {user.Name} has submitted an upgrade request to Agency.");
+              $"Người dùng {user.Name} đã gửi yêu cầu nâng cấp lên Agency.");
         }
 
         public async Task RequestUpgradeToHostAsync(int userId, RequestHostUpgradeDto requestDto)
@@ -799,7 +799,7 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             await SendWebNotificationAsync(user, "Pending", "Host Certificate", hostCertificate.CertificateId.ToString(),
-              $"User {user.Name} has submitted an upgrade request to Host.");
+              $"Người dùng {user.Name} đã gửi yêu cầu nâng cấp lên Host.");
         }
 
         /// <summary>
@@ -894,12 +894,20 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "ApproveCertificate.html",
-              "NOTIFICATION: Role upgrade request has been APPROVED");
+              "THÔNG BÁO: Yêu cầu nâng cấp vai trò đã được duyệt");
 
             await SendWebNotificationAsync(user, "Approved", objectType,
               dto.CertificateId.ToString(),
-              $"Your {objectType} upgrade request has been approved successfully.");
+              $"Yêu cầu {objectTypeVi} của bạn đã được duyệt thành công.");
         }
 
         public async Task RejectUpgradeCertificateAsync(RejectCertificateDto dto)
@@ -912,12 +920,20 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "RejectCertificate.html",
-              "NOTIFICATION: Role upgrade request has been REJECTED", dto.Comment);
+              "THÔNG BÁO: Yêu cầu nâng cấp vai trò đã bị từ chối", dto.Comment);
 
             await SendWebNotificationAsync(user, "Rejected", objectType,
               dto.CertificateId.ToString(),
-              $"Your {objectType} upgrade request has been rejected. Reason: {dto.Comment}");
+              $"Yêu cầu {objectTypeVi} của bạn đã bị từ chối. Lý do: {dto.Comment}");
         }
 
         public async Task ReviewUpgradeCertificateAsync(ReviewCertificateDto dto)
@@ -944,12 +960,20 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "AddCertificateReviewComment.html",
-              "NOTIFICATION: Additional information required for Role upgrade", dto.Comment);
+              "THÔNG BÁO: Yêu cầu bổ sung thông tin cho nâng cấp vai trò", dto.Comment);
 
             await SendWebNotificationAsync(user, "Review", objectType,
               dto.CertificateId.ToString(),
-              $"Your {objectType} upgrade request requires additional information. Content: {dto.Comment}");
+              $"Yêu cầu {objectTypeVi} của bạn cần bổ sung thông tin. Nội dung: {dto.Comment}");
         }
 
         private async Task<(dynamic Certificate, Account User, int SuccessRoleId, string ObjectType)>
@@ -1199,12 +1223,31 @@ namespace ESCE_SYSTEM.Services.UserService
         {
             try
             {
+                // Chuyển status sang tiếng Việt
+                var statusVi = status switch
+                {
+                    "approved" => "đã được duyệt",
+                    "rejected" => "đã bị từ chối",
+                    "pending" => "đang chờ duyệt",
+                    "review" => "cần xem xét lại",
+                    _ => status
+                };
+
+                // Chuyển objectType sang tiếng Việt
+                var objectTypeVi = objectType switch
+                {
+                    "Certificate" => "Chứng chỉ",
+                    "HostCertificate" => "Yêu cầu nâng cấp Host",
+                    "AgencyCertificate" => "Yêu cầu nâng cấp Agency",
+                    _ => objectType
+                };
+
                 // Create notification for the user
                 var userNotification = new Notification
                 {
                     UserId = user.Id,
                     Message = content,
-                    Title = $"Status update: {status}",
+                    Title = $"Cập nhật trạng thái: {statusVi}",
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -1216,7 +1259,7 @@ namespace ESCE_SYSTEM.Services.UserService
                 // Notify admins for certificate-related actions
                 if (objectType.Contains("Certificate"))
                 {
-                    var adminContent = $"{objectType} request from {user.Name} has been updated to {status}.";
+                    var adminContent = $"{objectTypeVi} từ {user.Name} đã được cập nhật thành: {statusVi}.";
                     var admins = await _dbContext.Accounts
                     .Where(admin => admin.RoleId == 1) // Role 1 = Admin
                                                       .ToListAsync();
@@ -1227,7 +1270,7 @@ namespace ESCE_SYSTEM.Services.UserService
                         {
                             UserId = admin.Id,
                             Message = adminContent,
-                            Title = $"System update: {status}",
+                            Title = $"Cập nhật hệ thống: {statusVi}",
                             IsRead = false,
                             CreatedAt = DateTime.UtcNow
                         });

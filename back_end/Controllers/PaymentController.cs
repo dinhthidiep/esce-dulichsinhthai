@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System;
+using System.Text.Json;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -211,61 +212,56 @@ namespace ESCE_SYSTEM.Controllers
 
                 Console.WriteLine($"[HandleReturn] Processing payment - orderCode: {orderCode}, isPaid: {isPaid}");
 
-                // Extract id từ orderCode
-                // orderCode = id * 1_000_000L + (timestamp % 1_000_000)
-                int extractedId = (int)(orderCode.Value / 1_000_000L);
-
-                // Tìm payment theo orderCode - phân biệt upgrade vs booking giống như webhook
-                Payment? payment = null;
+                // Tìm payment trực tiếp bằng OrderCode (chính xác nhất)
+                Payment? payment = await _db.Payments
+                    .FirstOrDefaultAsync(p => p.OrderCode == orderCode.Value);
                 
-                // Logic phân biệt Upgrade vs Booking dựa trên quy ước orderCode
-                // Tìm payment mới nhất được tạo trong vòng 1 giờ gần đây (để đảm bảo tìm đúng payment vừa tạo)
-                var recentTime = DateTime.UtcNow.AddHours(-1);
-                
-                if ((orderCode.Value % 1_000_000) >= 500_000)
+                if (payment == null)
                 {
-                    // Upgrade payment logic
-                    int userId = (int)(orderCode.Value / 1_000_000);
+                    // Fallback: Nếu không tìm thấy bằng OrderCode, thử tìm bằng cách extract id (cho các payment cũ chưa có OrderCode)
+                    Console.WriteLine($"[HandleReturn] ⚠️ Payment not found by OrderCode {orderCode}, trying fallback method...");
                     
-                    // Tìm payment mới nhất được tạo gần đây (không cần check status)
-                    var allPayments = await _db.Payments
-                        .Where(p => p.UserId == userId 
-                            && p.BookingId == null
-                            && p.UpdatedAt.HasValue 
-                            && p.UpdatedAt.Value >= recentTime)
-                        .OrderByDescending(p => p.Id)  // Payment mới nhất (ID lớn nhất)
-                        .ToListAsync();
+                    // Extract id từ orderCode
+                    int extractedId = (int)(orderCode.Value / 1_000_000L);
+                    var recentTime = DateTime.UtcNow.AddHours(-1);
                     
-                    Console.WriteLine($"[HandleReturn] Looking for upgrade payment with userId: {userId}, found {allPayments.Count} recent payments");
-                    foreach (var p in allPayments)
+                    // Logic phân biệt Upgrade vs Booking dựa trên quy ước orderCode
+                    if ((orderCode.Value % 1_000_000) >= 500_000)
                     {
-                        Console.WriteLine($"[HandleReturn] Payment ID: {p.Id}, Status: {p.Status}, PaymentType: {p.PaymentType}, UpdatedAt: {p.UpdatedAt}");
+                        // Upgrade payment logic
+                        int userId = extractedId;
+                        payment = await _db.Payments
+                            .Where(p => p.UserId == userId 
+                                && p.BookingId == null
+                                && p.UpdatedAt.HasValue 
+                                && p.UpdatedAt.Value >= recentTime)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
+                    }
+                    else
+                    {
+                        // Booking payment logic
+                        int bookingIdForSearch = extractedId;
+                        payment = await _db.Payments
+                            .Where(p => p.BookingId == bookingIdForSearch
+                                && p.UpdatedAt.HasValue 
+                                && p.UpdatedAt.Value >= recentTime)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
                     }
                     
-                    // Lấy payment mới nhất (ID lớn nhất = payment vừa tạo)
-                    payment = allPayments.FirstOrDefault();
+                    // Nếu tìm thấy payment bằng fallback, cập nhật OrderCode cho payment đó
+                    if (payment != null && payment.OrderCode == null)
+                    {
+                        Console.WriteLine($"[HandleReturn] ⚠️ Payment found by fallback but missing OrderCode, updating OrderCode to {orderCode}");
+                        payment.OrderCode = orderCode.Value;
+                        await _db.SaveChangesAsync();
+                        Console.WriteLine($"[HandleReturn] ✅ Updated OrderCode for payment {payment.Id}");
+                    }
                 }
                 else
                 {
-                    // Booking payment logic
-                    int bookingIdForSearch = (int)(orderCode.Value / 1_000_000);
-                    
-                    // Tìm payment mới nhất được tạo gần đây (không cần check status)
-                    var allPayments = await _db.Payments
-                        .Where(p => p.BookingId == bookingIdForSearch
-                            && p.UpdatedAt.HasValue 
-                            && p.UpdatedAt.Value >= recentTime)
-                        .OrderByDescending(p => p.Id)  // Payment mới nhất (ID lớn nhất)
-                        .ToListAsync();
-                    
-                    Console.WriteLine($"[HandleReturn] Looking for booking payment with bookingId: {bookingIdForSearch}, found {allPayments.Count} recent payments");
-                    foreach (var p in allPayments)
-                    {
-                        Console.WriteLine($"[HandleReturn] Payment ID: {p.Id}, Status: {p.Status}, BookingId: {p.BookingId}, UpdatedAt: {p.UpdatedAt}");
-                    }
-                    
-                    // Lấy payment mới nhất (ID lớn nhất = payment vừa tạo)
-                    payment = allPayments.FirstOrDefault();
+                    Console.WriteLine($"[HandleReturn] ✅ Found payment by OrderCode: ID={payment.Id}, Status={payment.Status}, BookingId={payment.BookingId}, UserId={payment.UserId}");
                 }
 
                 // Kiểm tra nếu là upgrade payment (không có BookingId)
@@ -298,6 +294,13 @@ namespace ESCE_SYSTEM.Controllers
                         {
                             payment.TransactionId = id;
                             Console.WriteLine($"[HandleReturn] Saved transaction ID: {id}");
+                        }
+                        
+                        // Đảm bảo OrderCode được lưu (cho các payment cũ chưa có)
+                        if (payment.OrderCode == null)
+                        {
+                            payment.OrderCode = orderCode.Value;
+                            Console.WriteLine($"[HandleReturn] Updated OrderCode to {orderCode} for payment {payment.Id}");
                         }
 
                         // Cập nhật trạng thái Certificate thành "PaidPending" (đã thanh toán, chờ admin duyệt)
@@ -333,6 +336,9 @@ namespace ESCE_SYSTEM.Controllers
                                 await _db.SaveChangesAsync();
                                 Console.WriteLine($"[HandleReturn] ✅ Retried updating payment status");
                             }
+                            
+                            // QUAN TRỌNG: Verify từ PayOS để đảm bảo payment đã được cập nhật đúng
+                            await VerifyPaymentFromPayOS(payment, orderCode.Value);
                         }
                         catch (Exception saveEx)
                         {
@@ -340,7 +346,8 @@ namespace ESCE_SYSTEM.Controllers
                             Console.WriteLine($"[HandleReturn] StackTrace: {saveEx.StackTrace}");
                             // Vẫn redirect để user biết thanh toán thành công, nhưng log lỗi
                         }
-                        return Redirect($"{frontendUrl}/upgrade-payment-success?type={upgradeTypeLower}&userId={payment.UserId}");
+                        // Redirect kèm orderCode để frontend có thể tự động check payment
+                        return Redirect($"{frontendUrl}/upgrade-payment-success?type={upgradeTypeLower}&userId={payment.UserId}&orderCode={orderCode.Value}");
                     }
                     else
                     {
@@ -350,7 +357,18 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 // Đây là booking payment
-                int bookingId = extractedId;
+                // Lấy bookingId từ payment hoặc extract từ orderCode
+                int bookingId;
+                if (payment.BookingId.HasValue)
+                {
+                    bookingId = payment.BookingId.Value;
+                }
+                else
+                {
+                    // Fallback: extract từ orderCode nếu payment không có BookingId
+                    bookingId = (int)(orderCode.Value / 1_000_000L);
+                }
+                
                 var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
                 if (booking == null)
                 {
@@ -385,6 +403,13 @@ namespace ESCE_SYSTEM.Controllers
                             bookingPayment.TransactionId = id;
                             Console.WriteLine($"[HandleReturn] Saved transaction ID: {id}");
                         }
+                        
+                        // Đảm bảo OrderCode được lưu (cho các payment cũ chưa có)
+                        if (bookingPayment.OrderCode == null || bookingPayment.OrderCode != orderCode.Value)
+                        {
+                            bookingPayment.OrderCode = orderCode.Value;
+                            Console.WriteLine($"[HandleReturn] Updated OrderCode to {orderCode} for payment {bookingPayment.Id}");
+                        }
                     }
                     else
                     {
@@ -406,16 +431,22 @@ namespace ESCE_SYSTEM.Controllers
                         Console.WriteLine($"[HandleReturn] ✅ Successfully saved {savedCount} changes for booking {bookingId}");
                         
                         // Verify payment was saved - đọc lại từ database để chắc chắn
-                        await _db.Entry(bookingPayment).ReloadAsync();
-                        Console.WriteLine($"[HandleReturn] ✅ Verified booking payment {bookingPayment.Id} status after save: {bookingPayment.Status}");
-                        
-                        if (bookingPayment.Status?.ToLower() != "success")
+                        if (bookingPayment != null)
                         {
-                            Console.WriteLine($"[HandleReturn] ⚠️ WARNING: Payment status was not updated correctly! Expected 'success', got '{bookingPayment.Status}'");
-                            // Thử cập nhật lại
-                            bookingPayment.Status = "success";
-                            await _db.SaveChangesAsync();
-                            Console.WriteLine($"[HandleReturn] ✅ Retried updating payment status");
+                            await _db.Entry(bookingPayment).ReloadAsync();
+                            Console.WriteLine($"[HandleReturn] ✅ Verified booking payment {bookingPayment.Id} status after save: {bookingPayment.Status}");
+                            
+                            if (bookingPayment.Status?.ToLower() != "success")
+                            {
+                                Console.WriteLine($"[HandleReturn] ⚠️ WARNING: Payment status was not updated correctly! Expected 'success', got '{bookingPayment.Status}'");
+                                // Thử cập nhật lại
+                                bookingPayment.Status = "success";
+                                await _db.SaveChangesAsync();
+                                Console.WriteLine($"[HandleReturn] ✅ Retried updating payment status");
+                            }
+                            
+                            // QUAN TRỌNG: Verify từ PayOS để đảm bảo payment đã được cập nhật đúng
+                            await VerifyPaymentFromPayOS(bookingPayment, orderCode.Value);
                         }
                     }
                     catch (Exception saveEx)
@@ -424,7 +455,8 @@ namespace ESCE_SYSTEM.Controllers
                         Console.WriteLine($"[HandleReturn] StackTrace: {saveEx.StackTrace}");
                     }
                     
-                    return Redirect($"{frontendUrl}/payment/success/{bookingId}");
+                    // Redirect kèm orderCode để frontend có thể tự động check payment
+                    return Redirect($"{frontendUrl}/payment/success/{bookingId}?orderCode={orderCode.Value}");
                 }
 
                 // Nếu payment đã success hoặc completed trước đó (tương thích ngược)
@@ -507,6 +539,285 @@ namespace ESCE_SYSTEM.Controllers
         }
 
 
+        // Method để verify payment từ PayOS và cập nhật nếu cần
+        private async Task VerifyPaymentFromPayOS(Payment payment, long orderCode)
+        {
+            try
+            {
+                Console.WriteLine($"[VerifyPayment] Verifying payment {payment.Id} with OrderCode {orderCode} from PayOS...");
+                
+                // Gọi PayOS API để kiểm tra trạng thái
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("x-client-id", _payOSOptions.ClientId);
+                httpClient.DefaultRequestHeaders.Add("x-api-key", _payOSOptions.ApiKey);
+                httpClient.BaseAddress = new Uri("https://api-merchant.payos.vn/");
+                
+                var payosResponse = await httpClient.GetAsync($"v2/payment-requests/{orderCode}");
+                
+                if (payosResponse.IsSuccessStatusCode)
+                {
+                    var payosContent = await payosResponse.Content.ReadAsStringAsync();
+                    var payosData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(payosContent);
+                    
+                    if (payosData.TryGetProperty("code", out var code) && code.GetString() == "00")
+                    {
+                        if (payosData.TryGetProperty("data", out var data))
+                        {
+                            var payosStatus = data.TryGetProperty("status", out var statusProp) 
+                                ? statusProp.GetString() 
+                                : null;
+                            
+                            Console.WriteLine($"[VerifyPayment] PayOS status: {payosStatus}, DB status: {payment.Status}");
+                            
+                            // Nếu PayOS báo đã thanh toán (PAID) nhưng DB vẫn pending, cập nhật
+                            if (payosStatus?.ToUpper() == "PAID" && payment.Status?.ToLower() == "pending")
+                            {
+                                Console.WriteLine($"[VerifyPayment] ✅ PayOS confirmed payment is PAID, updating database...");
+                                
+                                payment.Status = "success";
+                                payment.PaymentDate = DateTime.UtcNow;
+                                payment.UpdatedAt = DateTime.UtcNow;
+                                
+                                // Lấy transaction ID nếu có
+                                if (data.TryGetProperty("transactionId", out var transId))
+                                {
+                                    var transIdStr = transId.GetString();
+                                    if (!string.IsNullOrEmpty(transIdStr))
+                                    {
+                                        payment.TransactionId = transIdStr;
+                                    }
+                                }
+                                
+                                // Đảm bảo OrderCode được lưu
+                                if (payment.OrderCode == null)
+                                {
+                                    payment.OrderCode = orderCode;
+                                }
+                                
+                                // Cập nhật booking status nếu là booking payment
+                                if (payment.BookingId.HasValue)
+                                {
+                                    var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId.Value);
+                                    if (booking != null && booking.Status?.ToLower() != "confirmed" && booking.Status?.ToLower() != "paid")
+                                    {
+                                        booking.Status = "Confirmed";
+                                        booking.UpdatedAt = DateTime.UtcNow;
+                                        Console.WriteLine($"[VerifyPayment] Updated booking {booking.Id} status to Confirmed");
+                                    }
+                                }
+                                
+                                // Cập nhật certificate nếu là upgrade payment
+                                if (payment.BookingId == null && payment.PaymentType?.StartsWith("Upgrade") == true && payment.UserId.HasValue)
+                                {
+                                    var upgradeType = payment.PaymentType.Replace("Upgrade", "");
+                                    if (upgradeType == "Agency")
+                                    {
+                                        var certificate = await _db.AgencieCertificates
+                                            .Where(c => c.AccountId == payment.UserId.Value && c.Status == "Pending")
+                                            .OrderByDescending(c => c.CreatedAt)
+                                            .FirstOrDefaultAsync();
+                                        
+                                        if (certificate != null)
+                                        {
+                                            certificate.Status = "PaidPending";
+                                            certificate.UpdatedAt = DateTime.UtcNow;
+                                            Console.WriteLine($"[VerifyPayment] Updated certificate {certificate.AgencyId} status to PaidPending");
+                                        }
+                                    }
+                                }
+                                
+                                await _db.SaveChangesAsync();
+                                await _db.Entry(payment).ReloadAsync();
+                                
+                                Console.WriteLine($"[VerifyPayment] ✅ Successfully verified and updated payment {payment.Id} status to success");
+                            }
+                            else if (payosStatus?.ToUpper() == "PAID" && payment.Status?.ToLower() == "success")
+                            {
+                                Console.WriteLine($"[VerifyPayment] ✅ Payment status is already correct (success)");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[VerifyPayment] ⚠️ PayOS API returned status: {payosResponse.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VerifyPayment] ⚠️ Error verifying payment from PayOS: {ex.Message}");
+                // Không throw exception, chỉ log để không ảnh hưởng đến flow chính
+            }
+        }
+
+        // Endpoint để tự động check và update tất cả payments pending
+        [HttpPost("check-all-pending-payments")]
+        public async Task<IActionResult> CheckAllPendingPayments()
+        {
+            try
+            {
+                Console.WriteLine($"[CheckAllPending] Starting to check all pending payments...");
+                
+                // Lấy tất cả payments đang pending và có OrderCode
+                var pendingPayments = await _db.Payments
+                    .Where(p => p.Status != null && p.Status.ToLower() == "pending" && p.OrderCode != null)
+                    .OrderByDescending(p => p.UpdatedAt)
+                    .ToListAsync();
+                
+                Console.WriteLine($"[CheckAllPending] Found {pendingPayments.Count} pending payments with OrderCode");
+                
+                int updatedCount = 0;
+                int errorCount = 0;
+                var results = new List<object>();
+                
+                foreach (var payment in pendingPayments)
+                {
+                    if (payment.OrderCode == null) continue;
+                    
+                    try
+                    {
+                        Console.WriteLine($"[CheckAllPending] Checking payment ID={payment.Id}, OrderCode={payment.OrderCode}");
+                        
+                        // Gọi PayOS API để kiểm tra trạng thái
+                        using var httpClient = new HttpClient();
+                        httpClient.DefaultRequestHeaders.Add("x-client-id", _payOSOptions.ClientId);
+                        httpClient.DefaultRequestHeaders.Add("x-api-key", _payOSOptions.ApiKey);
+                        httpClient.BaseAddress = new Uri("https://api-merchant.payos.vn/");
+                        
+                        var payosResponse = await httpClient.GetAsync($"v2/payment-requests/{payment.OrderCode}");
+                        
+                        if (payosResponse.IsSuccessStatusCode)
+                        {
+                            var payosContent = await payosResponse.Content.ReadAsStringAsync();
+                            var payosData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(payosContent);
+                            
+                            if (payosData.TryGetProperty("code", out var code) && code.GetString() == "00")
+                            {
+                                if (payosData.TryGetProperty("data", out var data))
+                                {
+                                    var payosStatus = data.TryGetProperty("status", out var statusProp) 
+                                        ? statusProp.GetString() 
+                                        : null;
+                                    
+                                    // Nếu PayOS báo đã thanh toán (PAID) nhưng DB vẫn pending, cập nhật
+                                    if (payosStatus?.ToUpper() == "PAID" && payment.Status?.ToLower() == "pending")
+                                    {
+                                        Console.WriteLine($"[CheckAllPending] ✅ Payment ID={payment.Id} is PAID, updating...");
+                                        
+                                        payment.Status = "success";
+                                        payment.PaymentDate = DateTime.UtcNow;
+                                        payment.UpdatedAt = DateTime.UtcNow;
+                                        
+                                        // Lấy transaction ID nếu có
+                                        if (data.TryGetProperty("transactionId", out var transId))
+                                        {
+                                            var transIdStr = transId.GetString();
+                                            if (!string.IsNullOrEmpty(transIdStr))
+                                            {
+                                                payment.TransactionId = transIdStr;
+                                            }
+                                        }
+                                        
+                                        // Cập nhật booking status nếu là booking payment
+                                        if (payment.BookingId.HasValue)
+                                        {
+                                            var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId.Value);
+                                            if (booking != null && booking.Status?.ToLower() != "confirmed" && booking.Status?.ToLower() != "paid")
+                                            {
+                                                booking.Status = "Confirmed";
+                                                booking.UpdatedAt = DateTime.UtcNow;
+                                                Console.WriteLine($"[CheckAllPending] Updated booking {booking.Id} status to Confirmed");
+                                            }
+                                        }
+                                        
+                                        // Cập nhật certificate nếu là upgrade payment
+                                        if (payment.BookingId == null && payment.PaymentType?.StartsWith("Upgrade") == true && payment.UserId.HasValue)
+                                        {
+                                            var upgradeType = payment.PaymentType.Replace("Upgrade", "");
+                                            if (upgradeType == "Agency")
+                                            {
+                                                var certificate = await _db.AgencieCertificates
+                                                    .Where(c => c.AccountId == payment.UserId.Value && c.Status == "Pending")
+                                                    .OrderByDescending(c => c.CreatedAt)
+                                                    .FirstOrDefaultAsync();
+                                                
+                                                if (certificate != null)
+                                                {
+                                                    certificate.Status = "PaidPending";
+                                                    certificate.UpdatedAt = DateTime.UtcNow;
+                                                    Console.WriteLine($"[CheckAllPending] Updated certificate {certificate.AgencyId} status to PaidPending");
+                                                }
+                                            }
+                                        }
+                                        
+                                        await _db.SaveChangesAsync();
+                                        updatedCount++;
+                                        
+                                        results.Add(new
+                                        {
+                                            paymentId = payment.Id,
+                                            orderCode = payment.OrderCode,
+                                            status = "updated",
+                                            message = "Đã cập nhật thành công"
+                                        });
+                                    }
+                                    else
+                                    {
+                                        results.Add(new
+                                        {
+                                            paymentId = payment.Id,
+                                            orderCode = payment.OrderCode,
+                                            status = "still_pending",
+                                            payosStatus = payosStatus,
+                                            message = "Vẫn đang chờ thanh toán"
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[CheckAllPending] ⚠️ PayOS API returned status: {payosResponse.StatusCode} for payment {payment.Id}");
+                            errorCount++;
+                            results.Add(new
+                            {
+                                paymentId = payment.Id,
+                                orderCode = payment.OrderCode,
+                                status = "error",
+                                message = $"PayOS API error: {payosResponse.StatusCode}"
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[CheckAllPending] ❌ Error checking payment {payment.Id}: {ex.Message}");
+                        errorCount++;
+                        results.Add(new
+                        {
+                            paymentId = payment.Id,
+                            orderCode = payment.OrderCode,
+                            status = "error",
+                            message = ex.Message
+                        });
+                    }
+                }
+                
+                return Ok(new
+                {
+                    totalChecked = pendingPayments.Count,
+                    updated = updatedCount,
+                    errors = errorCount,
+                    results = results
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CheckAllPending] Error: {ex.Message}");
+                Console.WriteLine($"[CheckAllPending] StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Error checking pending payments", error = ex.Message });
+            }
+        }
+
         private async Task<Payment?> FindPaymentByOrderCode(long orderCode)
         {
             int id = (int)(orderCode / 1_000_000);
@@ -562,7 +873,7 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
-        // Endpoint để kiểm tra payment theo orderCode (dùng để test/debug)
+        // Endpoint để kiểm tra trạng thái payment theo orderCode
         [HttpGet("check-payment-by-ordercode")]
         public async Task<IActionResult> CheckPaymentByOrderCode([FromQuery] long orderCode)
         {
@@ -570,85 +881,208 @@ namespace ESCE_SYSTEM.Controllers
             {
                 Console.WriteLine($"[CheckPayment] Checking payment for orderCode: {orderCode}");
                 
-                Payment? payment = null;
+                // Tìm payment trực tiếp bằng OrderCode (chính xác nhất)
+                Payment? payment = await _db.Payments
+                    .FirstOrDefaultAsync(p => p.OrderCode == orderCode);
                 
-                // Logic phân biệt Upgrade vs Booking
-                if ((orderCode % 1_000_000) >= 500_000)
+                if (payment == null)
                 {
-                    int userId = (int)(orderCode / 1_000_000);
-                    var allPayments = await _db.Payments
-                        .Where(p => p.UserId == userId && p.BookingId == null)
-                        .OrderByDescending(p => p.Id)
-                        .ToListAsync();
+                    // Fallback: Nếu không tìm thấy bằng OrderCode, thử tìm bằng cách extract id (cho các payment cũ chưa có OrderCode)
+                    Console.WriteLine($"[CheckPayment] ⚠️ Payment not found by OrderCode {orderCode}, trying fallback method...");
                     
-                    payment = allPayments.FirstOrDefault();
+                    int extractedId = (int)(orderCode / 1_000_000);
                     
-                    return Ok(new
+                    if ((orderCode % 1_000_000) >= 500_000)
+                    {
+                        // Upgrade payment
+                        int userId = extractedId;
+                        payment = await _db.Payments
+                            .Where(p => p.UserId == userId && p.BookingId == null)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
+                    }
+                    else
+                    {
+                        // Booking payment
+                        int bookingId = extractedId;
+                        payment = await _db.Payments
+                            .Where(p => p.BookingId == bookingId)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
+                    }
+                }
+                
+                if (payment == null)
+                {
+                    return NotFound(new
                     {
                         orderCode = orderCode,
-                        type = "upgrade",
-                        userId = userId,
-                        foundPayments = allPayments.Count,
-                        payments = allPayments.Select(p => new
-                        {
-                            id = p.Id,
-                            status = p.Status,
-                            paymentType = p.PaymentType,
-                            userId = p.UserId,
-                            bookingId = p.BookingId,
-                            amount = p.Amount,
-                            updatedAt = p.UpdatedAt
-                        }).ToList(),
-                        selectedPayment = payment != null ? new
-                        {
-                            id = payment.Id,
-                            status = payment.Status,
-                            paymentType = payment.PaymentType,
-                            userId = payment.UserId,
-                            bookingId = payment.BookingId,
-                            amount = payment.Amount,
-                            updatedAt = payment.UpdatedAt
-                        } : null
+                        found = false,
+                        message = "Không tìm thấy payment với orderCode này"
                     });
                 }
-                else
+                
+                // Kiểm tra trạng thái từ PayOS nếu payment vẫn đang pending
+                bool wasUpdated = false;
+                if (payment.Status?.ToLower() == "pending")
                 {
-                    int bookingId = (int)(orderCode / 1_000_000);
-                    var allPayments = await _db.Payments
-                        .Where(p => p.BookingId == bookingId)
-                        .OrderByDescending(p => p.Id)
-                        .ToListAsync();
-                    
-                    payment = allPayments.FirstOrDefault();
-                    
-                    return Ok(new
+                    try
                     {
-                        orderCode = orderCode,
-                        type = "booking",
-                        bookingId = bookingId,
-                        foundPayments = allPayments.Count,
-                        payments = allPayments.Select(p => new
+                        Console.WriteLine($"[CheckPayment] Payment is pending, checking status from PayOS...");
+                        
+                        // Gọi PayOS API để kiểm tra trạng thái
+                        using var httpClient = new HttpClient();
+                        httpClient.DefaultRequestHeaders.Add("x-client-id", _payOSOptions.ClientId);
+                        httpClient.DefaultRequestHeaders.Add("x-api-key", _payOSOptions.ApiKey);
+                        httpClient.BaseAddress = new Uri("https://api-merchant.payos.vn/");
+                        
+                        var payosResponse = await httpClient.GetAsync($"v2/payment-requests/{orderCode}");
+                        
+                        if (payosResponse.IsSuccessStatusCode)
                         {
-                            id = p.Id,
-                            status = p.Status,
-                            paymentType = p.PaymentType,
-                            userId = p.UserId,
-                            bookingId = p.BookingId,
-                            amount = p.Amount,
-                            updatedAt = p.UpdatedAt
-                        }).ToList(),
-                        selectedPayment = payment != null ? new
+                            var payosContent = await payosResponse.Content.ReadAsStringAsync();
+                            var payosData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(payosContent);
+                            
+                            if (payosData.TryGetProperty("code", out var code) && code.GetString() == "00")
+                            {
+                                if (payosData.TryGetProperty("data", out var data))
+                                {
+                                    var payosStatus = data.TryGetProperty("status", out var statusProp) 
+                                        ? statusProp.GetString() 
+                                        : null;
+                                    
+                                    Console.WriteLine($"[CheckPayment] PayOS status: {payosStatus}");
+                                    
+                                    // Nếu PayOS báo đã thanh toán (PAID) nhưng DB vẫn pending, cập nhật
+                                    if (payosStatus?.ToUpper() == "PAID" && payment.Status?.ToLower() == "pending")
+                                    {
+                                        Console.WriteLine($"[CheckPayment] ✅ PayOS confirmed payment is PAID, updating database...");
+                                        
+                                        payment.Status = "success";
+                                        payment.PaymentDate = DateTime.UtcNow;
+                                        payment.UpdatedAt = DateTime.UtcNow;
+                                        
+                                        // Lấy transaction ID nếu có
+                                        if (data.TryGetProperty("transactionId", out var transId))
+                                        {
+                                            var transIdStr = transId.GetString();
+                                            if (!string.IsNullOrEmpty(transIdStr))
+                                            {
+                                                payment.TransactionId = transIdStr;
+                                            }
+                                        }
+                                        
+                                        // Cập nhật booking status nếu là booking payment
+                                        if (payment.BookingId.HasValue)
+                                        {
+                                            var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == payment.BookingId.Value);
+                                            if (booking != null && booking.Status?.ToLower() != "confirmed" && booking.Status?.ToLower() != "paid")
+                                            {
+                                                booking.Status = "Confirmed";
+                                                booking.UpdatedAt = DateTime.UtcNow;
+                                                Console.WriteLine($"[CheckPayment] Updated booking {booking.Id} status to Confirmed");
+                                            }
+                                        }
+                                        
+                                        // Cập nhật certificate nếu là upgrade payment
+                                        if (payment.BookingId == null && payment.PaymentType?.StartsWith("Upgrade") == true && payment.UserId.HasValue)
+                                        {
+                                            var upgradeType = payment.PaymentType.Replace("Upgrade", "");
+                                            if (upgradeType == "Agency")
+                                            {
+                                                var certificate = await _db.AgencieCertificates
+                                                    .Where(c => c.AccountId == payment.UserId.Value && c.Status == "Pending")
+                                                    .OrderByDescending(c => c.CreatedAt)
+                                                    .FirstOrDefaultAsync();
+                                                
+                                                if (certificate != null)
+                                                {
+                                                    certificate.Status = "PaidPending";
+                                                    certificate.UpdatedAt = DateTime.UtcNow;
+                                                    Console.WriteLine($"[CheckPayment] Updated certificate {certificate.AgencyId} status to PaidPending");
+                                                }
+                                            }
+                                        }
+                                        
+                                        await _db.SaveChangesAsync();
+                                        await _db.Entry(payment).ReloadAsync();
+                                        
+                                        wasUpdated = true;
+                                        Console.WriteLine($"[CheckPayment] ✅ Successfully updated payment {payment.Id} status to success");
+                                    }
+                                    else if (payosStatus?.ToUpper() == "CANCELED")
+                                    {
+                                        // Nếu PayOS báo đã hủy, cập nhật status
+                                        if (payment.Status?.ToLower() != "cancelled")
+                                        {
+                                            payment.Status = "cancelled";
+                                            payment.UpdatedAt = DateTime.UtcNow;
+                                            await _db.SaveChangesAsync();
+                                            await _db.Entry(payment).ReloadAsync();
+                                            wasUpdated = true;
+                                            Console.WriteLine($"[CheckPayment] Updated payment {payment.Id} status to cancelled");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
                         {
-                            id = payment.Id,
-                            status = payment.Status,
-                            paymentType = payment.PaymentType,
-                            userId = payment.UserId,
-                            bookingId = payment.BookingId,
-                            amount = payment.Amount,
-                            updatedAt = payment.UpdatedAt
-                        } : null
-                    });
+                            Console.WriteLine($"[CheckPayment] ⚠️ PayOS API returned status: {payosResponse.StatusCode}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[CheckPayment] ⚠️ Error checking PayOS status: {ex.Message}");
+                        // Không throw exception, tiếp tục với status hiện tại trong DB
+                    }
                 }
+                
+                // Xác định trạng thái thanh toán sau khi có thể đã cập nhật
+                bool isPaid = payment.Status?.ToLower() == "success";
+                bool isPending = payment.Status?.ToLower() == "pending";
+                bool isCancelled = payment.Status?.ToLower() == "cancelled";
+                
+                return Ok(new
+                {
+                    orderCode = orderCode,
+                    found = true,
+                    payment = new
+                    {
+                        id = payment.Id,
+                        orderCode = payment.OrderCode,
+                        status = payment.Status,
+                        isPaid = isPaid,
+                        isPending = isPending,
+                        isCancelled = isCancelled,
+                        paymentType = payment.PaymentType,
+                        userId = payment.UserId,
+                        bookingId = payment.BookingId,
+                        amount = payment.Amount,
+                        transactionId = payment.TransactionId,
+                        paymentDate = payment.PaymentDate,
+                        updatedAt = payment.UpdatedAt,
+                        method = payment.Method
+                    },
+                    paymentStatus = new
+                    {
+                        status = payment.Status,
+                        isPaid = isPaid,
+                        isPending = isPending,
+                        isCancelled = isCancelled,
+                        message = isPaid 
+                            ? "Đã thanh toán thành công" 
+                            : isPending 
+                            ? "Đang chờ thanh toán" 
+                            : isCancelled 
+                            ? "Đã hủy thanh toán" 
+                            : $"Trạng thái: {payment.Status}"
+                    },
+                    wasUpdated = wasUpdated,
+                    updateMessage = wasUpdated 
+                        ? "Đã tự động cập nhật trạng thái từ PayOS" 
+                        : null
+                });
             }
             catch (Exception ex)
             {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import Button from './ui/Button'
@@ -62,12 +62,136 @@ interface PaymentData {
 
 const PaymentSuccessPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [booking, setBooking] = useState<BookingData | null>(null)
   const [payment, setPayment] = useState<PaymentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [ensuredStatus, setEnsuredStatus] = useState(false)
+  const [paymentChecked, setPaymentChecked] = useState(false)
+
+  // QUAN TRỌNG: Tự động check và update payment status từ PayOS khi có orderCode
+  // Sử dụng polling với retry và fallback đến localhost để đảm bảo payment được cập nhật
+  useEffect(() => {
+    const orderCode = searchParams.get('orderCode')
+    
+    if (!orderCode || paymentChecked) return
+    
+    let retryCount = 0
+    const maxRetries = 3
+    const retryDelay = 2000 // 2 giây
+    
+    // Fallback URL: thử gọi trực tiếp đến localhost backend nếu ngrok offline
+    const localhostBackendUrl = 'https://localhost:7267/api'
+    
+    const checkPaymentByOrderCode = async (useLocalhost = false): Promise<void> => {
+      try {
+        const apiUrl = useLocalhost 
+          ? `${localhostBackendUrl}${API_ENDPOINTS.PAYMENT}/check-payment-by-ordercode?orderCode=${orderCode}`
+          : `${API_ENDPOINTS.PAYMENT}/check-payment-by-ordercode?orderCode=${orderCode}`
+        
+        console.log(`[PaymentSuccessPage] Checking payment with orderCode: ${orderCode} (attempt ${retryCount + 1}/${maxRetries}, ${useLocalhost ? 'localhost' : 'normal'})`)
+        
+        // Gọi endpoint check-payment-by-ordercode để verify và update payment
+        const checkResponse = useLocalhost
+          ? await fetch(apiUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                // Lấy token từ axiosInstance nếu có
+                ...(axiosInstance.defaults.headers.common['Authorization'] 
+                  ? { 'Authorization': axiosInstance.defaults.headers.common['Authorization'] as string }
+                  : {})
+              },
+              // Bỏ qua SSL certificate validation cho localhost
+              // @ts-ignore
+              rejectUnauthorized: false
+            }).then(res => res.json())
+          : await axiosInstance.get(apiUrl).then(res => res.data)
+        
+        if (checkResponse) {
+          const checkData = checkResponse
+          console.log(`[PaymentSuccessPage] Payment check result:`, checkData)
+          
+          if (checkData.wasUpdated || checkData.paymentStatus?.isPaid) {
+            console.log(`[PaymentSuccessPage] ✅ Payment status đã được cập nhật: ${checkData.paymentStatus?.status}`)
+            // Reload payment data sau khi update
+            if (bookingId) {
+              try {
+                const paymentResponse = await axiosInstance.get<PaymentData>(
+                  `${API_ENDPOINTS.PAYMENT}/status/${bookingId}`
+                )
+                if (paymentResponse.data) {
+                  setPayment(paymentResponse.data)
+                }
+              } catch (err) {
+                console.warn('Không thể reload payment data:', err)
+              }
+            }
+            setPaymentChecked(true)
+            return
+          }
+          
+          // Nếu payment đã success rồi thì không cần retry nữa
+          if (checkData.paymentStatus?.isPaid) {
+            setPaymentChecked(true)
+            return
+          }
+        }
+        
+        // Nếu chưa update được và còn retry, tiếp tục retry
+        if (retryCount < maxRetries - 1) {
+          retryCount++
+          setTimeout(() => {
+            checkPaymentByOrderCode(useLocalhost)
+          }, retryDelay)
+        } else {
+          // Nếu đã thử với normal URL và thất bại, thử với localhost
+          if (!useLocalhost) {
+            console.log('[PaymentSuccessPage] Thử gọi trực tiếp đến localhost backend...')
+            retryCount = 0
+            setTimeout(() => {
+              checkPaymentByOrderCode(true)
+            }, retryDelay)
+          } else {
+            console.warn('[PaymentSuccessPage] Đã hết số lần retry, payment có thể chưa được cập nhật')
+            setPaymentChecked(true)
+          }
+        }
+      } catch (err) {
+        console.warn(`[PaymentSuccessPage] Lỗi khi check payment (attempt ${retryCount + 1}):`, err)
+        
+        // Nếu là lỗi network và chưa thử localhost, thử localhost
+        const axiosError = err as { code?: string; message?: string; response?: { status?: number } }
+        const isNetworkError = axiosError.code === 'ERR_NETWORK' || 
+                              axiosError.message?.includes('network') ||
+                              axiosError.message?.includes('ngrok') ||
+                              axiosError.response?.status === 502 ||
+                              axiosError.response?.status === 503
+        
+        if (isNetworkError && !useLocalhost && retryCount >= maxRetries - 1) {
+          // Thử localhost ngay lập tức
+          console.log('[PaymentSuccessPage] Network error detected, trying localhost backend...')
+          retryCount = 0
+          setTimeout(() => {
+            checkPaymentByOrderCode(true)
+          }, 1000)
+        } else if (retryCount < maxRetries - 1) {
+          retryCount++
+          setTimeout(() => {
+            checkPaymentByOrderCode(useLocalhost)
+          }, retryDelay)
+        } else {
+          console.warn('[PaymentSuccessPage] Không thể check payment status sau nhiều lần thử')
+          setPaymentChecked(true)
+        }
+      }
+    }
+    
+    // Bắt đầu check ngay lập tức
+    checkPaymentByOrderCode()
+  }, [searchParams, paymentChecked, bookingId])
 
   useEffect(() => {
     const fetchData = async () => {

@@ -92,6 +92,50 @@ namespace ESCE_SYSTEM.Services.PaymentService
         // --------------------------------------
         public async Task<CreatePaymentResponse> CreatePaymentAsync(Booking booking, decimal amount, string description)
         {
+            // Load User với Role để kiểm tra role Agency
+            var user = await _db.Accounts
+                .Include(a => a.Role)
+                .FirstOrDefaultAsync(a => a.Id == booking.UserId);
+
+            if (user == null)
+            {
+                throw new Exception($"Không tìm thấy user với ID: {booking.UserId}");
+            }
+
+            // Kiểm tra nếu user là Agency
+            bool isAgency = user.Role?.Name?.ToLower() == "agency";
+            
+            decimal originalAmount = amount;
+            decimal discountAmount = 0;
+            decimal finalAmount;
+
+            // Logic thanh toán:
+            // 1. Tất cả user đều chỉ thanh toán 10% số tiền
+            // 2. Agency được giảm thêm 3% trước khi tính 10%
+            
+            if (isAgency)
+            {
+                // Agency: Giảm 3% trước, rồi thanh toán 10% của số tiền đã giảm
+                discountAmount = amount * 0.03m;
+                decimal amountAfterDiscount = amount - discountAmount;
+                finalAmount = amountAfterDiscount * 0.10m;
+                
+                Console.WriteLine($"[PaymentService] Agency payment calculation for User {user.Id}:");
+                Console.WriteLine($"  - Original Amount: {originalAmount:N0} VND");
+                Console.WriteLine($"  - Agency Discount (3%): {discountAmount:N0} VND");
+                Console.WriteLine($"  - Amount after discount: {amountAfterDiscount:N0} VND");
+                Console.WriteLine($"  - Final payment (10% of discounted amount): {finalAmount:N0} VND");
+            }
+            else
+            {
+                // User thường: Chỉ thanh toán 10% số tiền gốc
+                finalAmount = amount * 0.10m;
+                
+                Console.WriteLine($"[PaymentService] Regular user payment calculation for User {user.Id}:");
+                Console.WriteLine($"  - Original Amount: {originalAmount:N0} VND");
+                Console.WriteLine($"  - Final payment (10%): {finalAmount:N0} VND");
+            }
+
             // PayOS chỉ cho phép description tối đa 25 ký tự
             if (string.IsNullOrEmpty(description))
             {
@@ -102,7 +146,8 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 description = description.Substring(0, 25);
             }
 
-            long amountVND = (long)amount;
+            // Sử dụng finalAmount (đã áp dụng discount nếu là Agency) để thanh toán
+            long amountVND = (long)finalAmount;
 
             long orderCode = booking.Id * 1_000_000L +
                              (DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 1_000_000);
@@ -174,17 +219,27 @@ namespace ESCE_SYSTEM.Services.PaymentService
             var checkoutUrl = checkoutUrlElement.GetString() ?? "";
 
             // Lưu DB
+            // Lưu originalAmount vào Amount để theo dõi số tiền gốc
+            // finalAmount là số tiền thực tế thanh toán qua PayOS
             var payment = new Payment
             {
                 BookingId = booking.Id,
-                Amount = amount,
+                Amount = originalAmount, // Lưu số tiền gốc (trước khi giảm giá)
                 Method = "PAYOS",
                 Status = "pending",
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                OrderCode = orderCode, // Lưu OrderCode để tìm payment chính xác
+                PaymentType = "Booking"
             };
 
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync();
+            
+            Console.WriteLine($"[PaymentService] Payment created: ID={payment.Id}, OriginalAmount={originalAmount:N0} VND, FinalAmount={finalAmount:N0} VND, IsAgency={isAgency}");
+            if (isAgency)
+            {
+                Console.WriteLine($"[PaymentService] Agency payment details: Discount 3% = {discountAmount:N0} VND, Payment 10% = {finalAmount:N0} VND");
+            }
 
             return new CreatePaymentResponse
             {
@@ -247,47 +302,42 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 string? transactionId = webhookData.TryGetProperty("transactionId", out var transId)
                     ? transId.GetString() : null;
 
-                Payment? payment;
-
-                // --- TÌM PAYMENT TRONG DB ---
-                // Logic phân biệt Upgrade vs Booking dựa trên quy ước orderCode của bạn
-                if ((orderCode % 1_000_000) >= 500_000)
+                // --- TÌM PAYMENT TRONG DB BẰNG ORDERCODE (CHÍNH XÁC NHẤT) ---
+                Payment? payment = await _db.Payments
+                    .FirstOrDefaultAsync(p => p.OrderCode == orderCode);
+                
+                if (payment == null)
                 {
-                    // Upgrade payment logic
-                    int userId = (int)(orderCode / 1_000_000);
-                    Console.WriteLine($"[Webhook] Looking for upgrade payment - userId: {userId}, orderCode: {orderCode}");
+                    // Fallback: Nếu không tìm thấy bằng OrderCode, thử tìm bằng cách extract id (cho các payment cũ chưa có OrderCode)
+                    Console.WriteLine($"[Webhook] ⚠️ Payment not found by OrderCode {orderCode}, trying fallback method...");
                     
-                    var allPayments = await _db.Payments
-                        .Where(p => p.UserId == userId && p.BookingId == null)
-                        .OrderByDescending(p => p.Id)
-                        .ToListAsync();
-                    
-                    Console.WriteLine($"[Webhook] Found {allPayments.Count} upgrade payments for userId {userId}");
-                    foreach (var p in allPayments)
+                    // Logic phân biệt Upgrade vs Booking dựa trên quy ước orderCode
+                    if ((orderCode % 1_000_000) >= 500_000)
                     {
-                        Console.WriteLine($"[Webhook] Payment ID: {p.Id}, Status: {p.Status}, PaymentType: {p.PaymentType}, Created: {p.UpdatedAt}");
+                        // Upgrade payment logic
+                        int userId = (int)(orderCode / 1_000_000);
+                        Console.WriteLine($"[Webhook] Looking for upgrade payment - userId: {userId}, orderCode: {orderCode}");
+                        
+                        payment = await _db.Payments
+                            .Where(p => p.UserId == userId && p.BookingId == null)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
                     }
-                    
-                    payment = allPayments.FirstOrDefault();
+                    else
+                    {
+                        // Booking payment logic
+                        int bookingId = (int)(orderCode / 1_000_000);
+                        Console.WriteLine($"[Webhook] Looking for booking payment - bookingId: {bookingId}, orderCode: {orderCode}");
+                        
+                        payment = await _db.Payments
+                            .Where(p => p.BookingId == bookingId)
+                            .OrderByDescending(p => p.Id)
+                            .FirstOrDefaultAsync();
+                    }
                 }
                 else
                 {
-                    // Booking payment logic
-                    int bookingId = (int)(orderCode / 1_000_000);
-                    Console.WriteLine($"[Webhook] Looking for booking payment - bookingId: {bookingId}, orderCode: {orderCode}");
-                    
-                    var allPayments = await _db.Payments
-                        .Where(p => p.BookingId == bookingId)
-                        .OrderByDescending(p => p.Id)
-                        .ToListAsync();
-                    
-                    Console.WriteLine($"[Webhook] Found {allPayments.Count} booking payments for bookingId {bookingId}");
-                    foreach (var p in allPayments)
-                    {
-                        Console.WriteLine($"[Webhook] Payment ID: {p.Id}, Status: {p.Status}, BookingId: {p.BookingId}, Created: {p.UpdatedAt}");
-                    }
-                    
-                    payment = allPayments.FirstOrDefault();
+                    Console.WriteLine($"[Webhook] ✅ Found payment by OrderCode: ID={payment.Id}, Status={payment.Status}, BookingId={payment.BookingId}, UserId={payment.UserId}");
                 }
 
                 if (payment == null)
@@ -469,7 +519,8 @@ namespace ESCE_SYSTEM.Services.PaymentService
                 Status = "pending",
                 PaymentType = "Upgrade" + upgradeType,
                 UpgradeType = upgradeType,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                OrderCode = orderCode // Lưu OrderCode để tìm payment chính xác
             };
 
             _db.Payments.Add(payment);

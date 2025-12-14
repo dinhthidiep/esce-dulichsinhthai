@@ -66,7 +66,7 @@ const LoginForm = () => {
       
       // Initialize Google OAuth
       (window as any).google.accounts.id.initialize({
-        client_id: '772898465184-2lct3e00mcjggjn5tm33m95bquejphv2.apps.googleusercontent.com',
+        client_id: '281718540202-fgep1miupulamf080uo799stbr4f8ge0.apps.googleusercontent.com',
         callback: async (response: any) => {
           try {
             setGeneralError('')
@@ -78,7 +78,7 @@ const LoginForm = () => {
             }
 
             // Gọi API login với Google
-            const res = await fetchWithFallback('/api/Auth/logingoogle', {
+            const res = await fetchWithFallback('/Auth/logingoogle', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ idToken })

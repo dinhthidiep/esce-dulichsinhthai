@@ -155,8 +155,9 @@ export const requestAgencyUpgradeWithPayment = async (payload: {
   const upgradeResponse = await requestAgencyUpgrade(payload)
   
   // Bước 2: Trả về thông tin để frontend xử lý thanh toán
+  const responseData = upgradeResponse && typeof upgradeResponse === 'object' ? upgradeResponse : {}
   return {
-    ...upgradeResponse,
+    ...responseData,
     requiresPayment: true,
     amount: 1000000 // 1,000,000 VND
   }

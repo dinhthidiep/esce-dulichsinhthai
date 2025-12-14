@@ -19,7 +19,8 @@ namespace ESCE_SYSTEM.Models
         public string? Status { get; set; }
         public string? TransactionId { get; set; }
         public string? PaymentType { get; set; }
-        public  string? UpgradeType { get; set; } 
+        public  string? UpgradeType { get; set; }
+        public long? OrderCode { get; set; } // OrderCode từ PayOS để tìm payment chính xác
 
         public virtual Booking? Booking { get; set; } 
         public virtual Account? User { get; set; } 
