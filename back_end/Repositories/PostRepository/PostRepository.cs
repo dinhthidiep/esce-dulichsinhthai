@@ -41,9 +41,12 @@ namespace ESCE_SYSTEM.Repositories
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
+                .Include(p => p.Postreactions)
+                .ThenInclude(pr => pr.ReactionType)
                 .Include(p => p.Postsaves)
                 .ThenInclude(ps => ps.Account)
                 .OrderByDescending(p => p.CreatedAt)
+                .AsSplitQuery() // Tối ưu performance cho nhiều Include
                 .ToListAsync();
         }
 

@@ -153,8 +153,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
 
             // [QUAN TRỌNG] Dòng này để sửa lỗi 403:
-            // Nó báo cho .NET biết Role nằm ở key "role" trong Token
-            RoleClaimType = "role"
+            // Nó báo cho .NET biết Role nằm ở ClaimTypes.Role trong Token
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
 
         // Logic xử lý token từ query string cho SignalR
@@ -165,8 +165,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var accessToken = context.Request.Query["access_token"];
 
                 var path = context.HttpContext.Request.Path;
+                // Hỗ trợ cả NotificationHub và ChatHub
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    (path.StartsWithSegments("/notificationhub")))
+                    (path.StartsWithSegments("/notificationhub") || path.StartsWithSegments("/chathub")))
                 {
                     context.Token = accessToken;
                 }

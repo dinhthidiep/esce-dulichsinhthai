@@ -264,14 +264,15 @@ export default function ChatMainContent() {
 
   const userInfo = getUserInfo()
   // Đảm bảo currentUser.id luôn là number và hợp lệ
-  const currentUserId = Number(userInfo.id ?? userInfo.userId ?? 1)
+  // Backend trả về PascalCase (Id), frontend có thể lưu camelCase (id)
+  const currentUserId = Number(userInfo.Id ?? userInfo.id ?? userInfo.userId ?? 1)
   if (Number.isNaN(currentUserId) || currentUserId <= 0) {
     console.error('[ChatMainContent] Invalid currentUserId:', currentUserId, userInfo)
   }
   const currentUser = {
     id: currentUserId,
-    name: userInfo.name || userInfo.fullName || 'Admin',
-    email: userInfo.email || 'admin@example.com'
+    name: userInfo.Name || userInfo.name || userInfo.fullName || userInfo.FullName || 'Admin',
+    email: userInfo.Email || userInfo.email || 'admin@example.com'
   }
 
   // Debug log để kiểm tra
@@ -2104,6 +2105,8 @@ export default function ChatMainContent() {
                     p: 3,
                     position: 'relative',
                     zIndex: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
                     '&::-webkit-scrollbar': {
                       width: '6px'
                     },
@@ -2119,6 +2122,8 @@ export default function ChatMainContent() {
                     }
                   }}
                 >
+                  {/* Spacer để đẩy tin nhắn xuống dưới */}
+                  <Box sx={{ flexGrow: 1 }} />
                   <div ref={messagesStartRef} />
                   {isHistoryLoading ? (
                     <Box className="flex justify-center items-center h-full">

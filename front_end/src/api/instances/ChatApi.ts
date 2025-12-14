@@ -65,6 +65,7 @@ let MOCK_MESSAGES: ChatMessage[] = [
 
 const ensureToken = () => {
   const token = getAuthToken()
+  console.log('[ChatApi] ensureToken - token from localStorage:', token ? `${token.substring(0, 30)}...` : 'NULL/EMPTY')
   // Khi dev UI với mock / backend tắt thì không bắt buộc phải đăng nhập
   if (!token && DISABLE_BACKEND) {
     console.warn('[ChatApi] No token, but DISABLE_BACKEND=true -> dùng token mock')
@@ -153,7 +154,7 @@ export const getUsersForChat = async (): Promise<ChatUser[]> => {
   try {
     const token = ensureToken()
     const endpoint = '/api/chat/GetUserForChat'
-    console.log('[ChatApi] Fetching users for chat')
+    console.log('[ChatApi] Fetching users for chat, token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN')
     
     const response = await fetchWithFallback(endpoint, {
       method: 'GET',

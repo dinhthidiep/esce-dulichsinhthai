@@ -1,8 +1,8 @@
--- Check user role for trinhhung27012003@gmail.com
-SELECT a.Id, a.Email, a.RoleId, r.Name as RoleName
-FROM Accounts a
-JOIN Roles r ON a.RoleId = r.Id
-WHERE a.Email = 'trinhhung27012003@gmail.com';
+-- Kiểm tra các role trong database
+SELECT * FROM ROLES;
 
--- Check all roles in database
-SELECT * FROM Roles;
+-- Kiểm tra user và role của họ
+SELECT a.ID, a.EMAIL, a.NAME, a.ROLE_ID, r.NAME as ROLE_NAME
+FROM ACCOUNTS a
+JOIN ROLES r ON a.ROLE_ID = r.ID
+ORDER BY a.ID;

@@ -108,8 +108,8 @@ realAxiosInstance.interceptors.response.use(
       })
     }
     
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token hết hạn hoặc không hợp lệ
+    if (error.response?.status === 401) {
+      // Token hết hạn hoặc không hợp lệ - chỉ logout khi 401 (Unauthorized)
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
       sessionStorage.removeItem('token')
@@ -117,12 +117,14 @@ realAxiosInstance.interceptors.response.use(
       // Redirect to login nếu đang ở trang cần auth
       if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
         // Chỉ redirect nếu không phải trang public
-        const publicPaths = ['/', '/services', '/services/', '/about']
+        const publicPaths = ['/', '/services', '/services/', '/about', '/forum']
         if (!publicPaths.includes(window.location.pathname)) {
           window.location.href = '/login'
         }
       }
     }
+    // 403 Forbidden - không logout, chỉ log lỗi (user có thể không có quyền cho action cụ thể)
+    // Component sẽ xử lý hiển thị thông báo phù hợp
     
     // Xử lý lỗi network/SSL
     if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || error.code === 'CERT_HAS_EXPIRED') {

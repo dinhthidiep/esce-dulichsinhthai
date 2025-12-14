@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace ESCE_SYSTEM.Controllers
 {
     [Route("api/chat")]
+    [ApiController]
     [Authorize]
     public class ChatController : ControllerBase
     {

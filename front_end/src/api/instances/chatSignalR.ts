@@ -171,16 +171,38 @@ export const sendChatMessageViaSignalR = async (
     // Nhưng vì đây là async, ta tạo message tạm để UI cập nhật ngay
     const now = new Date().toISOString()
     
-    // Lấy currentUserId từ localStorage để set senderId đúng
+    // Lấy currentUserId từ localStorage hoặc JWT token
     let currentUserId = 0
     try {
+      // Thử lấy từ userInfo trong localStorage trước
       const userInfoStr = localStorage.getItem('userInfo')
       if (userInfoStr) {
         const userInfo = JSON.parse(userInfoStr)
-        currentUserId = Number(userInfo.id ?? userInfo.userId ?? 0)
+        currentUserId = Number(userInfo.Id ?? userInfo.id ?? userInfo.userId ?? userInfo.UserId ?? 0)
       }
-    } catch {
-      console.warn('[ChatSignalR] Could not get currentUserId from localStorage')
+      
+      // Nếu không có, thử decode từ JWT token
+      if (!currentUserId || currentUserId === 0) {
+        const token = getAuthToken()
+        if (token) {
+          // Decode JWT payload (phần giữa của token)
+          const parts = token.split('.')
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]))
+            // JWT claim cho user ID có thể là: nameid, sub, userId, id
+            const tokenUserId = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] 
+              ?? payload.nameid ?? payload.sub ?? payload.userId ?? payload.id
+            if (tokenUserId) {
+              currentUserId = Number(tokenUserId)
+              console.log('[ChatSignalR] Got currentUserId from JWT token:', currentUserId)
+            }
+          }
+        }
+      }
+      
+      console.log('[ChatSignalR] Final currentUserId:', currentUserId)
+    } catch (e) {
+      console.warn('[ChatSignalR] Could not get currentUserId:', e)
     }
     
     return {

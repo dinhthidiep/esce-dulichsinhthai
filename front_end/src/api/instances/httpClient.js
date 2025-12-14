@@ -17,7 +17,15 @@ export const fetchWithFallback = async (url, options = {}, useHttps = true) => {
   const fullUrl = `${baseUrl}${url}`;
 
   try {
-    console.log('[httpClient] Fetching:', { url, fullUrl, method: options.method || 'GET' });
+    // Log headers để debug Authorization
+    const hasAuth = options.headers?.Authorization || options.headers?.authorization;
+    console.log('[httpClient] Fetching:', { 
+      url, 
+      fullUrl, 
+      method: options.method || 'GET',
+      hasAuthHeader: !!hasAuth,
+      authHeaderPreview: hasAuth ? `${hasAuth.substring(0, 30)}...` : 'NONE'
+    });
     const response = await fetch(fullUrl, options);
     console.log('[httpClient] Response:', { url, status: response.status, ok: response.ok });
     return response;

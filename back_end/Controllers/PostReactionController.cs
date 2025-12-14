@@ -18,7 +18,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("like/{postId}")]
-        [Authorize(Roles = "Admin,Host,Agency,tourist")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> LikePost(int postId)
         {
             try
@@ -33,7 +33,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("{postId}/{reactionTypeId}")]
-        [Authorize(Roles = "Admin,Host,Agency,tourist")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> ReactToPost(int postId, byte reactionTypeId)
         {
             try
@@ -63,7 +63,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpDelete("unlike/{postReactionId}")]
-        [Authorize(Roles = "Admin,Host,Agency,tourist")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> UnlikePost(int postReactionId)
         {
             try

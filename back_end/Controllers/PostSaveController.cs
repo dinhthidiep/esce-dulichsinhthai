@@ -18,7 +18,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("save/{postId}")]
-        [Authorize(Roles = "Admin,Host,Agency,tourist")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> SavePost(int postId)
         {
             try
@@ -33,7 +33,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpDelete("unsave/{postId}")]
-        [Authorize(Roles = "Admin,Host,Agency,tourist")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> UnsavePost(int postId)
         {
             try
