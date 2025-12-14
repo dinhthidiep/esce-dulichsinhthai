@@ -1,7 +1,9 @@
 using ESCE_SYSTEM.DTOs.Statistics;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Services.StatisticsService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -11,18 +13,70 @@ namespace ESCE_SYSTEM.Controllers
     public class StatisticsController : ControllerBase
     {
         private readonly IStatisticsService _statisticsService;
+        private readonly ESCEContext _context;
 
-        public StatisticsController(IStatisticsService statisticsService)
+        public StatisticsController(IStatisticsService statisticsService, ESCEContext context)
         {
             _statisticsService = statisticsService;
+            _context = context;
         }
 
         /// <summary>
-        /// L?y th?ng k?t?ng quan cho dashboard
+        /// Lấy số lượng badge cho Admin sidebar (pending posts, services, upgrade requests, unread messages)
         /// </summary>
-        /// <param name="period">K? th?ng k? day, week, month, year</param>
-        /// <param name="startDate">Ng? b?t d?u (optional)</param>
-        /// <param name="endDate">Ng? k?t th? (optional)</param>
+        [HttpGet("admin-badges")]
+        public async Task<IActionResult> GetAdminBadges()
+        {
+            try
+            {
+                // Pending posts cần duyệt
+                var pendingPosts = await _context.Posts
+                    .CountAsync(p => p.Status == "Pending" && !p.IsDeleted);
+
+                // Pending services cần duyệt (Services table)
+                var pendingServices = await _context.Services
+                    .CountAsync(s => s.Status == "Pending");
+
+                // Pending service combos cần duyệt
+                var pendingServiceCombos = await _context.Servicecombos
+                    .CountAsync(s => s.Status == "pending");
+
+                // Pending upgrade requests (Host + Agency certificates)
+                var pendingHostCertificates = await _context.HostCertificates
+                    .CountAsync(c => c.Status == "Pending" || c.Status == "PaidPending" || c.Status == "Review");
+                var pendingAgencyCertificates = await _context.AgencieCertificates
+                    .CountAsync(c => c.Status == "Pending" || c.Status == "PaidPending" || c.Status == "Review");
+                var pendingUpgradeRequests = pendingHostCertificates + pendingAgencyCertificates;
+
+                // Unread messages (tin nhắn gửi đến Admin chưa đọc)
+                var adminUsers = await _context.Accounts
+                    .Where(a => a.RoleId == 1) // Admin role
+                    .Select(a => a.Id)
+                    .ToListAsync();
+                
+                var unreadMessages = await _context.Messages
+                    .CountAsync(m => adminUsers.Contains(m.ReceiverId) && m.IsRead == false);
+
+                return Ok(new
+                {
+                    PendingPosts = pendingPosts,
+                    PendingServices = pendingServices + pendingServiceCombos,
+                    PendingUpgradeRequests = pendingUpgradeRequests,
+                    UnreadMessages = unreadMessages
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy admin badges", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thống kê tổng quan cho dashboard
+        /// </summary>
+        /// <param name="period">Kỳ thống kê: day, week, month, year</param>
+        /// <param name="startDate">Ngày bắt đầu (optional)</param>
+        /// <param name="endDate">Ngày kết thúc (optional)</param>
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardStatisticsDto>> GetDashboardStatistics(
             [FromQuery] string period = "day",

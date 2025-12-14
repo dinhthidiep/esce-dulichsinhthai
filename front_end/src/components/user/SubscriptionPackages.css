@@ -1,0 +1,589 @@
+.sub-subscription-packages-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.sub-subscription-packages-main {
+  flex: 1;
+  padding-top: 0;
+}
+
+.sub-subscription-packages-container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* Hero Section */
+.sub-packages-hero {
+  position: relative;
+  min-height: 25vh;
+  margin-top: 80px;
+  display: flex;
+  align-items: center;
+  background-image: url('/images/manhinh.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
+  padding: 2rem 0;
+}
+
+/* Optimize background-attachment for mobile */
+@media (max-width: 968px) {
+  .sub-packages-hero {
+    background-attachment: scroll;
+    min-height: 23vh;
+  }
+}
+
+/* Overlay với gradient mờ */
+.sub-packages-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.75) 0%,
+    rgba(30, 41, 59, 0.65) 50%,
+    rgba(4, 120, 87, 0.7) 100%
+  );
+  z-index: 1;
+}
+
+/* Thêm lớp overlay phụ để tăng độ tương phản */
+.sub-packages-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(4, 120, 87, 0.3) 0%,
+    transparent 50%
+  );
+  z-index: 2;
+}
+
+.sub-packages-hero-content {
+  max-width: 100%;
+  margin: 0;
+  padding: 0 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 3;
+  width: 100%;
+}
+
+.sub-packages-badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.sub-packages-hero-title {
+  font-size: clamp(2rem, 5vw + 1rem, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 4px 40px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.02em;
+}
+
+.sub-packages-hero-subtitle {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.sub-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  letter-spacing: -0.01em;
+  padding: 0 1.5rem;
+}
+
+/* Current Level Section */
+.sub-current-level-section {
+  padding: 2rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.sub-current-level-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sub-level-progress-card-content {
+  padding: 0 !important;
+}
+
+.sub-current-level-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sub-current-level-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sub-current-level-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.sub-current-level-title {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.sub-current-level-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.sub-current-level-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.sub-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sub-stat-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sub-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sub-stat-value.sub-highlight {
+  color: #059669;
+}
+
+.sub-current-level-progress {
+  margin-bottom: 1.5rem;
+}
+
+.sub-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.sub-progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.sub-progress-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  text-align: center;
+  margin: 0;
+}
+
+.sub-explore-services-btn {
+  width: 100%;
+}
+
+/* Packages Section */
+.sub-packages-section {
+  padding: 2rem 1.5rem 4rem;
+}
+
+.sub-packages-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.sub-package-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sub-package-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.sub-package-card.sub-current {
+  border: 2px solid #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+.sub-package-card.sub-locked {
+  opacity: 0.7;
+  position: relative;
+}
+
+.sub-package-card.sub-locked::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 1;
+}
+
+.sub-popular-badge-wrapper {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.sub-package-header {
+  padding: 1.75rem 1.5rem;
+  color: white;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sub-level-icon-large {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.sub-package-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: white;
+  letter-spacing: -0.01em;
+}
+
+.sub-level-number {
+  font-size: 0.875rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.sub-package-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  flex: 1;
+}
+
+.sub-package-price {
+  text-align: center;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.sub-price-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.sub-price-amount {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.sub-package-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.sub-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sub-feature-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #059669;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.sub-locked-overlay {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.sub-locked-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.sub-subscribe-button {
+  width: 100%;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sub-button-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* How It Works Section */
+.sub-how-it-works-section {
+  padding: 3rem 1.5rem 4rem;
+  background: #ffffff;
+  margin: 2rem 0;
+  border-radius: 0;
+}
+
+.sub-how-it-works-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.sub-how-it-works-card {
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.sub-how-it-works-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.sub-step-number {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 auto 1rem;
+}
+
+.sub-step-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.75rem 0;
+}
+
+.sub-step-description {
+  font-size: 0.9375rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* FAQ Section */
+.sub-packages-faq-section {
+  padding: 3rem 1.5rem 4rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.sub-faq-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  letter-spacing: -0.01em;
+}
+
+.sub-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.sub-faq-card {
+  transition: all 0.3s ease;
+}
+
+.sub-faq-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sub-faq-question {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.75rem 0;
+}
+
+.sub-faq-answer {
+  font-size: 0.9375rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sub-subscription-packages-container {
+    padding: 0 1rem;
+  }
+
+  .sub-packages-hero {
+    padding: 2rem 0 1.5rem;
+  }
+
+  .sub-packages-hero-content {
+    padding: 0 1rem;
+  }
+
+  .sub-packages-hero-title {
+    font-size: 1.75rem;
+  }
+
+  .sub-packages-hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .sub-section-title {
+    font-size: 1.5rem;
+  }
+
+  .sub-current-level-section {
+    padding: 1.5rem 0;
+  }
+
+  .sub-current-level-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sub-current-level-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .sub-packages-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .sub-how-it-works-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .sub-packages-section {
+    padding: 1.5rem 0 3rem;
+  }
+
+  .sub-how-it-works-section {
+    padding: 2rem 1rem;
+    margin: 1rem 0;
+  }
+
+  .sub-packages-faq-section {
+    padding: 2rem 0 3rem;
+  }
+
+  .sub-faq-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sub-packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sub-how-it-works-grid {
+    grid-template-columns: 1fr;
+  }
+}

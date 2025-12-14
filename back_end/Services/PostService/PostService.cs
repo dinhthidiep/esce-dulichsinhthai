@@ -138,6 +138,7 @@ namespace ESCE_SYSTEM.Services
                     PosterId = post.AuthorId.ToString(),
                     PosterRole = post.Author?.Role?.Name ?? string.Empty,
                     PosterName = post.Author?.Name ?? string.Empty,
+                    PosterAvatar = post.Author?.Avatar ?? string.Empty,
                     Status = post.Status,
                     RejectComment = post.RejectComment ?? string.Empty,
                     PosterApproverId = post.AuthorId.ToString(),
@@ -159,6 +160,7 @@ namespace ESCE_SYSTEM.Services
                             PostLikeId = reaction.Id.ToString(),
                             AccountId = reaction.UserId.ToString(),
                             FullName = reaction.User?.Name ?? string.Empty,
+                            Avatar = reaction.User?.Avatar ?? string.Empty,
                             CreatedDate = reaction.CreatedAt ?? DateTime.Now,
                             ReactionTypeId = reaction.ReactionTypeId,
                             ReactionTypeName = reaction.ReactionType?.Name ?? string.Empty
@@ -175,6 +177,7 @@ namespace ESCE_SYSTEM.Services
                         {
                             PostCommentId = comment.Id.ToString(),
                             FullName = comment.Author?.Name ?? string.Empty,
+                            Avatar = comment.Author?.Avatar ?? string.Empty,
                             Content = comment.Content,
                             Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
                             CreatedDate = comment.CreatedAt,
@@ -195,6 +198,7 @@ namespace ESCE_SYSTEM.Services
                                     PostCommentLikeId = commentReaction.Id.ToString(),
                                     AccountId = commentReaction.UserId.ToString(),
                                     FullName = commentReaction.User?.Name ?? string.Empty,
+                                    Avatar = commentReaction.User?.Avatar ?? string.Empty,
                                     CreatedDate = commentReaction.CreatedAt ?? DateTime.Now
                                 });
                             }

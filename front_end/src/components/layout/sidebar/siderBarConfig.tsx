@@ -11,55 +11,55 @@ import type { SideBarConfigType } from '~/types/menu'
 export const sidebarConfig = [
   {
     title: 'Dashboard',
-    path: '/',
+    path: '/admin/dashboard',
     icon: <HomeIcon />,
     badge: 0
   },
   {
     title: 'Quản lý Users',
-    path: '/users',
+    path: '/admin/users',
     icon: <People />,
     badge: 0
   },
   {
     title: 'Bài viết',
-    path: '/post',
+    path: '/admin/post',
     icon: <PostAddIcon />,
     badge: 0
   },
   {
     title: 'Chat',
-    path: '/chat',
+    path: '/admin/chat',
     icon: <ChatBubbleOutlineIcon />,
     badge: 0
   },
   {
     title: 'Tin tức',
-    path: '/news',
+    path: '/admin/news',
     icon: <FeedIcon />,
     badge: 0
   },
   {
     title: 'Duyệt Bài viết',
-    path: '/post-approvals',
+    path: '/admin/post-approvals',
     icon: <ArticleIcon />,
     badge: 0
   },
   {
     title: 'Duyệt Dịch vụ',
-    path: '/service-approvals',
+    path: '/admin/service-approvals',
     icon: <MiscellaneousServicesIcon />,
     badge: 0
   },
   {
     title: 'Nâng cấp vai trò',
-    path: '/role-upgrade',
+    path: '/admin/role-upgrade',
     icon: <WorkspacePremiumIcon />,
     badge: 0
   },
   {
     title: 'Profile',
-    path: '/profile',
+    path: '/admin/profile',
     icon: <AccountCircleIcon />,
     badge: 0
   }

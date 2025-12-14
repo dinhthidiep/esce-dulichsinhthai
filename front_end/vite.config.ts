@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(({ mode }) => {
   const env = loadEnvTyped(mode)
   return {
-    base: './',
+    base: '/',
     define: {
       __API_URL__: JSON.stringify(env.VITE_API_URL),
       __API_APP_PORT__: Number(env.VITE_APP_PORT),
@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react(), tailwindcss()],
     server: {
-      port: Number(env.VITE_APP_PORT)
+      port: Number(env.VITE_APP_PORT),
+      strictPort: true // Bắt buộc dùng port 5173, báo lỗi nếu port đã bị chiếm
     },
     resolve: {
       alias: [{ find: '~', replacement: '/src' }]

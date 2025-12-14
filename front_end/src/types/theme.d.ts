@@ -18,3 +18,25 @@ export interface ThemeContextType {
   currentMode: CurrentThemeMode | undefined
   theme: Theme
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

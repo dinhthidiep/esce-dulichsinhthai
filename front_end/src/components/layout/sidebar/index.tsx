@@ -64,17 +64,17 @@ const SideBar = ({ open, setOpen }: SideBarProps) => {
           {sidebarConfig.map((item) => {
             let dynamicBadge = item.badge ?? 0
             switch (item.path) {
-              case '/chat':
-                dynamicBadge = badges.chat
+              case '/admin/chat':
+                dynamicBadge = badges.unreadMessages
                 break
-              case '/support-approvals':
-                dynamicBadge = badges.supportApprovals
+              case '/admin/post-approvals':
+                dynamicBadge = badges.pendingPosts
                 break
-              case '/role-upgrade':
-                dynamicBadge = badges.roleUpgrade
+              case '/admin/service-approvals':
+                dynamicBadge = badges.pendingServices
                 break
-              case '/users':
-                dynamicBadge = badges.users
+              case '/admin/role-upgrade':
+                dynamicBadge = badges.pendingUpgradeRequests
                 break
               default:
                 break

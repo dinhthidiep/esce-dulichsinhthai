@@ -1,0 +1,338 @@
+.upg-upgrade-account-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.upg-upgrade-account-main {
+  flex: 1;
+  padding-top: 0;
+}
+
+.upg-upgrade-account-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  width: 100%;
+}
+
+/* Page Header Section */
+.upg-upgrade-page-header {
+  position: relative;
+  min-height: 25vh;
+  margin-top: 80px;
+  display: flex;
+  align-items: center;
+  background-image: url('/images/manhinh.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
+  padding: 2rem 0;
+}
+
+/* Optimize background-attachment for mobile */
+@media (max-width: 968px) {
+  .upg-upgrade-page-header {
+    background-attachment: scroll;
+    min-height: 23vh;
+  }
+}
+
+/* Overlay với gradient mờ */
+.upg-upgrade-page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.75) 0%,
+    rgba(30, 41, 59, 0.65) 50%,
+    rgba(4, 120, 87, 0.7) 100%
+  );
+  z-index: 1;
+}
+
+/* Thêm lớp overlay phụ để tăng độ tương phản */
+.upg-upgrade-page-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(4, 120, 87, 0.3) 0%,
+    transparent 50%
+  );
+  z-index: 2;
+}
+
+.upg-upgrade-header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 3;
+}
+
+.upg-upgrade-page-title {
+  font-size: clamp(2rem, 5vw + 1rem, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 4px 40px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.02em;
+}
+
+.upg-upgrade-page-subtitle {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+}
+
+/* Upgrade Options Section */
+.upg-upgrade-options-section {
+  padding: 2rem 0 4rem;
+}
+
+.upg-upgrade-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.upg-upgrade-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.upg-upgrade-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.upg-upgrade-card-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.upg-popular-badge {
+  background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.6875rem;
+  padding: 0.5rem 0.875rem;
+}
+
+.upg-upgrade-card-header {
+  padding: 1.75rem 1.5rem;
+  color: white;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.upg-upgrade-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  letter-spacing: -0.01em;
+}
+
+.upg-upgrade-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
+}
+
+.upg-upgrade-card-description {
+  color: #64748b;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.upg-upgrade-price {
+  text-align: center;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.upg-price-amount {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.upg-price-currency {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.upg-price-note {
+  display: block;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.upg-upgrade-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-grow: 1;
+}
+
+.upg-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.upg-feature-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #059669;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.upg-upgrade-button {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.upg-button-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Info Section */
+.upg-upgrade-info-section {
+  padding: 3rem 0 4rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.upg-info-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  letter-spacing: -0.01em;
+}
+
+.upg-info-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.upg-info-card {
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.upg-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.upg-info-card-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  border-radius: 12px;
+  color: #059669;
+}
+
+.upg-info-card-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.upg-info-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.75rem 0;
+}
+
+.upg-info-card-description {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .upg-upgrade-account-container {
+    padding: 0 1rem;
+  }
+
+
+  .upg-upgrade-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .upg-upgrade-options-section {
+    padding: 1.5rem 0 3rem;
+  }
+
+  .upg-upgrade-info-section {
+    padding: 2rem 0 3rem;
+  }
+
+  .upg-info-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
