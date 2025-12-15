@@ -307,22 +307,27 @@ const Header = React.memo(() => {
                       <span>Hồ sơ của tôi</span>
                     </Link>
                     <div className="header-user-menu-divider" />
-                    <Link
-                      to="/subscription-packages"
-                      className="header-user-menu-item"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <StarIcon style={{ width: '18px', height: '18px' }} />
-                      <span>Cấp độ của bạn</span>
-                    </Link>
-                    <Link
-                      to="/upgrade"
-                      className="header-user-menu-item header-user-menu-item-upgrade"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <CrownIcon style={{ width: '18px', height: '18px' }} />
-                      <span>Nâng cấp tài khoản</span>
-                    </Link>
+                    {/* Ẩn "Cấp độ của bạn" và "Nâng cấp tài khoản" nếu là Admin (roleId = 1) */}
+                    {userInfo && (userInfo.RoleId || userInfo.roleId) !== 1 && String(userInfo.RoleId || userInfo.roleId) !== '1' && (
+                      <>
+                        <Link
+                          to="/subscription-packages"
+                          className="header-user-menu-item"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <StarIcon style={{ width: '18px', height: '18px' }} />
+                          <span>Cấp độ của bạn</span>
+                        </Link>
+                        <Link
+                          to="/upgrade"
+                          className="header-user-menu-item header-user-menu-item-upgrade"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <CrownIcon style={{ width: '18px', height: '18px' }} />
+                          <span>Nâng cấp tài khoản</span>
+                        </Link>
+                      </>
+                    )}
                     <div className="header-user-menu-divider" />
                     <button
                       className="header-user-menu-item header-user-menu-item-logout"

@@ -12,8 +12,12 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-  transition: all 0.3s ease;
-  z-index: 1000;
+  /* Disable transition để tránh vấn đề với click events */
+  transition: none;
+  z-index: 9999;
+  pointer-events: auto;
+  /* Ngăn double-tap zoom trên mobile */
+  touch-action: manipulation;
 }
 
 .support-chat-button:hover {
@@ -59,7 +63,9 @@
   justify-content: center;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  animation: badge-pulse 2s infinite;
+  /* Tạm disable animation để debug */
+  /* animation: badge-pulse 2s infinite; */
+  pointer-events: none;
 }
 
 @keyframes badge-pulse {

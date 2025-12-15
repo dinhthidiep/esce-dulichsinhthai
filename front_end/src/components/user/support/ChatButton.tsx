@@ -7,8 +7,22 @@ interface ChatButtonProps {
 }
 
 const ChatButton: React.FC<ChatButtonProps> = ({ onClick, unreadCount = 0 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
+    console.log('[ChatButton] Click event triggered')
+    onClick()
+  }
+  
   return (
-    <button className="support-chat-button" onClick={onClick} aria-label="Mở hỗ trợ trực tuyến">
+    <button 
+      className="support-chat-button" 
+      onClick={handleClick} 
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+      aria-label="Mở hỗ trợ trực tuyến"
+    >
       <div className="support-chat-button-icon">
         <svg
           width="24"

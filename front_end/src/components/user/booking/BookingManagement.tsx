@@ -30,6 +30,10 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
   // Booking Modal states
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingModalData, setBookingModalData] = useState({ bookingId: null, action: '', notes: '' });
+  
+  // Booking Detail Modal states
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
   // Get user ID helper
   const getUserId = useCallback(() => {
@@ -251,13 +255,12 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
     }
     
     try {
-      // Update booking status via API
-      const updateData = {
-        Status: newStatus,
-        Notes: notes || ''
-      };
-      
-      await axiosInstance.put(`${API_ENDPOINTS.BOOKING}/${bookingId}`, updateData);
+      // Update booking status via API - dùng endpoint /status riêng
+      await axiosInstance.put(`${API_ENDPOINTS.BOOKING}/${bookingId}/status`, newStatus, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       // Update local state
       setBookings(prevBookings => 
@@ -397,7 +400,7 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 const notes = booking.Notes || booking.notes || 'Không có ghi chú';
                 const status = (booking.Status || booking.status || '').toLowerCase();
                 const user = booking.User || booking.user || {};
-                const userName = user.Name || user.name || 'N/A';
+                const userName = user.FullName || user.fullName || user.Name || user.name || 'N/A';
                 const isPending = status === 'pending';
                 const isConfirmed = status === 'confirmed';
                 
@@ -461,28 +464,39 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                               </div>
                             </div>
                           </div>
-                          {isPending && (
-                            <div className="booking-mgr-booking-card-actions">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="btn-edit-service"
-                                onClick={() => handleAcceptBooking(bookingId, notes)}
-                              >
-                                Chấp nhận
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="cancel-booking-btn"
-                                onClick={() => handleRejectBooking(bookingId, notes)}
-                              >
-                                Từ chối
-                              </Button>
-                            </div>
-                          )}
-                          {isConfirmed && (
-                            <div className="booking-mgr-booking-card-actions">
+                          <div className="booking-mgr-booking-card-actions">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="btn-view-detail"
+                              onClick={() => {
+                                setSelectedBooking(booking);
+                                setShowDetailModal(true);
+                              }}
+                            >
+                              Xem chi tiết
+                            </Button>
+                            {isPending && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="btn-edit-service"
+                                  onClick={() => handleAcceptBooking(bookingId, notes)}
+                                >
+                                  Chấp nhận
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="cancel-booking-btn"
+                                  onClick={() => handleRejectBooking(bookingId, notes)}
+                                >
+                                  Từ chối
+                                </Button>
+                              </>
+                            )}
+                            {isConfirmed && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -491,8 +505,8 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                               >
                                 Hoàn thành
                               </Button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                       {/* Part 2: Notes */}
@@ -597,6 +611,124 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
         onConfirm={handleConfirmBookingAction}
         onModalDataChange={setBookingModalData}
       />
+
+      {/* Booking Detail Modal */}
+      {showDetailModal && selectedBooking && (
+        <div className="booking-detail-modal-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="booking-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="booking-detail-modal-header">
+              <h2>Chi tiết đơn đặt hàng</h2>
+              <button 
+                className="booking-detail-modal-close"
+                onClick={() => setShowDetailModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="booking-detail-modal-content">
+              {/* Service Info */}
+              <div className="booking-detail-section">
+                <h3>Thông tin dịch vụ</h3>
+                <div className="booking-detail-service">
+                  <img 
+                    src={getImageUrl(
+                      (selectedBooking.ServiceCombo?.Image || selectedBooking.serviceCombo?.image || '').split(',')[0]?.trim(),
+                      '/img/banahills.jpg'
+                    )}
+                    alt="Service"
+                    className="booking-detail-service-image"
+                  />
+                  <div className="booking-detail-service-info">
+                    <h4>{selectedBooking.ServiceCombo?.Name || selectedBooking.serviceCombo?.name || 'Dịch vụ'}</h4>
+                    <p>{selectedBooking.ServiceCombo?.Address || selectedBooking.serviceCombo?.address || ''}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="booking-detail-section">
+                <h3>Thông tin người đặt</h3>
+                <div className="booking-detail-grid">
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Họ tên:</span>
+                    <span className="booking-detail-value">
+                      {selectedBooking.User?.Name || selectedBooking.user?.name || selectedBooking.User?.FullName || selectedBooking.user?.fullName || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Email:</span>
+                    <span className="booking-detail-value">
+                      {selectedBooking.User?.Email || selectedBooking.user?.email || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Số điện thoại:</span>
+                    <span className="booking-detail-value">
+                      {selectedBooking.User?.Phone || selectedBooking.user?.phone || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Info */}
+              <div className="booking-detail-section">
+                <h3>Thông tin đặt hàng</h3>
+                <div className="booking-detail-grid">
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Mã đơn:</span>
+                    <span className="booking-detail-value">
+                      {selectedBooking.BookingNumber || selectedBooking.bookingNumber || `#${selectedBooking.Id || selectedBooking.id}`}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Ngày đặt:</span>
+                    <span className="booking-detail-value">
+                      {formatBookingDate(selectedBooking.BookingDate || selectedBooking.bookingDate)}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Số người:</span>
+                    <span className="booking-detail-value">
+                      {selectedBooking.Quantity || selectedBooking.quantity || 0}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Đơn giá:</span>
+                    <span className="booking-detail-value">
+                      {formatCurrency(selectedBooking.UnitPrice || selectedBooking.unitPrice || 0)}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Tổng tiền:</span>
+                    <span className="booking-detail-value booking-detail-total">
+                      {formatCurrency(selectedBooking.TotalAmount || selectedBooking.totalAmount || 0)}
+                    </span>
+                  </div>
+                  <div className="booking-detail-item">
+                    <span className="booking-detail-label">Trạng thái:</span>
+                    <Badge className={`booking-mgr-status-badge ${getBookingStatusDisplay(selectedBooking.Status || selectedBooking.status).className}`}>
+                      {getBookingStatusDisplay(selectedBooking.Status || selectedBooking.status).text}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="booking-detail-section">
+                <h3>Ghi chú</h3>
+                <p className="booking-detail-notes">
+                  {selectedBooking.Notes || selectedBooking.notes || 'Không có ghi chú'}
+                </p>
+              </div>
+            </div>
+            <div className="booking-detail-modal-footer">
+              <Button variant="outline" onClick={() => setShowDetailModal(false)}>
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -43,6 +43,7 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
   const [generalError, setGeneralError] = useState('')
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
   const [checkingBackend, setCheckingBackend] = useState(true)
+  const [isBanned, setIsBanned] = useState(false)
 
   // Kiểm tra backend có đang chạy không
   useEffect(() => {
@@ -238,7 +239,15 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
         return
       }
       console.error('Login error:', error)
-      setGeneralError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại!')
+      
+      // Kiểm tra nếu user bị ban
+      const errorMsg = error.message || ''
+      if (errorMsg.includes('bị khóa') || errorMsg.includes('banned') || errorMsg.includes('locked')) {
+        setIsBanned(true)
+        setGeneralError('')
+      } else {
+        setGeneralError(errorMsg || 'Đăng nhập thất bại. Vui lòng thử lại!')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -398,6 +407,28 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
           </div>
         </div>
       </div>
+
+      {/* Modal thông báo tài khoản bị khóa */}
+      {isBanned && (
+        <div className="banned-modal-overlay">
+          <div className="banned-modal">
+            <div className="banned-modal-icon">🚫</div>
+            <h2 className="banned-modal-title">Tài khoản bị khóa</h2>
+            <p className="banned-modal-message">
+              Tài khoản của bạn đã bị khóa do vi phạm điều khoản sử dụng hoặc theo yêu cầu của quản trị viên.
+            </p>
+            <p className="banned-modal-contact">
+              Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ bộ phận hỗ trợ qua email: <strong>support@esce.vn</strong>
+            </p>
+            <button 
+              className="banned-modal-button"
+              onClick={() => setIsBanned(false)}
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

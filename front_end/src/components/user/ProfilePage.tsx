@@ -1422,8 +1422,8 @@ const ProfilePage = () => {
             {/* Personal Info Tab */}
             {activeTab === 'personal' && (
             <div className="profile-profile-form-compact">
-              {/* Level Progress Bar - Only show for non-Host roles */}
-              {!levelLoading && userId && level && getRoleName() !== 'Host' && (
+              {/* Level Progress Bar - Only show for non-Host and non-Admin roles */}
+              {!levelLoading && userId && level && getRoleName() !== 'Host' && getRoleName() !== 'Admin' && (
                 <LevelProgressBar
                   totalSpent={totalSpent}
                   level={level}
@@ -1433,7 +1433,7 @@ const ProfilePage = () => {
                   size="large"
                 />
               )}
-              {levelError && getRoleName() !== 'Host' && (
+              {levelError && getRoleName() !== 'Host' && getRoleName() !== 'Admin' && (
                 <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fef2f2', color: '#dc2626', borderRadius: '0.5rem' }}>
                   {levelError}
                 </div>

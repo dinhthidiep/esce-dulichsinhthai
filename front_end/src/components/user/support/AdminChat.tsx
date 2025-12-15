@@ -42,6 +42,16 @@ interface AdminChatProps {
 // Common emojis
 const EMOJI_LIST = ['😀', '😂', '😍', '🥰', '😊', '😎', '🤔', '😢', '😡', '👍', '👎', '❤️', '🔥', '🎉', '✨', '🙏', '👋', '🤝', '💪', '🌟']
 
+// Helper function to parse server timestamp (UTC) to local Date
+const parseServerTimestamp = (dateStr?: string): Date => {
+  if (!dateStr) return new Date()
+  // If the date string doesn't have timezone info, treat it as UTC
+  if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+    return new Date(dateStr + 'Z')
+  }
+  return new Date(dateStr)
+}
+
 const AdminChat: React.FC<AdminChatProps> = ({
   isOpen,
   onClose,
@@ -179,7 +189,7 @@ const AdminChat: React.FC<AdminChatProps> = ({
         id: String(msg.Id || msg.id || index),
         text: msg.Content || msg.content || '',
         isUser: String(msg.SenderId || msg.senderId) === currentUserId,
-        timestamp: new Date(msg.CreatedAt || msg.createdAt || Date.now()),
+        timestamp: parseServerTimestamp(msg.CreatedAt || msg.createdAt),
         senderId: String(msg.SenderId || msg.senderId || ''),
         receiverId: String(msg.ReceiverId || msg.receiverId || '')
       }))
@@ -204,7 +214,7 @@ const AdminChat: React.FC<AdminChatProps> = ({
         id: String(msg.Id || msg.id || index),
         text: msg.Content || msg.content || '',
         isUser: String(msg.SenderId || msg.senderId) === currentUserId,
-        timestamp: new Date(msg.CreatedAt || msg.createdAt || Date.now()),
+        timestamp: parseServerTimestamp(msg.CreatedAt || msg.createdAt),
         senderId: String(msg.SenderId || msg.senderId || ''),
         receiverId: String(msg.ReceiverId || msg.receiverId || '')
       }))
@@ -279,6 +289,37 @@ const AdminChat: React.FC<AdminChatProps> = ({
         toUserId,
         content: messageText
       })
+      
+      // Cập nhật danh sách lịch sử chat ngay lập tức
+      const updateUserInList = (users: ChatUser[]) => {
+        const userId = selectedUser.UserId || selectedUser.userId
+        const existingIndex = users.findIndex(u => (u.UserId || u.userId) === userId)
+        
+        if (existingIndex >= 0) {
+          // User đã có trong danh sách - cập nhật tin nhắn mới nhất và đưa lên đầu
+          const updatedUser = {
+            ...users[existingIndex],
+            LastMessage: messageText,
+            lastMessage: messageText,
+            LastMessageTime: new Date().toISOString(),
+            lastMessageTime: new Date().toISOString()
+          }
+          const newList = users.filter((_, i) => i !== existingIndex)
+          return [updatedUser, ...newList]
+        } else {
+          // User chưa có trong danh sách - thêm mới vào đầu
+          const newUser: ChatUser = {
+            ...selectedUser,
+            LastMessage: messageText,
+            lastMessage: messageText,
+            LastMessageTime: new Date().toISOString(),
+            lastMessageTime: new Date().toISOString()
+          }
+          return [newUser, ...users]
+        }
+      }
+      
+      setChattedUsers(prev => updateUserInList(prev))
     } catch (err) {
       console.error('Error sending message:', err)
       // Remove message from UI if failed
@@ -328,14 +369,16 @@ const AdminChat: React.FC<AdminChatProps> = ({
     })
   }
 
-  const formatRelativeTime = (dateStr?: string) => {
-    if (!dateStr) return ''
-    // Parse UTC time from server and convert to local
-    let date = new Date(dateStr)
-    // If the date string doesn't have timezone info, treat it as UTC
-    if (!dateStr.includes('Z') && !dateStr.includes('+')) {
-      date = new Date(dateStr + 'Z')
+  const formatRelativeTime = (dateOrStr?: Date | string) => {
+    if (!dateOrStr) return ''
+    let date: Date
+    if (dateOrStr instanceof Date) {
+      date = dateOrStr
+    } else {
+      // Parse string từ server - nếu không có timezone info thì coi như UTC
+      date = parseServerTimestamp(dateOrStr)
     }
+    
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
@@ -343,9 +386,9 @@ const AdminChat: React.FC<AdminChatProps> = ({
     const diffDays = Math.floor(diffMs / 86400000)
 
     if (diffMins < 1) return 'Vừa xong'
-    if (diffMins < 60) return `${diffMins} phút`
-    if (diffHours < 24) return `${diffHours} giờ`
-    if (diffDays < 7) return `${diffDays} ngày`
+    if (diffMins < 60) return `${diffMins} phút trước`
+    if (diffHours < 24) return `${diffHours} giờ trước`
+    if (diffDays < 7) return `${diffDays} ngày trước`
     return date.toLocaleDateString('vi-VN')
   }
 
@@ -429,7 +472,7 @@ const AdminChat: React.FC<AdminChatProps> = ({
                     )}
                     <div className="admin-chat-message-content">
                       <div className="admin-chat-message-bubble">{message.text}</div>
-                      <div className="admin-chat-message-time">{formatTime(message.timestamp)}</div>
+                      <div className="admin-chat-message-time">{formatRelativeTime(message.timestamp)}</div>
                     </div>
                   </div>
                 ))

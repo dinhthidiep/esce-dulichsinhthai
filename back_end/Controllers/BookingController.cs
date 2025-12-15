@@ -214,6 +214,19 @@ namespace ESCE_SYSTEM.Controllers
                 ItemType = b.ItemType ?? string.Empty
             };
 
+            // Map User details (người đặt)
+            if (b.User != null)
+            {
+                dto.User = new BookingUserInfoDto
+                {
+                    Id = b.User.Id,
+                    Name = b.User.Name ?? string.Empty,
+                    Email = b.User.Email,
+                    Phone = b.User.Phone,
+                    Avatar = b.User.Avatar
+                };
+            }
+
             // Map ServiceCombo details
             if (b.ServiceCombo != null)
             {

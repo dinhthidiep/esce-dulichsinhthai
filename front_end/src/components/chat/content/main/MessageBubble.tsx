@@ -81,7 +81,7 @@ export default function MessageBubble({
       sx={{
         display: 'flex',
         justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
-        mb: isLastInGroup ? 1.5 : 0.3,
+        mb: isLastInGroup ? 1 : 0.2,
         px: 1
       }}
     >
@@ -113,7 +113,15 @@ export default function MessageBubble({
           </Box>
         )}
 
-        <Box sx={{ position: 'relative', '&:hover .reaction-btn': { opacity: 1 } }}>
+        <Box 
+          sx={{ 
+            position: 'relative', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: isCurrentUser ? 'flex-end' : 'flex-start',
+            '&:hover .reaction-btn': { opacity: 1 } 
+          }}
+        >
           {/* Tên người gửi - chỉ hiện ở tin đầu trong nhóm */}
           {showName && !isCurrentUser && (
             <Typography
@@ -133,9 +141,7 @@ export default function MessageBubble({
           <Box
             sx={{
               px: 1.5,
-              py: 1,
-              minHeight: '2rem',
-              minWidth: '3rem',
+              py: 0.8,
               background: isCurrentUser
                 ? 'linear-gradient(135deg, #0084ff 0%, #0099ff 100%)'
                 : '#e4e6eb',
@@ -172,15 +178,17 @@ export default function MessageBubble({
             )}
 
             {/* Nội dung tin nhắn */}
-            <Typography
-              sx={{
-                fontSize: '1.4rem',
-                lineHeight: 1.4,
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              {message.content || ' '}
-            </Typography>
+            {message.content && (
+              <Typography
+                sx={{
+                  fontSize: '1.4rem',
+                  lineHeight: 1.4,
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {message.content}
+              </Typography>
+            )}
 
             {/* Reactions */}
             {message.reactions && message.reactions.length > 0 && (

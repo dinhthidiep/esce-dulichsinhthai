@@ -190,7 +190,9 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       try {
         setLoadingServiceCombos(true);
         const userId = getUserId();
+        console.log('[ServiceComboManagement] Loading combos for userId:', userId);
         if (!userId) {
+          console.log('[ServiceComboManagement] No userId found');
           setServiceCombos([]);
           setLoadingServiceCombos(false);
           return;
@@ -199,9 +201,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         // Get service combos for host
         const response = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
         const combosData = response.data || [];
+        console.log('[ServiceComboManagement] Loaded combos:', combosData.length, combosData);
         setServiceCombos(combosData);
       } catch (err) {
-        console.error('Error loading service combos:', err);
+        console.error('[ServiceComboManagement] Error loading service combos:', err);
         if (onError) {
           onError('Không thể tải danh sách gói dịch vụ. Vui lòng thử lại.');
         }
@@ -315,7 +318,12 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
         const servicesResponse = await axiosInstance.get(API_ENDPOINTS.SERVICE);
         const allServices = servicesResponse.data || [];
-        const hostServices = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        // So sánh bằng String để tránh lỗi type mismatch
+        const hostServices = allServices.filter((s: any) => {
+          const serviceHostId = String(s.HostId || s.hostId || '');
+          const currentUserId = String(userId || '');
+          return serviceHostId === currentUserId && serviceHostId !== '';
+        });
         setCreateServiceComboAllServices(hostServices);
       } else {
         setCreateServiceComboAllServices([]);
@@ -652,7 +660,12 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
         const servicesResponse = await axiosInstance.get(API_ENDPOINTS.SERVICE);
         const allServices = servicesResponse.data || [];
-        const hostServices = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        // So sánh bằng String để tránh lỗi type mismatch
+        const hostServices = allServices.filter((s: any) => {
+          const serviceHostId = String(s.HostId || s.hostId || '');
+          const currentUserId = String(userId || '');
+          return serviceHostId === currentUserId && serviceHostId !== '';
+        });
         setEditServiceComboAllServices(hostServices);
       } else {
         setEditServiceComboAllServices([]);

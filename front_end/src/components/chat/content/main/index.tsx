@@ -2143,7 +2143,18 @@ export default function ChatMainContent() {
                       // Đảm bảo so sánh chính xác bằng cách convert cả hai về number
                       const messageSenderId = Number(message.senderId)
                       const currentUserIdNum = Number(currentUser.id)
-                      const isCurrentUser = messageSenderId === currentUserIdNum
+                      // So sánh bằng String để tránh lỗi type mismatch
+                      const isCurrentUser = String(messageSenderId) === String(currentUserIdNum)
+                      
+                      // Debug log để kiểm tra
+                      if (index === selectedConversation.messages.length - 1) {
+                        console.log('[ChatMainContent] Last message debug:', {
+                          messageSenderId,
+                          currentUserIdNum,
+                          isCurrentUser,
+                          messageContent: message.content
+                        })
+                      }
 
                       // Lấy thông tin hiển thị cho message (Facebook/Zalo style)
                       const displayInfo = getMessageDisplayInfo(

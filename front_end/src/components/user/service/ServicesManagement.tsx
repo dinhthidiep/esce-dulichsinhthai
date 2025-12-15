@@ -113,9 +113,17 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
         }
 
         // Get all services and filter by hostId (backend doesn't have /host/{hostId} endpoint)
+        console.log('[ServicesManagement] Loading services for userId:', userId);
         const response = await axiosInstance.get(API_ENDPOINTS.SERVICE);
         const allServices = response.data || [];
-        const servicesData = allServices.filter((s: any) => (s.HostId || s.hostId) === userId);
+        console.log('[ServicesManagement] Total services from API:', allServices.length);
+        // So sánh bằng String để tránh lỗi type mismatch (number vs string)
+        const servicesData = allServices.filter((s: any) => {
+          const serviceHostId = String(s.HostId || s.hostId || '');
+          const currentUserId = String(userId || '');
+          return serviceHostId === currentUserId && serviceHostId !== '';
+        });
+        console.log('[ServicesManagement] Filtered services for host:', servicesData.length, servicesData);
         setServices(servicesData);
         const filtered = applyServiceFilters(servicesData, filterName, sortOrder);
         setFilteredServices(filtered);

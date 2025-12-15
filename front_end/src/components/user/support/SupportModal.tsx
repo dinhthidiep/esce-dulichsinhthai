@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { XIcon, ArrowLeftIcon } from '~/components/user/icons'
 import './SupportModal.css'
 
@@ -15,12 +15,39 @@ const SupportModal: React.FC<SupportModalProps> = ({
   onSelectAdminChat,
   onSelectAIChat,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Click outside to close
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      // Kiểm tra xem click có phải vào ChatButton không
+      const target = e.target as HTMLElement
+      if (target.closest('.support-chat-button')) {
+        return // Không đóng nếu click vào ChatButton
+      }
+      
+      if (containerRef.current && !containerRef.current.contains(target)) {
+        onClose()
+      }
+    }
+
+    // Delay để tránh trigger ngay khi mở
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
-    <>
-      <div className="support-modal-overlay" onClick={onClose}></div>
-      <div className="support-modal-container">
+    <div className="support-modal-container" ref={containerRef}>
         <div className="support-modal-header">
           <div className="support-modal-header-left">
             <svg
@@ -125,7 +152,6 @@ const SupportModal: React.FC<SupportModalProps> = ({
           </div>
         </div>
       </div>
-    </>
   )
 }
 

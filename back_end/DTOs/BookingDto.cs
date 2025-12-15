@@ -18,11 +18,23 @@ namespace ESCE_SYSTEM.DTOs
         public DateTime? CompletedDate { get; set; }
         public string ItemType { get; set; } = string.Empty;
         
+        // User details (người đặt)
+        public BookingUserInfoDto? User { get; set; }
+        
         // ServiceCombo details
         public ServiceComboInfoDto? ServiceCombo { get; set; }
         
         // Service details (nếu đặt service riêng)
         public ServiceInfoDto? Service { get; set; }
+    }
+    
+    public class BookingUserInfoDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Avatar { get; set; }
     }
 
     public class ServiceComboInfoDto

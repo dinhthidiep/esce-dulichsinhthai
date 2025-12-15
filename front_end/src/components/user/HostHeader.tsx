@@ -242,6 +242,7 @@ const HostHeader = React.memo(() => {
               <NotificationDropdown
                 isOpen={isNotificationOpen}
                 onClose={() => setIsNotificationOpen(false)}
+                onUnreadCountChange={(count) => setUnreadCount(count)}
               />
             )}
           </div>
