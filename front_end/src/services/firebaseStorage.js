@@ -8,6 +8,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
  * @param {File} file - The image file to upload
  * @param {string} folder - The folder path in Firebase Storage (e.g., 'posts', 'comments')
  * @returns {Promise<string>} - The download URL of the uploaded image
+ * @param {string} storagePath
+ * @returns {Promise<string>}
  */
 export const uploadImageToFirebase = async (file, folder = 'images') => {
   try {
@@ -118,3 +120,28 @@ export const extractFirebasePath = (imageUrl) => {
   }
 };
 
+export const getFirebaseImageUrl = async (storagePath) => {
+  try {
+    const storageRef = ref(storage, storagePath);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error) {
+    console.error(`Error getting Firebase image URL for path "${storagePath}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get the fallback image URL from Firebase Storage
+ * Uses the default banafarm.jpg image stored at 'default/banafarm.jpg'
+ * @returns {Promise<string>} - The download URL of the fallback image
+ */
+export const getFallbackImageUrl = async () => {
+  try {
+    return await getFirebaseImageUrl('default/banafarm.jpg');
+  } catch (error) {
+    console.error('Error getting fallback image from Firebase:', error);
+    // Fallback to local path if Firebase fails
+    return '/img/banafarm.jpg';
+  }
+};

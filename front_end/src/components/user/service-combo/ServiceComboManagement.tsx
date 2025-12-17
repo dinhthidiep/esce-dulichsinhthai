@@ -6,6 +6,7 @@ import CreateServiceComboModal from './CreateServiceComboModal';
 import EditServiceComboModal from './EditServiceComboModal';
 import axiosInstance from '~/utils/axiosInstance';
 import { API_BASE_URL, API_ENDPOINTS } from '~/config/api';
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage';
 import './ServiceComboManagement.css';
 
 interface ServiceComboManagementProps {
@@ -39,15 +40,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     availableSlots: '',
     status: 'open',
     cancellationPolicy: '',
-    image: null,
-    startDate: '',
-    endDate: '',
-    numberOfDays: '',
-    numberOfNights: ''
+    images: [] as File[],
   });
   const [createServiceComboErrors, setCreateServiceComboErrors] = useState({});
   const [isCreatingServiceCombo, setIsCreatingServiceCombo] = useState(false);
-  const [createServiceComboImagePreview, setCreateServiceComboImagePreview] = useState(null);
+  const [createServiceComboImagePreviews, setCreateServiceComboImagePreviews] = useState<string[]>([]);
   const [createServiceComboSelectedServices, setCreateServiceComboSelectedServices] = useState({});
   const [createServiceComboAllServices, setCreateServiceComboAllServices] = useState([]);
   const [createServiceComboServicesPage, setCreateServiceComboServicesPage] = useState(1);
@@ -86,15 +83,12 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     availableSlots: '',
     status: 'open',
     cancellationPolicy: '',
-    image: null,
-    startDate: '',
-    endDate: '',
-    numberOfDays: '',
-    numberOfNights: ''
+    images: [] as (File | string)[],
   });
   const [editServiceComboErrors, setEditServiceComboErrors] = useState({});
   const [isEditingServiceCombo, setIsEditingServiceCombo] = useState(false);
-  const [editServiceComboImagePreview, setEditServiceComboImagePreview] = useState(null);
+  const [editServiceComboImagePreviews, setEditServiceComboImagePreviews] = useState<string[]>([]);
+  const [oldImageUrlsToDelete, setOldImageUrlsToDelete] = useState<string[]>([]); // Track ảnh cũ cần xóa khỏi Firebase
   const [editServiceComboSelectedServices, setEditServiceComboSelectedServices] = useState({});
   const [editServiceComboAllServices, setEditServiceComboAllServices] = useState([]);
   const [editServiceComboServicesPage, setEditServiceComboServicesPage] = useState(1);
@@ -122,6 +116,34 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   const [isEditCouponsTableOpen, setIsEditCouponsTableOpen] = useState(false);
   
   const DEFAULT_IMAGE_URL = '/img/banahills.jpg';
+
+  // Enrich coupons: /Coupon/host/{id} sometimes returns a slim shape (missing RequiredLevel/TargetAudience).
+  // Option B: fetch each coupon detail via /Coupon/{id} and merge extra fields.
+  const enrichCouponsWithDetails = useCallback(async (coupons: any[]) => {
+    if (!Array.isArray(coupons) || coupons.length === 0) return [];
+
+    const tasks = coupons.map(async (c) => {
+      const id = c?.Id ?? c?.id;
+      if (!id) return c;
+
+      // If fields are already present, don't refetch
+      const hasRequiredLevel = c?.RequiredLevel !== undefined || c?.requiredLevel !== undefined;
+      const hasTargetAudience = c?.TargetAudience !== undefined || c?.targetAudience !== undefined;
+      if (hasRequiredLevel || hasTargetAudience) return c;
+
+      try {
+        const detailRes = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/${id}`);
+        const detail = detailRes?.data;
+        if (!detail) return c;
+        return { ...c, ...detail };
+      } catch (e) {
+        // Non-fatal: keep original coupon
+        return c;
+      }
+    });
+
+    return await Promise.all(tasks);
+  }, []);
   
   // Get user ID helper
   const getUserId = useCallback(() => {
@@ -294,14 +316,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null,
-      startDate: '',
-      endDate: '',
-      numberOfDays: '',
-      numberOfNights: ''
+      images: [],
     });
     setCreateServiceComboErrors({});
-    setCreateServiceComboImagePreview(null);
+    setCreateServiceComboImagePreviews([]);
     setCreateServiceComboSelectedServices({});
     setCreateServiceComboServicesPage(1);
     setCreateServiceComboSelectedPromotions({});
@@ -331,12 +349,19 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       
       // Load promotions - TODO: Implement promotion API endpoint
       // For now, set empty array
-      setCreateServiceComboAllPromotions([]);
+      if (userId) {
+        const promotionsResponse = await axiosInstance.get(`${API_ENDPOINTS.BONUS_SERVICE}/host/${userId}`);
+        setCreateServiceComboAllPromotions(promotionsResponse.data || []);
+      } else {
+        setCreateServiceComboAllPromotions([]);
+      }
       
       // Load coupons from API
       if (userId) {
         const couponsResponse = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/host/${userId}`);
-        setCreateServiceComboAllCoupons(couponsResponse.data || []);
+        const coupons = couponsResponse.data || [];
+        const enriched = await enrichCouponsWithDetails(coupons);
+        setCreateServiceComboAllCoupons(enriched);
       } else {
         setCreateServiceComboAllCoupons([]);
       }
@@ -359,14 +384,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null,
-      startDate: '',
-      endDate: '',
-      numberOfDays: '',
-      numberOfNights: ''
+        images: [],
+
     });
     setCreateServiceComboErrors({});
-    setCreateServiceComboImagePreview(null);
+    setCreateServiceComboImagePreviews([]);
     setCreateServiceComboSelectedServices({});
     setCreateServiceComboServicesPage(1);
     setCreateServiceComboSelectedPromotions({});
@@ -395,19 +417,52 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     }
   };
 
-  // Handle create service combo image change
+  // Handle create service combo image change (multiple images, max 10)
   const handleCreateServiceComboImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files || []) as File[];
+    const MAX_IMAGES = 10;
+    
+    if (files.length === 0) {
+      setCreateServiceComboImagePreviews([]);
+      setCreateServiceComboFormData(prev => ({ ...prev, images: [] }));
+      return;
+    }
+
+    // Limit to max 10 images
+    const filesToAdd = files.slice(0, MAX_IMAGES);
+    const currentCount = createServiceComboFormData.images.length;
+    const remainingSlots = MAX_IMAGES - currentCount;
+    
+    if (remainingSlots <= 0) {
+      if (onError) {
+        onError(`Chỉ được tải tối đa ${MAX_IMAGES} ảnh.`);
+      }
+      return;
+    }
+
+    const finalFiles = [...createServiceComboFormData.images, ...filesToAdd.slice(0, remainingSlots)];
+    setCreateServiceComboFormData(prev => ({ ...prev, images: finalFiles }));
+
+    // Create previews for new files
+    const newPreviews: string[] = [];
+    filesToAdd.slice(0, remainingSlots).forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setCreateServiceComboImagePreview(event.target.result);
+        newPreviews.push(event.target.result as string);
+        if (newPreviews.length === filesToAdd.slice(0, remainingSlots).length) {
+          setCreateServiceComboImagePreviews([...createServiceComboImagePreviews, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
-    } else {
-      setCreateServiceComboImagePreview(null);
-    }
-    handleCreateServiceComboInputChange(e);
+    });
+  };
+
+  // Remove image from create modal
+  const handleRemoveCreateImage = (index: number) => {
+    const newImages = createServiceComboFormData.images.filter((_, i) => i !== index);
+    const newPreviews = createServiceComboImagePreviews.filter((_, i) => i !== index);
+    setCreateServiceComboFormData(prev => ({ ...prev, images: newImages }));
+    setCreateServiceComboImagePreviews(newPreviews);
   };
 
   // Handle create service combo service select
@@ -438,7 +493,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       ...prev,
       [promotionId]: {
         selected: selected,
-        quantity: prev[promotionId]?.quantity || 0
       }
     }));
   };
@@ -455,52 +509,24 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     });
   };
 
-  // Handle create service combo promotion quantity change
-  const handleCreateServiceComboPromotionQuantityChange = (promotionId, quantity) => {
-    setCreateServiceComboSelectedPromotions(prev => ({
-      ...prev,
-      [promotionId]: {
-        selected: prev[promotionId]?.selected || false,
-        quantity: parseInt(quantity) || 0
-      }
-    }));
-  };
+  // Promotions (BonusService) selection has no quantity: backend doesn't store it for ServiceCombo
 
   // Handle create service combo submit
   const handleCreateServiceComboSubmit = async (e) => {
     e.preventDefault();
     
     // Validate required fields
-    const newErrors: { name?: string; address?: string; startDate?: string; endDate?: string; numberOfDays?: string; numberOfNights?: string; price?: string; availableSlots?: string } = {};
+    const newErrors: { name?: string; address?: string; price?: string; availableSlots?: string } = {};
     if (!createServiceComboFormData.name || createServiceComboFormData.name.trim() === '') {
       newErrors.name = 'Tên combo dịch vụ không được để trống';
     }
     if (!createServiceComboFormData.address || createServiceComboFormData.address.trim() === '') {
       newErrors.address = 'Địa chỉ không được để trống';
     }
-    if (!createServiceComboFormData.startDate || createServiceComboFormData.startDate.trim() === '') {
-      newErrors.startDate = 'Ngày bắt đầu không được để trống';
-    }
-    if (!createServiceComboFormData.endDate || createServiceComboFormData.endDate.trim() === '') {
-      newErrors.endDate = 'Ngày kết thúc không được để trống';
-    }
-    if (createServiceComboFormData.startDate && createServiceComboFormData.endDate) {
-      const startDate = new Date(createServiceComboFormData.startDate);
-      const endDate = new Date(createServiceComboFormData.endDate);
-      if (endDate <= startDate) {
-        newErrors.endDate = 'Ngày kết thúc phải sau ngày bắt đầu';
-      }
-    }
-    if (!createServiceComboFormData.numberOfDays || createServiceComboFormData.numberOfDays.trim() === '' || parseInt(createServiceComboFormData.numberOfDays) < 0) {
-      newErrors.numberOfDays = 'Số ngày không được để trống và phải >= 0';
-    }
-    if (!createServiceComboFormData.numberOfNights || createServiceComboFormData.numberOfNights.trim() === '' || parseInt(createServiceComboFormData.numberOfNights) < 0) {
-      newErrors.numberOfNights = 'Số đêm không được để trống và phải >= 0';
-    }
-    if (!createServiceComboFormData.price || parseFloat(createServiceComboFormData.price) < 0) {
+    if (!createServiceComboFormData.price || isNaN(parseFloat(createServiceComboFormData.price)) || parseFloat(createServiceComboFormData.price) < 0) {
       newErrors.price = 'Giá phải là số >= 0';
     }
-    if (!createServiceComboFormData.availableSlots || parseInt(createServiceComboFormData.availableSlots) < 1) {
+    if (!createServiceComboFormData.availableSlots || isNaN(parseInt(createServiceComboFormData.availableSlots)) || parseInt(createServiceComboFormData.availableSlots) < 1) {
       newErrors.availableSlots = 'Số chỗ trống phải là số nguyên >= 1';
     }
     
@@ -522,28 +548,96 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         return;
       }
 
-      const formData = new FormData();
-      formData.append('Name', createServiceComboFormData.name.trim());
-      formData.append('Address', createServiceComboFormData.address.trim());
-      formData.append('Description', createServiceComboFormData.description?.trim() || '');
-      formData.append('Price', createServiceComboFormData.price);
-      formData.append('AvailableSlots', createServiceComboFormData.availableSlots);
-      formData.append('Status', createServiceComboFormData.status || 'open');
-      formData.append('CancellationPolicy', createServiceComboFormData.cancellationPolicy?.trim() || '');
-      formData.append('StartDate', createServiceComboFormData.startDate || '');
-      formData.append('EndDate', createServiceComboFormData.endDate || '');
-      formData.append('NumberOfDays', createServiceComboFormData.numberOfDays || '0');
-      formData.append('NumberOfNights', createServiceComboFormData.numberOfNights || '0');
-      formData.append('HostId', userId.toString());
-      if (createServiceComboFormData.image) {
-        formData.append('Image', createServiceComboFormData.image);
-      }
-
-      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      // Upload all images to Firebase
+      let imageUrls: string[] = [];
+      if (createServiceComboFormData.images.length > 0) {
+        try {
+          const uploadPromises = createServiceComboFormData.images.map(file => 
+            uploadImageToFirebase(file, 'service-combos')
+          );
+          imageUrls = await Promise.all(uploadPromises);
+          console.log('[ServiceComboManagement] Đã upload', imageUrls.length, 'ảnh lên Firebase');
+        } catch (error) {
+          console.error('[ServiceComboManagement] Lỗi upload ảnh lên Firebase:', error);
+          if (onError) {
+            onError('Không thể upload ảnh. Vui lòng thử lại.');
+          }
+          setIsCreatingServiceCombo(false);
+          return;
         }
-      });
+      }
+      
+      // Join image URLs with commas for backend
+      const imageUrl = imageUrls.length > 0 ? imageUrls.join(',') : null;
+
+      // Send the minimal payload the backend ServiceCombo model expects.
+      // Avoid sending optional fields when empty/null to prevent model-binding edge cases.
+      const requestBody: any = {
+        Name: createServiceComboFormData.name.trim(),
+        Address: createServiceComboFormData.address.trim(),
+        Price: parseFloat(createServiceComboFormData.price) || 0,
+        AvailableSlots: parseInt(createServiceComboFormData.availableSlots) || 1,
+      };
+      const desc = createServiceComboFormData.description?.trim();
+      if (desc) requestBody.Description = desc;
+      const cancel = createServiceComboFormData.cancellationPolicy?.trim();
+      if (cancel) requestBody.CancellationPolicy = cancel;
+      // Backend overwrites Status to "pending" on create, so we omit it.
+      if (imageUrl) requestBody.Image = imageUrl;
+      
+      // Fetch user account data to construct Host object for model binding
+      // Model binding requires Host navigation property with Role, so we need to provide it
+      try {
+        const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          const roleId = userInfo.RoleId || userInfo.roleId || 2; // Default to 2 (Host role)
+          const roleName = userInfo.Role?.Name || userInfo.role?.name || userInfo.RoleName || userInfo.roleName || 'Host';
+          
+          // Construct Host object with available data including Role navigation property
+          // Note: PasswordHash is required but we don't have it - backend should ignore this since HostId is set
+          requestBody.Host = {
+            Id: userId,
+            Name: userInfo.Name || userInfo.name || '',
+            Email: userInfo.Email || userInfo.email || '',
+            PasswordHash: '', // Empty string - backend should ignore this since HostId is set
+            RoleId: roleId,
+            Role: {
+              Id: roleId,
+              Name: roleName,
+              Description: null // Optional field
+            }
+          };
+        } else {
+          // Fallback: minimal Host object with Role
+          requestBody.Host = {
+            Id: userId,
+            RoleId: 2, // Host role
+            Role: {
+              Id: 2,
+              Name: 'Host',
+              Description: null
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing userInfo for Host object:', error);
+        // Fallback: minimal Host object with Role
+        requestBody.Host = {
+          Id: userId,
+          RoleId: 2, // Host role
+          Role: {
+            Id: 2,
+            Name: 'Host',
+            Description: null
+          }
+        };
+      }
+      
+      // Also send HostId - the controller will set it, but sending it helps
+      requestBody.HostId = userId;
+
+      const response = await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO, requestBody);
       const newCombo = response.data;
       
       // Add service combo details if services are selected
@@ -569,11 +663,26 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         onSuccess('Combo dịch vụ đã được tạo thành công!');
       }
       handleCloseCreateServiceComboModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating service combo:', err);
-      if (onError) {
-        onError('Có lỗi xảy ra khi tạo combo dịch vụ. Vui lòng thử lại.');
+      console.error('Create ServiceCombo response data:', err?.response?.data);
+      // Try to surface backend validation errors (ApiController 400) to the UI
+      let errorMessage = 'Có lỗi xảy ra khi tạo combo dịch vụ. Vui lòng thử lại.'
+      const data = err?.response?.data
+      if (data?.errors && typeof data.errors === 'object') {
+        try {
+          const parts = Object.entries(data.errors).flatMap(([key, val]: any) => {
+            if (Array.isArray(val)) return val.map((m) => `${key}: ${m}`)
+            return [`${key}: ${String(val)}`]
+          })
+          if (parts.length > 0) errorMessage = parts.join(' | ')
+        } catch {}
+      } else if (typeof data === 'string' && data.trim()) {
+        errorMessage = data
+      } else if (data?.title) {
+        errorMessage = data.title
       }
+      if (onError) onError(errorMessage)
     } finally {
       setIsCreatingServiceCombo(false);
     }
@@ -585,7 +694,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setIsEditServiceComboModalOpen(true);
     setLoadingEditServiceComboData(true);
     setEditServiceComboErrors({});
-    setEditServiceComboImagePreview(null);
+    setEditServiceComboImagePreviews([]);
     setEditServiceComboSelectedServices({});
     setEditServiceComboServicesPage(1);
     setEditServiceComboServicesPageInput('');
@@ -619,19 +728,20 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         return;
       }
       
-      const existingImage = serviceCombo.Image || serviceCombo.image || null;
+      const existingImageField = serviceCombo.Image || serviceCombo.image || null;
       
-      // Format datetime-local from ISO string
-      const formatDateTimeLocal = (isoString) => {
-        if (!isoString) return '';
-        const date = new Date(isoString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      // Parse comma-separated image URLs
+      const parseImages = (imageField: string | null): string[] => {
+        if (!imageField || typeof imageField !== 'string') return [];
+        return imageField.split(',').map(img => img.trim()).filter(img => img !== '');
       };
+      
+      const existingImageUrls = parseImages(existingImageField);
+      
+      // Lưu ảnh cũ để có thể xóa khỏi Firebase sau khi update thành công
+      // Chỉ lưu nếu là Firebase URL (bắt đầu với https://firebasestorage.googleapis.com)
+      const firebaseUrls = existingImageUrls.filter(url => url.startsWith('https://firebasestorage.googleapis.com'));
+      setOldImageUrlsToDelete(firebaseUrls);
       
       setEditServiceComboFormData({
         name: serviceCombo.Name || serviceCombo.name || '',
@@ -641,19 +751,19 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         availableSlots: String(serviceCombo.AvailableSlots || serviceCombo.availableSlots || ''),
         status: serviceCombo.Status || serviceCombo.status || 'open',
         cancellationPolicy: serviceCombo.CancellationPolicy || serviceCombo.cancellationPolicy || '',
-        image: existingImage,
-        startDate: formatDateTimeLocal(serviceCombo.StartDate || serviceCombo.startDate),
-        endDate: formatDateTimeLocal(serviceCombo.EndDate || serviceCombo.endDate),
-        numberOfDays: String(serviceCombo.NumberOfDays || serviceCombo.numberOfDays || ''),
-        numberOfNights: String(serviceCombo.NumberOfNights || serviceCombo.numberOfNights || '')
+        images: existingImageUrls, // Store as string array
       });
       
-      if (existingImage && (existingImage.startsWith('data:image') || existingImage.startsWith('http://') || existingImage.startsWith('https://'))) {
-        setEditServiceComboImagePreview(existingImage);
-      } else if (existingImage) {
-      const backendRoot = API_BASE_URL.replace('/api', '');
-      setEditServiceComboImagePreview(`${backendRoot}/images/${existingImage}`);
-      }
+      // Create previews for existing images
+      const previews = existingImageUrls.map(img => {
+        if (img.startsWith('data:image') || img.startsWith('http://') || img.startsWith('https://')) {
+          return img;
+        } else {
+          const backendRoot = API_BASE_URL.replace('/api', '');
+          return `${backendRoot}/images/${img}`;
+        }
+      });
+      setEditServiceComboImagePreviews(previews);
       
       // Load services from API
       const userId = getUserId();
@@ -673,7 +783,26 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       }
       
       // Load promotions - TODO: Implement promotion API endpoint
-      setEditServiceComboAllPromotions([]);
+      if (userId) {
+        const promotionsResponse = await axiosInstance.get(`${API_ENDPOINTS.BONUS_SERVICE}/host/${userId}`);
+        setEditServiceComboAllPromotions(promotionsResponse.data || []);
+      } else {
+        setEditServiceComboAllPromotions([]);
+      }
+
+      // Load coupons (and enrich with details)
+      if (userId) {
+        try {
+          const couponsResponse = await axiosInstance.get(`${API_ENDPOINTS.COUPON}/host/${userId}`);
+          const coupons = couponsResponse.data || [];
+          const enriched = await enrichCouponsWithDetails(coupons);
+          setEditServiceComboAllCoupons(enriched);
+        } catch {
+          setEditServiceComboAllCoupons([]);
+        }
+      } else {
+        setEditServiceComboAllCoupons([]);
+      }
       
       // Load existing service combo details from API
       const detailsResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/combo/${serviceComboId}`);
@@ -713,14 +842,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       availableSlots: '',
       status: 'open',
       cancellationPolicy: '',
-      image: null,
-      startDate: '',
-      endDate: '',
-      numberOfDays: '',
-      numberOfNights: ''
+        images: [],
     });
     setEditServiceComboErrors({});
-    setEditServiceComboImagePreview(null);
+    setEditServiceComboImagePreviews([]);
+    setOldImageUrlsToDelete([]); // Reset ảnh cũ cần xóa
     setEditServiceComboSelectedServices({});
     setEditServiceComboServicesPage(1);
     setEditServiceComboServicesPageInput('');
@@ -760,17 +886,63 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     }
   };
 
-  // Handle edit service combo image change
+  // Handle edit service combo image change (multiple images, max 10)
   const handleEditServiceComboImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files || []) as File[];
+    const MAX_IMAGES = 10;
+    
+    if (files.length === 0) {
+      return;
+    }
+
+    const currentCount = editServiceComboFormData.images.length;
+    const remainingSlots = MAX_IMAGES - currentCount;
+    
+    if (remainingSlots <= 0) {
+      if (onError) {
+        onError(`Chỉ được tải tối đa ${MAX_IMAGES} ảnh.`);
+      }
+      return;
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+    const finalFiles = [...editServiceComboFormData.images, ...filesToAdd];
+    setEditServiceComboFormData(prev => ({ ...prev, images: finalFiles }));
+
+    // Create previews for new files
+    const newPreviews: string[] = [];
+    filesToAdd.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setEditServiceComboImagePreview(event.target.result);
+        newPreviews.push(event.target.result as string);
+        if (newPreviews.length === filesToAdd.length) {
+          setEditServiceComboImagePreviews([...editServiceComboImagePreviews, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle remove image khi edit
+  const handleRemoveEditImage = (index: number) => {
+    const imageToRemove = editServiceComboFormData.images[index];
+    
+    // If it's an existing URL (string), mark it for deletion from Firebase
+    if (typeof imageToRemove === 'string' && imageToRemove.startsWith('https://firebasestorage.googleapis.com')) {
+      setOldImageUrlsToDelete(prev => [...prev, imageToRemove]);
     }
-    handleEditServiceComboInputChange(e);
+    
+    // Remove from arrays
+    const newImages = editServiceComboFormData.images.filter((_, i) => i !== index);
+    const newPreviews = editServiceComboImagePreviews.filter((_, i) => i !== index);
+    setEditServiceComboFormData(prev => ({ ...prev, images: newImages }));
+    setEditServiceComboImagePreviews(newPreviews);
+    
+    // Reset file input
+    const fileInput = document.getElementById('edit-service-combo-image') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   // Handle edit service combo service select
@@ -803,21 +975,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       ...prev,
       [promotionId]: {
         selected: selected,
-        quantity: prev[promotionId]?.quantity || 0
       }
     }));
   };
 
-  // Handle edit service combo promotion quantity change
-  const handleEditServiceComboPromotionQuantityChange = (promotionId, quantity) => {
-    setEditServiceComboSelectedPromotions(prev => ({
-      ...prev,
-      [promotionId]: {
-        selected: prev[promotionId]?.selected || false,
-        quantity: parseInt(quantity) || 0
-      }
-    }));
-  };
+  // Promotions (BonusService) selection has no quantity: backend doesn't store it for ServiceCombo
 
   // Handle edit service combo coupon select
   const handleEditServiceComboCouponSelect = (couponId, checked) => {
@@ -844,36 +1006,17 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     }
     
     // Validate required fields
-    const newErrors: { name?: string; address?: string; startDate?: string; endDate?: string; numberOfDays?: string; numberOfNights?: string; price?: string; availableSlots?: string } = {};
+    const newErrors: { name?: string; address?: string; price?: string; availableSlots?: string } = {};
     if (!editServiceComboFormData.name || editServiceComboFormData.name.trim() === '') {
       newErrors.name = 'Tên combo dịch vụ không được để trống';
     }
     if (!editServiceComboFormData.address || editServiceComboFormData.address.trim() === '') {
       newErrors.address = 'Địa chỉ không được để trống';
     }
-    if (!editServiceComboFormData.startDate || editServiceComboFormData.startDate.trim() === '') {
-      newErrors.startDate = 'Ngày triển khai không được để trống';
-    }
-    if (!editServiceComboFormData.endDate || editServiceComboFormData.endDate.trim() === '') {
-      newErrors.endDate = 'Ngày kết thúc không được để trống';
-    }
-    if (editServiceComboFormData.startDate && editServiceComboFormData.endDate) {
-      const startDate = new Date(editServiceComboFormData.startDate);
-      const endDate = new Date(editServiceComboFormData.endDate);
-      if (endDate <= startDate) {
-        newErrors.endDate = 'Ngày kết thúc phải sau ngày triển khai';
-      }
-    }
-    if (!editServiceComboFormData.numberOfDays || editServiceComboFormData.numberOfDays.trim() === '' || parseInt(editServiceComboFormData.numberOfDays) < 0) {
-      newErrors.numberOfDays = 'Số ngày không được để trống và phải >= 0';
-    }
-    if (!editServiceComboFormData.numberOfNights || editServiceComboFormData.numberOfNights.trim() === '' || parseInt(editServiceComboFormData.numberOfNights) < 0) {
-      newErrors.numberOfNights = 'Số đêm không được để trống và phải >= 0';
-    }
-    if (!editServiceComboFormData.price || parseFloat(editServiceComboFormData.price) < 0) {
+    if (!editServiceComboFormData.price || isNaN(parseFloat(editServiceComboFormData.price)) || parseFloat(editServiceComboFormData.price) < 0) {
       newErrors.price = 'Giá phải là số >= 0';
     }
-    if (!editServiceComboFormData.availableSlots || parseInt(editServiceComboFormData.availableSlots) < 1) {
+    if (!editServiceComboFormData.availableSlots || isNaN(parseInt(editServiceComboFormData.availableSlots)) || parseInt(editServiceComboFormData.availableSlots) < 1) {
       newErrors.availableSlots = 'Số chỗ trống phải là số nguyên >= 1';
     }
     
@@ -886,27 +1029,57 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setEditServiceComboErrors({});
     
     try {
-      const formData = new FormData();
-      formData.append('Name', editServiceComboFormData.name.trim());
-      formData.append('Address', editServiceComboFormData.address.trim());
-      formData.append('Description', editServiceComboFormData.description?.trim() || '');
-      formData.append('Price', editServiceComboFormData.price);
-      formData.append('AvailableSlots', editServiceComboFormData.availableSlots);
-      formData.append('Status', editServiceComboFormData.status || 'open');
-      formData.append('CancellationPolicy', editServiceComboFormData.cancellationPolicy?.trim() || '');
-      formData.append('StartDate', editServiceComboFormData.startDate || '');
-      formData.append('EndDate', editServiceComboFormData.endDate || '');
-      formData.append('NumberOfDays', editServiceComboFormData.numberOfDays || '0');
-      formData.append('NumberOfNights', editServiceComboFormData.numberOfNights || '0');
-      if (editServiceComboFormData.image) {
-        formData.append('Image', editServiceComboFormData.image);
-      }
-
-      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE_COMBO}/${editingServiceComboId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      // Process images: separate existing URLs from new Files
+      const existingImageUrls: string[] = [];
+      const newImageFiles: File[] = [];
+      
+      editServiceComboFormData.images.forEach(img => {
+        if (img instanceof File) {
+          newImageFiles.push(img);
+        } else if (typeof img === 'string') {
+          existingImageUrls.push(img);
         }
       });
+      
+      // Upload new images to Firebase
+      let uploadedImageUrls: string[] = [];
+      if (newImageFiles.length > 0) {
+        try {
+          const uploadPromises = newImageFiles.map(file => 
+            uploadImageToFirebase(file, 'service-combos')
+          );
+          uploadedImageUrls = await Promise.all(uploadPromises);
+          console.log('✅ [ServiceComboManagement] Đã upload', uploadedImageUrls.length, 'ảnh mới lên Firebase');
+        } catch (error) {
+          console.error('❌ [ServiceComboManagement] Lỗi upload ảnh lên Firebase:', error);
+          if (onError) {
+            onError('Không thể upload ảnh. Vui lòng thử lại.');
+          }
+          setIsEditingServiceCombo(false);
+          return;
+        }
+      }
+      
+      // Combine existing and new image URLs
+      const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+      const imageUrl = allImageUrls.length > 0 ? allImageUrls.join(',') : null;
+
+      // Send minimal payload, omit optional fields if empty.
+      const requestBody: any = {
+        Name: editServiceComboFormData.name.trim(),
+        Address: editServiceComboFormData.address.trim(),
+        Price: parseFloat(editServiceComboFormData.price) || 0,
+        AvailableSlots: parseInt(editServiceComboFormData.availableSlots) || 1,
+      };
+      const desc = editServiceComboFormData.description?.trim();
+      if (desc) requestBody.Description = desc;
+      const cancel = editServiceComboFormData.cancellationPolicy?.trim();
+      if (cancel) requestBody.CancellationPolicy = cancel;
+      // For update, keep Status if present (backend Update copies it).
+      if (editServiceComboFormData.status) requestBody.Status = editServiceComboFormData.status;
+      if (imageUrl) requestBody.Image = imageUrl;
+
+      const response = await axiosInstance.put(`${API_ENDPOINTS.SERVICE_COMBO}/${editingServiceComboId}`, requestBody);
       const updatedCombo = response.data;
       
       // Update service combo details
@@ -944,12 +1117,29 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       const filtered = applyServiceComboFilters(updatedCombos, serviceComboFilterName, serviceComboFilterStatus, serviceComboSortOrder);
       setFilteredServiceCombos(filtered);
       
+      // Sau khi update thành công, xóa ảnh cũ khỏi Firebase nếu user đã remove chúng
+      if (oldImageUrlsToDelete.length > 0) {
+        // Xóa các ảnh đã bị remove (không còn trong allImageUrls)
+        const urlsToDelete = oldImageUrlsToDelete.filter(oldUrl => !allImageUrls.includes(oldUrl));
+        
+        if (urlsToDelete.length > 0) {
+          try {
+            await Promise.all(urlsToDelete.map(url => deleteImageFromFirebase(url)));
+            console.log('✅ [ServiceComboManagement] Đã xóa', urlsToDelete.length, 'ảnh cũ khỏi Firebase');
+          } catch (error) {
+            console.error('⚠️ [ServiceComboManagement] Lỗi xóa ảnh cũ khỏi Firebase (không ảnh hưởng đến kết quả):', error);
+            // Không throw error, chỉ log vì update đã thành công
+          }
+        }
+      }
+      
       if (onSuccess) {
         onSuccess('Combo dịch vụ đã được cập nhật thành công!');
       }
       handleCloseEditServiceComboModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating service combo:', err);
+      console.error('Update ServiceCombo response data:', err?.response?.data);
       if (onError) {
         onError('Có lỗi xảy ra khi cập nhật combo dịch vụ. Vui lòng thử lại.');
       }
@@ -1083,9 +1273,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                           </div>
                           <div className="combo-service-details">
                             <h3 className="combo-service-name">{s.Name || s.name}</h3>
-                            <p className="combo-service-date">
-                              Thời gian: {s.StartDate || s.startDate ? new Date(s.StartDate || s.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {s.EndDate || s.endDate ? new Date(s.EndDate || s.endDate).toLocaleDateString('vi-VN') : 'N/A'}
-                            </p>
                             <p className="service-duration">
                               Trong: {s.NumberOfDays || s.numberOfDays || 0} ngày {s.NumberOfNights || s.numberOfNights || 0} đêm
                             </p>
@@ -1206,7 +1393,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         onClose={handleCloseCreateServiceComboModal}
         formData={createServiceComboFormData}
         errors={createServiceComboErrors}
-        imagePreview={createServiceComboImagePreview}
+        imagePreviews={createServiceComboImagePreviews}
         isSubmitting={isCreatingServiceCombo}
         allServices={createServiceComboAllServices}
         selectedServices={createServiceComboSelectedServices}
@@ -1235,10 +1422,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         isCouponsTableOpen={isCouponsTableOpen}
         onInputChange={handleCreateServiceComboInputChange}
         onImageChange={handleCreateServiceComboImageChange}
+        onRemoveImage={handleRemoveCreateImage}
         onServiceSelect={handleCreateServiceComboServiceSelect}
         onServiceQuantityChange={handleCreateServiceComboServiceQuantityChange}
         onPromotionSelect={handleCreateServiceComboPromotionSelect}
-        onPromotionQuantityChange={handleCreateServiceComboPromotionQuantityChange}
         onCouponSelect={handleCreateServiceComboCouponSelect}
         onServicesPageChange={setCreateServiceComboServicesPage}
         onServicesPageInputChange={setCreateServiceComboServicesPageInput}
@@ -1266,7 +1453,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         loading={loadingEditServiceComboData}
         formData={editServiceComboFormData}
         errors={editServiceComboErrors}
-        imagePreview={editServiceComboImagePreview}
+        imagePreviews={editServiceComboImagePreviews}
         isSubmitting={isEditingServiceCombo}
         allServices={editServiceComboAllServices}
         selectedServices={editServiceComboSelectedServices}
@@ -1295,10 +1482,10 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         isCouponsTableOpen={isEditCouponsTableOpen}
         onInputChange={handleEditServiceComboInputChange}
         onImageChange={handleEditServiceComboImageChange}
+        onRemoveImage={handleRemoveEditImage}
         onServiceSelect={handleEditServiceComboServiceSelect}
         onServiceQuantityChange={handleEditServiceComboServiceQuantityChange}
         onPromotionSelect={handleEditServiceComboPromotionSelect}
-        onPromotionQuantityChange={handleEditServiceComboPromotionQuantityChange}
         onCouponSelect={handleEditServiceComboCouponSelect}
         onServicesPageChange={setEditServiceComboServicesPage}
         onServicesPageInputChange={setEditServiceComboServicesPageInput}

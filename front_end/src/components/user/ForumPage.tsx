@@ -210,17 +210,18 @@ const ForumPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0)
     checkUserInfo()
+    fetchPosts()
     
     // Load cached posts ngay lập tức để hiển thị nhanh
-    const cachedPosts = loadCachedPosts()
-    if (cachedPosts && cachedPosts.length > 0) {
-      setPosts(cachedPosts)
-      setLoading(false)
-      // Fetch fresh data ở background
-      fetchPosts(false, true)
-    } else {
-      fetchPosts()
-    }
+    // const cachedPosts = loadCachedPosts()
+    // if (cachedPosts && cachedPosts.length > 0) {
+    //   setPosts(cachedPosts)
+    //   setLoading(false)
+    //   // Fetch fresh data ở background
+    //   fetchPosts(false, true)
+    // } else {
+    //   fetchPosts()
+    // }
   }, [])
 
   useEffect(() => {
@@ -506,67 +507,67 @@ const ForumPage = () => {
       const approvedPosts = (response.data || []).filter(post => post.Status === 'Approved')
       
       // Normalize posts và kiểm tra user đã like/save chưa
-      const savedPostIds = getSavedPostIds()
-      const newUserReactions: Record<string, number> = {}
+      // const savedPostIds = getSavedPostIds()
+      // const newUserReactions: Record<string, number> = {}
       
-      // Nếu preserveSavedState = true, giữ lại isSaved từ state hiện tại
-      const currentPostsMap = preserveSavedState 
-        ? new Map(posts.map(p => [p.PostId || '', p.isSaved]))
-        : new Map<string, boolean>()
+      // // Nếu preserveSavedState = true, giữ lại isSaved từ state hiện tại
+      // const currentPostsMap = preserveSavedState 
+      //   ? new Map(posts.map(p => [p.PostId || '', p.isSaved]))
+      //   : new Map<string, boolean>()
       
-      const postsWithUserStatus = approvedPosts.map((post) => {
-        const normalized = normalizePost(post)
-        const postId = normalized.PostId || ''
+      // const postsWithUserStatus = approvedPosts.map((post) => {
+      //   const normalized = normalizePost(post)
+      //   const postId = normalized.PostId || ''
         
-        if (userInfo) {
-          const userId = userInfo.Id || userInfo.id
-          // Tìm reaction của user hiện tại - so sánh cả string và number
-          const userReaction = normalized.Likes?.find(
-            (like) => {
-              const likeAccountId = String(like.AccountId || '').trim()
-              const currentUserId = String(userId || '').trim()
-              return likeAccountId === currentUserId && likeAccountId !== ''
-            }
-          )
+      //   if (userInfo) {
+      //     const userId = userInfo.Id || userInfo.id
+      //     // Tìm reaction của user hiện tại - so sánh cả string và number
+      //     const userReaction = normalized.Likes?.find(
+      //       (like) => {
+      //         const likeAccountId = String(like.AccountId || '').trim()
+      //         const currentUserId = String(userId || '').trim()
+      //         return likeAccountId === currentUserId && likeAccountId !== ''
+      //       }
+      //     )
           
-          // Nếu preserveSavedState và có state hiện tại, giữ lại state đó
-          // Nếu không, lấy từ localStorage
-          const isSaved = preserveSavedState && currentPostsMap.has(postId)
-            ? currentPostsMap.get(postId)!
-            : savedPostIds.includes(postId)
+      //     // Nếu preserveSavedState và có state hiện tại, giữ lại state đó
+      //     // Nếu không, lấy từ localStorage
+      //     const isSaved = preserveSavedState && currentPostsMap.has(postId)
+      //       ? currentPostsMap.get(postId)!
+      //       : savedPostIds.includes(postId)
           
-          const userReactionId = userReaction ? parseInt(userReaction.PostLikeId) : undefined
+      //     const userReactionId = userReaction ? parseInt(userReaction.PostLikeId) : undefined
           
-          // Lấy reaction type từ backend (ReactionType field)
-          if (userReaction && userReaction.ReactionType) {
-            const reactionTypeId = getReactionTypeId(userReaction.ReactionType)
-            newUserReactions[postId] = reactionTypeId
-          } else if (userReaction) {
-            // Có reaction nhưng không có ReactionType -> mặc định là Like (1)
-            newUserReactions[postId] = 1
-          } else if (userReactionId) {
-            // Fallback: giữ lại từ state hoặc mặc định là Like (1)
-            newUserReactions[postId] = userReactions[postId] || 1
-          }
+      //     // Lấy reaction type từ backend (ReactionType field)
+      //     if (userReaction && userReaction.ReactionType) {
+      //       const reactionTypeId = getReactionTypeId(userReaction.ReactionType)
+      //       newUserReactions[postId] = reactionTypeId
+      //     } else if (userReaction) {
+      //       // Có reaction nhưng không có ReactionType -> mặc định là Like (1)
+      //       newUserReactions[postId] = 1
+      //     } else if (userReactionId) {
+      //       // Fallback: giữ lại từ state hoặc mặc định là Like (1)
+      //       newUserReactions[postId] = userReactions[postId] || 1
+      //     }
           
-          return {
-            ...normalized,
-            isLiked: !!userReaction, // Giữ lại để tương thích
-            isSaved: isSaved,
-            userReactionId: userReactionId,
-          }
-        }
-        const isSaved = preserveSavedState && currentPostsMap.has(postId)
-          ? currentPostsMap.get(postId)!
-          : savedPostIds.includes(postId)
-        return { ...normalized, isSaved }
-      })
+      //     return {
+      //       ...normalized,
+      //       isLiked: !!userReaction, // Giữ lại để tương thích
+      //       isSaved: isSaved,
+      //       userReactionId: userReactionId,
+      //     }
+      //   }
+      //   const isSaved = preserveSavedState && currentPostsMap.has(postId)
+      //     ? currentPostsMap.get(postId)!
+      //     : savedPostIds.includes(postId)
+      //   return { ...normalized, isSaved }
+      // })
       
-      setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
-      setPosts(postsWithUserStatus)
+      // setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
+      setPosts(response.data)
       
       // Save to cache
-      saveCachedPosts(postsWithUserStatus)
+      saveCachedPosts(approvedPosts)
     } catch (err: any) {
       console.error('Error fetching posts:', err)
       // Chỉ show error nếu không phải background fetch và không có cached data

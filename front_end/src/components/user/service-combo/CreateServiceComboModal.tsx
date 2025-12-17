@@ -1,5 +1,5 @@
-import React from 'react';
-import { XIcon, ChevronDownIcon } from '../icons/index';
+import React, { useState, useRef } from 'react';
+import { XIcon, ChevronDownIcon, ImageIcon } from '../icons/index';
 import './CreateServiceComboModal.css';
 
 interface CreateServiceComboModalProps {
@@ -13,14 +13,10 @@ interface CreateServiceComboModalProps {
     availableSlots: string;
     status: string;
     cancellationPolicy: string;
-    image: File | string | null;
-    startDate: string;
-    endDate: string;
-    numberOfDays: string;
-    numberOfNights: string;
+    images: File[];
   };
   errors: Record<string, string>;
-  imagePreview: string | null;
+  imagePreviews: string[];
   isSubmitting: boolean;
   allServices: any[];
   selectedServices: Record<string, { selected: boolean; quantity: number }>;
@@ -31,7 +27,7 @@ interface CreateServiceComboModalProps {
   serviceFilterPrice: string;
   isServicesTableOpen: boolean;
   allPromotions: any[];
-  selectedPromotions: Record<string, { selected: boolean; quantity: number }>;
+  selectedPromotions: Record<string, { selected: boolean }>;
   promotionsPage: number;
   promotionsPageInput: string;
   promotionsPerPage: number;
@@ -49,10 +45,10 @@ interface CreateServiceComboModalProps {
   isCouponsTableOpen: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveImage?: (index: number) => void;
   onServiceSelect: (serviceId: string, checked: boolean) => void;
   onServiceQuantityChange: (serviceId: string, quantity: string) => void;
   onPromotionSelect: (promotionId: string, selected: boolean) => void;
-  onPromotionQuantityChange: (promotionId: string, quantity: string) => void;
   onCouponSelect: (couponId: string, checked: boolean) => void;
   onServicesPageChange: (page: number) => void;
   onServicesPageInputChange: (value: string) => void;
@@ -78,7 +74,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   onClose,
   formData,
   errors,
-  imagePreview,
+  imagePreviews,
   isSubmitting,
   allServices,
   selectedServices,
@@ -107,10 +103,10 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   isCouponsTableOpen,
   onInputChange,
   onImageChange,
+  onRemoveImage,
   onServiceSelect,
   onServiceQuantityChange,
   onPromotionSelect,
-  onPromotionQuantityChange,
   onCouponSelect,
   onServicesPageChange,
   onServicesPageInputChange,
@@ -130,6 +126,43 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   onToggleCouponsTable,
   onSubmit
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files) as File[];
+    if (files.length > 0) {
+      // Create a synthetic event to reuse the existing handler
+      const syntheticEvent = {
+        target: {
+          files: files as any,
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+      onImageChange(syntheticEvent);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   if (!isOpen) return null;
 
   // Filter services
@@ -152,17 +185,68 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   const servicesEndIndex = servicesStartIndex + servicesPerPage;
   const currentPageServices = filteredServices.slice(servicesStartIndex, servicesEndIndex);
 
+  // Helper function to parse TargetAudience and extract Rank and UserType
+  const parsePromotionInfo = (promotion: any) => {
+    const name = promotion.Name || promotion.name || 'N/A';
+    const targetAudienceStr = promotion.TargetAudience || promotion.targetAudience;
+    
+    let ranks: string[] = [];
+    let userTypes: string[] = [];
+    let pairedSegments: string[] = [];
+    
+    if (targetAudienceStr) {
+      try {
+        const ta = JSON.parse(targetAudienceStr);
+        if (ta.forAgency) {
+          userTypes.push('Công ty');
+          const agencyRanks: string[] = [];
+          if (ta.agencyLevels?.level1) agencyRanks.push('Đồng');
+          if (ta.agencyLevels?.level2) agencyRanks.push('Bạc');
+          if (ta.agencyLevels?.level3) agencyRanks.push('Vàng');
+          ranks.push(...agencyRanks);
+          if (agencyRanks.length > 0) pairedSegments.push(`Công ty: ${agencyRanks.join(', ')}`);
+        }
+        if (ta.forTourist) {
+          userTypes.push('Khách hàng');
+          const touristRanks: string[] = [];
+          if (ta.touristLevels?.level1) touristRanks.push('Đồng');
+          if (ta.touristLevels?.level2) touristRanks.push('Bạc');
+          if (ta.touristLevels?.level3) touristRanks.push('Vàng');
+          ranks.push(...touristRanks);
+          if (touristRanks.length > 0) pairedSegments.push(`Khách hàng: ${touristRanks.join(', ')}`);
+        }
+      } catch (e) {
+        console.error('Error parsing target audience:', e);
+      }
+    }
+    
+    const uniqueRanks = [...new Set(ranks)];
+    const uniqueUserTypes = [...new Set(userTypes)];
+    const pairedDisplay = pairedSegments.length > 0 ? pairedSegments.join(' | ') : 'N/A';
+
+    return {
+      name,
+      ranks: uniqueRanks, // used for filtering
+      userTypes: uniqueUserTypes, // used for filtering
+      pairedDisplay,
+      rankDisplay: uniqueRanks.length > 0 ? uniqueRanks.join(', ') : 'N/A',
+      userTypeDisplay: uniqueUserTypes.length > 0 ? uniqueUserTypes.join(', ') : 'N/A'
+    };
+  };
+
   // Filter promotions
   let filteredPromotions = [...allPromotions];
   if (promotionFilterName.trim() !== '') {
-    filteredPromotions = filteredPromotions.filter(p => 
-      (p.ServiceName || '').toLowerCase().includes(promotionFilterName.toLowerCase().trim())
-    );
+    filteredPromotions = filteredPromotions.filter(p => {
+      const info = parsePromotionInfo(p);
+      return info.name.toLowerCase().includes(promotionFilterName.toLowerCase().trim());
+    });
   }
   if (promotionFilterRank !== 'all') {
-    filteredPromotions = filteredPromotions.filter(p => 
-      (p.Rank || '') === promotionFilterRank
-    );
+    filteredPromotions = filteredPromotions.filter(p => {
+      const info = parsePromotionInfo(p);
+      return info.ranks.includes(promotionFilterRank);
+    });
   }
   const promotionsTotalPages = Math.ceil(filteredPromotions.length / promotionsPerPage);
   const promotionsStartIndex = (promotionsPage - 1) * promotionsPerPage;
@@ -170,21 +254,88 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
   const currentPagePromotions = filteredPromotions.slice(promotionsStartIndex, promotionsEndIndex);
 
   // Filter coupons
+  const parseCouponInfo = (coupon: any) => {
+    const code = coupon.Code || coupon.code || 'N/A';
+    const targetAudienceStr = coupon.TargetAudience || coupon.targetAudience;
+    const requiredLevelRaw =
+      coupon.RequiredLevel ??
+      coupon.requiredLevel ??
+      coupon.REQUIRED_LEVEL ??
+      coupon.required_level ??
+      coupon.requiredLevelId ??
+      coupon.Requiredlevel;
+    const requiredLevel = typeof requiredLevelRaw === 'string' ? parseInt(requiredLevelRaw, 10) : requiredLevelRaw;
+
+    let ranks: string[] = [];
+    let userTypes: string[] = [];
+
+    if (targetAudienceStr) {
+      try {
+        // If TargetAudience is JSON (preferred), parse to derive userTypes (and ranks if present)
+        if (typeof targetAudienceStr === 'string' && targetAudienceStr.trim().startsWith('{')) {
+          const ta = JSON.parse(targetAudienceStr);
+          if (ta.forAgency) {
+            userTypes.push('Công ty');
+            if (ta.agencyLevels?.level1) ranks.push('Đồng');
+            if (ta.agencyLevels?.level2) ranks.push('Bạc');
+            if (ta.agencyLevels?.level3) ranks.push('Vàng');
+          }
+          if (ta.forTourist) {
+            userTypes.push('Khách hàng');
+            if (ta.touristLevels?.level1) ranks.push('Đồng');
+            if (ta.touristLevels?.level2) ranks.push('Bạc');
+            if (ta.touristLevels?.level3) ranks.push('Vàng');
+          }
+        } else if (typeof targetAudienceStr === 'string' && targetAudienceStr.trim() !== '' && targetAudienceStr.trim() !== 'string') {
+          // If it's not JSON and not the default placeholder "string", treat it as a display value
+          userTypes.push(targetAudienceStr.trim());
+        }
+      } catch (e) {
+        console.error('Error parsing coupon target audience:', e);
+      }
+    }
+
+    // Fallback: backend Coupon.TargetAudience is [NotMapped], so often missing in responses.
+    // Use RequiredLevel (0..3) to derive a single "rank" label when available.
+    let rankDisplayFromLevel: string | null = null;
+    if (typeof requiredLevel === 'number' && !isNaN(requiredLevel)) {
+      if (requiredLevel === 0) rankDisplayFromLevel = 'Tất cả';
+      if (requiredLevel === 1) rankDisplayFromLevel = 'Đồng';
+      if (requiredLevel === 2) rankDisplayFromLevel = 'Bạc';
+      if (requiredLevel === 3) rankDisplayFromLevel = 'Vàng';
+    }
+    // Prefer explicit level-derived rank when ranks weren't derived from TargetAudience
+    if (ranks.length === 0 && rankDisplayFromLevel && rankDisplayFromLevel !== 'Tất cả') {
+      ranks.push(rankDisplayFromLevel);
+    }
+
+    return {
+      code,
+      ranks: [...new Set(ranks)],
+      userTypes: [...new Set(userTypes)],
+      rankDisplay: rankDisplayFromLevel || (ranks.length > 0 ? ranks.join(', ') : 'N/A'),
+      userTypeDisplay: userTypes.length > 0 ? userTypes.join(', ') : 'N/A'
+    };
+  };
+
   let filteredCoupons = [...allCoupons];
   if (couponFilterCode.trim() !== '') {
-    filteredCoupons = filteredCoupons.filter(c => 
-      (c.Code || '').toLowerCase().includes(couponFilterCode.toLowerCase().trim())
-    );
+    filteredCoupons = filteredCoupons.filter((c) => {
+      const info = parseCouponInfo(c);
+      return info.code.toLowerCase().includes(couponFilterCode.toLowerCase().trim());
+    });
   }
   if (couponFilterRank !== 'all') {
-    filteredCoupons = filteredCoupons.filter(c => 
-      (c.Rank || '') === couponFilterRank
-    );
+    filteredCoupons = filteredCoupons.filter((c) => {
+      const info = parseCouponInfo(c);
+      return info.ranks.includes(couponFilterRank);
+    });
   }
   if (couponFilterUserType !== 'all') {
-    filteredCoupons = filteredCoupons.filter(c => 
-      (c.UserType || '') === couponFilterUserType
-    );
+    filteredCoupons = filteredCoupons.filter((c) => {
+      const info = parseCouponInfo(c);
+      return info.userTypes.includes(couponFilterUserType);
+    });
   }
   const couponsTotalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
   const couponsStartIndex = (couponsPage - 1) * couponsPerPage;
@@ -263,84 +414,6 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               </div>
             </div>
 
-            {/* Start Date and End Date Fields */}
-            <div className="combo-create-create-service-combo-field-row">
-              <div className="combo-create-create-service-combo-field">
-                <label htmlFor="create-service-combo-startDate">
-                  Ngày triển khai
-                  <span className="combo-create-create-service-combo-required-indicator">*</span>
-                </label>
-                <input
-                  id="create-service-combo-startDate"
-                  name="startDate"
-                  type="datetime-local"
-                  required
-                  value={formData.startDate}
-                  onChange={onInputChange}
-                />
-                {errors.startDate && <div className="combo-create-create-service-combo-error">{errors.startDate}</div>}
-              </div>
-
-              <div className="combo-create-create-service-combo-field">
-                <label htmlFor="create-service-combo-endDate">
-                  Ngày kết thúc
-                  <span className="combo-create-create-service-combo-required-indicator">*</span>
-                </label>
-                <input
-                  id="create-service-combo-endDate"
-                  name="endDate"
-                  type="datetime-local"
-                  required
-                  value={formData.endDate}
-                  onChange={onInputChange}
-                  min={formData.startDate || undefined}
-                />
-                {errors.endDate && <div className="combo-create-create-service-combo-error">{errors.endDate}</div>}
-              </div>
-            </div>
-
-            {/* Duration Field */}
-            <div className="combo-create-create-service-combo-field">
-              <label>
-                Thời hạn
-                <span className="combo-create-create-service-combo-required-indicator">*</span>
-              </label>
-              <div className="combo-create-create-service-combo-duration-inputs">
-                <input
-                  id="create-service-combo-numberOfDays"
-                  name="numberOfDays"
-                  type="number"
-                  min="0"
-                  max="50"
-                  step="1"
-                  required
-                  placeholder="0"
-                  value={formData.numberOfDays}
-                  onChange={onInputChange}
-                  inputMode="numeric"
-                  className="combo-create-create-service-combo-duration-input"
-                />
-                <span className="combo-create-create-service-combo-duration-label">ngày</span>
-                <input
-                  id="create-service-combo-numberOfNights"
-                  name="numberOfNights"
-                  type="number"
-                  min="0"
-                  max="50"
-                  step="1"
-                  required
-                  placeholder="0"
-                  value={formData.numberOfNights}
-                  onChange={onInputChange}
-                  inputMode="numeric"
-                  className="combo-create-create-service-combo-duration-input"
-                />
-                <span className="combo-create-create-service-combo-duration-label">đêm</span>
-              </div>
-              {errors.numberOfDays && <div className="combo-create-create-service-combo-error">{errors.numberOfDays}</div>}
-              {errors.numberOfNights && <div className="combo-create-create-service-combo-error">{errors.numberOfNights}</div>}
-            </div>
-
             {/* Price and Available Slots Fields */}
             <div className="combo-create-create-service-combo-field-row">
               <div className="combo-create-create-service-combo-field">
@@ -400,26 +473,71 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
               </div>
             </div>
 
-            {/* Image Upload Field */}
+            {/* Image Upload Field - Forum Style */}
             <div className="combo-create-create-service-combo-field">
-              <label htmlFor="create-service-combo-image">Chọn ảnh (Image)</label>
-              <input
-                id="create-service-combo-image"
-                name="image"
-                type="file"
-                accept="image/*"
-                onChange={onImageChange}
-              />
-              <div className="combo-create-create-service-combo-hint">
-                Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)
-              </div>
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  className="combo-create-create-service-combo-img-preview"
-                  alt="Xem trước ảnh"
-                  loading="lazy"
+              <label className="combo-create-create-service-combo-label">
+                Hình ảnh (tối đa 10 ảnh, mỗi ảnh tối đa 5MB)
+              </label>
+              
+              {/* Drag & Drop Area */}
+              <div
+                className={`combo-create-upload-area ${isDragging ? 'combo-create-dragging' : ''} ${errors.images ? 'combo-create-error' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleUploadClick}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="create-service-combo-image"
+                  name="images"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  multiple
+                  onChange={onImageChange}
+                  className="combo-create-file-input"
                 />
+                <div className="combo-create-upload-content">
+                  <ImageIcon className="combo-create-upload-icon" />
+                  <p className="combo-create-upload-text">
+                    Kéo thả ảnh vào đây hoặc <span className="combo-create-upload-link">chọn từ máy tính</span>
+                  </p>
+                  <p className="combo-create-upload-hint">
+                    Hỗ trợ: JPG, PNG, GIF, WEBP (tối đa 5MB/ảnh). Đã chọn: {imagePreviews.length}/10
+                  </p>
+                </div>
+              </div>
+
+              {errors.images && (
+                <span className="combo-create-form-error-text">{errors.images}</span>
+              )}
+
+              {/* Image Preview Grid */}
+              {imagePreviews.length > 0 && (
+                <div className="combo-create-image-preview-grid">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="combo-create-image-preview-item">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="combo-create-image-preview"
+                      />
+                      {onRemoveImage && (
+                        <button
+                          type="button"
+                          className="combo-create-image-remove-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveImage(index);
+                          }}
+                          aria-label="Xóa ảnh"
+                        >
+                          <XIcon />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -663,14 +781,13 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           <th>Tên ưu đãi</th>
                           <th>Hạng người dùng</th>
                           <th>Loại người dùng</th>
-                          <th>Số lượng</th>
                           <th>Chọn</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPromotions.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="combo-create-create-service-combo-empty-cell">
+                            <td colSpan={4} className="combo-create-create-service-combo-empty-cell">
                               Không có ưu đãi nào
                             </td>
                           </tr>
@@ -678,27 +795,12 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           currentPagePromotions.map(promotion => {
                             const promotionId = String(promotion.Id || promotion.id);
                             const isSelected = selectedPromotions[promotionId]?.selected || false;
-                            const quantity = selectedPromotions[promotionId]?.quantity || 0;
+                            const info = parsePromotionInfo(promotion);
                             return (
                               <tr key={promotionId}>
-                                <td>{promotion.ServiceName || promotion.serviceName || 'N/A'}</td>
-                                <td>
-                                  <span className={`combo-create-create-service-combo-rank-badge combo-create-rank-${(promotion.Rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
-                                    {promotion.Rank || promotion.rank || 'N/A'}
-                                  </span>
-                                </td>
-                                <td>{promotion.UserType || promotion.userType || 'N/A'}</td>
-                                <td>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={quantity}
-                                    onChange={(e) => onPromotionQuantityChange(promotionId, e.target.value)}
-                                    disabled={!isSelected}
-                                    className="combo-create-create-service-combo-quantity-input"
-                                  />
-                                </td>
+                                <td>{info.name}</td>
+                                <td>{info.pairedDisplay}</td>
+                                <td>{info.userTypeDisplay}</td>
                                 <td>
                                   <input
                                     type="checkbox"
@@ -876,15 +978,26 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                           currentPageCoupons.map(coupon => {
                             const couponId = String(coupon.Id || coupon.id);
                             const isSelected = selectedCoupons[couponId]?.selected || false;
+                            const info = parseCouponInfo(coupon);
                             return (
                               <tr key={couponId}>
-                                <td>{coupon.Code || coupon.code || 'N/A'}</td>
+                                <td>{info.code}</td>
                                 <td>
-                                  <span className={`combo-create-create-service-combo-rank-badge combo-create-rank-${(coupon.Rank || coupon.rank || '').toLowerCase().replace(/\s+/g, '-')}`}>
-                                    {coupon.Rank || coupon.rank || 'N/A'}
-                                  </span>
+                                  {info.ranks.length > 0 ? (
+                                    info.ranks.map((rank, idx) => (
+                                      <span
+                                        key={idx}
+                                        className={`combo-create-create-service-combo-rank-badge combo-create-rank-${rank.toLowerCase().replace(/\s+/g, '-')}`}
+                                        style={{ marginRight: '0.25rem' }}
+                                      >
+                                        {rank}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span>{info.rankDisplay}</span>
+                                  )}
                                 </td>
-                                <td>{coupon.UserType || coupon.userType || 'N/A'}</td>
+                                <td>{info.userTypeDisplay}</td>
                                 <td>
                                   <input
                                     type="checkbox"

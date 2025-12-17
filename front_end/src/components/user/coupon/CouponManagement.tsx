@@ -52,6 +52,32 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
   // Coupon Rank Rules states
   const [couponRankRules, setCouponRankRules] = useState([]);
 
+  // Compute RequiredLevel (0..3) from chosen audience levels.
+  // Rule: if any "*Level0" (Tất cả) is selected => 0, else highest selected among 1/2/3.
+  const computeRequiredLevel = useCallback((data: any) => {
+    const hasAll =
+      (data?.forAgency && data?.agencyLevel0) ||
+      (data?.forTourist && data?.touristLevel0);
+    if (hasAll) return 0;
+
+    const has3 =
+      (data?.forAgency && data?.agencyLevel3) ||
+      (data?.forTourist && data?.touristLevel3);
+    if (has3) return 3;
+
+    const has2 =
+      (data?.forAgency && data?.agencyLevel2) ||
+      (data?.forTourist && data?.touristLevel2);
+    if (has2) return 2;
+
+    const has1 =
+      (data?.forAgency && data?.agencyLevel1) ||
+      (data?.forTourist && data?.touristLevel1);
+    if (has1) return 1;
+
+    return 0;
+  }, []);
+
   const [coupons, setCoupons] = useState([]);
   const [filteredCoupons, setFilteredCoupons] = useState([]);
   const [couponFilterName, setCouponFilterName] = useState('');
@@ -531,6 +557,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
           level3: createCouponFormData.touristLevel3
         } : null
       };
+
+      const requiredLevel = computeRequiredLevel(createCouponFormData);
       
       const couponData = {
         Code: createCouponFormData.code.trim(),
@@ -543,7 +571,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         StartDate: createCouponFormData.startDate ? new Date(createCouponFormData.startDate).toISOString() : null,
         ExpiryDate: createCouponFormData.expiryDate ? new Date(createCouponFormData.expiryDate).toISOString() : null,
         HostId: userId,
-        RequiredLevel: 0,
+        RequiredLevel: requiredLevel,
         TargetAudience: JSON.stringify(targetAudience)
       };
 
@@ -893,6 +921,8 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
           level3: editCouponFormData.touristLevel3
         } : null
       };
+
+      const requiredLevel = computeRequiredLevel(editCouponFormData);
       
       const couponData = {
         Code: editCouponFormData.code.trim(),
@@ -903,7 +933,7 @@ const CouponManagement = forwardRef<CouponManagementRef, CouponManagementProps>(
         StartDate: editCouponFormData.startDate ? new Date(editCouponFormData.startDate).toISOString() : null,
         ExpiryDate: editCouponFormData.expiryDate ? new Date(editCouponFormData.expiryDate).toISOString() : null,
         IsActive: editCouponFormData.isActive,
-        RequiredLevel: 0,
+        RequiredLevel: requiredLevel,
         TargetAudience: JSON.stringify(targetAudience)
       };
 

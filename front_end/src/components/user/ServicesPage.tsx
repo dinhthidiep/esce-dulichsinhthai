@@ -7,6 +7,7 @@ import { Card, CardContent } from '~/components/user/ui/Card'
 import Badge from '~/components/user/ui/Badge'
 import LoadingSpinner from '~/components/user/LoadingSpinner'
 import LazyImage from '~/components/user/LazyImage'
+import { getFallbackImageUrl } from '~/services/firebaseStorage'
 import {
   StarIcon,
   MapPinIcon,
@@ -27,8 +28,6 @@ import type { ServiceItem } from '~/types/serviceCombo'
 import type { ServiceComboResponse } from '~/types/serviceCombo'
 import './ServicesPage.css'
 
-// Sử dụng đường dẫn public URL thay vì import
-const baNaHillImage = '/img/banahills.jpg'
 
 interface TourCardProps {
   tour: ServiceItem
@@ -36,6 +35,7 @@ interface TourCardProps {
   isFavorite: boolean
   onToggleFavorite: () => void
   isVisible: boolean
+  fallbackImageUrl: string
 }
 
 type SortBy = 'popular' | 'price-low' | 'price-high' | 'name'
@@ -52,6 +52,7 @@ const ServicesPage = () => {
   const [ratings, setRatings] = useState<Record<number, number>>({}) // Map serviceId -> rating
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showServices] = useState(false) // Luôn hiển thị ServiceCombo, không hiển thị Service đơn lẻ
+  const [fallbackImageUrl, setFallbackImageUrl] = useState<string>('') // Fallback image từ Firebase
   const { tours, loading: toursLoading, error: toursError } = useTours()
   // Không cần load services nữa vì chỉ hiển thị ServiceCombo
 
@@ -75,6 +76,23 @@ const ServicesPage = () => {
       document.documentElement.style.scrollBehavior = 'auto'
     }
   }, [])
+
+  // Load fallback image từ Firebase Storage khi component mount
+// CHỈ sử dụng Firebase - không fallback về local
+useEffect(() => {
+  const loadFallbackImage = async () => {
+    try {
+      const firebaseUrl = await getFallbackImageUrl()
+      setFallbackImageUrl(firebaseUrl)
+      console.log('[ServicesPage] Đã load fallback image từ Firebase:', firebaseUrl)
+    } catch (error) {
+      console.error('[ServicesPage] Lỗi khi load fallback image từ Firebase:', error)
+      // KHÔNG set local path - để fallbackImageUrl = '' và component sẽ xử lý
+      // Hoặc có thể hiển thị thông báo lỗi cho user
+    }
+  }
+  loadFallbackImage()
+}, [])
 
   // Fetch ratings cho ServiceCombo
   useEffect(() => {
@@ -152,7 +170,7 @@ const ServicesPage = () => {
           imagePath = imagePath.split(',')[0].trim()
         }
         // getImageUrl sẽ xử lý trường hợp imagePath rỗng/null và trả về fallback
-        const image = getImageUrl(imagePath, baNaHillImage)
+        const image = getImageUrl(imagePath, fallbackImageUrl)
         
         // Map các trường khác từ API
         const address = tour.Address || 'Đà Nẵng'
@@ -196,7 +214,7 @@ const ServicesPage = () => {
 
     console.log(`✅ [ServicesPage] Đã map thành công ${mappedServices.length} ServiceCombo(s) từ ${tours.length} tour(s)`)
     return mappedServices
-  }, [tours, ratings, toursLoading, toursError])
+  }, [tours, ratings, toursLoading, toursError, fallbackImageUrl])
 
   // Filter and sort services
   const filteredAndSortedServices = useMemo(() => {
@@ -525,6 +543,7 @@ const ServicesPage = () => {
                       isFavorite={tour.id !== null && favorites.has(tour.id)}
                       onToggleFavorite={() => toggleFavorite(tour.id)}
                       isVisible={isVisible}
+                      fallbackImageUrl={fallbackImageUrl}
                     />
                   ))}
                 </div>
@@ -539,7 +558,7 @@ const ServicesPage = () => {
 }
 
 // Tour Card Component
-const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFavorite, isVisible }) => {
+const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFavorite, isVisible, fallbackImageUrl }) => {
   const discountPercent = tour.originalPrice
     ? Math.round(((tour.originalPrice - tour.price) / tour.originalPrice) * 100)
     : null
@@ -562,7 +581,7 @@ const TourCard: React.FC<TourCardProps> = ({ tour, index, isFavorite, onToggleFa
               src={tour.image}
               alt={tour.name}
               className="svc-tour-image"
-              fallbackSrc={baNaHillImage}
+              fallbackSrc={fallbackImageUrl}
             />
 
             {/* Favorite Button */}

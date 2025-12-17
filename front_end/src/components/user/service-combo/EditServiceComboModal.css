@@ -21,7 +21,7 @@
     max-width: 900px;
     width: 100%;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -70,7 +70,8 @@
 }
 
 .combo-edit-edit-service-combo-modal-body {
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+    overflow-y: auto;
 }
 
 .combo-edit-edit-service-combo-disclaimer-text {
@@ -120,6 +121,11 @@
     box-sizing: border-box;
 }
 
+.combo-edit-edit-service-combo-field input::placeholder,
+.combo-edit-edit-service-combo-field textarea::placeholder {
+    color: #94a3b8;
+}
+
 .combo-edit-edit-service-combo-field input:focus,
 .combo-edit-edit-service-combo-field textarea:focus,
 .combo-edit-edit-service-combo-field select:focus {
@@ -131,6 +137,12 @@
 .combo-edit-edit-service-combo-field textarea {
     resize: vertical;
     min-height: 100px;
+}
+
+.combo-edit-edit-service-combo-field input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    padding: 0;
 }
 
 .combo-edit-edit-service-combo-hint {
@@ -229,6 +241,7 @@
 .combo-edit-edit-service-combo-table-wrapper {
     max-height: 300px;
     overflow-y: auto;
+    overflow-x: auto;
 }
 
 .combo-edit-edit-service-combo-table {
@@ -244,7 +257,7 @@
 }
 
 .combo-edit-edit-service-combo-table th {
-    padding: 0.5rem;
+    padding: 0.75rem;
     text-align: left;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.875rem;
@@ -253,10 +266,14 @@
 }
 
 .combo-edit-edit-service-combo-table td {
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.875rem;
     color: #475569;
+}
+
+.combo-edit-edit-service-combo-table tbody tr:hover td {
+    background: #f8fafc;
 }
 
 .combo-edit-edit-service-combo-empty-cell {
@@ -291,6 +308,7 @@
 }
 
 .combo-edit-edit-service-combo-quantity-input[type="number"] {
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 
@@ -507,6 +525,7 @@
 }
 
 .combo-edit-edit-service-combo-duration-input[type="number"] {
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 
@@ -518,6 +537,10 @@
     border-top: 1px solid #e2e8f0;
     align-items: center;
     justify-content: flex-end;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 5;
 }
 
 .combo-edit-edit-service-combo-btn-primary,
@@ -530,6 +553,36 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
+}
+
+.combo-edit-edit-service-combo-btn-primary:focus-visible,
+.combo-edit-edit-service-combo-btn-secondary:focus-visible {
+    outline: 3px solid rgba(16, 185, 129, 0.25);
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .combo-edit-edit-service-combo-field-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .combo-edit-edit-service-combo-table-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .combo-edit-edit-service-combo-modal-header {
+        padding: 1rem;
+    }
+    .combo-edit-edit-service-combo-modal-body {
+        padding: 1rem;
+    }
+    .combo-edit-edit-service-combo-form-action {
+        justify-content: stretch;
+    }
+    .combo-edit-edit-service-combo-btn-primary,
+    .combo-edit-edit-service-combo-btn-secondary {
+        width: 100%;
+    }
 }
 
 .combo-edit-edit-service-combo-btn-primary {
@@ -560,4 +613,151 @@
 .combo-edit-edit-service-combo-btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Upload Area - Forum Style */
+.combo-edit-upload-area {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 0.5rem;
+}
+
+.combo-edit-upload-area:hover {
+    border-color: #059669;
+    background: #f0fdf4;
+}
+
+.combo-edit-upload-area.combo-edit-dragging {
+    border-color: #059669;
+    background: #ecfdf5;
+    border-style: solid;
+    transform: scale(1.02);
+}
+
+.combo-edit-upload-area.combo-edit-error {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+
+.combo-edit-file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.combo-edit-upload-content {
+    position: relative;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.combo-edit-upload-icon {
+    width: 3rem;
+    height: 3rem;
+    color: #059669;
+    margin: 0 auto 1rem;
+    display: block;
+}
+
+.combo-edit-upload-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin: 0 0 0.5rem;
+}
+
+.combo-edit-upload-link {
+    color: #059669;
+    text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.combo-edit-upload-hint {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Image Preview Grid */
+.combo-edit-image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.combo-edit-image-preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    background: #f1f5f9;
+}
+
+.combo-edit-image-preview-item:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+}
+
+.combo-edit-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.combo-edit-image-remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+}
+
+.combo-edit-image-remove-btn:hover {
+    background: rgba(220, 38, 38, 0.9);
+    transform: scale(1.1);
+}
+
+.combo-edit-image-remove-btn svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.combo-edit-form-error-text {
+    display: block;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.combo-edit-edit-service-combo-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
 }
