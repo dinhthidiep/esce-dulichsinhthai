@@ -1,5 +1,7 @@
-// Backend is running on HTTP port 5002
-const backend_url = "http://localhost:5002";
+import { API_BASE_URL } from '~/config/api';
+
+// Sử dụng API_BASE_URL đã cấu hình (đã trỏ tới API deploy trên Azure)
+const backend_url = API_BASE_URL;
 
 // Helper function to get token from either storage
 const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');

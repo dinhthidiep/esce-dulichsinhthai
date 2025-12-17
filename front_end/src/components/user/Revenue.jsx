@@ -503,8 +503,13 @@ const Revenue = ({ embedded = false }) => {
 
     // Helper function to get image URL
     const getComboImageUrl = (combo) => {
-        // Backend is running on HTTP port 5002
-        const backend_url = "http://localhost:5002";
+        // Backend URL gốc (bỏ đuôi /api nếu có), trỏ tới API deploy trên Azure
+        const backend_url =
+            (typeof import.meta !== "undefined" &&
+                import.meta.env &&
+                import.meta.env.VITE_API_URL &&
+                import.meta.env.VITE_API_URL.replace("/api", "")) ||
+            "";
         const DEFAULT_IMAGE_URL =
             "https://firebasestorage.googleapis.com/v0/b/esce-a4b58.firebasestorage.app/o/default%2Fstock_nimg.jpg?alt=media&token=623cc75c-6625-4d18-ab1e-ff5ca18b49a1";
 

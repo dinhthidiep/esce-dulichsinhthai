@@ -13,7 +13,7 @@ export const useTours = () => {
       setLoading(true)
       setError(null)
       const url = API_ENDPOINTS.SERVICE_COMBO
-      const baseURL = axiosInstance.defaults.baseURL || 'https://localhost:7267/api'
+      const baseURL = axiosInstance.defaults.baseURL || (import.meta.env.VITE_API_URL || '/api')
       const fullUrl = `${baseURL}${url}`
       
       console.log('🔍 [useTours] Đang gọi API ServiceCombo:')
@@ -88,7 +88,7 @@ export const useTours = () => {
         // Request đã được gửi nhưng không nhận được response
         console.error('❌ [useTours] Không nhận được response từ server')
         console.error('  - Error:', err)
-        setError('Không thể kết nối đến server. Vui lòng kiểm tra:\n1. Backend có đang chạy không (https://localhost:7267)\n2. Kết nối mạng\n3. CORS configuration')
+        setError('Không thể kết nối đến server. Vui lòng kiểm tra:\n1. API deploy có đang chạy không\n2. Kết nối mạng\n3. CORS configuration')
       } else {
         // Lỗi khi setup request
         const axiosError = err as { code?: string; message?: string }
@@ -100,7 +100,7 @@ export const useTours = () => {
         console.error('  - Error message:', errorMessage)
         
         if (errorCode === 'ERR_NETWORK' || errorCode === 'ECONNREFUSED') {
-          setError('Không thể kết nối đến backend server. Vui lòng đảm bảo backend đang chạy tại https://localhost:7267')
+          setError('Không thể kết nối đến backend server deploy. Vui lòng đảm bảo API deploy đang hoạt động.')
         } else {
           setError(`Lỗi kết nối: ${errorMessage}`)
         }

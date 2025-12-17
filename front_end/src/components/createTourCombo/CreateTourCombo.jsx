@@ -360,8 +360,10 @@ const CreateTourCombo = () => {
 
       console.log('Creating tour combo:', comboData)
 
-      // Make API call to create tour combo
-      const response = await fetch('http://localhost:7267/api/tour/create-tour-combo', {
+      // Make API call to create tour combo trên backend deploy
+      const apiBase = import.meta.env.VITE_API_URL || '/api'
+      const backendRoot = apiBase.replace('/api', '')
+      const response = await fetch(`${backendRoot}/api/tour/create-tour-combo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

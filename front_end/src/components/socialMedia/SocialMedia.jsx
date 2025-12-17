@@ -10,7 +10,10 @@ const DEFAULT_AVATAR_URL = 'https://firebasestorage.googleapis.com/v0/b/esce-a4b
 
 const SocialMedia = () => {
   const navigate = useNavigate();
-  const backendUrl = "http://localhost:7267";
+  // Dùng cùng domain với API deploy
+  const backendUrl = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace('/api', '')
+    : window.location.origin;
   // State management
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2467,7 +2470,7 @@ const SocialMedia = () => {
                     // Only try fallback if we have a valid filename (not a full URL, not the default)
                     if (filename && filename !== 'stock_nimg.jpg' && !filename.includes('http://') && !filename.includes('://') && filename.length < 100) {
                       const candidates = [
-                        `http://localhost:7267/img/uploads/${filename}`,
+                        `${backendUrl}/img/uploads/${filename}`,
                         `/img/uploads/${filename}`,
                         '/img/stock_nimg.jpg'
                       ];
@@ -2749,7 +2752,7 @@ const SocialMedia = () => {
                             // Only try fallback if we have a valid filename (not a full URL, not the default)
                             if (filename && filename !== 'stock_nimg.jpg' && !filename.includes('http://') && !filename.includes('://') && filename.length < 100) {
                               const candidates = [
-                                `http://localhost:7267/img/uploads/${filename}`,
+                                `${backendUrl}/img/uploads/${filename}`,
                                 `/img/uploads/${filename}`,
                                 '/img/stock_nimg.jpg'
                               ];

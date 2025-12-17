@@ -1,8 +1,8 @@
-// Khớp với cấu hình trong back_end/Properties/launchSettings.json
-// Profile https:  https://localhost:7267
-// Profile http:   http://localhost:5002
-const backend_url_https = "https://localhost:7267";
-const backend_url_http = "http://localhost:5002";
+import { API_BASE_URL } from '~/config/api';
+
+// Dùng chung domain với API deploy; bỏ đuôi /api để gọi các endpoint khác (ví dụ: /tour, /chathub, ...)
+const backend_url_https = API_BASE_URL.replace('/api', '');
+const backend_url_http = backend_url_https;
 
 // Kết nối trực tiếp backend
 export const DISABLE_BACKEND = false;

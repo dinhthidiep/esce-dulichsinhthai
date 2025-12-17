@@ -1,5 +1,7 @@
-// Dùng HTTPS khớp với back_end
-const backend_url = "https://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage';
+// Dùng cùng domain với API deploy; các endpoint bên dưới đã tự thêm /api/ServiceCombo/...
+const backend_url = API_BASE_URL.replace('/api', '');
 
 export const createServiceCombo = async (serviceComboData, imageFile = null) => {
   const token = localStorage.getItem('token');
@@ -8,8 +10,7 @@ export const createServiceCombo = async (serviceComboData, imageFile = null) => 
   // Upload image to Firebase Storage first if provided
   let imageUrl = null;
   if (imageFile instanceof File) {
-    const { uploadImageToFirebase } = await import('../services/firebaseStorage');
-    imageUrl = await uploadImageToFirebase(imageFile, 'service-combos');
+    await uploadImageToFirebase(imageFile, 'service-combos');
   }
   
   // Use JSON instead of FormData since we're sending URL, not file
@@ -54,7 +55,7 @@ export const getServiceComboById = async (id) => {
   return res.json();
 };
 
-export const updateServiceCombo = async (id, updateData, imageFile = null) => {
+export const updateServiceCombo = async (id, updateData, imageFile = null, oldImageUrl = null) => {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('Authentication required.');
   
@@ -63,8 +64,9 @@ export const updateServiceCombo = async (id, updateData, imageFile = null) => {
   // Upload image to Firebase Storage first if a new file is provided
   let imageUrl = null;
   if (imageFile instanceof File) {
-    const { uploadImageToFirebase } = await import('../services/firebaseStorage');
-    imageUrl = await uploadImageToFirebase(imageFile, 'service-combos');
+    await uploadImageToFirebase(imageFile, 'service-combos');
+  } else if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+    await deleteImageFromFirebase(oldImageUrl);
   }
   
   // Use JSON instead of FormData since we're sending URL, not file
@@ -102,10 +104,10 @@ export const updateServiceCombo = async (id, updateData, imageFile = null) => {
   }
 };
 
-export const deleteServiceCombo = async (serviceComboId) => {
+export const deleteServiceCombo = async (serviceComboId, oldImageUrl = null) => {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('Authentication required.');
-  
+
   const res = await fetch(`${backend_url}/api/ServiceCombo/${serviceComboId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${token}` }
@@ -139,6 +141,9 @@ export const deleteServiceCombo = async (serviceComboId) => {
     const error = new Error(errorMessage);
     error.status = res.status;
     throw error;
+  }
+  if (oldImageUrl) {
+    await deleteImageFromFirebase(oldImageUrl);
   }
   
   // Handle both JSON and plain text responses

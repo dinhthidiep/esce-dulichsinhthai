@@ -13,7 +13,7 @@ import {
 } from './icons/index'
 import { formatPrice } from '~/lib/utils'
 import axiosInstance from '~/utils/axiosInstance'
-import { API_ENDPOINTS } from '~/config/api'
+import { API_BASE_URL, API_ENDPOINTS } from '~/config/api'
 import './PaymentSuccessPage.css'
 
 interface BookingData {
@@ -82,13 +82,13 @@ const PaymentSuccessPage = () => {
     const maxRetries = 3
     const retryDelay = 2000 // 2 giây
     
-    // Fallback URL: thử gọi trực tiếp đến localhost backend nếu ngrok offline
-    const localhostBackendUrl = 'https://localhost:7267/api'
+    // Fallback URL: thử gọi trực tiếp đến backend deploy (cùng base với API_BASE_URL)
+    const deployedBackendUrl = API_BASE_URL
     
     const checkPaymentByOrderCode = async (useLocalhost = false): Promise<void> => {
       try {
-        const apiUrl = useLocalhost 
-          ? `${localhostBackendUrl}${API_ENDPOINTS.PAYMENT}/check-payment-by-ordercode?orderCode=${orderCode}`
+        const apiUrl = useLocalhost
+          ? `${deployedBackendUrl}${API_ENDPOINTS.PAYMENT}/check-payment-by-ordercode?orderCode=${orderCode}`
           : `${API_ENDPOINTS.PAYMENT}/check-payment-by-ordercode?orderCode=${orderCode}`
         
         console.log(`[PaymentSuccessPage] Checking payment with orderCode: ${orderCode} (attempt ${retryCount + 1}/${maxRetries}, ${useLocalhost ? 'localhost' : 'normal'})`)
@@ -162,7 +162,7 @@ const PaymentSuccessPage = () => {
       } catch (err) {
         console.warn(`[PaymentSuccessPage] Lỗi khi check payment (attempt ${retryCount + 1}):`, err)
         
-        // Nếu là lỗi network và chưa thử localhost, thử localhost
+        // Nếu là lỗi network và chưa thử fallback, thử fallback
         const axiosError = err as { code?: string; message?: string; response?: { status?: number } }
         const isNetworkError = axiosError.code === 'ERR_NETWORK' || 
                               axiosError.message?.includes('network') ||

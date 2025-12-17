@@ -35,7 +35,7 @@ import {
   Close as CloseIcon,
   Link as LinkIcon
 } from '@mui/icons-material'
-import { uploadImageToFirebase } from '~/firebaseClient'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import {
   fetchAllNews,
   createNews,

@@ -11,8 +11,10 @@ import {
     updateServiceComboDetail,
 } from "~/api/user/ServiceApi";
 import HostHeader from "~/components/user/HostHeader";
+import { API_BASE_URL } from "~/config/api";
 
-const backend_url = "http://localhost:5002";
+// Backend URL gốc (bỏ đuôi /api nếu có), trỏ tới API deploy trên Azure
+const backend_url = API_BASE_URL.replace("/api", "");
 
 const EditServiceCombo = () => {
     // State management

@@ -1,5 +1,8 @@
-// Dùng HTTPS khớp với back_end
-const backend_url = "https://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage'
+
+// Dùng cùng domain với API deploy; các endpoint bên dưới đã tự thêm /api/...
+const backend_url = API_BASE_URL.replace('/api', '');
 
 // Get comments by post ID API
 export const getCommentsByPostId = async (postId) => {
@@ -303,7 +306,6 @@ export const createPost = async (postData) => {
     // Upload image to Firebase Storage first if provided
     let imageUrl = null;
     if (postData.image instanceof File) {
-      const { uploadImageToFirebase } = await import('../services/firebaseStorage');
       imageUrl = await uploadImageToFirebase(postData.image, 'posts');
     }
 
@@ -415,7 +417,6 @@ export const createComment = async (commentData) => {
     // Upload image to Firebase Storage first if provided
     let imageUrl = null;
     if (commentData.image instanceof File) {
-      const { uploadImageToFirebase } = await import('../services/firebaseStorage');
       imageUrl = await uploadImageToFirebase(commentData.image, 'comments');
     }
 
@@ -515,7 +516,7 @@ export const createComment = async (commentData) => {
 };
 
 // Delete post API
-export const deletePost = async (postId) => {
+export const deletePost = async (postId, oldImageUrls = []) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -571,6 +572,13 @@ export const deletePost = async (postId) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }// Backend
+    //  xoá bài viết thành công, giờ mới xoá ảnh Firebase
+    const urls = Array.isArray(oldImageUrls) ? oldImageUrls : [oldImageUrls];
+    for (const url of urls) {
+      if (url) {
+        await deleteImageFromFirebase(url);
+      }
     }
 
     return true;
@@ -581,7 +589,7 @@ export const deletePost = async (postId) => {
 };
 
 // Delete comment API
-export const deleteComment = async (commentId) => {
+export const deleteComment = async (commentId, oldImageUrl = null) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -644,6 +652,10 @@ export const deleteComment = async (commentId) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }
+
+    if (oldImageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
     }
 
     return true;
@@ -1008,7 +1020,7 @@ export const unsavePost = async (postId) => {
 };
 
 // Update post API
-export const updatePost = async (postId, postData) => {
+export const updatePost = async (postId, {postData, oldImageUrl: currentImageUrl}) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -1110,6 +1122,11 @@ export const updatePost = async (postId, postData) => {
       throw error;
     }
 
+    const oldImageUrl = postData.oldImageUrl;
+    if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
+    }
+  
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const text = await response.text();
@@ -1198,7 +1215,7 @@ export const getPostById = async (postId) => {
 };
 
 // Update comment API
-export const updateComment = async (commentId, commentData) => {
+export const updateComment = async (commentId, {commentData, oldImageUrl: currentImageUrl}) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -1275,6 +1292,11 @@ export const updateComment = async (commentId, commentData) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }
+
+    const oldImageUrl = commentData.oldImageUrl; // truyền từ component
+    if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
     }
 
     const contentType = response.headers.get('content-type');

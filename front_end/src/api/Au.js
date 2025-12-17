@@ -1,5 +1,7 @@
-// Dùng HTTPS đúng với cấu hình back_end (xem launchSettings.json: https://localhost:7267)
-export const backend_url = 'https://localhost:7267'
+import { API_BASE_URL } from '~/config/api'
+
+// Dùng cùng domain với API deploy; Auth endpoints sẽ gọi dưới /api/Auth/...
+export const backend_url = API_BASE_URL.replace('/api', '')
 
 export const login = async (userEmail, password) => {
   try {

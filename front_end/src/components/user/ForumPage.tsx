@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import ConditionalHeader from '~/components/user/ConditionalHeader'
 import Footer from '~/components/user/Footer'
 import LoadingSpinner from '~/components/user/LoadingSpinner'
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage'
 import LazyImage from '~/components/user/LazyImage'
 import {
   HeartIcon,
@@ -130,16 +131,29 @@ const ForumPage = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [submittingComment, setSubmittingComment] = useState<string | null>(null)
   const [showCreatePostModal, setShowCreatePostModal] = useState(false)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [createPostData, setCreatePostData] = useState({
     ArticleTitle: '',
     PostContent: '',
-    Images: [] as string[],
+    Images: [],
   })
+  // setImageFiles([])
+  // setImagePreviewUrls([])
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setImageFiles(files)
+
+    const previews = files.map(file => URL.createObjectURL(file))
+    setImagePreviewUrls(previews)
+  }
+
   const [submittingPost, setSubmittingPost] = useState(false)
   const [showReactionPicker, setShowReactionPicker] = useState<Record<string, boolean>>({})
   const [reactionPickerTimeout, setReactionPickerTimeout] = useState<Record<string, NodeJS.Timeout>>({})
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -927,16 +941,32 @@ const ForumPage = () => {
       errors.PostContent = 'Nội dung bài viết phải có ít nhất 10 ký tự'
     }
     
-    // Validate images
+  // Validate local image files trước khi upload Firebase
+  if (imageFiles.length > 0) {
     const invalidImages: string[] = []
-    createPostData.Images.forEach((img, idx) => {
-      if (img.trim() && !img.trim().match(/\.(forum-jpg|jpeg|png|gif|webp)$/i) && !img.trim().startsWith('http')) {
+
+    imageFiles.forEach((file, idx) => {
+      const name = file.name.toLowerCase()
+      const type = (file.type || '').toLowerCase()
+
+      const isImageByExt =
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png') ||
+        name.endsWith('.gif') ||
+        name.endsWith('.webp')
+
+      const isImageByMime = type.startsWith('image/')
+
+      if (!isImageByExt && !isImageByMime) {
         invalidImages.push(`Ảnh ${idx + 1}`)
       }
     })
+
     if (invalidImages.length > 0) {
-      errors.Images = `URL ảnh không hợp lệ: ${invalidImages.join(', ')}`
+      errors.Images = `File ảnh không hợp lệ: ${invalidImages.join(', ')}`
     }
+  }
     
     setFormErrors(errors)
     return Object.keys(errors).length === 0
@@ -1011,16 +1041,41 @@ const ForumPage = () => {
     try {
       setSubmittingPost(true)
       setFormErrors({})
+
+      const uploadedUrls: string[] = []
+      for (const file of imageFiles) {
+        try {
+          const url = await uploadImageToFirebase(file, 'posts')
+          uploadedUrls.push(url)
+        } catch (err) {
+          console.error('Lỗi upload ảnh lên Firebase (update post):', err)
+        }
+      }
+  
+      // 2) Ảnh cũ đang lưu trong createPostData.Images (URL từ backend)
+      const existingUrls = (createPostData.Images || []).filter(img => img && img.trim())
+  
+      // 3) Gộp ảnh cũ + ảnh mới
+      const finalImages = [...existingUrls, ...uploadedUrls]
+
       const postData = {
         PostContent: createPostData.PostContent.trim(),
         ArticleTitle: createPostData.ArticleTitle.trim() || undefined,
-        Images: createPostData.Images.filter(img => img.trim()),
+        Images: finalImages,
         PosterName: userInfo.Name || userInfo.name || 'Người dùng',
         Hashtags: [],
       }
 
       await axiosInstance.put(`${API_ENDPOINTS.POST}/UpdatePost?id=${editingPost.PostId || editingPost.Id}`, postData)
       
+
+      for (const url of imagesToDelete) {
+        try {
+          await deleteImageFromFirebase(url)
+        } catch (err) {
+          console.error('Lỗi xóa ảnh trên Firebase:', err)
+        }
+      }
       // Reset form
       setCreatePostData({
         ArticleTitle: '',
@@ -1062,10 +1117,23 @@ const ForumPage = () => {
     try {
       setSubmittingPost(true)
       setFormErrors({})
+    
+      // BƯỚC 3: upload các file ảnh trong imageFiles lên Firebase
+      const uploadedUrls: string[] = []
+    
+      for (const file of imageFiles) {
+        try {
+          const url = await uploadImageToFirebase(file, 'posts')
+          uploadedUrls.push(url)
+        } catch (err) {
+          console.error('Lỗi upload ảnh lên Firebase:', err)
+        }
+      }
+    
       const postData = {
         PostContent: createPostData.PostContent.trim(),
         ArticleTitle: createPostData.ArticleTitle.trim() || undefined,
-        Images: createPostData.Images.filter(img => img.trim()),
+        Images: uploadedUrls, // ← SỬA: dùng uploadedUrls thay vì createPostData.Images.filter(...)
         PosterName: userInfo.Name || userInfo.name || 'Người dùng',
         Hashtags: [],
       }
@@ -1105,14 +1173,21 @@ const ForumPage = () => {
   }
 
   // Convert File to base64 data URL
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (err) => reject(err)
-    })
-  }
+  // const fileToBase64 = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader()
+  //     reader.onload = () => {
+  //       const result = reader.result
+  //       if (result && typeof result === 'string') {
+  //         resolve(result)
+  //       } else {
+  //         reject(new Error('Failed to convert file to base64'))
+  //       }
+  //     }
+  //     reader.onerror = (err) => reject(err)
+  //     reader.readAsDataURL(file)
+  //   })
+  // }
 
   // Handle file selection
   const handleFileSelect = async (files: FileList | null) => {
@@ -1154,15 +1229,16 @@ const ForumPage = () => {
     setImageFiles(updatedFiles)
 
     // Generate preview URLs
-    const previewPromises = updatedFiles.map(file => fileToBase64(file))
-    const previewUrls = await Promise.all(previewPromises)
-    setImagePreviewUrls(previewUrls)
+    // const previewPromises = updatedFiles.map(file => fileToBase64(file))
+    // const previewUrls = await Promise.all(previewPromises)
+    // setImagePreviewUrls(previewUrls)
 
-    // Convert to base64 data URLs for backend
-    const base64Promises = updatedFiles.map(file => fileToBase64(file))
-    const base64Urls = await Promise.all(base64Promises)
-    setCreatePostData({ ...createPostData, Images: base64Urls })
-  }
+    // const base64Promises = updatedFiles.map(file => fileToBase64(file))
+    //   const base64Urls = await Promise.all(base64Promises)
+    //   setCreatePostData({ ...createPostData, Images: base64Urls })
+    const previewUrls = updatedFiles.map(file => URL.createObjectURL(file))
+    setImagePreviewUrls(previewUrls)
+    }
 
   // Remove image
   const handleRemoveImage = (index: number) => {
@@ -1174,11 +1250,13 @@ const ForumPage = () => {
       setCreatePostData({ ...createPostData, Images: [] })
     } else {
       // Regenerate previews
-      const previewPromises = newFiles.map(file => fileToBase64(file))
-      Promise.all(previewPromises).then(urls => {
-        setImagePreviewUrls(urls)
-        setCreatePostData({ ...createPostData, Images: urls })
-      })
+      // const previewPromises = newFiles.map(file => fileToBase64(file))
+      // Promise.all(previewPromises).then(urls => {
+      //   setImagePreviewUrls(urls)
+      //   setCreatePostData({ ...createPostData, Images: urls })
+      const previewUrls = newFiles.map(file => URL.createObjectURL(file))
+      setImagePreviewUrls(previewUrls)
+      //})
     }
   }
 
@@ -2096,8 +2174,8 @@ const ForumPage = () => {
                     id="post-images"
                     accept="image/jpeg,image/forum-jpg,image/png,image/gif,image/webp"
                     multiple
+                    onChange={handleImageFileChange}
                     className="forum-forum-file-input"
-                    onChange={(e) => handleFileSelect(e.target.files)}
                   />
                   <div className="forum-forum-upload-content">
                     <ImageIcon className="forum-forum-upload-icon" />

@@ -40,7 +40,7 @@ import {
   deleteConversation
 } from '~/api/instances/ChatApi'
 import { onReceiveMessage } from '~/api/instances/chatSignalR'
-import { uploadImageToFirebase } from '~/firebaseClient'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import MessageBubble, { getMessageDisplayInfo } from './MessageBubble'
 
 type Reaction = {
@@ -1462,7 +1462,7 @@ export default function ChatMainContent() {
         })
 
         // Upload với compression để tăng tốc độ
-        imageUrl = await uploadImageToFirebase(selectedImageFile, 'chat', true)
+        imageUrl = await uploadImageToFirebase(selectedImageFile, 'chat')
         console.log('[ChatMainContent] Image uploaded successfully:', imageUrl)
       } catch (error) {
         let errorMessage = 'Không thể upload ảnh'

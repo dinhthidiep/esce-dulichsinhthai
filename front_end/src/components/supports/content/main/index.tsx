@@ -58,7 +58,7 @@ import {
   type UpdateSupportRequestDto,
   type SupportStatus
 } from '~/api/instances/SupportApi'
-import { uploadImageToFirebase } from '~/firebaseClient'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 
 // Helper functions
 const getStatusLabel = (status?: SupportStatus): string => {

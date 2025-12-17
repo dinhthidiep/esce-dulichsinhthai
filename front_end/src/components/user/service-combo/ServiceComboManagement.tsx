@@ -5,7 +5,7 @@ import { GridIcon } from '../icons/index';
 import CreateServiceComboModal from './CreateServiceComboModal';
 import EditServiceComboModal from './EditServiceComboModal';
 import axiosInstance from '~/utils/axiosInstance';
-import { API_ENDPOINTS } from '~/config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '~/config/api';
 import './ServiceComboManagement.css';
 
 interface ServiceComboManagementProps {
@@ -651,7 +651,8 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       if (existingImage && (existingImage.startsWith('data:image') || existingImage.startsWith('http://') || existingImage.startsWith('https://'))) {
         setEditServiceComboImagePreview(existingImage);
       } else if (existingImage) {
-        setEditServiceComboImagePreview(`http://localhost:5002/images/${existingImage}`);
+      const backendRoot = API_BASE_URL.replace('/api', '');
+      setEditServiceComboImagePreview(`${backendRoot}/images/${existingImage}`);
       }
       
       // Load services from API
@@ -1042,10 +1043,11 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                       if (isAbsolute) {
                         candidates.push(imageName);
                       } else {
-                        // Use relative paths for images
+                        // Use relative paths cho FE và backend deploy
+                        const backendRoot = API_BASE_URL.replace('/api', '');
                         candidates.push(`/img/uploads/${imageName}`);
-                        candidates.push(`http://localhost:5002/img/uploads/${imageName}`);
-                        candidates.push(`http://localhost:5002/images/${imageName}`);
+                        candidates.push(`${backendRoot}/img/uploads/${imageName}`);
+                        candidates.push(`${backendRoot}/images/${imageName}`);
                       }
                     }
                     if (candidates.length === 0) {

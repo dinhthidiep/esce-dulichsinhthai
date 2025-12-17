@@ -1,4 +1,7 @@
-const API_BASE_URL = 'http://localhost:7267/api/tour';
+import { API_BASE_URL as CORE_API_BASE_URL } from '~/config/api';
+
+// Sử dụng chung domain với API deploy cho các endpoint /api/tour/...
+const API_BASE_URL = `${CORE_API_BASE_URL}/tour`;
 
 // Fetch all posts
 export const getAllPosts = async () => {

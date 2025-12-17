@@ -5,8 +5,10 @@ import { getAllServices, addServiceToCombo, getServiceComboDetailsByComboId, del
 import Header from './Header';
 import { getCurrentUser } from '../API/SocialMediaApi';
 
-// Dùng HTTPS khớp với back_end
-const backend_url = "https://localhost:7267";
+// Dùng cùng domain với API deploy
+const backend_url = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace('/api', '')
+  : window.location.origin;
 
 const EditServiceCombo = () => {
    // State management

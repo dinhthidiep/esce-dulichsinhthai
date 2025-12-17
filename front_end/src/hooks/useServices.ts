@@ -103,7 +103,7 @@ export const useServices = (status?: string) => {
       } else if (err && typeof err === 'object' && 'request' in err) {
         console.error('❌ [useServices] Không nhận được response từ server')
         console.error('  - Error:', err)
-        setError('Không thể kết nối đến server. Vui lòng kiểm tra:\n1. Backend có đang chạy không (https://localhost:7267)\n2. Kết nối mạng\n3. CORS configuration')
+        setError('Không thể kết nối đến server. Vui lòng kiểm tra:\n1. API deploy có đang chạy không\n2. Kết nối mạng\n3. CORS configuration')
       } else {
         const axiosError = err as { code?: string; message?: string }
         const errorCode = axiosError.code
@@ -114,7 +114,7 @@ export const useServices = (status?: string) => {
         console.error('  - Error message:', errorMessage)
         
         if (errorCode === 'ERR_NETWORK' || errorCode === 'ECONNREFUSED') {
-          setError('Không thể kết nối đến backend server. Vui lòng đảm bảo backend đang chạy tại https://localhost:7267')
+          setError('Không thể kết nối đến backend server deploy. Vui lòng đảm bảo API deploy đang hoạt động.')
         } else {
           setError(`Lỗi kết nối: ${errorMessage}`)
         }

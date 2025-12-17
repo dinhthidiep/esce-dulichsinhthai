@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axiosInstance from '~/utils/axiosInstance';
 import HostHeader from '~/components/user/HostHeader';
-import Button from './ui/Button';
 import Badge from './ui/Badge';
 import LoadingSpinner from './LoadingSpinner';
 import { 
@@ -11,12 +9,15 @@ import {
   StarIcon,
   ArrowRightIcon,
   GridIcon,
+  DollarSignIcon,
 } from './icons/index';
 import './HostDashboard.css'; // Dùng chung CSS với HostDashboard
 
 interface UserInfo {
   Id?: number;
   id?: number;
+  Name?: string;
+  name?: string;
   FullName?: string;
   fullName?: string;
   Email?: string;
@@ -40,8 +41,8 @@ const AgencyDashboard = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<DashboardStats>({
+  const [activeTab, setActiveTab] = useState('overview');
+  const [stats] = useState<DashboardStats>({
     totalTours: 0,
     totalBookings: 0,
     totalRevenue: 0,
@@ -90,130 +91,281 @@ const AgencyDashboard = () => {
     );
   }
 
-  const userName = userInfo?.FullName || userInfo?.fullName || 'Agency';
+  // Get user display info
+  const displayName = userInfo?.Name || userInfo?.name || userInfo?.FullName || userInfo?.fullName || 'Agency';
+  const displayEmail = userInfo?.Email || userInfo?.email || '';
+  const avatarUrl = userInfo?.Avatar || userInfo?.avatar || '';
 
   return (
-    <div className="host-dashboard">
-      <HostHeader />
-      
-      <div className="host-dashboard-container">
-        {/* Sidebar */}
-        <aside className="host-sidebar">
-          <div className="sidebar-header">
-            <h2>Agency Dashboard</h2>
+    <>
+      <HostHeader dashboardType="agency" />
+      <main className="host-hostdashboard-main">
+        <div className="host-profile-container">
+          {/* Sidebar - sử dụng đúng CSS class như HostSidebar */}
+          <aside className="hostdashboard-sidebar">
+            <div className="sidebar-user-info">
+              <div className="sidebar-avatar">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" />
+                ) : (
+                  <div className="sidebar-avatar-placeholder">
+                    {displayName.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <h3 className="sidebar-user-name">{displayName}</h3>
+              <p className="sidebar-user-email">{displayEmail}</p>
+              <Badge variant="default" className="sidebar-role-badge">
+                Agency
+              </Badge>
+            </div>
+
+            <nav className="sidebar-menu">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`sidebar-menu-item ${activeTab === 'overview' ? 'active' : ''}`}
+              >
+                <GridIcon className="sidebar-menu-icon" />
+                <span>Tổng quan</span>
+              </button>
+              <button
+                onClick={() => navigate('/service-combo-manager')}
+                className={`sidebar-menu-item ${activeTab === 'tours' ? 'active' : ''}`}
+              >
+                <CalendarIcon className="sidebar-menu-icon" />
+                <span>Quản lý Tour</span>
+              </button>
+              <button
+                onClick={() => navigate('/booking-manager')}
+                className={`sidebar-menu-item ${activeTab === 'bookings' ? 'active' : ''}`}
+              >
+                <UserIcon className="sidebar-menu-icon" />
+                <span>Đặt chỗ</span>
+              </button>
+              <button
+                onClick={() => navigate('/revenue')}
+                className={`sidebar-menu-item ${activeTab === 'revenue' ? 'active' : ''}`}
+              >
+                <DollarSignIcon className="sidebar-menu-icon" />
+                <span>Doanh thu</span>
+              </button>
+              <button
+                onClick={() => navigate('/profile')}
+                className={`sidebar-menu-item ${activeTab === 'profile' ? 'active' : ''}`}
+              >
+                <UserIcon className="sidebar-menu-icon" />
+                <span>Hồ sơ</span>
+              </button>
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <div className="host-hostdashboard-content">
+            <div className="host-profile-content-header">
+              <h1 className="host-profile-title">Xin chào, {displayName}!</h1>
+            </div>
+
+            <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+              Chào mừng bạn đến với Agency Dashboard
+            </p>
+
+            {/* Stats Cards */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '1rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ 
+                background: 'white', 
+                borderRadius: '12px', 
+                padding: '1.25rem',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '12px', 
+                  background: '#dbeafe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563eb'
+                }}>
+                  <CalendarIcon />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.totalTours}</h3>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>Tour đang hoạt động</p>
+                </div>
+              </div>
+
+              <div style={{ 
+                background: 'white', 
+                borderRadius: '12px', 
+                padding: '1.25rem',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '12px', 
+                  background: '#dcfce7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#16a34a'
+                }}>
+                  <UserIcon />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.totalBookings}</h3>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>Tổng đặt chỗ</p>
+                </div>
+              </div>
+
+              <div style={{ 
+                background: 'white', 
+                borderRadius: '12px', 
+                padding: '1.25rem',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '12px', 
+                  background: '#fef3c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#d97706'
+                }}>
+                  <GridIcon />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.pendingBookings}</h3>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>Chờ xác nhận</p>
+                </div>
+              </div>
+
+              <div style={{ 
+                background: 'white', 
+                borderRadius: '12px', 
+                padding: '1.25rem',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '12px', 
+                  background: '#ecfdf5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#059669'
+                }}>
+                  <DollarSignIcon />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.totalRevenue.toLocaleString('vi-VN')}đ</h3>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>Doanh thu</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', marginBottom: '1rem' }}>Thao tác nhanh</h2>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                gap: '1rem'
+              }}>
+                <Link to="/create-service-combo" style={{ 
+                  background: 'white', 
+                  borderRadius: '12px', 
+                  padding: '1.25rem',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <CalendarIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
+                  <span style={{ flex: 1, fontWeight: 500 }}>Tạo Tour mới</span>
+                  <ArrowRightIcon style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+                </Link>
+
+                <Link to="/booking-manager" style={{ 
+                  background: 'white', 
+                  borderRadius: '12px', 
+                  padding: '1.25rem',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <UserIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
+                  <span style={{ flex: 1, fontWeight: 500 }}>Quản lý đặt chỗ</span>
+                  <ArrowRightIcon style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+                </Link>
+
+                <Link to="/revenue" style={{ 
+                  background: 'white', 
+                  borderRadius: '12px', 
+                  padding: '1.25rem',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <DollarSignIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
+                  <span style={{ flex: 1, fontWeight: 500 }}>Xem doanh thu</span>
+                  <ArrowRightIcon style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+                </Link>
+
+                <Link to="/profile" style={{ 
+                  background: 'white', 
+                  borderRadius: '12px', 
+                  padding: '1.25rem',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textDecoration: 'none',
+                  color: '#1e293b',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <UserIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
+                  <span style={{ flex: 1, fontWeight: 500 }}>Cập nhật hồ sơ</span>
+                  <ArrowRightIcon style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+                </Link>
+              </div>
+            </div>
           </div>
-          <nav className="sidebar-nav">
-            <Link to="/agency-dashboard" className="sidebar-link active">
-              <GridIcon className="sidebar-icon" />
-              <span>Tổng quan</span>
-            </Link>
-            <Link to="/service-combo-manager" className="sidebar-link">
-              <CalendarIcon className="sidebar-icon" />
-              <span>Quản lý Tour</span>
-            </Link>
-            <Link to="/booking-manager" className="sidebar-link">
-              <UserIcon className="sidebar-icon" />
-              <span>Đặt chỗ</span>
-            </Link>
-            <Link to="/revenue" className="sidebar-link">
-              <StarIcon className="sidebar-icon" />
-              <span>Doanh thu</span>
-            </Link>
-            <Link to="/profile" className="sidebar-link">
-              <UserIcon className="sidebar-icon" />
-              <span>Hồ sơ</span>
-            </Link>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="host-main-content">
-          <div className="dashboard-header">
-            <h1>Xin chào, {userName}!</h1>
-            <p>Chào mừng bạn đến với Agency Dashboard</p>
-          </div>
-
-          {error && (
-            <div className="error-message" style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#fee', borderRadius: '8px' }}>
-              {error}
-            </div>
-          )}
-
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon tours">
-                <CalendarIcon />
-              </div>
-              <div className="stat-info">
-                <h3>{stats.totalTours}</h3>
-                <p>Tour đang hoạt động</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon bookings">
-                <UserIcon />
-              </div>
-              <div className="stat-info">
-                <h3>{stats.totalBookings}</h3>
-                <p>Tổng đặt chỗ</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon pending">
-                <GridIcon />
-              </div>
-              <div className="stat-info">
-                <h3>{stats.pendingBookings}</h3>
-                <p>Chờ xác nhận</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon revenue">
-                <StarIcon />
-              </div>
-              <div className="stat-info">
-                <h3>{stats.totalRevenue.toLocaleString('vi-VN')}đ</h3>
-                <p>Doanh thu</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="quick-actions">
-            <h2>Thao tác nhanh</h2>
-            <div className="actions-grid">
-              <Link to="/create-service-combo" className="action-card">
-                <CalendarIcon className="action-icon" />
-                <span>Tạo Tour mới</span>
-                <ArrowRightIcon className="arrow-icon" />
-              </Link>
-
-              <Link to="/booking-manager" className="action-card">
-                <UserIcon className="action-icon" />
-                <span>Quản lý đặt chỗ</span>
-                <ArrowRightIcon className="arrow-icon" />
-              </Link>
-
-              <Link to="/revenue" className="action-card">
-                <StarIcon className="action-icon" />
-                <span>Xem doanh thu</span>
-                <ArrowRightIcon className="arrow-icon" />
-              </Link>
-
-              <Link to="/profile" className="action-card">
-                <UserIcon className="action-icon" />
-                <span>Cập nhật hồ sơ</span>
-                <ArrowRightIcon className="arrow-icon" />
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 };
 

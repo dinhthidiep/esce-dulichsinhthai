@@ -24,7 +24,7 @@ import PhoneIcon from '@mui/icons-material/Phone'
 import WcIcon from '@mui/icons-material/Wc'
 import HomeIcon from '@mui/icons-material/Home'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import { uploadImageToFirebase } from '~/firebaseClient'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import { styled } from '@mui/material/styles'
 import { updateProfile as updateProfileApi } from '~/api/instances/UserApi'
 

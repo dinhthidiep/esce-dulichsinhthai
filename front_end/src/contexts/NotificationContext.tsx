@@ -54,9 +54,11 @@ export const NotificationProvider = ({ children }) => {
         
         if (!mounted) return
 
-        // Create SignalR connection
+        // Create SignalR connection (dùng cùng domain với API deploy)
+        const apiBase = (import.meta as any).env.VITE_API_URL || '/api'
+        const backendRoot = apiBase.replace('/api', '')
         const newConnection = new signalR.HubConnectionBuilder()
-          .withUrl('http://localhost:5002/hubs/notification', {
+          .withUrl(`${backendRoot}/hubs/notification`, {
             accessTokenFactory: () => token,
             skipNegotiation: false,
             transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling

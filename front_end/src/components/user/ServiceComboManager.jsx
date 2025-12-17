@@ -5,9 +5,10 @@ import {
     getServiceComboById,
 } from "~/api/user/ServiceComboApi";
 import HostHeader from "~/components/user/HostHeader";
+import { API_BASE_URL } from "~/config/api";
 
-// Backend is running on HTTP port 5002
-const backend_url = "http://localhost:5002";
+// Backend URL gốc (bỏ đuôi /api nếu có), trỏ tới API deploy trên Azure
+const backend_url = API_BASE_URL.replace("/api", "");
 // Default image from Firebase Storage
 const DEFAULT_IMAGE_URL =
     "https://firebasestorage.googleapis.com/v0/b/esce-a4b58.firebasestorage.app/o/default%2Fstock_nimg.jpg?alt=media&token=623cc75c-6625-4d18-ab1e-ff5ca18b49a1";

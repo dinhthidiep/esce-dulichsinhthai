@@ -1,9 +1,12 @@
 import * as signalR from '@microsoft/signalr'
 import { getAuthToken } from './httpClient'
 import type { ChatMessage } from './ChatApi'
+import { API_BASE_URL } from '~/config/api'
 
-const backend_url_http = 'http://localhost:5002'
-const backend_url_https = 'https://localhost:7267'
+// Dùng chung domain với API deploy cho ChatHub
+const backend_root = API_BASE_URL.replace('/api', '')
+const backend_url_http = backend_root
+const backend_url_https = backend_root
 
 let chatConnection: signalR.HubConnection | null = null
 let connectionPromise: Promise<signalR.HubConnection> | null = null

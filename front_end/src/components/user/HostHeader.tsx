@@ -12,7 +12,11 @@ import NotificationDropdown from '~/components/user/NotificationDropdown'
 import { getNotifications } from '~/api/user/NotificationApi'
 import './HostHeader.css'
 
-const HostHeader = React.memo(() => {
+interface HostHeaderProps {
+  dashboardType?: 'host' | 'agency';
+}
+
+const HostHeader = React.memo(({ dashboardType }: HostHeaderProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   
@@ -23,6 +27,33 @@ const HostHeader = React.memo(() => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  
+  // Determine dashboard type from props or user role
+  const effectiveDashboardType = useMemo(() => {
+    if (dashboardType) return dashboardType;
+    // Auto-detect from userInfo
+    const roleId = userInfo?.RoleId || userInfo?.roleId;
+    if (roleId === 3 || roleId === '3') return 'agency';
+    return 'host';
+  }, [dashboardType, userInfo]);
+  
+  // Dashboard config based on type
+  const dashboardConfig = useMemo(() => {
+    if (effectiveDashboardType === 'agency') {
+      return {
+        title: 'Agency Dashboard',
+        subtitle: 'Quản lý tour',
+        dashboardPath: '/agency-dashboard',
+        roleName: 'Agency'
+      };
+    }
+    return {
+      title: 'Host Dashboard',
+      subtitle: 'Quản lý dịch vụ',
+      dashboardPath: '/host-dashboard',
+      roleName: 'Host'
+    };
+  }, [effectiveDashboardType]);
 
   // Kiểm tra đăng nhập - chỉ check khi location thay đổi hoặc khi mount
   useEffect(() => {
@@ -187,11 +218,11 @@ const HostHeader = React.memo(() => {
     <header className={`host-header ${isScrolled ? 'host-header-scrolled' : ''}`}>
       <div className="host-header-container">
         {/* Logo */}
-        <Link to="/host-dashboard" className="host-header-logo-section">
+        <Link to={dashboardConfig.dashboardPath} className="host-header-logo-section">
           <img src="/img/logo_esce.png" alt="ESCE Logo" className="host-header-logo" />
           <div className="host-header-logo-text">
-            <div className="host-header-logo-text-main">Host Dashboard</div>
-            <div className="host-header-logo-text-sub">Quản lý dịch vụ</div>
+            <div className="host-header-logo-text-main">{dashboardConfig.title}</div>
+            <div className="host-header-logo-text-sub">{dashboardConfig.subtitle}</div>
           </div>
         </Link>
 
@@ -213,11 +244,11 @@ const HostHeader = React.memo(() => {
 
         {/* Actions */}
         <div className="host-header-actions">
-          {/* Host Management Button - Link to Dashboard */}
+          {/* Management Button - Link to Dashboard */}
           <Link
-            to="/host-dashboard"
-            className={`host-header-management-button ${isActive('/host-dashboard') ? 'host-header-management-active' : ''}`}
-            aria-label="Quản lý Host"
+            to={dashboardConfig.dashboardPath}
+            className={`host-header-management-button ${isActive(dashboardConfig.dashboardPath) ? 'host-header-management-active' : ''}`}
+            aria-label={`Quản lý ${dashboardConfig.roleName}`}
           >
             <GridIcon className="host-header-management-icon" />
             <span>Quản lý</span>
@@ -276,9 +307,9 @@ const HostHeader = React.memo(() => {
               {userInfo && (
                 <div className="host-header-user-info-inline">
                   <span className="host-header-user-name-inline">
-                    {userInfo?.Name || userInfo?.name || 'Host'}
+                    {userInfo?.Name || userInfo?.name || dashboardConfig.roleName}
                   </span>
-                  <span className="host-header-user-role-inline">Host</span>
+                  <span className="host-header-user-role-inline">{dashboardConfig.roleName}</span>
                 </div>
               )}
               <ChevronDownIcon 

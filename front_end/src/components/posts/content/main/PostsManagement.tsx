@@ -43,7 +43,7 @@ import {
   Send as SendIcon,
   Favorite as FavoriteIcon
 } from '@mui/icons-material'
-import { uploadImageToFirebase } from '~/firebaseClient'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import {
   fetchAllPosts,
   createPost,

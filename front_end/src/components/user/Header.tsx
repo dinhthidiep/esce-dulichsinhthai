@@ -307,8 +307,8 @@ const Header = React.memo(() => {
                       <span>Hồ sơ của tôi</span>
                     </Link>
                     <div className="header-user-menu-divider" />
-                    {/* Ẩn "Cấp độ của bạn" và "Nâng cấp tài khoản" nếu là Admin (roleId = 1) */}
-                    {userInfo && (userInfo.RoleId || userInfo.roleId) !== 1 && String(userInfo.RoleId || userInfo.roleId) !== '1' && (
+                    {/* Ẩn "Cấp độ của bạn" và "Nâng cấp tài khoản" nếu là Admin (roleId = 1) hoặc Agency (roleId = 3) */}
+                    {userInfo && ![1, 3, '1', '3'].includes(userInfo.RoleId || userInfo.roleId) && (
                       <>
                         <Link
                           to="/subscription-packages"
