@@ -291,12 +291,48 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
     }
   };
 
+  // Calculate booking statistics
+  const bookingStats = useMemo(() => {
+    const total = bookings.length;
+    const completed = bookings.filter(b => (b.Status || b.status || '').toLowerCase() === 'completed').length;
+    const confirmed = bookings.filter(b => (b.Status || b.status || '').toLowerCase() === 'confirmed').length;
+    const cancelled = bookings.filter(b => (b.Status || b.status || '').toLowerCase() === 'cancelled').length;
+    const pending = bookings.filter(b => (b.Status || b.status || '').toLowerCase() === 'pending').length;
+    return { total, completed, confirmed, cancelled, pending };
+  }, [bookings]);
+
   return (
     <div className="booking-mgr-booking-management">
       {loadingBookings ? (
         <LoadingSpinner message="Đang tải danh sách booking..." />
       ) : (
         <>
+          {/* Booking Statistics */}
+          <div className="booking-mgr-stats-section">
+            <div className="booking-mgr-stats-grid">
+              <div className="booking-mgr-stat-card">
+                <div className="booking-mgr-stat-label">Tổng số booking</div>
+                <div className="booking-mgr-stat-value">{bookingStats.total}</div>
+              </div>
+              <div className="booking-mgr-stat-card">
+                <div className="booking-mgr-stat-label">Đã hoàn thành</div>
+                <div className="booking-mgr-stat-value booking-mgr-stat-completed">{bookingStats.completed}</div>
+              </div>
+              <div className="booking-mgr-stat-card">
+                <div className="booking-mgr-stat-label">Đã chấp nhận</div>
+                <div className="booking-mgr-stat-value booking-mgr-stat-accepted">{bookingStats.confirmed}</div>
+              </div>
+              <div className="booking-mgr-stat-card">
+                <div className="booking-mgr-stat-label">Đã từ chối</div>
+                <div className="booking-mgr-stat-value booking-mgr-stat-rejected">{bookingStats.cancelled}</div>
+              </div>
+              <div className="booking-mgr-stat-card">
+                <div className="booking-mgr-stat-label">Đã xử lý</div>
+                <div className="booking-mgr-stat-value booking-mgr-stat-pending">{bookingStats.pending}</div>
+              </div>
+            </div>
+          </div>
+
           {/* Filters */}
           <div className="booking-mgr-booking-filter-container">
             <div className="booking-mgr-filter-row">
@@ -393,8 +429,6 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                 }
                 const serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
                 const bookingDate = booking.BookingDate || booking.bookingDate;
-                const startDate = booking.StartDate || booking.startDate || booking.START_DATE;
-                const endDate = booking.EndDate || booking.endDate || booking.END_DATE;
                 const quantity = booking.Quantity || booking.quantity || 0;
                 const totalAmount = booking.TotalAmount || booking.totalAmount || 0;
                 const notes = booking.Notes || booking.notes || 'Không có ghi chú';
@@ -437,15 +471,6 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ onSuccess, onErro
                                   <div className="booking-mgr-booking-detail-item">
                                     <CalendarIcon className="booking-mgr-detail-icon" />
                                     <span>Ngày đặt: {formatBookingDate(bookingDate)}</span>
-                                  </div>
-                                )}
-                                {startDate && (
-                                  <div className="booking-mgr-booking-detail-item">
-                                    <CalendarIcon className="booking-mgr-detail-icon" />
-                                    <span>
-                                      {formatBookingDate(startDate)}
-                                      {endDate && ` - ${formatBookingDate(endDate)}`}
-                                    </span>
                                   </div>
                                 )}
                                 {quantity > 0 && (

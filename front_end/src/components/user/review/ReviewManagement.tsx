@@ -86,14 +86,30 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
         const hostCombos = serviceComboResponse.data || [];
         const hostComboIds = hostCombos.map(c => c.Id || c.id);
         
+        // Filter reviews theo ServiceComboId từ Booking (vì GetAllAsync không include ServiceCombo object)
         const hostReviews = allReviews.filter(review => {
           const booking = review.Booking || review.booking;
-          const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
-          const comboId = serviceCombo?.Id || serviceCombo?.id;
+          // Lấy ServiceComboId trực tiếp từ booking
+          const comboId = booking?.ServiceComboId || booking?.serviceComboId;
           return comboId && hostComboIds.includes(comboId);
         });
         
-        setReviews(hostReviews);
+        // Map ServiceCombo info từ hostCombos vào reviews để hiển thị
+        const hostCombosMap = new Map(hostCombos.map(c => [c.Id || c.id, c]));
+        const enrichedReviews = hostReviews.map(review => {
+          const booking = review.Booking || review.booking;
+          const comboId = booking?.ServiceComboId || booking?.serviceComboId;
+          const serviceCombo = hostCombosMap.get(comboId);
+          return {
+            ...review,
+            Booking: {
+              ...booking,
+              ServiceCombo: serviceCombo
+            }
+          };
+        });
+        
+        setReviews(enrichedReviews);
       } catch (err) {
         console.error('Error loading reviews:', err);
         if (onError) {
@@ -135,8 +151,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
     
     // Sort
     filtered.sort((a, b) => {
-      const dateA = new Date(a.CreatedAt || a.createdAt || a.CreatedDate || a.createdDate || 0);
-      const dateB = new Date(b.CreatedAt || b.createdAt || b.CreatedDate || b.createdDate || 0);
+      const dateA = new Date(a.CreatedDate || a.createdDate || a.CreatedAt || a.createdAt || 0);
+      const dateB = new Date(b.CreatedDate || b.createdDate || b.CreatedAt || b.createdAt || 0);
       const ratingA = a.Rating || a.rating || 0;
       const ratingB = b.Rating || b.rating || 0;
       
@@ -176,16 +192,26 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
   };
 
   // Review handlers
-  const handleViewReviewDetails = (reviewId) => {
+  const handleViewReviewDetails = async (reviewId) => {
     const review = reviews.find(r => (r.Id || r.id) === reviewId);
     if (!review) {
       console.error('Review not found:', reviewId);
       return;
     }
-    setSelectedReview(review);
-    const replies = review.Replies || review.replies || [];
-    const reply = replies.length > 0 ? replies[0] : null;
-    setReplyText(reply?.Comment || reply?.comment || '');
+    
+    // Load replies từ API vì GetAllAsync không include Replies
+    try {
+      const repliesResponse = await axiosInstance.get(`${API_ENDPOINTS.REVIEW}/${reviewId}/replies`);
+      const replies = repliesResponse.data || [];
+      const reviewWithReplies = { ...review, Replies: replies };
+      setSelectedReview(reviewWithReplies);
+      const reply = replies.length > 0 ? replies[0] : null;
+      setReplyText(reply?.Comment || reply?.comment || '');
+    } catch (err) {
+      console.error('Error loading replies:', err);
+      setSelectedReview(review);
+      setReplyText('');
+    }
   };
 
   const handleCloseReviewDetails = () => {
@@ -239,16 +265,29 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
       const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${currentUserId}`);
       const hostCombos = serviceComboResponse.data || [];
       const hostComboIds = hostCombos.map(c => c.Id || c.id);
+      
+      // Filter theo ServiceComboId
       const hostReviews = allReviews.filter(review => {
         const booking = review.Booking || review.booking;
-        const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
-        const comboId = serviceCombo?.Id || serviceCombo?.id;
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
         return comboId && hostComboIds.includes(comboId);
       });
-      setReviews(hostReviews);
+      
+      // Map ServiceCombo info
+      const hostCombosMap = new Map(hostCombos.map(c => [c.Id || c.id, c]));
+      const enrichedReviews = hostReviews.map(review => {
+        const booking = review.Booking || review.booking;
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
+        const serviceCombo = hostCombosMap.get(comboId);
+        return {
+          ...review,
+          Booking: { ...booking, ServiceCombo: serviceCombo }
+        };
+      });
+      setReviews(enrichedReviews);
       
       // Update selectedReview
-      const updatedReview = hostReviews.find(r => (r.Id || r.id) === reviewId);
+      const updatedReview = enrichedReviews.find(r => (r.Id || r.id) === reviewId);
       if (updatedReview) {
         setSelectedReview(updatedReview);
       }
@@ -304,16 +343,29 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
       const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${currentUserId}`);
       const hostCombos = serviceComboResponse.data || [];
       const hostComboIds = hostCombos.map(c => c.Id || c.id);
+      
+      // Filter theo ServiceComboId
       const hostReviews = allReviews.filter(review => {
         const booking = review.Booking || review.booking;
-        const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
-        const comboId = serviceCombo?.Id || serviceCombo?.id;
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
         return comboId && hostComboIds.includes(comboId);
       });
-      setReviews(hostReviews);
+      
+      // Map ServiceCombo info
+      const hostCombosMap = new Map(hostCombos.map(c => [c.Id || c.id, c]));
+      const enrichedReviews = hostReviews.map(review => {
+        const booking = review.Booking || review.booking;
+        const comboId = booking?.ServiceComboId || booking?.serviceComboId;
+        const serviceCombo = hostCombosMap.get(comboId);
+        return {
+          ...review,
+          Booking: { ...booking, ServiceCombo: serviceCombo }
+        };
+      });
+      setReviews(enrichedReviews);
       
       // Update selectedReview
-      const updatedReview = hostReviews.find(r => (r.Id || r.id) === reviewId);
+      const updatedReview = enrichedReviews.find(r => (r.Id || r.id) === reviewId);
       if (updatedReview) {
         setSelectedReview(updatedReview);
       } else {
@@ -422,7 +474,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                 {paginatedReviews.map((review, index) => {
                   try {
                     const reviewId = review.Id || review.id || `review-${index}`;
-                    const serviceCombo = review.ServiceCombo || review.serviceCombo;
+                    const booking = review.Booking || review.booking;
+                    const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo || review.ServiceCombo || review.serviceCombo;
                     
                     // Fallback nếu không có ServiceCombo - lấy từ ComboId
                     let serviceName = 'Dịch vụ không xác định';
@@ -445,8 +498,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                     }
                     
                     const rating = review.Rating || review.rating || 0;
-                    const comment = review.Content || review.content || review.Comment || review.comment || '';
-                    const createdAt = review.CreatedAt || review.createdAt || review.CreatedDate || review.createdDate;
+                    const comment = review.Comment || review.comment || review.Content || review.content || '';
+                    const createdAt = review.CreatedDate || review.createdDate || review.CreatedAt || review.createdAt;
                     
                     return (
                       <div key={reviewId} className="review-mgr-review-card-enhanced">

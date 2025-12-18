@@ -4,6 +4,72 @@
   width: 100%;
 }
 
+/* Statistics Section */
+.booking-mgr-stats-section {
+  margin-bottom: 1.5rem;
+}
+
+.booking-mgr-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .booking-mgr-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-mgr-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .booking-mgr-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.booking-mgr-stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.booking-mgr-stat-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.booking-mgr-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.booking-mgr-stat-completed {
+  color: #16a34a;
+}
+
+.booking-mgr-stat-accepted {
+  color: #2563eb;
+}
+
+.booking-mgr-stat-rejected {
+  color: #dc2626;
+}
+
+.booking-mgr-stat-pending {
+  color: #f59e0b;
+}
+
 /* Filter Container */
 .booking-mgr-booking-filter-container {
   margin-bottom: 1.5rem;

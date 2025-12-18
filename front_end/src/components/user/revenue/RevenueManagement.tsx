@@ -32,42 +32,9 @@ interface RevenueManagementProps {
   onError?: (message: string) => void;
 }
 
-// ========== MOCK DATA - Đặt USE_MOCK_DATA = true để xem demo ==========
-const USE_MOCK_DATA = true;
-
-const MOCK_PAYMENTS = [
-  // Tháng 12/2025
-  { Id: 1, Status: 'success', Amount: 2500000, PaymentDate: '2025-12-01T10:00:00' },
-  { Id: 2, Status: 'success', Amount: 3200000, PaymentDate: '2025-12-03T14:30:00' },
-  { Id: 3, Status: 'success', Amount: 1800000, PaymentDate: '2025-12-05T09:15:00' },
-  { Id: 4, Status: 'success', Amount: 4500000, PaymentDate: '2025-12-07T16:45:00' },
-  { Id: 5, Status: 'success', Amount: 2100000, PaymentDate: '2025-12-10T11:20:00' },
-  { Id: 6, Status: 'success', Amount: 5800000, PaymentDate: '2025-12-12T08:00:00' },
-  { Id: 7, Status: 'success', Amount: 3600000, PaymentDate: '2025-12-14T13:30:00' },
-  // Tháng 11/2025
-  { Id: 8, Status: 'success', Amount: 2800000, PaymentDate: '2025-11-05T10:00:00' },
-  { Id: 9, Status: 'success', Amount: 4200000, PaymentDate: '2025-11-12T14:30:00' },
-  { Id: 10, Status: 'success', Amount: 3100000, PaymentDate: '2025-11-20T09:15:00' },
-  { Id: 11, Status: 'success', Amount: 5500000, PaymentDate: '2025-11-25T16:45:00' },
-  // Tháng 10/2025
-  { Id: 12, Status: 'success', Amount: 3800000, PaymentDate: '2025-10-08T11:20:00' },
-  { Id: 13, Status: 'success', Amount: 2900000, PaymentDate: '2025-10-15T08:00:00' },
-  { Id: 14, Status: 'success', Amount: 4100000, PaymentDate: '2025-10-22T13:30:00' },
-  // Tháng 9/2025
-  { Id: 15, Status: 'success', Amount: 2200000, PaymentDate: '2025-09-10T10:00:00' },
-  { Id: 16, Status: 'success', Amount: 3500000, PaymentDate: '2025-09-18T14:30:00' },
-  // Tháng 8/2025
-  { Id: 17, Status: 'success', Amount: 4800000, PaymentDate: '2025-08-05T09:15:00' },
-  { Id: 18, Status: 'success', Amount: 2600000, PaymentDate: '2025-08-20T16:45:00' },
-  // Tháng 7/2025
-  { Id: 19, Status: 'success', Amount: 3300000, PaymentDate: '2025-07-12T11:20:00' },
-  { Id: 20, Status: 'success', Amount: 5100000, PaymentDate: '2025-07-25T08:00:00' },
-];
-// ========== END MOCK DATA ==========
 
 const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onError }) => {
   // Revenue states
-  const [revenueSubTab, setRevenueSubTab] = useState('revenue'); // 'revenue' or 'statistics'
   const [payments, setPayments] = useState<any[]>([]);
   const [chartViewBy, setChartViewBy] = useState('month'); // 'month' or 'year'
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -106,13 +73,6 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
   // Load payments from API
   useEffect(() => {
     const loadPayments = async () => {
-      // Sử dụng mock data nếu USE_MOCK_DATA = true
-      if (USE_MOCK_DATA) {
-        console.log('📊 [RevenueManagement] Using MOCK_PAYMENTS data');
-        setPayments(MOCK_PAYMENTS);
-        return;
-      }
-
       try {
         const userId = getUserId();
         if (!userId) {
@@ -191,7 +151,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
       const endOfMonth = new Date(year, month, 0, 23, 59, 59);
       
       paymentsForChart = successfulPayments.filter(payment => {
-        const date = payment.PaymentDate || payment.paymentDate || payment.CreatedAt || payment.createdAt;
+        const date = payment.PaymentDate || payment.paymentDate || payment.UpdatedAt || payment.updatedAt;
         if (!date) return false;
         const paymentDate = new Date(date);
         return paymentDate >= startOfMonth && paymentDate <= endOfMonth;
@@ -207,7 +167,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
       }
       
       paymentsForChart.forEach(payment => {
-        const date = payment.PaymentDate || payment.paymentDate || payment.CreatedAt || payment.createdAt;
+        const date = payment.PaymentDate || payment.paymentDate || payment.UpdatedAt || payment.updatedAt;
         if (!date) return;
         const paymentDate = new Date(date);
         const dateKey = paymentDate.toISOString().split('T')[0];
@@ -233,7 +193,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
       const endOfYear = new Date(year, 11, 31, 23, 59, 59);
       
       paymentsForChart = successfulPayments.filter(payment => {
-        const date = payment.PaymentDate || payment.paymentDate || payment.CreatedAt || payment.createdAt;
+        const date = payment.PaymentDate || payment.paymentDate || payment.UpdatedAt || payment.updatedAt;
         if (!date) return false;
         const paymentDate = new Date(date);
         return paymentDate >= startOfYear && paymentDate <= endOfYear;
@@ -247,7 +207,7 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
       }
       
       paymentsForChart.forEach(payment => {
-        const date = payment.PaymentDate || payment.paymentDate || payment.CreatedAt || payment.createdAt;
+        const date = payment.PaymentDate || payment.paymentDate || payment.UpdatedAt || payment.updatedAt;
         if (!date) return;
         const paymentDate = new Date(date);
         const month = paymentDate.getMonth();
@@ -398,68 +358,9 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
     }
   }), []);
 
-  // Load bookings for statistics
-  const [bookingsForStats, setBookingsForStats] = useState([]);
-
-  useEffect(() => {
-    const loadBookingsForStats = async () => {
-      try {
-        const userId = getUserId();
-        if (!userId) {
-          setBookingsForStats([]);
-          return;
-        }
-
-        // Get bookings for host's service combos
-        const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
-        const serviceCombos = serviceCombosResponse.data || [];
-        const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
-        
-        // Get bookings for each service combo
-        const allBookings: any[] = [];
-        for (const comboId of comboIds) {
-          try {
-            const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
-            const comboBookings = bookingsResponse.data || [];
-            allBookings.push(...comboBookings);
-          } catch (err) {
-            // Ignore 404 for combos without bookings
-            if ((err as any)?.response?.status !== 404) {
-              console.error(`Error loading bookings for combo ${comboId}:`, err);
-            }
-          }
-        }
-        
-        setBookingsForStats(allBookings);
-      } catch (err) {
-        console.error('Error loading bookings for stats:', err);
-        setBookingsForStats([]);
-      }
-    };
-
-    loadBookingsForStats();
-  }, [getUserId]);
-
   return (
     <div className="revenue-mgr-revenue-management">
-      {/* Revenue Sub-tabs */}
-      <div className="service-view-toggle">
-        <button
-          className={`toggle-btn ${revenueSubTab === 'revenue' ? 'active' : ''}`}
-          onClick={() => setRevenueSubTab('revenue')}
-        >
-          Doanh thu
-        </button>
-        <button
-          className={`toggle-btn ${revenueSubTab === 'statistics' ? 'active' : ''}`}
-          onClick={() => setRevenueSubTab('statistics')}
-        >
-          Số liệu thống kê
-        </button>
-      </div>
-      
-      {revenueSubTab === 'revenue' ? (
-        <div className="revenue-mgr-revenue-content">
+      <div className="revenue-mgr-revenue-content">
           {/* Revenue Chart Section */}
           <div className="revenue-mgr-revenue-chart-section">
             <div className="revenue-mgr-revenue-chart-container">
@@ -549,56 +450,6 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
             </div>
           </div>
         </div>
-      ) : (
-        <div className="revenue-mgr-revenue-content">
-          {/* Booking Statistics */}
-          <div className="revenue-mgr-revenue-stats-section">
-            <h3 className="revenue-mgr-revenue-section-title">Thống kê booking</h3>
-            <div className="revenue-mgr-revenue-stats-grid">
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Tổng số booking</div>
-                <div className="revenue-mgr-revenue-stat-value">{bookingsForStats.length}</div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã hoàn thành</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-completed">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'completed';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã chấp nhận</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-accepted">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'confirmed';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã từ chối</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-rejected">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'cancelled';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã xử lý</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-pending">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'pending';
-                  }).length}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
