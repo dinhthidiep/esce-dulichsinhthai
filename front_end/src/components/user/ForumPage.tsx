@@ -269,13 +269,14 @@ const ForumPage = () => {
 
   // Helper function để build comment tree từ flat list
   const buildCommentTree = (flatComments: PostComment[]): PostComment[] => {
-    // Tạo map để truy cập nhanh
+    // Tạo map để truy cập nhanh - dùng cả string và number key
     const commentMap = new Map<string, PostComment>()
     const topLevelComments: PostComment[] = []
 
     // Bước 1: Tạo map và khởi tạo replies array cho mỗi comment
     flatComments.forEach((comment) => {
-      commentMap.set(comment.PostCommentId, {
+      const commentIdStr = String(comment.PostCommentId)
+      commentMap.set(commentIdStr, {
         ...comment,
         Replies: []
       })
@@ -283,24 +284,33 @@ const ForumPage = () => {
 
     // Bước 2: Phân loại comments thành top-level và replies
     flatComments.forEach((comment) => {
-      const commentId = comment.PostCommentId
+      const commentIdStr = String(comment.PostCommentId)
       const parentId = comment.ParentCommentId
 
-      if (parentId) {
+      if (parentId !== null && parentId !== undefined) {
         // Đây là reply - thêm vào replies của parent
-        const parentComment = commentMap.get(String(parentId))
-        const replyComment = commentMap.get(commentId)
+        // Tìm parent bằng cả string key
+        const parentIdStr = String(parentId)
+        const parentComment = commentMap.get(parentIdStr)
+        const replyComment = commentMap.get(commentIdStr)
         
         if (parentComment && replyComment) {
           // Kiểm tra tránh duplicate
-          if (!parentComment.Replies.some(r => r.PostCommentId === replyComment.PostCommentId)) {
+          if (!parentComment.Replies.some(r => String(r.PostCommentId) === String(replyComment.PostCommentId))) {
             parentComment.Replies.push(replyComment)
+          }
+        } else {
+          // Parent không tìm thấy - có thể là orphan reply, thêm vào top level
+          // Điều này xảy ra khi parent comment bị xóa hoặc chưa load
+          if (replyComment && !topLevelComments.some(c => String(c.PostCommentId) === commentIdStr)) {
+            console.warn(`[buildCommentTree] Parent comment ${parentIdStr} not found for reply ${commentIdStr}`)
+            topLevelComments.push(replyComment)
           }
         }
       } else {
-        // Đây là top-level comment
-        const topComment = commentMap.get(commentId)
-        if (topComment && !topLevelComments.some(c => c.PostCommentId === topComment.PostCommentId)) {
+        // Đây là top-level comment (ParentCommentId = null hoặc undefined)
+        const topComment = commentMap.get(commentIdStr)
+        if (topComment && !topLevelComments.some(c => String(c.PostCommentId) === commentIdStr)) {
           topLevelComments.push(topComment)
         }
       }
@@ -428,19 +438,57 @@ const ForumPage = () => {
         })
 
         // Kiểm tra xem API đã trả về nested hay chưa
-        // Nếu có comment nào có Replies array không rỗng, nghĩa là API đã nested
-        const hasNestedReplies = flatComments.some(c => 
+        // Nếu có comment nào có Replies array không rỗng từ API gốc, nghĩa là API đã nested
+        const hasNestedRepliesFromApi = post.Comments.some((c: any) => 
           c.Replies && Array.isArray(c.Replies) && c.Replies.length > 0
         )
         
-        if (hasNestedReplies) {
-          // API đã trả về nested, giữ nguyên nhưng đảm bảo format đúng
-          comments = flatComments
-            .filter(c => !c.ParentCommentId) // Chỉ lấy top-level comments
-            .map(c => ({
-              ...c,
-              Replies: c.Replies || []
+        // Kiểm tra xem có comment nào có ParentCommentId (flat list với parent reference)
+        const hasFlatWithParentId = flatComments.some(c => 
+          c.ParentCommentId !== null && c.ParentCommentId !== undefined
+        )
+        
+        if (import.meta.env.DEV) {
+          console.log('[normalizePost] hasNestedRepliesFromApi:', hasNestedRepliesFromApi)
+          console.log('[normalizePost] hasFlatWithParentId:', hasFlatWithParentId)
+          console.log('[normalizePost] flatComments ParentCommentIds:', flatComments.map(c => ({
+            id: c.PostCommentId,
+            parentId: c.ParentCommentId,
+            content: c.Content?.substring(0, 20)
+          })))
+        }
+        
+        if (hasNestedRepliesFromApi) {
+          // API đã trả về nested, cần normalize Replies từ API gốc
+          const normalizeReplies = (replies: any[]): PostComment[] => {
+            if (!replies || !Array.isArray(replies)) return []
+            return replies.map((reply: any) => ({
+              PostCommentId: reply.PostCommentId || String(reply.Id || ''),
+              FullName: reply.FullName || 'Người dùng',
+              Avatar: reply.Avatar || reply.avatar || '',
+              Content: reply.Content || '',
+              Images: reply.Images && Array.isArray(reply.Images) && reply.Images.length > 0
+                ? reply.Images.map((img: string) => getImageUrl(img, '/img/banahills.forum-jpg')).filter((img): img is string => img !== null)
+                : undefined,
+              CreatedDate: reply.CreatedDate,
+              Likes: reply.Likes || [],
+              Replies: normalizeReplies(reply.Replies), // Recursive cho nested replies
+              AuthorId: reply.AuthorId || reply.Author?.Id,
+              ReactionsCount: reply.ReactionsCount || 0,
+              ParentCommentId: reply.ParentCommentId || null,
             }))
+          }
+          
+          comments = post.Comments
+            .filter((c: any) => !c.ParentCommentId) // Chỉ lấy top-level comments
+            .map((c: any) => {
+              const flatComment = flatComments.find(fc => fc.PostCommentId === (c.PostCommentId || String(c.Id || '')))
+              return {
+                ...flatComment,
+                PostCommentId: c.PostCommentId || String(c.Id || ''),
+                Replies: normalizeReplies(c.Replies || [])
+              } as PostComment
+            })
         } else {
           // API trả về flat list, cần build tree
           comments = buildCommentTree(flatComments)
@@ -1621,50 +1669,87 @@ const ForumPage = () => {
       setPosts((prev) =>
         prev.map((post) => {
           if (post.PostId === postId) {
-            const addReplyToComment = (comments: PostComment[]): PostComment[] => {
-              return comments.map((comment) => {
-                if (comment.PostCommentId === parentCommentId) {
-                  const newReply: PostComment = {
-                    PostCommentId: tempReplyId,
-                    FullName: userName,
-                    Avatar: userInfo?.Avatar || userInfo?.avatar || '',
-                    Content: replyText,
-                    CreatedDate: new Date().toISOString(),
-                    Likes: [],
-                    Replies: [],
-                    AuthorId: userId,
-                    ParentCommentId: parseInt(parentCommentId),
-                  }
-                  return {
-                    ...comment,
-                    Replies: [...(comment.Replies || []), newReply],
-                  }
+            // Facebook style: Tìm top-level comment chứa parentCommentId
+            // Nếu parentCommentId là reply, tìm comment gốc của nó
+            const findTopLevelComment = (comments: PostComment[], targetId: string): PostComment | null => {
+              for (const comment of comments) {
+                if (comment.PostCommentId === targetId) {
+                  return comment // Đây là top-level comment
                 }
-                // Recursively check replies
+                // Kiểm tra trong replies
                 if (comment.Replies && comment.Replies.length > 0) {
-                  return {
-                    ...comment,
-                    Replies: addReplyToComment(comment.Replies),
+                  const foundInReplies = comment.Replies.find(r => r.PostCommentId === targetId)
+                  if (foundInReplies) {
+                    return comment // Trả về top-level comment chứa reply này
                   }
                 }
-                return comment
-              })
+              }
+              return null
             }
             
-            return {
-              ...post,
-              Comments: post.Comments ? addReplyToComment(post.Comments) : [],
+            const topLevelComment = findTopLevelComment(post.Comments || [], parentCommentId)
+            
+            if (topLevelComment) {
+              const newReply: PostComment = {
+                PostCommentId: tempReplyId,
+                FullName: userName,
+                Avatar: userInfo?.Avatar || userInfo?.avatar || '',
+                Content: replyText,
+                CreatedDate: new Date().toISOString(),
+                Likes: [],
+                Replies: [],
+                AuthorId: userId,
+                ParentCommentId: parseInt(topLevelComment.PostCommentId), // Luôn reply vào top-level comment
+              }
+              
+              return {
+                ...post,
+                Comments: (post.Comments || []).map((comment) => {
+                  if (comment.PostCommentId === topLevelComment.PostCommentId) {
+                    return {
+                      ...comment,
+                      Replies: [...(comment.Replies || []), newReply],
+                    }
+                  }
+                  return comment
+                }),
+              }
             }
+            
+            return post
           }
           return post
         })
       )
 
+      // Tìm top-level comment ID để gửi lên backend
+      // Facebook style: tất cả replies đều thuộc về top-level comment
+      const findTopLevelCommentId = (): string => {
+        const currentPost = posts.find(p => p.PostId === postId)
+        if (!currentPost?.Comments) return parentCommentId
+        
+        for (const comment of currentPost.Comments) {
+          if (comment.PostCommentId === parentCommentId) {
+            return parentCommentId // Đây đã là top-level comment
+          }
+          // Kiểm tra trong replies
+          if (comment.Replies && comment.Replies.length > 0) {
+            const foundInReplies = comment.Replies.find(r => r.PostCommentId === parentCommentId)
+            if (foundInReplies) {
+              return comment.PostCommentId // Trả về ID của top-level comment
+            }
+          }
+        }
+        return parentCommentId
+      }
+      
+      const topLevelCommentId = findTopLevelCommentId()
+      
       await axiosInstance.post(API_ENDPOINTS.COMMENT, {
         PostId: postId, // Backend expect string
         Content: replyText,
         Images: null,
-        PostCommentId: parentCommentId, // Backend dùng PostCommentId để xác định parent comment (reply)
+        ParentCommentId: parseInt(topLevelCommentId), // Luôn reply vào top-level comment
       })
 
       // Ẩn reply input sau khi gửi thành công
@@ -2966,7 +3051,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   const isReply = depth > 0
 
                   return (
-                    <div key={comment.PostCommentId} className={`forum-forum-comment-item ${isReply ? 'forum-forum-comment-reply' : ''}`} style={{ marginLeft: depth > 0 ? `${depth * 2}rem` : '0' }}>
+                    <div key={comment.PostCommentId} className={`forum-forum-comment-item ${isReply ? 'forum-forum-comment-reply' : ''}`} style={{ marginLeft: isReply ? '2.5rem' : '0' }}>
                       {comment.Avatar ? (
                         <img 
                           src={comment.Avatar} 
@@ -3266,10 +3351,10 @@ const PostCard: React.FC<PostCardProps> = ({
                             </div>
                           </div>
                         )}
-                        {/* Render Replies (nested) */}
+                        {/* Render Replies - Facebook style: tất cả replies cùng 1 level indent */}
                         {comment.Replies && comment.Replies.length > 0 && (
                           <div className="forum-forum-comment-replies">
-                            {comment.Replies.map((reply) => renderComment(reply, depth + 1))}
+                            {comment.Replies.map((reply) => renderComment(reply, 1))}
                           </div>
                         )}
                       </div>

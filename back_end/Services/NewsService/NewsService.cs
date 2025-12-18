@@ -174,6 +174,8 @@ namespace ESCE_SYSTEM.Services.NewsService
             return (liked, likesCount);
         }
 
+        private const string ImageSeparator = "|||IMAGE_SEPARATOR|||";
+
         private static string SerializeImages(IEnumerable<string>? images)
         {
             if (images == null)
@@ -185,7 +187,7 @@ namespace ESCE_SYSTEM.Services.NewsService
                 .Where(img => !string.IsNullOrWhiteSpace(img))
                 .Select(img => img.Trim());
 
-            return string.Join(";", sanitized);
+            return string.Join(ImageSeparator, sanitized);
         }
 
         private static string[] DeserializeImages(string? serializedImages)
@@ -193,6 +195,24 @@ namespace ESCE_SYSTEM.Services.NewsService
             if (string.IsNullOrWhiteSpace(serializedImages))
             {
                 return Array.Empty<string>();
+            }
+
+            // Support both new separator and legacy semicolon separator
+            if (serializedImages.Contains(ImageSeparator))
+            {
+                return serializedImages
+                    .Split(new[] { ImageSeparator }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .ToArray();
+            }
+
+            // Legacy: semicolon separator (only for non-URL images)
+            // Check if it looks like URLs (contains http)
+            if (serializedImages.Contains("http"))
+            {
+                // For URLs, don't split by semicolon as it breaks Firebase URLs
+                return new[] { serializedImages.Trim() };
             }
 
             return serializedImages

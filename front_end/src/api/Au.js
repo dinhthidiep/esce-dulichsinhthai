@@ -141,6 +141,49 @@ export const verifyOtp = async (email, otp) => {
   }
 }
 
+// Update review (PUT /api/Review/{id})
+// Chỉ cần gửi Rating và Comment theo backend hiện tại
+export const updateReview = async (reviewId, rating, comment) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token') || ''
+  const url = `${backend_url}/api/Review/${reviewId}`
+  const body = {
+    Rating: Number(rating),
+    Comment: comment && comment.trim() ? comment.trim() : null
+  }
+
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body)
+  })
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') || ''
+    let message = 'Không thể cập nhật đánh giá.'
+    if (contentType.includes('application/json')) {
+      const err = await response.json()
+      message = err.message || message
+    } else {
+      const text = await response.text()
+      message = text || message
+    }
+    throw new Error(message)
+  }
+
+  const respType = response.headers.get('content-type') || ''
+  if (respType.includes('application/json')) {
+    return await response.json()
+  }
+  return true
+}
+
 export const resetPassword = async (email, otp, newPassword) => {
   try {
     const response = await fetch(`${backend_url}/api/Auth/ResetPassword`, {

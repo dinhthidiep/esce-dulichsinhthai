@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.DTOs;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -75,10 +76,24 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Review review)
+        public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
             try
             {
+                // Chỉ map các trường scalar, không gắn navigation để tránh lỗi EF double-tracking
+                var review = new Review
+                {
+                    BookingId = dto.BookingId,
+                    UserId = dto.UserId,
+                    Rating = dto.Rating,
+                    Comment = dto.Comment
+                };
+
                 var result = await _service.CreateAsync(review);
                 return Ok(result);
             }
@@ -89,10 +104,21 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Review review)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateReviewDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
             try
             {
+                var review = new Review
+                {
+                    Rating = dto.Rating,
+                    Comment = dto.Comment
+                };
+
                 var result = await _service.UpdateAsync(id, review);
                 if (result == null) return NotFound();
                 return Ok(result);

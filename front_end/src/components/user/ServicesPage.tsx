@@ -94,42 +94,51 @@ useEffect(() => {
   loadFallbackImage()
 }, [])
 
-  // Fetch ratings cho ServiceCombo
+  // Fetch ratings cho ServiceCombo dựa trên danh sách Review (đồng bộ với ServiceDetail)
   useEffect(() => {
-    const fetchRatings = async () => {
-      // Fetch ratings cho ServiceCombo (tours)
-      if (tours && tours.length > 0) {
-        const tourRatingPromises = tours.map(async (tour) => {
-          const id = tour.Id
-          if (!id) return null
+    const fetchRatingsFromReviews = async () => {
+      try {
+        const response = await axiosInstance.get(API_ENDPOINTS.REVIEW)
+        const allReviews = response.data || []
 
-          try {
-            const response = await axiosInstance.get<{ AverageRating?: number }>(
-              `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
-            )
-            const rating = response.data.AverageRating || 0
-            return { id, rating: parseFloat(String(rating)) || 0 }
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn(`Không thể lấy rating cho ServiceCombo ${id}:`, error)
-            }
-            return { id, rating: 0 }
+        // Gom rating theo ServiceComboId qua Booking
+        const sumMap: Record<number, { sum: number; count: number }> = {}
+
+        allReviews.forEach((review: any) => {
+          const booking = review.Booking || review.booking
+          if (!booking) return
+
+          const comboId = booking.ServiceComboId || booking.serviceComboId
+          const rating = review.Rating || review.rating || 0
+
+          if (!comboId || rating <= 0) return
+
+          if (!sumMap[comboId]) {
+            sumMap[comboId] = { sum: 0, count: 0 }
           }
+          sumMap[comboId].sum += Number(rating)
+          sumMap[comboId].count += 1
         })
 
-        const tourRatingResults = await Promise.all(tourRatingPromises)
         const ratingsMap: Record<number, number> = {}
-        tourRatingResults.forEach((result) => {
-          if (result) {
-            ratingsMap[result.id] = result.rating
+        Object.keys(sumMap).forEach((key) => {
+          const id = Number(key)
+          const { sum, count } = sumMap[id]
+          if (count > 0) {
+            ratingsMap[id] = sum / count
           }
         })
-        setRatings((prev) => ({ ...prev, ...ratingsMap }))
+
+        setRatings(ratingsMap)
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('Không thể tính rating từ Review:', error)
+        }
       }
     }
 
-    fetchRatings()
-  }, [tours])
+    fetchRatingsFromReviews()
+  }, [])
 
 
   // Transform API data to display format

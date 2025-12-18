@@ -171,6 +171,48 @@ const getUserId = () => {
   }
 };
 
+// Toast notification types
+type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+interface ToastState {
+  show: boolean;
+  type: ToastType;
+  title: string;
+  message: string;
+}
+
+// Toast Icon Components
+const ToastSuccessIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+
+const ToastErrorIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </svg>
+);
+
+const ToastWarningIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const ToastInfoIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="16" x2="12" y2="12"/>
+    <line x1="12" y1="8" x2="12.01" y2="8"/>
+  </svg>
+);
+
 const ServiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -198,6 +240,52 @@ const ServiceDetail = () => {
   const [similarServices, setSimilarServices] = useState([]);
   const [loadingSimilarServices, setLoadingSimilarServices] = useState(false);
   const [availableServices, setAvailableServices] = useState([]); // Dịch vụ đơn lẻ của host
+  
+  // Toast notification state
+  const [toast, setToast] = useState<ToastState>({
+    show: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Show toast notification function
+  const showToast = useCallback((type: ToastType, title: string, message: string = '', duration: number = 4000) => {
+    // Clear existing timeout
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    
+    setToast({
+      show: true,
+      type,
+      title,
+      message
+    });
+
+    // Auto hide after duration
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, duration);
+  }, []);
+
+  // Hide toast function
+  const hideToast = useCallback(() => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast(prev => ({ ...prev, show: false }));
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
   const [selectedServices, setSelectedServices] = useState<number[]>([]); // ID các dịch vụ đã chọn
   const [loadingServices, setLoadingServices] = useState(false);
 
@@ -710,6 +798,24 @@ const ServiceDetail = () => {
     return distribution;
   }, [reviews]);
 
+  // Tính rating trung bình từ reviews - đồng bộ với ratingDistribution
+  const calculatedAverageRating = useMemo(() => {
+    if (!reviews || reviews.length === 0) return 0;
+    
+    let totalRating = 0;
+    let validCount = 0;
+    
+    reviews.forEach(review => {
+      const rating = review.Rating || review.rating || 0;
+      if (rating >= MIN_RATING && rating <= MAX_RATING) {
+        totalRating += rating;
+        validCount++;
+      }
+    });
+    
+    return validCount > 0 ? totalRating / validCount : 0;
+  }, [reviews]);
+
   // Get sorted and filtered reviews - Memoized để tránh sort/filter lại mỗi render
   const sortedAndFilteredReviews = useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
@@ -783,19 +889,19 @@ const ServiceDetail = () => {
 
   const handleSubmitReview = async () => {
     if (!reviewForm.rating || reviewForm.rating < MIN_RATING || reviewForm.rating > MAX_RATING) {
-      alert('Vui lòng chọn số sao đánh giá');
+      showToast('warning', 'Thiếu thông tin', 'Vui lòng chọn số sao đánh giá');
       return;
     }
 
     const userId = getUserId();
     if (!userId) {
-      alert('Vui lòng đăng nhập để đánh giá');
+      showToast('warning', 'Chưa đăng nhập', 'Vui lòng đăng nhập để đánh giá');
       navigate('/login', { state: { returnUrl: `/services/${id}` } });
       return;
     }
 
     if (!id) {
-      alert('Không tìm thấy thông tin dịch vụ');
+      showToast('error', 'Lỗi', 'Không tìm thấy thông tin dịch vụ');
       return;
     }
 
@@ -831,7 +937,7 @@ const ServiceDetail = () => {
         });
         
         if (!validBooking) {
-          alert('Bạn chỉ có thể đánh giá sau khi hoàn thành chuyến du lịch.');
+          showToast('warning', 'Chưa đủ điều kiện', 'Bạn chỉ có thể đánh giá sau khi hoàn thành chuyến du lịch.');
           setSubmittingReview(false);
           return;
         }
@@ -841,7 +947,7 @@ const ServiceDetail = () => {
       }
 
       if (!bookingId || !bookingObject) {
-        alert('Không tìm thấy thông tin booking hợp lệ để đánh giá.');
+        showToast('error', 'Lỗi', 'Không tìm thấy thông tin booking hợp lệ để đánh giá.');
         setSubmittingReview(false);
         return;
       }
@@ -870,13 +976,13 @@ const ServiceDetail = () => {
         if (import.meta.env.DEV) {
           console.error('❌ [ServiceDetail] Không thể fetch user từ API:', err);
         }
-        alert('Không thể lấy thông tin người dùng từ hệ thống. Vui lòng thử lại sau.');
+        showToast('error', 'Lỗi hệ thống', 'Không thể lấy thông tin người dùng từ hệ thống. Vui lòng thử lại sau.');
         setSubmittingReview(false);
         return;
       }
 
       if (!rawUserPayload) {
-        alert('Không tìm thấy thông tin người dùng hợp lệ.');
+        showToast('error', 'Lỗi', 'Không tìm thấy thông tin người dùng hợp lệ.');
         setSubmittingReview(false);
         return;
       }
@@ -1004,13 +1110,13 @@ const ServiceDetail = () => {
       // Reload can-review status sau khi submit review (user đã review nên canReview = false)
       await checkCanReview();
       
-      alert('Đánh giá của bạn đã được gửi! Cảm ơn bạn đã đánh giá dịch vụ.');
+      showToast('success', 'Gửi đánh giá thành công!', 'Cảm ơn bạn đã đánh giá dịch vụ.');
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' Lỗi khi gửi review:', err);
       }
       const errorMessage = err.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.';
-      alert(errorMessage);
+      showToast('error', 'Lỗi', errorMessage);
     } finally {
       setSubmittingReview(false);
     }
@@ -1029,12 +1135,12 @@ const ServiceDetail = () => {
 
   const handleUpdateReview = async () => {
     if (!editForm.rating || editForm.rating < MIN_RATING || editForm.rating > MAX_RATING) {
-      alert('Vui lòng chọn số sao đánh giá');
+      showToast('warning', 'Thiếu thông tin', 'Vui lòng chọn số sao đánh giá');
       return;
     }
 
     if (!editingReviewId) {
-      alert('Không tìm thấy đánh giá cần chỉnh sửa');
+      showToast('error', 'Lỗi', 'Không tìm thấy đánh giá cần chỉnh sửa');
       return;
     }
 
@@ -1055,13 +1161,13 @@ const ServiceDetail = () => {
       
       await reloadReviews();
       
-      alert('Đánh giá đã được cập nhật thành công!');
+      showToast('success', 'Cập nhật thành công!', 'Đánh giá của bạn đã được cập nhật.');
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' Lỗi khi cập nhật review:', err);
       }
       const errorMessage = err.response?.data?.message || 'Không thể cập nhật đánh giá. Vui lòng thử lại.';
-      alert(errorMessage);
+      showToast('error', 'Lỗi', errorMessage);
     } finally {
       setSubmittingReview(false);
     }
@@ -1082,13 +1188,13 @@ const ServiceDetail = () => {
       // Reload can-review status sau khi delete review (user có thể review lại)
       await checkCanReview();
       
-      alert('Đánh giá đã được xóa thành công!');
+      showToast('success', 'Xóa thành công!', 'Đánh giá đã được xóa.');
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' Lỗi khi xóa review:', err);
       }
       const errorMessage = err.response?.data?.message || 'Không thể xóa đánh giá. Vui lòng thử lại.';
-      alert(errorMessage);
+      showToast('error', 'Lỗi', errorMessage);
     } finally {
       setDeletingReviewId(null);
     }
@@ -1186,7 +1292,8 @@ const ServiceDetail = () => {
   const status = service.Status || service.status || 'open';
   const cancellationPolicy = service.CancellationPolicy || service.cancellationPolicy || null;
   const statusBadge = getStatusBadge(status);
-  const rating = averageRating > 0 ? averageRating : 4.5; // Fallback rating
+  // Sử dụng calculatedAverageRating từ reviews để đồng bộ tất cả các vị trí hiển thị rating
+  const rating = calculatedAverageRating;
 
   // Tính tổng tiền (đã được tính trong useMemo ở trên)
   const totalPrice = servicePrice + selectedServicesTotal;
@@ -1494,14 +1601,14 @@ const ServiceDetail = () => {
                       <div className="sd-rating-summary-main">
                         <div className="sd-rating-overall">
                           <div className="sd-rating-overall-value">
-                            {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
+                            {calculatedAverageRating > 0 ? calculatedAverageRating.toFixed(1) : '0.0'}
                           </div>
                           <div className="sd-rating-overall-stars">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <StarIcon
                                 key={star}
                                 className="sd-rating-overall-star"
-                                filled={star <= Math.round(averageRating)}
+                                filled={star <= Math.round(calculatedAverageRating)}
                               />
                             ))}
                           </div>
@@ -2024,7 +2131,7 @@ const ServiceDetail = () => {
                           if (import.meta.env.DEV) {
                             console.warn('  - Button disabled: status =', status, ', slots =', availableSlots)
                           }
-                          alert('Dịch vụ hiện không khả dụng để đặt');
+                          showToast('warning', 'Không khả dụng', 'Dịch vụ hiện không khả dụng để đặt');
                           return;
                         }
                         
@@ -2092,6 +2199,36 @@ const ServiceDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div 
+          className={`sd-toast sd-toast-${toast.type}`}
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="sd-toast-icon">
+            {toast.type === 'success' && <ToastSuccessIcon />}
+            {toast.type === 'error' && <ToastErrorIcon />}
+            {toast.type === 'warning' && <ToastWarningIcon />}
+            {toast.type === 'info' && <ToastInfoIcon />}
+          </div>
+          <div className="sd-toast-content">
+            <div className="sd-toast-title">{toast.title}</div>
+            {toast.message && <div className="sd-toast-message">{toast.message}</div>}
+          </div>
+          <button 
+            className="sd-toast-close"
+            onClick={hideToast}
+            aria-label="Đóng thông báo"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

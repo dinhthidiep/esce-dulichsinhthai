@@ -65,6 +65,21 @@ namespace ESCE_SYSTEM.Services
             if (booking.ItemType != "combo" && booking.ItemType != "service")
                 throw new Exception("ItemType must be 'combo' or 'service'");
 
+            // Nếu là combo: kiểm tra số chỗ còn lại trước khi cho đặt
+            if (booking.ItemType == "combo" && booking.ServiceComboId.HasValue)
+            {
+                var combo = await _serviceComboRepository.GetByIdAsync(booking.ServiceComboId.Value);
+                if (combo == null)
+                {
+                    throw new Exception("ServiceCombo not found");
+                }
+
+                if (combo.AvailableSlots < booking.Quantity)
+                {
+                    throw new Exception("Số chỗ còn lại không đủ cho số lượng bạn đặt.");
+                }
+            }
+
             decimal totalAmount = await CalculateTotalAmountAsync(
                 booking.ServiceComboId ?? 0,
                 booking.ServiceId ?? 0,
@@ -106,6 +121,21 @@ namespace ESCE_SYSTEM.Services
             // Validate itemType
             if (booking.ItemType != "combo" && booking.ItemType != "service")
                 throw new Exception("ItemType must be 'combo' or 'service'");
+
+            // Nếu là combo: kiểm tra số chỗ còn lại trước khi cho đặt
+            if (booking.ItemType == "combo" && booking.ServiceComboId.HasValue)
+            {
+                var combo = await _serviceComboRepository.GetByIdAsync(booking.ServiceComboId.Value);
+                if (combo == null)
+                {
+                    throw new Exception("ServiceCombo not found");
+                }
+
+                if (combo.AvailableSlots < booking.Quantity)
+                {
+                    throw new Exception("Số chỗ còn lại không đủ cho số lượng bạn đặt.");
+                }
+            }
 
             // Tính tổng tiền
             decimal totalAmount = await CalculateTotalAmountAsync(
@@ -174,6 +204,7 @@ namespace ESCE_SYSTEM.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
+            var oldStatus = existing.Status;
             existing.Status = status;
             existing.UpdatedAt = DateTime.UtcNow;
 
@@ -181,7 +212,23 @@ namespace ESCE_SYSTEM.Services
                 existing.ConfirmedDate = DateTime.UtcNow;
 
             if (status == "completed")
+            {
                 existing.CompletedDate = DateTime.UtcNow;
+
+                // Khi booking chuyển sang completed lần đầu tiên, trừ số chỗ của ServiceCombo
+                if (oldStatus != "completed"
+                    && existing.ItemType == "combo"
+                    && existing.ServiceComboId.HasValue)
+                {
+                    var combo = await _serviceComboRepository.GetByIdAsync(existing.ServiceComboId.Value);
+                    if (combo != null)
+                    {
+                        var newSlots = Math.Max(0, combo.AvailableSlots - existing.Quantity);
+                        combo.AvailableSlots = newSlots;
+                        await _serviceComboRepository.UpdateAsync(combo);
+                    }
+                }
+            }
 
             await _repository.UpdateAsync(existing);
             return true;

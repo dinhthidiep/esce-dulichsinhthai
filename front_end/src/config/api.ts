@@ -7,8 +7,8 @@ const envApiUrl = import.meta.env.VITE_API_URL
 // Do đó mặc định dùng HTTPS để tránh redirect
 // Nếu backend chạy HTTPS, set VITE_API_URL=https://localhost:7267/api trong file .env
 // Nếu backend chạy HTTP (không có redirect), set VITE_API_URL=http://localhost:5002/api trong file .env
-export const API_BASE_URL ='https://esce-api-hwhhh5behvh3gnfr.southeastasia-01.azurewebsites.net/api'
-
+// export const API_BASE_URL ='https://esce-api-hwhhh5behvh3gnfr.southeastasia-01.azurewebsites.net/api'
+export const API_BASE_URL ='http://localhost:5002/api'
 
 // Log để debug (chỉ log một lần khi khởi động)
 if (import.meta.env.DEV) {

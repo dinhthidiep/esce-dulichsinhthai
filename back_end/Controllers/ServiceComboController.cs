@@ -81,12 +81,39 @@ namespace ESCE_SYSTEM.Controllers
         [Authorize(Roles = "Host")]
         public async Task<IActionResult> Create(ServiceCombo ServiceCombo)
         {
-            // Chỉ Host mới được tạo ServiceCombo
-            var hostId = _userContextService.GetCurrentUserId();
-            ServiceCombo.HostId = hostId;
-            
-            var result = await _service.CreateAsync(ServiceCombo);
-            return Ok(result);
+            // 1. Loại bỏ kiểm tra các thuộc tính quan hệ để tránh lỗi validation từ frontend gửi object lồng nhau
+            ModelState.Remove("Host");
+            ModelState.Remove("Bookings");
+            ModelState.Remove("ServiceComboDetails");
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // Chỉ Host mới được tạo ServiceCombo
+                var hostId = _userContextService.GetCurrentUserId();
+                if (hostId <= 0)
+                {
+                    return Unauthorized("Không tìm thấy HostId");
+                }
+
+                // 2. Đảm bảo gán đúng HostId và ngắt kết nối với object Host ảo từ Frontend
+                ServiceCombo.HostId = hostId;
+                ServiceCombo.Host = null!;
+
+                var result = await _service.CreateAsync(ServiceCombo);
+
+                // 3. Trả về kết quả gọn, tránh trả lại full graph gây vòng lặp JSON
+                return Ok(new { message = "Thành công", id = result.Id });
+            }
+            catch (Exception ex)
+            {
+                // 4. Trả về lỗi chi tiết thay vì 500 trống
+                return StatusCode(500, $"Lỗi Server: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
 
         [HttpPut("{id}")]

@@ -428,16 +428,18 @@ const LandingPage = () => {
       console.log('[LandingPage] Sample tour Image:', tours[0].Image)
     }
 
-    // Lọc các service có status 'open' và map sang format cần thiết
+    // Lọc các service có status 'open' hoặc 'approved' và map sang format cần thiết
     // API trả về PascalCase (Status)
     const activeServices = tours
       .filter((service) => {
         const status = (service.Status || 'open') as string
-        const isOpen = status.toLowerCase() === 'open'
-        if (!isOpen) {
+        const statusLower = status.toLowerCase()
+        // Chấp nhận cả 'open' và 'approved' là các trạng thái hợp lệ để hiển thị
+        const isActive = statusLower === 'open' || statusLower === 'approved'
+        if (!isActive) {
           console.log(`  [LandingPage] Bỏ qua service có status: ${status}`)
         }
-        return isOpen
+        return isActive
       })
       .map(mapServiceComboToService)
       // Sắp xếp theo rating từ cao xuống thấp
@@ -808,9 +810,13 @@ const LandingPage = () => {
 
                   const isReviewVisible = visibleSections.has('testimonials')
                   
+                  // Tạo unique key bằng cách kết hợp id và index để tránh duplicate
+                  const reviewId = review.Id || review.id
+                  const uniqueKey = reviewId ? `review-${reviewId}-${currentReviewIndex}-${index}` : `review-idx-${currentReviewIndex}-${index}`
+                  
                   return (
                     <article
-                      key={review.Id || review.id || index}
+                      key={uniqueKey}
                       className={`review-card ${isReviewVisible ? 'fade-in-up' : ''}`}
                       style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                     >

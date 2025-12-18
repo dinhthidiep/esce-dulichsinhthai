@@ -35,7 +35,7 @@ import {
   Close as CloseIcon,
   Link as LinkIcon
 } from '@mui/icons-material'
-import { uploadImageToFirebase } from '~/services/firebaseStorage'
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage'
 import {
   fetchAllNews,
   createNews,
@@ -341,10 +341,14 @@ export default function NewsManagement() {
 
   // Edit News Handlers
   const handleOpenEditDialog = (newsItem: NewsDto) => {
+    console.log('🔵 [Edit News] Opening edit dialog for news:', newsItem.newsId)
+    console.log('🔵 [Edit News] newsItem.images:', newsItem.images)
+    console.log('🔵 [Edit News] newsItem.images length:', newsItem.images?.length)
+    
     setEditingNews(newsItem)
     setEditContent(newsItem.content)
     setEditSocialLink(newsItem.socialMediaLink || '')
-    setEditImages([...newsItem.images])
+    setEditImages(newsItem.images ? [...newsItem.images] : [])
     setEditNewImages([])
     setEditNewImagePreviews([])
     setEditDialogOpen(true)
@@ -363,16 +367,45 @@ export default function NewsManagement() {
 
   const handleEditImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
+    if (files && files.length > 0) {
       const fileArray = Array.from(files)
-      setEditNewImages((prev) => [...prev, ...fileArray])
 
-      const previews = fileArray.map((file) => URL.createObjectURL(file))
+      // Validate file types
+      const validFiles = fileArray.filter((file) => {
+        if (!file.type.startsWith('image/')) {
+          console.warn(`File ${file.name} is not an image, skipping`)
+          return false
+        }
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          console.warn(`File ${file.name} exceeds 5MB limit, skipping`)
+          setError(`Ảnh ${file.name} vượt quá 5MB`)
+          return false
+        }
+        return true
+      })
+
+      if (validFiles.length === 0) {
+        return
+      }
+
+      // Add new files (avoid duplicates)
+      setEditNewImages((prev) => {
+        const existingNames = new Set(prev.map((f) => f.name))
+        const newFiles = validFiles.filter((f) => !existingNames.has(f.name))
+        return [...prev, ...newFiles]
+      })
+
+      // Create previews
+      const previews = validFiles.map((file) => URL.createObjectURL(file))
       setEditNewImagePreviews((prev) => [...prev, ...previews])
+
+      // Reset input to allow selecting same file again
+      e.target.value = ''
     }
   }
 
-  const removeEditImage = (index: number, isNew: boolean) => {
+  const removeEditImage = async (index: number, isNew: boolean) => {
     if (isNew) {
       setEditNewImages((prev) => prev.filter((_, i) => i !== index))
       setEditNewImagePreviews((prev) => {
@@ -380,6 +413,16 @@ export default function NewsManagement() {
         return prev.filter((_, i) => i !== index)
       })
     } else {
+      // Delete old Firebase image when removing existing image
+      const imageToDelete = editImages[index]
+      if (imageToDelete && imageToDelete.includes('firebasestorage')) {
+        try {
+          await deleteImageFromFirebase(imageToDelete)
+          console.log('✅ Đã xóa ảnh cũ từ Firebase:', imageToDelete)
+        } catch (deleteErr) {
+          console.warn('⚠️ Không thể xóa ảnh cũ từ Firebase:', deleteErr)
+        }
+      }
       setEditImages((prev) => prev.filter((_, i) => i !== index))
     }
   }

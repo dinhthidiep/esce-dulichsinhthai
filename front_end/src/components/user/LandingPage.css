@@ -126,7 +126,7 @@
 .landing-page .hero-section {
   position: relative;
   min-height: 100vh;
-  margin-top: 80px;
+  margin-top: 69px;
   display: flex;
   align-items: center;
   background-image: url('/images/manhinh.jpg');
@@ -915,6 +915,7 @@
   padding: 0;
 }
 
+
 .landing-page .lp-service-image {
   width: 100%;
   height: 100%;
@@ -1153,13 +1154,32 @@
 
 .landing-page .reviews-carousel-wrapper {
   position: relative;
+  overflow: hidden;
+  padding: 0 60px;
 }
 
 .landing-page .reviews-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--landing-spacing-lg);
   transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Responsive cho reviews grid - 3 cột trên desktop, 2 trên tablet, 1 trên mobile */
+@media (max-width: 1024px) {
+  .landing-page .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-page .reviews-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .landing-page .reviews-carousel-wrapper {
+    padding: 0 40px;
+  }
 }
 
 .landing-page .reviews-carousel-btn {

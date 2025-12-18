@@ -10,6 +10,7 @@ import { formatPrice, getImageUrl } from '~/lib/utils';
 import { API_ENDPOINTS } from '~/config/api';
 import { useUserLevel } from '~/hooks/useUserLevel';
 import LevelProgressBar from './LevelProgressBar';
+import { uploadImageToFirebase, deleteImageFromFirebase, getFallbackImageUrl } from '~/services/firebaseStorage'
 import { 
   UserIcon, 
   CalendarIcon, 
@@ -78,6 +79,7 @@ const ProfilePage = () => {
   const [reviews, setReviews] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [bookingFallbackImage, setBookingFallbackImage] = useState<string>('/img/banahills.jpg');
   const originalFormDataRef = useRef(null);
   const fileInputRef = useRef(null);
   
@@ -140,6 +142,16 @@ const ProfilePage = () => {
       try {
         setLoading(true);
         setError(null);
+
+        // Load Firebase fallback image cho booking history
+        try {
+          const firebaseFallback = await getFallbackImageUrl();
+          if (firebaseFallback) {
+            setBookingFallbackImage(firebaseFallback);
+          }
+        } catch (fallbackErr) {
+          console.warn('⚠️ [ProfilePage] Không thể load fallback image từ Firebase, dùng local:', fallbackErr);
+        }
 
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) {
@@ -709,8 +721,10 @@ const ProfilePage = () => {
       }
 
       // Log payload before sending
-      console.log(' ProfilePage.handleSave: Payload sẽ gửi đến backend:', JSON.stringify(updateData, null, 2));
-      console.log(' ProfilePage.handleSave: Endpoint:', `${API_ENDPOINTS.USER}/profile`);
+      console.log('🔵 ProfilePage.handleSave: formData.avatar:', formData.avatar);
+      console.log('🔵 ProfilePage.handleSave: currentAvatar:', currentAvatar);
+      console.log('🔵 ProfilePage.handleSave: Payload sẽ gửi đến backend:', JSON.stringify(updateData, null, 2));
+      console.log('🔵 ProfilePage.handleSave: Endpoint:', `${API_ENDPOINTS.USER}/profile`);
 
       const response = await axiosInstance.put(`${API_ENDPOINTS.USER}/profile`, updateData);
       
@@ -866,51 +880,59 @@ const ProfilePage = () => {
     }
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Clear previous errors
-    setError(null);
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+  
+    // clear lỗi cũ + validate type/size như đang làm
+    setError(null)
     setFieldErrors(prev => {
-      const newErrors: { [key: string]: string } = { ...prev };
-      delete newErrors.avatar;
-      return newErrors;
-    });
-
-    // Validate file type
+      const next: any = { ...prev }   // ép kiểu any cho object lỗi
+      delete next.avatar              // xoá lỗi avatar
+      return next
+    })
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh (JPG, PNG, GIF)');
-      setFieldErrors(prev => ({ ...prev, avatar: 'File phải là ảnh' }));
-      return;
+      setError('Vui lòng chọn file ảnh (JPG, PNG, GIF)')
+      setFieldErrors(prev => ({ ...prev, avatar: 'File phải là ảnh' }))
+      return
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('Kích thước ảnh không được vượt quá 5MB');
-      setFieldErrors(prev => ({ ...prev, avatar: 'Kích thước tối đa: 5MB' }));
-      return;
+      setError('Kích thước ảnh không được vượt quá 5MB')
+      setFieldErrors(prev => ({ ...prev, avatar: 'Kích thước tối đa: 5MB' }))
+      return
     }
+  
+    try {
+      // Lưu URL ảnh cũ để xóa sau khi upload thành công
+      const oldAvatarUrl = formData.avatar
 
-    // Read file as base64
-    const reader = new FileReader();
-    reader.onerror = () => {
-      setError('Không thể đọc file ảnh. Vui lòng thử lại.');
-    };
-    reader.onloadend = () => {
-      setFormData((prev: { name: string; email: string; phone: string; dob: string; gender: string; address: string; avatar: string }): { name: string; email: string; phone: string; dob: string; gender: string; address: string; avatar: string } => {
-        const newData: { [key: string]: string | ArrayBuffer } = {
-          ...prev,
-          avatar: reader.result
-        };
-        // Check for changes
-        const newDataString = JSON.stringify(newData);
-        setHasChanges(newDataString !== originalFormDataRef.current);
-        return newData as { name: string; email: string; phone: string; dob: string; gender: string; address: string; avatar: string };
-      });
-    };
-    reader.readAsDataURL(file);
-  };
+      // Gửi lên Firebase, folder 'avatars'
+      const downloadUrl = await uploadImageToFirebase(file, 'avatars')
+  
+      // Xóa ảnh cũ từ Firebase nếu có (chỉ xóa nếu là Firebase URL)
+      if (oldAvatarUrl && oldAvatarUrl.includes('firebasestorage')) {
+        try {
+          await deleteImageFromFirebase(oldAvatarUrl)
+          console.log('✅ Đã xóa ảnh avatar cũ từ Firebase')
+        } catch (deleteErr) {
+          // Không throw lỗi nếu xóa thất bại, chỉ log warning
+          console.warn('⚠️ Không thể xóa ảnh avatar cũ:', deleteErr)
+        }
+      }
+
+      // Cập nhật formData.avatar = URL Firebase
+      setFormData(prev => {
+        const next = { ...prev, avatar: downloadUrl }
+        const newDataString = JSON.stringify(next)
+        setHasChanges(newDataString !== originalFormDataRef.current)
+        return next
+      })
+    } catch (err) {
+      console.error('Upload avatar Firebase lỗi:', err)
+      setError(err.message || 'Không thể upload ảnh. Vui lòng thử lại.')
+      setFieldErrors(prev => ({ ...prev, avatar: 'Upload ảnh thất bại' }))
+    }
+  }
 
   // Get role name
   const getRoleName = () => {
@@ -1311,13 +1333,11 @@ const ProfilePage = () => {
           <aside className="profile-profile-sidebar">
             <div className="profile-sidebar-user-info">
               <div className="profile-sidebar-avatar">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" />
-                ) : (
-                  <div className="profile-sidebar-avatar-placeholder">
-                    {displayName.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+                <LazyImage 
+                  src={avatarUrl} 
+                  alt="Avatar" 
+                  className="profile-sidebar-avatar-image"
+                />
               </div>
               <h3 className="profile-sidebar-user-name">{displayName}</h3>
               <p className="profile-sidebar-user-email">{displayEmail}</p>
@@ -1443,13 +1463,11 @@ const ProfilePage = () => {
                 <div className="profile-avatar-section-compact">
                   <div className="profile-avatar-wrapper-compact">
                     <div className="profile-avatar-preview-compact">
-                      {formData.avatar ? (
-                        <img src={formData.avatar} alt="Avatar" />
-                      ) : (
-                        <div className="profile-avatar-placeholder-compact">
-                          {formData.name ? formData.name.substring(0, 2).toUpperCase() : 'U'}
-                        </div>
-                      )}
+                      <LazyImage 
+                        src={formData.avatar} 
+                        alt="Avatar" 
+                        className="profile-avatar-image"
+                      />
                     </div>
                     <label htmlFor="avatar-upload" className="profile-avatar-change-button">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1673,6 +1691,7 @@ const ProfilePage = () => {
                 ) : (
                   <div className="profile-bookings-list">
                     {bookings.map((booking) => {
+                      console.log(' Booking:', booking);
                       const statusDisplay = getBookingStatusDisplay(booking.Status || booking.status);
                       const bookingId = booking.Id || booking.id;
                       const serviceCombo = booking.ServiceCombo || booking.serviceCombo;
@@ -1682,7 +1701,7 @@ const ProfilePage = () => {
                       if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
                         imagePath = imagePath.split(',')[0].trim();
                       }
-                      const serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
+                      const serviceImage = getImageUrl(imagePath, bookingFallbackImage);
                       
                       return (
                         <div key={bookingId} className="profile-booking-card ui-card">
@@ -1694,7 +1713,7 @@ const ProfilePage = () => {
                                     src={serviceImage}
                                     alt={serviceName}
                                     className="profile-booking-image-img"
-                                    fallbackSrc="/img/banahills.jpg"
+                                    fallbackSrc={bookingFallbackImage}
                                   />
                                 </div>
                                 <div className="profile-booking-info">
@@ -1894,7 +1913,7 @@ const ProfilePage = () => {
                         // Fallback nếu không có ServiceCombo - lấy từ ComboId
                         let serviceName = 'Dịch vụ không xác định';
                         let serviceId = null;
-                        let serviceImage = '/img/banahills.jpg';
+                        let serviceImage = bookingFallbackImage;
                         
                         if (serviceCombo) {
                           serviceName = serviceCombo.Name || serviceCombo.name || 'Dịch vụ không xác định';
@@ -1904,7 +1923,7 @@ const ProfilePage = () => {
                           if (imagePath && typeof imagePath === 'string' && imagePath.includes(',')) {
                             imagePath = imagePath.split(',')[0].trim();
                           }
-                          serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
+                          serviceImage = getImageUrl(imagePath, bookingFallbackImage);
                         } else if (review.ComboId || review.comboId) {
                           // Nếu chưa load được ServiceCombo, vẫn hiển thị review với thông tin cơ bản
                           serviceName = `Dịch vụ #${review.ComboId || review.comboId}`;
@@ -1985,7 +2004,7 @@ const ProfilePage = () => {
                                           src={serviceImage}
                                           alt={serviceName}
                                           className="profile-review-service-image"
-                                          fallbackSrc="/img/banahills.jpg"
+                                          fallbackSrc={bookingFallbackImage}
                                         />
                                       </Link>
                                     ) : (
@@ -1993,7 +2012,7 @@ const ProfilePage = () => {
                                         src={serviceImage}
                                         alt={serviceName}
                                         className="profile-review-service-image"
-                                        fallbackSrc="/img/banahills.jpg"
+                                        fallbackSrc={bookingFallbackImage}
                                       />
                                     )}
                                   </div>

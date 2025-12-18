@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import type { ImgHTMLAttributes } from 'react'
+import { getFallbackImageUrl } from '~/services/firebaseStorage'
 
-// Sử dụng đường dẫn public URL thay vì import
-const baNaHillImage = '/img/banahills.jpg'
+// Fallback local tạm thời, sẽ được thay bằng URL Firebase nếu load được
+const localBaNaHillImage = '/img/banahills.jpg'
 
 interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src?: string | null
@@ -17,11 +18,35 @@ const LazyImage = ({
   alt,
   className = '',
   wrapperClassName = '',
-  fallbackSrc = baNaHillImage,
+  fallbackSrc = localBaNaHillImage,
   ...props
 }: LazyImageProps) => {
+  const [resolvedFallback, setResolvedFallback] = useState(fallbackSrc)
+
+  // Load fallback Ba Na Hill từ Firebase một lần
+  useEffect(() => {
+    let isMounted = true
+
+    const loadFirebaseFallback = async () => {
+      try {
+        const firebaseUrl = await getFallbackImageUrl()
+        if (isMounted && firebaseUrl) {
+          setResolvedFallback(firebaseUrl)
+        }
+      } catch {
+        // Nếu lỗi thì giữ nguyên fallback local, không cần làm gì
+      }
+    }
+
+    loadFirebaseFallback()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   // Đảm bảo src luôn có giá trị hợp lệ
-  const imageSrc = src || fallbackSrc
+  const imageSrc = src || resolvedFallback
   const [currentSrc, setCurrentSrc] = useState(imageSrc)
   const [hasError, setHasError] = useState(false)
 
@@ -34,21 +59,17 @@ const LazyImage = ({
   }, [imageSrc, currentSrc])
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    // if (!hasError && currentSrc !== fallbackSrc) {
-    //   // Thử load fallback nếu chưa thử
-    //   // Chỉ log trong development mode để tránh spam console
-    //   if (import.meta.env.DEV) {
-    //     console.warn(`⚠️ [LazyImage] Không thể load ảnh "${currentSrc}", thử fallback: ${fallbackSrc}`)
-    //   }
-    //   setHasError(true)
-    //   setCurrentSrc(fallbackSrc)
-    // } else {
-    //   // Nếu fallback cũng lỗi, vẫn hiển thị ảnh (có thể là broken image)
-    //   // Chỉ log trong development mode
-    //   if (import.meta.env.DEV) {
-    //     console.error(`❌ [LazyImage] Không thể load cả ảnh và fallback: ${currentSrc}`)
-    //   }
-    // }
+    if (!hasError && currentSrc !== resolvedFallback) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ [LazyImage] Không thể load ảnh "${currentSrc}", thử fallback: ${resolvedFallback}`)
+      }
+      setHasError(true)
+      setCurrentSrc(resolvedFallback)
+    } else {
+      if (import.meta.env.DEV) {
+        console.error(`❌ [LazyImage] Không thể load cả ảnh và fallback: ${currentSrc}`)
+      }
+    }
   }
 
   return (
