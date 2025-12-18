@@ -15,8 +15,8 @@ namespace ESCE_SYSTEM.Models
 
         public int Quantity { get; set; } = 1;
 
-        // Navigation properties
-        public ServiceCombo ServiceCombo { get; set; } = null!;
-        public Service Service { get; set; } = null!;
+        // Navigation properties (nullable to avoid model binding validation issues)
+        public ServiceCombo? ServiceCombo { get; set; }
+        public Service? Service { get; set; }
     }
 }

@@ -93,7 +93,6 @@ const MOCK_DASHBOARD: DashboardDto = {
 
 const authorizedRequest = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const token = getAuthToken()
-  // Khi đang dev UI với mock data hoặc backend tắt, cho phép không có token
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(init.headers || {})
@@ -150,7 +149,7 @@ const formatGrowthPercent = (percent: number): string => {
   return `${sign}${percent.toFixed(1)}% so với kỳ trước`
 }
 
-const normalizeDashboard = (payload: DashboardStatisticsDto): DashboardDto => {
+const normalizeDashboard = (payload: DashboardStatisticsDto, extraData?: any): DashboardDto => {
   const totalUsers = payload?.totalUsers ?? payload?.TotalUsers ?? 0
   const totalPosts = payload?.totalPosts ?? payload?.TotalPosts ?? 0
   const totalServiceCombos = payload?.totalServiceCombos ?? payload?.TotalServiceCombos ?? 0
@@ -163,6 +162,10 @@ const normalizeDashboard = (payload: DashboardStatisticsDto): DashboardDto => {
   const revenueGrowthPercent = payload?.revenueGrowthPercent ?? payload?.RevenueGrowthPercent ?? 0
   const bookingsGrowthPercent = payload?.bookingsGrowthPercent ?? payload?.BookingsGrowthPercent ?? 0
 
+  // Extract extra data from additional API calls
+  const badges = extraData?.badges || {}
+  const postStats = extraData?.postStats || {}
+
   return {
     totalUsers,
     userGrowth: formatGrowthPercent(usersGrowthPercent),
@@ -174,19 +177,21 @@ const normalizeDashboard = (payload: DashboardStatisticsDto): DashboardDto => {
     revenueGrowth: formatGrowthPercent(revenueGrowthPercent),
     totalBookings,
     bookingGrowth: formatGrowthPercent(bookingsGrowthPercent),
-    // These fields are not available in DashboardStatisticsDto, will need separate API calls
-    pendingSupports: 0,
-    totalViews: 0,
-    todayComments: 0,
-    todayReactions: 0,
+    // Admin badges - pendingSupports từ badges
+    pendingSupports: badges?.PendingUpgradeRequests ?? badges?.pendingUpgradeRequests ?? 0,
+    pendingUpgradeRequests: badges?.PendingUpgradeRequests ?? badges?.pendingUpgradeRequests ?? 0,
+    unreadMessages: badges?.UnreadMessages ?? badges?.unreadMessages ?? 0,
+    // Sử dụng totalBookings làm totalViews
+    totalViews: totalBookings,
+    // Post statistics
+    todayComments: postStats?.TotalComments ?? postStats?.totalComments ?? 0,
+    todayReactions: postStats?.TotalReactions ?? postStats?.totalReactions ?? 0,
     todayChatMessages: 0,
     unreadNotifications: 0,
-    activeTours: totalServiceCombos, // Use totalServiceCombos as activeTours
+    activeTours: totalServiceCombos,
     todayBookings: 0,
     recentActivities: [],
-    urgentSupports: 0,
-    pendingUpgradeRequests: 0,
-    unreadMessages: 0,
+    urgentSupports: badges?.PendingUpgradeRequests ?? 0,
     popularPosts: []
   }
 }
@@ -206,10 +211,14 @@ export const fetchDashboardData = async (
   if (startDate) params.append('startDate', startDate)
   if (endDate) params.append('endDate', endDate)
 
-  const data = await authorizedRequest(`/api/statistics/dashboard?${params.toString()}`, {
-    method: 'GET'
-  })
-  return normalizeDashboard(data)
+  // Fetch statistics in parallel
+  const [dashboardData, badges, postStats] = await Promise.all([
+    authorizedRequest(`/api/statistics/dashboard?${params.toString()}`, { method: 'GET' }),
+    authorizedRequest('/api/statistics/admin-badges', { method: 'GET' }).catch(() => ({})),
+    authorizedRequest(`/api/statistics/posts?${params.toString()}`, { method: 'GET' }).catch(() => ({}))
+  ])
+
+  return normalizeDashboard(dashboardData, { badges, postStats })
 }
 
 // Time Series DTO for charts
@@ -230,59 +239,14 @@ export interface TimeSeriesDto {
   data: TimeSeriesDataPoint[]
 }
 
-// Mock time series data for screenshots
-const MOCK_MONTHLY_TIME_SERIES: TimeSeriesDto = {
-  period: 'month',
-  startDate: '2024-01-01',
-  endDate: '2024-12-31',
-  data: [
-    { label: 'Tháng 1', date: '2024-01-01', newUsers: 120, newServiceCombos: 5, newPosts: 25, revenue: 120_000_000, newBookings: 45 },
-    { label: 'Tháng 2', date: '2024-02-01', newUsers: 150, newServiceCombos: 8, newPosts: 30, revenue: 150_000_000, newBookings: 52 },
-    { label: 'Tháng 3', date: '2024-03-01', newUsers: 180, newServiceCombos: 12, newPosts: 35, revenue: 180_000_000, newBookings: 58 },
-    { label: 'Tháng 4', date: '2024-04-01', newUsers: 160, newServiceCombos: 10, newPosts: 28, revenue: 160_000_000, newBookings: 48 },
-    { label: 'Tháng 5', date: '2024-05-01', newUsers: 210, newServiceCombos: 15, newPosts: 42, revenue: 210_000_000, newBookings: 65 },
-    { label: 'Tháng 6', date: '2024-06-01', newUsers: 240, newServiceCombos: 18, newPosts: 48, revenue: 240_000_000, newBookings: 72 },
-    { label: 'Tháng 7', date: '2024-07-01', newUsers: 230, newServiceCombos: 16, newPosts: 45, revenue: 230_000_000, newBookings: 68 },
-    { label: 'Tháng 8', date: '2024-08-01', newUsers: 260, newServiceCombos: 20, newPosts: 52, revenue: 260_000_000, newBookings: 75 },
-    { label: 'Tháng 9', date: '2024-09-01', newUsers: 220, newServiceCombos: 14, newPosts: 38, revenue: 220_000_000, newBookings: 62 },
-    { label: 'Tháng 10', date: '2024-10-01', newUsers: 280, newServiceCombos: 22, newPosts: 55, revenue: 280_000_000, newBookings: 82 },
-    { label: 'Tháng 11', date: '2024-11-01', newUsers: 300, newServiceCombos: 25, newPosts: 60, revenue: 300_000_000, newBookings: 88 },
-    { label: 'Tháng 12', date: '2024-12-01', newUsers: 320, newServiceCombos: 28, newPosts: 65, revenue: 320_000_000, newBookings: 95 }
-  ]
-}
-
-const MOCK_DAILY_TIME_SERIES: TimeSeriesDto = {
-  period: 'day',
-  startDate: '2024-12-01',
-  endDate: '2024-12-30',
-  data: Array.from({ length: 30 }, (_, idx) => {
-    const day = idx + 1
-    const base = 3_000_000 + (day % 7 === 0 || day % 7 === 6 ? 4_000_000 : 0)
-    const fluctuation = (day % 5) * 500_000
-    return {
-      label: `Ngày ${day}`,
-      date: `2024-12-${String(day).padStart(2, '0')}`,
-      newUsers: Math.floor(Math.random() * 20) + 5,
-      newServiceCombos: Math.floor(Math.random() * 3) + 1,
-      newPosts: Math.floor(Math.random() * 8) + 2,
-      revenue: base + fluctuation,
-      newBookings: Math.floor(Math.random() * 10) + 3
-    }
-  })
-}
-
 // Fetch time series data for charts
+// period: 'year' -> doanh thu theo từng tháng trong năm
+// period: 'month' -> doanh thu theo từng ngày trong tháng hiện tại
 export const fetchTimeSeriesData = async (
   period: string = 'month',
   startDate?: string,
   endDate?: string
 ): Promise<TimeSeriesDto> => {
-  // Return mock data if USE_MOCK_DASHBOARD is true
-  if (USE_MOCK_DASHBOARD) {
-    console.warn('[DashboardApi] Using MOCK time series data (backend disabled)')
-    return period === 'month' ? MOCK_MONTHLY_TIME_SERIES : MOCK_DAILY_TIME_SERIES
-  }
-
   const params = new URLSearchParams({ period })
   if (startDate) params.append('startDate', startDate)
   if (endDate) params.append('endDate', endDate)
@@ -308,3 +272,48 @@ export const fetchTimeSeriesData = async (
   }
 }
 
+// Top Spender DTO
+export interface TopSpenderDto {
+  userId: number
+  userName: string
+  email: string
+  role: string
+  totalSpent: number
+  bookingCount: number
+}
+
+// Top Host DTO
+export interface TopHostDto {
+  hostId: number
+  hostName: string
+  email: string
+  totalRevenue: number
+  serviceComboCount: number
+  totalBookings: number
+}
+
+// Fetch top users có chi tiêu cao nhất
+export const fetchTopSpenders = async (top: number = 10): Promise<TopSpenderDto[]> => {
+  const data = await authorizedRequest(`/api/statistics/top-spenders?top=${top}`, { method: 'GET' })
+  return (data ?? []).map((item: any) => ({
+    userId: item?.UserId ?? item?.userId ?? 0,
+    userName: item?.UserName ?? item?.userName ?? 'Unknown',
+    email: item?.Email ?? item?.email ?? '',
+    role: item?.Role ?? item?.role ?? '',
+    totalSpent: item?.TotalSpent ?? item?.totalSpent ?? 0,
+    bookingCount: item?.BookingCount ?? item?.bookingCount ?? 0
+  }))
+}
+
+// Fetch top hosts có doanh thu cao nhất
+export const fetchTopHosts = async (top: number = 10): Promise<TopHostDto[]> => {
+  const data = await authorizedRequest(`/api/statistics/top-hosts?top=${top}`, { method: 'GET' })
+  return (data ?? []).map((item: any) => ({
+    hostId: item?.HostId ?? item?.hostId ?? 0,
+    hostName: item?.HostName ?? item?.hostName ?? 'Unknown',
+    email: item?.Email ?? item?.email ?? '',
+    totalRevenue: item?.TotalRevenue ?? item?.totalRevenue ?? 0,
+    serviceComboCount: item?.ServiceComboCount ?? item?.serviceComboCount ?? 0,
+    totalBookings: item?.TotalBookings ?? item?.totalBookings ?? 0
+  }))
+}

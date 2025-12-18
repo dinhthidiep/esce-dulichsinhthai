@@ -132,7 +132,9 @@ namespace ESCE_SYSTEM.Services
         // Admin xem tất cả ServiceCombo (kể cả chưa duyệt)
         public async Task<IEnumerable<ServiceCombo>> GetAllForAdminAsync()
         {
-            return await _context.Servicecombos.ToListAsync();
+            return await _context.Servicecombos
+                .Include(s => s.Host)
+                .ToListAsync();
         }
     }
 }

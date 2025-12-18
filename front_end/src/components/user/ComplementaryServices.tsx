@@ -1,49 +1,111 @@
 import React, { useState, useEffect } from 'react'
-import Badge from './ui/Badge'
 import { 
   AlertCircleIcon
 } from './icons/index'
 import type { MembershipTier, ComplementaryService, TierComplementaryServices } from '~/types/membership'
+import { getBonusServicesByHost } from '~/api/user/BonusServiceApi'
 import './ComplementaryServices.css'
 
-// Dữ liệu ưu đãi sẽ được lấy từ API sau; hiện để map rỗng
-const complementaryServicesByTier: Partial<Record<MembershipTier, TierComplementaryServices>> = {}
+// Map tier name to level key trong TargetAudience JSON
+const tierToLevelKey: Record<MembershipTier, string> = {
+  none: '',
+  silver: 'level1',
+  gold: 'level2', 
+  diamond: 'level3'
+}
+
+// Max selectable theo tier
+const maxSelectableByTier: Record<MembershipTier, number> = {
+  none: 0,
+  silver: 1,
+  gold: 2,
+  diamond: 3
+}
 
 interface ComplementaryServicesProps {
   userTier: MembershipTier
   selectedServices: number[]
   onSelectionChange: (selectedIds: number[]) => void
   disabled?: boolean
+  hostId?: number // Thêm hostId để fetch bonus services
 }
 
 const ComplementaryServices = ({
   userTier,
   selectedServices,
   onSelectionChange,
-  disabled = false
+  disabled = false,
+  hostId
 }: ComplementaryServicesProps) => {
   const [tierData, setTierData] = useState<TierComplementaryServices | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Nếu user chưa có hạng thành viên (level 0), không cần load data
-    if (userTier === 'none') {
-      setTierData(null)
-      return
+    const fetchBonusServices = async () => {
+      // Nếu user chưa có hạng thành viên (level 0) hoặc không có hostId, không cần load data
+      if (userTier === 'none' || !hostId) {
+        setTierData(null)
+        return
+      }
+
+      try {
+        setLoading(true)
+        const bonusServices = await getBonusServicesByHost(hostId)
+        
+        // Filter bonus services theo TargetAudience phù hợp với userTier
+        const levelKey = tierToLevelKey[userTier]
+        const filteredServices = bonusServices.filter(bs => {
+          if (!bs.TargetAudience) return false
+          try {
+            const target = JSON.parse(bs.TargetAudience)
+            // Kiểm tra forTourist và touristLevels
+            if (target.forTourist && target.touristLevels && target.touristLevels[levelKey]) {
+              return true
+            }
+            return false
+          } catch {
+            return false
+          }
+        })
+
+        // Convert sang format ComplementaryService
+        const availableServices: ComplementaryService[] = filteredServices.map(bs => ({
+          id: bs.Id,
+          name: bs.Name,
+          description: bs.Description || '',
+          value: bs.Price
+        }))
+
+        if (availableServices.length > 0) {
+          setTierData({
+            maxSelectable: maxSelectableByTier[userTier],
+            availableServices
+          })
+        } else {
+          setTierData(null)
+        }
+      } catch (error) {
+        console.error('Error fetching bonus services:', error)
+        setTierData(null)
+      } finally {
+        setLoading(false)
+      }
     }
-    
-    const data = complementaryServicesByTier[userTier] || null
-    setTierData(data)
-    
-    // Reset selection nếu user tier thay đổi
-    if (selectedServices.length > 0 && data) {
+
+    fetchBonusServices()
+  }, [userTier, hostId])
+
+  // Reset selection nếu tierData thay đổi
+  useEffect(() => {
+    if (selectedServices.length > 0 && tierData) {
       const validServices = selectedServices.filter(id => 
-        data.availableServices.some(s => s.id === id)
+        tierData.availableServices.some(s => s.id === id)
       )
       if (validServices.length !== selectedServices.length) {
         onSelectionChange(validServices)
       }
     }
-  }, [userTier, selectedServices, onSelectionChange])
+  }, [tierData, selectedServices, onSelectionChange])
 
   // Nếu customer chưa có gói thành viên (level 0)
   if (userTier === 'none') {
@@ -53,6 +115,17 @@ const ComplementaryServices = ({
           <p className="comp-empty-message">
             Bạn đang ở cấp 0. <a href="/services">Đặt ngay</a> để tích lũy và nhận ưu đãi đặc biệt!
           </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="comp-complementary-services-wrapper">
+        <div className="comp-complementary-services-empty">
+          <p className="comp-empty-message">Đang tải ưu đãi...</p>
         </div>
       </div>
     )

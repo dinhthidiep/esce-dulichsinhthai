@@ -234,6 +234,98 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         /// <summary>
+        /// Lấy top Users có chi tiêu cao nhất
+        /// </summary>
+        [HttpGet("top-spenders")]
+        public async Task<IActionResult> GetTopSpenders([FromQuery] int top = 10)
+        {
+            try
+            {
+                var topSpenders = await _context.Bookings
+                    .Where(b => b.Status == "completed")
+                    .GroupBy(b => b.UserId)
+                    .Select(g => new
+                    {
+                        UserId = g.Key,
+                        TotalSpent = g.Sum(b => b.TotalAmount),
+                        BookingCount = g.Count()
+                    })
+                    .OrderByDescending(x => x.TotalSpent)
+                    .Take(top)
+                    .ToListAsync();
+
+                var userIds = topSpenders.Select(x => x.UserId).ToList();
+                var users = await _context.Accounts
+                    .Where(a => userIds.Contains(a.Id))
+                    .Select(a => new { a.Id, a.Name, a.Email, RoleName = a.Role.Name })
+                    .ToListAsync();
+
+                var result = topSpenders.Select(s => new
+                {
+                    UserId = s.UserId,
+                    UserName = users.FirstOrDefault(u => u.Id == s.UserId)?.Name ?? "Unknown",
+                    Email = users.FirstOrDefault(u => u.Id == s.UserId)?.Email ?? "",
+                    Role = users.FirstOrDefault(u => u.Id == s.UserId)?.RoleName ?? "",
+                    TotalSpent = s.TotalSpent,
+                    BookingCount = s.BookingCount
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy top spenders", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy top Host có doanh thu cao nhất
+        /// </summary>
+        [HttpGet("top-hosts")]
+        public async Task<IActionResult> GetTopHosts([FromQuery] int top = 10)
+        {
+            try
+            {
+                // Lấy doanh thu từ các booking completed, join với ServiceCombo để lấy HostId
+                var topHosts = await _context.Bookings
+                    .Where(b => b.Status == "completed" && b.ServiceCombo != null && b.ServiceCombo.HostId != null)
+                    .GroupBy(b => b.ServiceCombo!.HostId)
+                    .Select(g => new
+                    {
+                        HostId = g.Key,
+                        TotalRevenue = g.Sum(b => b.TotalAmount),
+                        TotalBookings = g.Count(),
+                        ServiceComboCount = g.Select(b => b.ServiceComboId).Distinct().Count()
+                    })
+                    .OrderByDescending(x => x.TotalRevenue)
+                    .Take(top)
+                    .ToListAsync();
+
+                var hostIds = topHosts.Select(x => x.HostId).ToList();
+                var hosts = await _context.Accounts
+                    .Where(a => hostIds.Contains(a.Id))
+                    .Select(a => new { a.Id, a.Name, a.Email })
+                    .ToListAsync();
+
+                var result = topHosts.Select(h => new
+                {
+                    HostId = h.HostId,
+                    HostName = hosts.FirstOrDefault(u => u.Id == h.HostId)?.Name ?? "Unknown",
+                    Email = hosts.FirstOrDefault(u => u.Id == h.HostId)?.Email ?? "",
+                    TotalRevenue = h.TotalRevenue,
+                    ServiceComboCount = h.ServiceComboCount,
+                    TotalBookings = h.TotalBookings
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy top hosts", error = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// L?y t?t c? th?ng k?c?g l?
         /// </summary>
         [HttpGet("all")]

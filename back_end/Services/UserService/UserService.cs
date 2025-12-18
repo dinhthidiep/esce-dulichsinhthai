@@ -375,7 +375,7 @@ namespace ESCE_SYSTEM.Services.UserService
 
             var account = await GetAccountByIdAsync(id);
 
-            if (account.IsActive == false || account.IS_BANNED)
+            if (account.IS_BANNED)
             {
                 throw new InvalidOperationException("Account is already banned");
             }
@@ -402,7 +402,7 @@ namespace ESCE_SYSTEM.Services.UserService
 
             var account = await GetAccountByIdAsync(id);
 
-            if (account.IsActive == true && !account.IS_BANNED)
+            if (!account.IS_BANNED)
             {
                 throw new InvalidOperationException("Tài khoản không bị khóa");
             }

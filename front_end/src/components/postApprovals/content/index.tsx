@@ -8,7 +8,6 @@ import { alpha } from '@mui/material/styles'
 import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  RateReview as ReviewIcon,
   Refresh as RefreshIcon,
   Image as ImageIcon,
   Article as ArticleIcon,
@@ -17,7 +16,7 @@ import {
   Clear as ClearIcon
 } from '@mui/icons-material'
 import {
-  getPendingPosts, approvePost, rejectPost, reviewPost,
+  getPendingPosts, approvePost, rejectPost,
   type PendingPost
 } from '~/api/instances/PostApprovalApi'
 
@@ -46,9 +45,6 @@ export default function PostApprovalsContent() {
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; post: PendingPost | null; comment: string }>({
     open: false, post: null, comment: ''
   })
-  const [reviewDialog, setReviewDialog] = useState<{ open: boolean; post: PendingPost | null; comment: string }>({
-    open: false, post: null, comment: ''
-  })
   const [approveDialog, setApproveDialog] = useState<{ open: boolean; post: PendingPost | null }>({
     open: false, post: null
   })
@@ -68,21 +64,28 @@ export default function PostApprovalsContent() {
     )
   }, [posts, searchQuery])
 
-  const loadPosts = async () => {
+  const loadPosts = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       setError(null)
       const data = await getPendingPosts()
       setPosts(data)
     } catch (err: any) {
       setError(err?.message || 'Không thể tải danh sách bài viết')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
     loadPosts()
+    
+    // Auto-refresh mỗi 10 giây để cập nhật bài viết mới
+    const intervalId = setInterval(() => {
+      loadPosts(false) // Không hiện loading khi auto-refresh
+    }, 10000)
+    
+    return () => clearInterval(intervalId)
   }, [])
 
   const handleApprove = async () => {
@@ -113,24 +116,6 @@ export default function PostApprovalsContent() {
       await loadPosts()
     } catch (err: any) {
       setError(err?.message || 'Không thể từ chối bài viết')
-    } finally {
-      setProcessingId(null)
-    }
-  }
-
-  const handleReview = async () => {
-    if (!reviewDialog.post || !reviewDialog.comment.trim()) {
-      setError('Vui lòng nhập nội dung yêu cầu chỉnh sửa')
-      return
-    }
-    try {
-      setProcessingId(reviewDialog.post.id)
-      await reviewPost(reviewDialog.post.id, reviewDialog.comment)
-      setSuccess(`Đã gửi yêu cầu chỉnh sửa cho ${reviewDialog.post.posterName}`)
-      setReviewDialog({ open: false, post: null, comment: '' })
-      await loadPosts()
-    } catch (err: any) {
-      setError(err?.message || 'Không thể gửi yêu cầu chỉnh sửa')
     } finally {
       setProcessingId(null)
     }
@@ -167,7 +152,7 @@ export default function PostApprovalsContent() {
                 sx={{ borderRadius: '999px', fontWeight: 600 }}
               />
               <Tooltip title="Làm mới">
-                <IconButton onClick={loadPosts} disabled={loading} sx={{ bgcolor: 'rgba(0,0,0,0.04)' }}>
+                <IconButton onClick={() => loadPosts()} disabled={loading} sx={{ bgcolor: 'rgba(0,0,0,0.04)' }}>
                   <RefreshIcon />
                 </IconButton>
               </Tooltip>
@@ -356,21 +341,6 @@ export default function PostApprovalsContent() {
                                 </Button>
                               </span>
                             </Tooltip>
-                            <Tooltip title="Yêu cầu chỉnh sửa" arrow>
-                              <span>
-                                <Button
-                                  variant="outlined"
-                                  color="info"
-                                  startIcon={<ReviewIcon />}
-                                  disabled={processingId === post.id}
-                                  onClick={() => setReviewDialog({ open: true, post, comment: '' })}
-                                  fullWidth
-                                  sx={{ borderRadius: '0.8rem', py: 1 }}
-                                >
-                                  Yêu cầu sửa
-                                </Button>
-                              </span>
-                            </Tooltip>
                           </Stack>
                         </Grid>
                       </Grid>
@@ -457,47 +427,6 @@ export default function PostApprovalsContent() {
             sx={{ borderRadius: '0.8rem' }}
           >
             {processingId !== null ? 'Đang xử lý...' : 'Từ chối'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Review Dialog */}
-      <Dialog open={reviewDialog.open} onClose={() => setReviewDialog({ open: false, post: null, comment: '' })} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Yêu cầu chỉnh sửa bài viết</DialogTitle>
-        <DialogContent>
-          {reviewDialog.post && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'rgba(3,169,244,0.05)', borderRadius: '1rem' }}>
-              <Typography sx={{ fontWeight: 600 }}>{reviewDialog.post.posterName}</Typography>
-              {reviewDialog.post.articleTitle && (
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
-                  {reviewDialog.post.articleTitle}
-                </Typography>
-              )}
-            </Box>
-          )}
-          <TextField
-            label="Nội dung yêu cầu chỉnh sửa"
-            multiline
-            rows={3}
-            fullWidth
-            value={reviewDialog.comment}
-            onChange={(e) => setReviewDialog(prev => ({ ...prev, comment: e.target.value }))}
-            placeholder="Nhập nội dung cần chỉnh sửa..."
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '1rem' } }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setReviewDialog({ open: false, post: null, comment: '' })} sx={{ borderRadius: '0.8rem' }}>
-            Hủy
-          </Button>
-          <Button
-            variant="contained"
-            color="info"
-            onClick={handleReview}
-            disabled={processingId !== null}
-            sx={{ borderRadius: '0.8rem' }}
-          >
-            {processingId !== null ? 'Đang xử lý...' : 'Gửi yêu cầu'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -115,6 +115,14 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   const [isEditPromotionsTableOpen, setIsEditPromotionsTableOpen] = useState(false);
   const [isEditCouponsTableOpen, setIsEditCouponsTableOpen] = useState(false);
   
+  // Confirmation modal states
+  const [isConfirmEditModalOpen, setIsConfirmEditModalOpen] = useState(false);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [pendingEditComboId, setPendingEditComboId] = useState<number | null>(null);
+  const [pendingDeleteComboId, setPendingDeleteComboId] = useState<number | null>(null);
+  const [pendingDeleteComboName, setPendingDeleteComboName] = useState<string>('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const DEFAULT_IMAGE_URL = '/img/banahills.jpg';
 
   // Enrich coupons: /Coupon/host/{id} sometimes returns a slim shape (missing RequiredLevel/TargetAudience).
@@ -286,23 +294,43 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
     setServiceComboPageInput('');
   };
 
-  // Handle delete service combo
-  const handleDeleteServiceCombo = async (serviceComboId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa combo dịch vụ này? Hành động này không thể hoàn tác.')) {
-      try {
-        await axiosInstance.delete(`${API_ENDPOINTS.SERVICE_COMBO}/${serviceComboId}`);
-        setServiceCombos(prevCombos => prevCombos.filter(s => (s.Id || s.id) !== serviceComboId));
-        setFilteredServiceCombos(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== serviceComboId));
-        if (onSuccess) {
-          onSuccess('Combo dịch vụ đã được xóa thành công!');
-        }
-      } catch (err) {
-        console.error('Error deleting service combo:', err);
-        if (onError) {
-          onError('Có lỗi xảy ra khi xóa combo dịch vụ. Vui lòng thử lại.');
-        }
+  // Handle delete service combo - show confirmation modal
+  const handleDeleteServiceCombo = (serviceComboId: number, comboName?: string) => {
+    setPendingDeleteComboId(serviceComboId);
+    setPendingDeleteComboName(comboName || 'combo này');
+    setIsConfirmDeleteModalOpen(true);
+  };
+
+  // Confirm delete action
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteComboId) return;
+    
+    setIsDeleting(true);
+    try {
+      await axiosInstance.delete(`${API_ENDPOINTS.SERVICE_COMBO}/${pendingDeleteComboId}`);
+      setServiceCombos(prevCombos => prevCombos.filter(s => (s.Id || s.id) !== pendingDeleteComboId));
+      setFilteredServiceCombos(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== pendingDeleteComboId));
+      if (onSuccess) {
+        onSuccess('Combo dịch vụ đã được xóa thành công!');
       }
+    } catch (err) {
+      console.error('Error deleting service combo:', err);
+      if (onError) {
+        onError('Có lỗi xảy ra khi xóa combo dịch vụ. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmDeleteModalOpen(false);
+      setPendingDeleteComboId(null);
+      setPendingDeleteComboName('');
     }
+  };
+
+  // Cancel delete action
+  const handleCancelDelete = () => {
+    setIsConfirmDeleteModalOpen(false);
+    setPendingDeleteComboId(null);
+    setPendingDeleteComboName('');
   };
 
   // Handle open create service combo modal
@@ -648,7 +676,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       for (const serviceId of selectedServiceIds) {
         const quantity = createServiceComboSelectedServices[serviceId]?.quantity || 1;
         await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO_DETAIL, {
-          ServiceComboId: newCombo.Id || newCombo.id,
+          ServicecomboId: newCombo.Id || newCombo.id,
           ServiceId: parseInt(serviceId),
           Quantity: quantity
         });
@@ -689,7 +717,27 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   };
 
   // Handle open edit service combo modal
-  const handleOpenEditServiceComboModal = async (serviceComboId) => {
+  // Show edit confirmation modal
+  const handleEditServiceComboClick = (serviceComboId: number) => {
+    setPendingEditComboId(serviceComboId);
+    setIsConfirmEditModalOpen(true);
+  };
+
+  // Confirm edit action - proceed to open edit modal
+  const handleConfirmEdit = () => {
+    if (!pendingEditComboId) return;
+    setIsConfirmEditModalOpen(false);
+    handleOpenEditServiceComboModal(pendingEditComboId);
+    setPendingEditComboId(null);
+  };
+
+  // Cancel edit action
+  const handleCancelEdit = () => {
+    setIsConfirmEditModalOpen(false);
+    setPendingEditComboId(null);
+  };
+
+  const handleOpenEditServiceComboModal = async (serviceComboId: number) => {
     setEditingServiceComboId(serviceComboId);
     setIsEditServiceComboModalOpen(true);
     setLoadingEditServiceComboData(true);
@@ -1064,17 +1112,53 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
       const imageUrl = allImageUrls.length > 0 ? allImageUrls.join(',') : null;
 
-      // Send minimal payload, omit optional fields if empty.
+      // Fetch the complete existing ServiceCombo to satisfy backend validation
+      const existingComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${editingServiceComboId}`);
+      const existingCombo = existingComboResponse.data;
+      
+      // Fetch Host data to satisfy backend validation (Host is required navigation property)
+      const hostId = existingCombo.HostId || existingCombo.hostId;
+      let hostData: any = null;
+      if (hostId) {
+        try {
+          const hostResponse = await axiosInstance.get(`${API_ENDPOINTS.USER}/${hostId}`);
+          const userData = hostResponse.data;
+          // Construct Host object with required fields for backend validation
+          // The User API returns a DTO without PasswordHash and full Role object
+          hostData = {
+            Id: userData.Id || userData.id,
+            Name: userData.Name || userData.name,
+            Email: userData.Email || userData.email,
+            PasswordHash: 'placeholder', // Required by model but not used in Update
+            RoleId: userData.RoleId || userData.roleId,
+            Role: {
+              Id: userData.RoleId || userData.roleId,
+              Name: userData.RoleName || userData.roleName || 'Host',
+            },
+            Avatar: userData.Avatar || userData.avatar,
+            Phone: userData.Phone || userData.phone,
+            Address: userData.Address || userData.address,
+          };
+        } catch (err) {
+          console.warn('[ServiceComboManagement] Could not fetch host data:', err);
+        }
+      }
+      
+      // Merge changes into the existing complete object
       const requestBody: any = {
+        ...existingCombo,
         Name: editServiceComboFormData.name.trim(),
         Address: editServiceComboFormData.address.trim(),
         Price: parseFloat(editServiceComboFormData.price) || 0,
         AvailableSlots: parseInt(editServiceComboFormData.availableSlots) || 1,
+        Host: hostData, // Include Host to satisfy backend validation
       };
       const desc = editServiceComboFormData.description?.trim();
       if (desc) requestBody.Description = desc;
+      else requestBody.Description = existingCombo.Description || null;
       const cancel = editServiceComboFormData.cancellationPolicy?.trim();
       if (cancel) requestBody.CancellationPolicy = cancel;
+      else requestBody.CancellationPolicy = existingCombo.CancellationPolicy || null;
       // For update, keep Status if present (backend Update copies it).
       if (editServiceComboFormData.status) requestBody.Status = editServiceComboFormData.status;
       if (imageUrl) requestBody.Image = imageUrl;
@@ -1100,7 +1184,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       for (const serviceId of selectedServiceIds) {
         const quantity = editServiceComboSelectedServices[serviceId]?.quantity || 1;
         await axiosInstance.post(API_ENDPOINTS.SERVICE_COMBO_DETAIL, {
-          ServiceComboId: editingServiceComboId,
+          ServicecomboId: editingServiceComboId,
           ServiceId: parseInt(serviceId),
           Quantity: quantity
         });
@@ -1123,12 +1207,15 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         const urlsToDelete = oldImageUrlsToDelete.filter(oldUrl => !allImageUrls.includes(oldUrl));
         
         if (urlsToDelete.length > 0) {
-          try {
-            await Promise.all(urlsToDelete.map(url => deleteImageFromFirebase(url)));
-            console.log('✅ [ServiceComboManagement] Đã xóa', urlsToDelete.length, 'ảnh cũ khỏi Firebase');
-          } catch (error) {
-            console.error('⚠️ [ServiceComboManagement] Lỗi xóa ảnh cũ khỏi Firebase (không ảnh hưởng đến kết quả):', error);
-            // Không throw error, chỉ log vì update đã thành công
+          // Use Promise.allSettled to handle individual failures gracefully
+          const results = await Promise.allSettled(urlsToDelete.map(url => deleteImageFromFirebase(url)));
+          const succeeded = results.filter(r => r.status === 'fulfilled').length;
+          const failed = results.filter(r => r.status === 'rejected').length;
+          if (succeeded > 0) {
+            console.log('✅ [ServiceComboManagement] Đã xóa', succeeded, 'ảnh cũ khỏi Firebase');
+          }
+          if (failed > 0) {
+            console.warn('⚠️ [ServiceComboManagement]', failed, 'ảnh không tồn tại hoặc đã bị xóa trước đó');
           }
         }
       }
@@ -1285,7 +1372,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                             variant="outline"
                             size="sm"
                             className="btn-edit-service"
-                            onClick={() => handleOpenEditServiceComboModal(s.Id || s.id)}
+                            onClick={() => handleEditServiceComboClick(s.Id || s.id)}
                           >
                             Chỉnh sửa
                           </Button>
@@ -1293,7 +1380,7 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                             variant="outline"
                             size="sm"
                             className="cancel-booking-btn"
-                            onClick={() => handleDeleteServiceCombo(s.Id || s.id)}
+                            onClick={() => handleDeleteServiceCombo(s.Id || s.id, s.Name || s.name)}
                           >
                             Xóa
                           </Button>
@@ -1505,6 +1592,51 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
         onToggleCouponsTable={() => setIsEditCouponsTableOpen(!isEditCouponsTableOpen)}
         onSubmit={handleEditServiceComboSubmit}
       />
+
+      {/* Confirmation Modal for Edit */}
+      {isConfirmEditModalOpen && (
+        <div className="modal-overlay" onClick={handleCancelEdit}>
+          <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirmation-modal-header">
+              <h3>Xác nhận chỉnh sửa</h3>
+            </div>
+            <div className="confirmation-modal-body">
+              <p>Bạn có muốn chỉnh sửa combo dịch vụ này không?</p>
+            </div>
+            <div className="confirmation-modal-footer">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Hủy
+              </Button>
+              <Button variant="default" onClick={handleConfirmEdit}>
+                Xác nhận
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Delete */}
+      {isConfirmDeleteModalOpen && (
+        <div className="modal-overlay" onClick={handleCancelDelete}>
+          <div className="confirmation-modal confirmation-modal-delete" onClick={(e) => e.stopPropagation()}>
+            <div className="confirmation-modal-header">
+              <h3>Xác nhận xóa</h3>
+            </div>
+            <div className="confirmation-modal-body">
+              <p>Bạn có chắc chắn muốn xóa <strong>{pendingDeleteComboName}</strong>?</p>
+              <p className="warning-text">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="confirmation-modal-footer">
+              <Button variant="outline" onClick={handleCancelDelete} disabled={isDeleting}>
+                Hủy
+              </Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeleting}>
+                {isDeleting ? 'Đang xóa...' : 'Xóa'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

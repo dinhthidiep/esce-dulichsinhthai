@@ -1463,6 +1463,7 @@ const BookingPage = () => {
                         selectedServices={selectedComplementaryServices}
                         onSelectionChange={setSelectedComplementaryServices}
                         disabled={submitting}
+                        hostId={service?.HostId || service?.hostId}
                       />
                     )}
 

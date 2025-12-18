@@ -269,6 +269,15 @@ const ForumPage = () => {
 
   // Helper function để build comment tree từ flat list
   const buildCommentTree = (flatComments: PostComment[]): PostComment[] => {
+    // Debug log
+    if (import.meta.env.DEV) {
+      console.log('[buildCommentTree] Input flatComments:', flatComments.map(c => ({
+        id: c.PostCommentId,
+        parentId: c.ParentCommentId,
+        content: c.Content?.substring(0, 20)
+      })))
+    }
+    
     // Tạo map để truy cập nhanh - dùng cả string và number key
     const commentMap = new Map<string, PostComment>()
     const topLevelComments: PostComment[] = []
@@ -287,7 +296,10 @@ const ForumPage = () => {
       const commentIdStr = String(comment.PostCommentId)
       const parentId = comment.ParentCommentId
 
-      if (parentId !== null && parentId !== undefined) {
+      // ParentCommentId có giá trị hợp lệ (không phải null, undefined, 0, hoặc chuỗi rỗng)
+      const hasValidParent = parentId !== null && parentId !== undefined && parentId !== 0 && String(parentId).trim() !== ''
+      
+      if (hasValidParent) {
         // Đây là reply - thêm vào replies của parent
         // Tìm parent bằng cả string key
         const parentIdStr = String(parentId)
@@ -308,13 +320,22 @@ const ForumPage = () => {
           }
         }
       } else {
-        // Đây là top-level comment (ParentCommentId = null hoặc undefined)
+        // Đây là top-level comment (ParentCommentId = null, undefined, 0, hoặc chuỗi rỗng)
         const topComment = commentMap.get(commentIdStr)
         if (topComment && !topLevelComments.some(c => String(c.PostCommentId) === commentIdStr)) {
           topLevelComments.push(topComment)
         }
       }
     })
+
+    // Debug log kết quả
+    if (import.meta.env.DEV) {
+      console.log('[buildCommentTree] Result topLevelComments:', topLevelComments.map(c => ({
+        id: c.PostCommentId,
+        repliesCount: c.Replies?.length || 0,
+        replies: c.Replies?.map(r => ({ id: r.PostCommentId, content: r.Content?.substring(0, 20) }))
+      })))
+    }
 
     return topLevelComments
   }
@@ -358,6 +379,24 @@ const ForumPage = () => {
     // PostResponseDto đã có Likes và Comments format sẵn, chỉ cần convert nếu là Post model
     let likes: PostLike[] = []
     if (post.Likes && Array.isArray(post.Likes) && post.Likes.length > 0) {
+      // Debug log để xem dữ liệu Likes từ server
+      if (import.meta.env.DEV) {
+        console.log('[normalizePost] Raw Likes from server:', post.Likes.map((like: any) => ({
+          PostLikeId: like.PostLikeId || like.postLikeId,
+          AccountId: like.AccountId || like.accountId,
+          ReactionType: like.ReactionType,
+          ReactionTypeName: like.ReactionTypeName,
+          reactionType: like.reactionType,
+          reactionTypeName: like.reactionTypeName,
+          ReactionTypeId: like.ReactionTypeId,
+          reactionTypeId: like.reactionTypeId,
+          Type: like.Type,
+          type: like.type,
+          // Log toàn bộ object để xem tất cả fields
+          allKeys: Object.keys(like),
+        })))
+      }
+      
       // Đã là PostLikeResponseDto format từ GetAllPost
       // Backend có thể trả về PascalCase hoặc camelCase tùy config
       likes = post.Likes.map((like: any) => ({
@@ -372,7 +411,14 @@ const ForumPage = () => {
                 ? (like.CreatedDate || like.createdDate).toISOString()
                 : new Date(like.CreatedDate || like.createdDate).toISOString())
           : '',
-        ReactionType: like.ReactionTypeName || like.reactionTypeName || like.ReactionType || like.reactionType || 'Like',
+        // Xử lý nhiều trường hợp tên field từ server
+        ReactionType: like.ReactionTypeName || like.reactionTypeName || 
+                      like.ReactionType || like.reactionType || 
+                      like.Type || like.type ||
+                      // Nếu có ReactionTypeId, convert sang tên
+                      (like.ReactionTypeId ? getReactionTypeName(like.ReactionTypeId) : null) ||
+                      (like.reactionTypeId ? getReactionTypeName(like.reactionTypeId) : null) ||
+                      'Like',
       }))
     } else if (post.Postreactions && Array.isArray(post.Postreactions)) {
       // Convert từ Post model (nếu dùng /approved endpoint)
@@ -433,19 +479,37 @@ const ForumPage = () => {
             AuthorId: comment.AuthorId || comment.Author?.Id,
             ReactionsCount: comment.ReactionsCount || 0,
             UserReactionId: userReaction ? (userReaction.Id || userReaction.CommentReactionId) : undefined,
-            ParentCommentId: comment.ParentCommentId || null,
+            // Xử lý cả PascalCase và camelCase từ server, giữ nguyên giá trị 0 nếu có
+            ParentCommentId: comment.ParentCommentId !== undefined ? comment.ParentCommentId 
+              : comment.parentCommentId !== undefined ? comment.parentCommentId 
+              : null,
           }
         })
+        
+        // Debug log để xem dữ liệu từ server
+        if (import.meta.env.DEV) {
+          console.log('[normalizePost] Raw comments from server:', post.Comments.map((c: any) => ({
+            id: c.PostCommentId || c.Id,
+            parentId: c.ParentCommentId,
+            parentIdCamel: c.parentCommentId,
+            content: c.Content?.substring(0, 20)
+          })))
+        }
 
         // Kiểm tra xem API đã trả về nested hay chưa
         // Nếu có comment nào có Replies array không rỗng từ API gốc, nghĩa là API đã nested
         const hasNestedRepliesFromApi = post.Comments.some((c: any) => 
-          c.Replies && Array.isArray(c.Replies) && c.Replies.length > 0
+          (c.Replies && Array.isArray(c.Replies) && c.Replies.length > 0) ||
+          (c.replies && Array.isArray(c.replies) && c.replies.length > 0)
         )
         
-        // Kiểm tra xem có comment nào có ParentCommentId (flat list với parent reference)
+        // Kiểm tra xem có comment nào có ParentCommentId hợp lệ (flat list với parent reference)
+        // ParentCommentId phải khác null, undefined, 0, và chuỗi rỗng
         const hasFlatWithParentId = flatComments.some(c => 
-          c.ParentCommentId !== null && c.ParentCommentId !== undefined
+          c.ParentCommentId !== null && 
+          c.ParentCommentId !== undefined && 
+          c.ParentCommentId !== 0 && 
+          String(c.ParentCommentId).trim() !== ''
         )
         
         if (import.meta.env.DEV) {
@@ -458,8 +522,19 @@ const ForumPage = () => {
           })))
         }
         
-        if (hasNestedRepliesFromApi) {
+        // Ưu tiên buildCommentTree nếu có ParentCommentId hợp lệ
+        // Vì đây là cách chính xác nhất để xây dựng comment tree
+        if (hasFlatWithParentId) {
+          // API trả về flat list với ParentCommentId, cần build tree
+          if (import.meta.env.DEV) {
+            console.log('[normalizePost] Using buildCommentTree because hasFlatWithParentId=true')
+          }
+          comments = buildCommentTree(flatComments)
+        } else if (hasNestedRepliesFromApi) {
           // API đã trả về nested, cần normalize Replies từ API gốc
+          if (import.meta.env.DEV) {
+            console.log('[normalizePost] Using nested replies from API')
+          }
           const normalizeReplies = (replies: any[]): PostComment[] => {
             if (!replies || !Array.isArray(replies)) return []
             return replies.map((reply: any) => ({
@@ -490,8 +565,12 @@ const ForumPage = () => {
               } as PostComment
             })
         } else {
-          // API trả về flat list, cần build tree
-          comments = buildCommentTree(flatComments)
+          // Không có nested replies và không có ParentCommentId
+          // Tất cả comments đều là top-level
+          if (import.meta.env.DEV) {
+            console.log('[normalizePost] All comments are top-level (no nested, no ParentCommentId)')
+          }
+          comments = flatComments
         }
       } else if (post.Comment && Array.isArray(post.Comment)) {
         // Convert từ Post model (nếu dùng /approved endpoint)
@@ -554,65 +633,47 @@ const ForumPage = () => {
       // Filter chỉ lấy posts đã approved
       const approvedPosts = (response.data || []).filter(post => post.Status === 'Approved')
       
-      // Normalize posts và kiểm tra user đã like/save chưa
-      // const savedPostIds = getSavedPostIds()
-      // const newUserReactions: Record<string, number> = {}
+      // Normalize posts để xử lý comment tree đúng cách
+      const normalizedPosts = approvedPosts.map((post) => normalizePost(post))
       
-      // // Nếu preserveSavedState = true, giữ lại isSaved từ state hiện tại
-      // const currentPostsMap = preserveSavedState 
-      //   ? new Map(posts.map(p => [p.PostId || '', p.isSaved]))
-      //   : new Map<string, boolean>()
+      // Cập nhật userReactions từ dữ liệu server
+      // Lấy userInfo từ localStorage để đảm bảo có data
+      const localUserInfo = (() => {
+        try {
+          const str = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+          return str ? JSON.parse(str) : null
+        } catch { return null }
+      })()
+      const currentUserId = userInfo?.Id || userInfo?.id || localUserInfo?.Id || localUserInfo?.id
       
-      // const postsWithUserStatus = approvedPosts.map((post) => {
-      //   const normalized = normalizePost(post)
-      //   const postId = normalized.PostId || ''
+      if (currentUserId) {
+        const newUserReactions: Record<string, number> = {}
         
-      //   if (userInfo) {
-      //     const userId = userInfo.Id || userInfo.id
-      //     // Tìm reaction của user hiện tại - so sánh cả string và number
-      //     const userReaction = normalized.Likes?.find(
-      //       (like) => {
-      //         const likeAccountId = String(like.AccountId || '').trim()
-      //         const currentUserId = String(userId || '').trim()
-      //         return likeAccountId === currentUserId && likeAccountId !== ''
-      //       }
-      //     )
+        normalizedPosts.forEach((post) => {
+          const postId = post.PostId || ''
+          if (!postId) return
           
-      //     // Nếu preserveSavedState và có state hiện tại, giữ lại state đó
-      //     // Nếu không, lấy từ localStorage
-      //     const isSaved = preserveSavedState && currentPostsMap.has(postId)
-      //       ? currentPostsMap.get(postId)!
-      //       : savedPostIds.includes(postId)
+          // Tìm reaction của user hiện tại
+          const userReaction = post.Likes?.find((like) => {
+            const likeAccountId = String(like.AccountId || '').trim()
+            const userId = String(currentUserId || '').trim()
+            return likeAccountId === userId && likeAccountId !== ''
+          })
           
-      //     const userReactionId = userReaction ? parseInt(userReaction.PostLikeId) : undefined
-          
-      //     // Lấy reaction type từ backend (ReactionType field)
-      //     if (userReaction && userReaction.ReactionType) {
-      //       const reactionTypeId = getReactionTypeId(userReaction.ReactionType)
-      //       newUserReactions[postId] = reactionTypeId
-      //     } else if (userReaction) {
-      //       // Có reaction nhưng không có ReactionType -> mặc định là Like (1)
-      //       newUserReactions[postId] = 1
-      //     } else if (userReactionId) {
-      //       // Fallback: giữ lại từ state hoặc mặc định là Like (1)
-      //       newUserReactions[postId] = userReactions[postId] || 1
-      //     }
-          
-      //     return {
-      //       ...normalized,
-      //       isLiked: !!userReaction, // Giữ lại để tương thích
-      //       isSaved: isSaved,
-      //       userReactionId: userReactionId,
-      //     }
-      //   }
-      //   const isSaved = preserveSavedState && currentPostsMap.has(postId)
-      //     ? currentPostsMap.get(postId)!
-      //     : savedPostIds.includes(postId)
-      //   return { ...normalized, isSaved }
-      // })
+          if (userReaction && userReaction.ReactionType) {
+            // Lấy reaction type từ server
+            const reactionTypeId = getReactionTypeId(userReaction.ReactionType)
+            newUserReactions[postId] = reactionTypeId
+          } else if (userReaction) {
+            // Có reaction nhưng không có ReactionType -> mặc định là Like (1)
+            newUserReactions[postId] = 1
+          }
+        })
+        
+        setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
+      }
       
-      // setUserReactions((prev) => ({ ...prev, ...newUserReactions }))
-      setPosts(response.data)
+      setPosts(normalizedPosts)
       
       // Save to cache
       saveCachedPosts(approvedPosts)
@@ -839,14 +900,32 @@ const ForumPage = () => {
         // Không refresh, chỉ dùng optimistic update
       } else {
         // Thêm hoặc thay đổi reaction
-        // Backend đã xử lý việc đổi reaction: nếu đã có reaction khác, backend sẽ tự update
-        // Không cần unlike trước, chỉ cần gọi ReactToPost với reactionTypeId mới
         
-        // Gọi endpoint với reactionTypeId cụ thể
-        // Backend sẽ tự động:
-        // - Nếu chưa có reaction -> tạo mới
-        // - Nếu đã có reaction khác -> update reaction type
-        // - Nếu cùng reaction type -> unlike (nhưng case này đã xử lý ở trên)
+        // Nếu đã có reaction khác, cần xóa reaction cũ trước rồi thêm mới
+        // Vì backend có thể xử lý như toggle thay vì update
+        if (hasExistingReaction && !isSameReactionType) {
+          // Đổi reaction: xóa cũ trước
+          let reactionIdToDelete = currentReactionId
+          
+          if (!reactionIdToDelete || String(reactionIdToDelete).length > 10) {
+            const postData = posts.find(p => p.PostId === postId)
+            const userLike = postData?.Likes?.find(like => String(like.AccountId) === String(userId))
+            
+            if (userLike && userLike.PostLikeId && String(userLike.PostLikeId).length <= 10) {
+              reactionIdToDelete = parseInt(userLike.PostLikeId)
+            }
+          }
+          
+          if (reactionIdToDelete && String(reactionIdToDelete).length <= 10) {
+            try {
+              await axiosInstance.delete(`${API_ENDPOINTS.POST_REACTION}/unlike/${reactionIdToDelete}`)
+            } catch (deleteErr) {
+              console.warn('Error deleting old reaction, continuing with new reaction:', deleteErr)
+            }
+          }
+        }
+        
+        // Thêm reaction mới
         await axiosInstance.post(`${API_ENDPOINTS.POST_REACTION}/${postId}/${reactionTypeId}`)
         
         // Optimistic update - cập nhật state ngay lập tức
@@ -1583,26 +1662,62 @@ const ForumPage = () => {
     const commentText = editCommentInputs[commentId]?.trim()
     if (!commentText) return
 
-    try {
-      await axiosInstance.put(`${API_ENDPOINTS.COMMENT}/${commentId}`, {
-        Content: commentText,
-        Images: null,
-      })
+    // Lưu state trước khi thay đổi để revert nếu có lỗi
+    const previousPosts = posts
+    const previousSavedPosts = savedPosts
 
-      // Refresh posts
-      await fetchPosts(true)
-      if (activeTab === 'forum-saved') {
-        await fetchSavedPosts(true)
+    try {
+      // Optimistic update: cập nhật comment trong UI ngay lập tức
+      const updateCommentInList = (postsList: Post[]): Post[] => {
+        return postsList.map((post) => {
+          if (post.PostId !== postId) return post
+          
+          // Helper function để cập nhật comment trong tree (bao gồm cả replies)
+          const updateInComments = (comments: PostComment[]): PostComment[] => {
+            return comments.map((comment) => {
+              if (comment.PostCommentId === commentId) {
+                return { ...comment, Content: commentText }
+              }
+              if (comment.Replies && comment.Replies.length > 0) {
+                return { ...comment, Replies: updateInComments(comment.Replies) }
+              }
+              return comment
+            })
+          }
+          
+          return {
+            ...post,
+            Comments: updateInComments(post.Comments || [])
+          }
+        })
       }
 
+      setPosts(updateCommentInList)
+      setSavedPosts(updateCommentInList)
+
+      // Đóng form edit ngay lập tức
       setEditingCommentId(null)
       setEditCommentInputs((prev) => {
         const newInputs = { ...prev }
         delete newInputs[commentId]
         return newInputs
       })
+
+      // Gọi API cập nhật
+      await axiosInstance.put(`${API_ENDPOINTS.COMMENT}/${commentId}`, {
+        Content: commentText,
+        Images: null,
+      })
+
+      // Sync với server ở background sau 500ms
+      setTimeout(() => {
+        fetchPosts(true, true)
+      }, 500)
     } catch (err: any) {
       console.error('Error updating comment:', err)
+      // Revert về state cũ nếu có lỗi
+      setPosts(previousPosts)
+      setSavedPosts(previousSavedPosts)
       alert(err.response?.data?.message || 'Không thể cập nhật bình luận. Vui lòng thử lại.')
     }
   }
@@ -1622,19 +1737,51 @@ const ForumPage = () => {
 
     const { postId, commentId } = deleteCommentConfirm
 
+    // Lưu state trước khi thay đổi để revert nếu có lỗi
+    const previousPosts = posts
+    const previousSavedPosts = savedPosts
+
     try {
       setDeletingComment(commentId)
       setDeleteCommentConfirm(null) // Đóng modal ngay
 
+      // Optimistic update: xóa comment khỏi UI ngay lập tức
+      const removeCommentFromList = (postsList: Post[]): Post[] => {
+        return postsList.map((post) => {
+          if (post.PostId !== postId) return post
+          
+          // Helper function để xóa comment từ tree (bao gồm cả replies)
+          const removeFromComments = (comments: PostComment[]): PostComment[] => {
+            return comments
+              .filter((comment) => comment.PostCommentId !== commentId)
+              .map((comment) => ({
+                ...comment,
+                Replies: comment.Replies ? removeFromComments(comment.Replies) : []
+              }))
+          }
+          
+          return {
+            ...post,
+            Comments: removeFromComments(post.Comments || [])
+          }
+        })
+      }
+
+      setPosts(removeCommentFromList)
+      setSavedPosts(removeCommentFromList)
+
+      // Gọi API xóa
       await axiosInstance.delete(`${API_ENDPOINTS.COMMENT}/${commentId}`)
 
-      // Refresh posts
-      await fetchPosts(true)
-      if (activeTab === 'forum-saved') {
-        await fetchSavedPosts(true)
-      }
+      // Sync với server ở background sau 500ms
+      setTimeout(() => {
+        fetchPosts(true, true)
+      }, 500)
     } catch (err: any) {
       console.error('Error deleting comment:', err)
+      // Revert về state cũ nếu có lỗi
+      setPosts(previousPosts)
+      setSavedPosts(previousSavedPosts)
       alert(err.response?.data?.message || 'Không thể xóa bình luận. Vui lòng thử lại.')
     } finally {
       setDeletingComment(null)
@@ -1759,8 +1906,8 @@ const ForumPage = () => {
         return newSet
       })
 
-      // Fetch lại ở background để sync cache với server (fix reply biến mất sau F5)
-      fetchPosts(true, true)
+      // KHÔNG fetch lại để giữ reply ở đúng vị trí
+      // Reply đã được lưu vào server, sẽ hiển thị đúng khi user refresh trang
     } catch (err: any) {
       console.error('Error replying to comment:', err)
       // Chỉ refresh khi có lỗi để đảm bảo đồng bộ

@@ -31,6 +31,12 @@ export default function HeaderDashBoardContent() {
           userGrowth: 'Đang tải...',
           totalPosts: 0,
           postGrowth: 'Đang tải...',
+          totalServiceCombos: 0,
+          serviceComboGrowth: '',
+          totalRevenue: 0,
+          revenueGrowth: '',
+          totalBookings: 0,
+          bookingGrowth: '',
           pendingSupports: 0,
           totalViews: 0,
           todayComments: 0,
@@ -87,7 +93,7 @@ export default function HeaderDashBoardContent() {
     },
     {
       title: 'Lượt tương tác',
-      value: dashboardData.totalViews.toLocaleString('vi-VN'), // Total interactions from database
+      value: dashboardData.totalViews.toLocaleString('vi-VN'),
       subtitle: 'Tổng tương tác hệ thống',
       icon: <LegendToggleIcon sx={{ fontSize: '2rem' }} />,
       bgColor: 'bg-linear-to-br from-green-50 to-green-100',
@@ -119,4 +125,3 @@ export default function HeaderDashBoardContent() {
     </Box>
   )
 }
-

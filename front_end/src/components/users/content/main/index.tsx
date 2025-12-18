@@ -134,6 +134,8 @@ const mapBackendUserToFrontend = (backendUser: any): User => {
 
   // Backend trả về IS_BANNED (PascalCase với underscore) hoặc IsBanned
   const isBanned = backendUser.IS_BANNED ?? backendUser.IsBanned ?? backendUser.isBanned ?? false
+  // IsActive: backend mặc định là true cho account mới, chỉ false khi bị ban
+  // Nếu IsActive không có trong response, mặc định là true
   const isActive = backendUser.IsActive ?? backendUser.isActive ?? true
 
   const rawCreatedAt = backendUser.CreatedAt ?? backendUser.createdAt
@@ -166,7 +168,9 @@ const mapBackendUserToFrontend = (backendUser: any): User => {
     address: backendUser.Address ?? backendUser.address ?? null,
     role: resolvedRole,
     roleId: normalizedRoleId,
-    status: isBanned ? 'blocked' : isActive ? 'active' : 'blocked',
+    // Backend kiểm tra: IsActive == false || IS_BANNED để xác định account bị khóa
+    // Frontend cần hiển thị đúng để admin biết account nào có thể ban/unban
+    status: !isActive || isBanned ? 'blocked' : 'active',
     joinDate,
     verified: Boolean(isActive && !isBanned)
   }

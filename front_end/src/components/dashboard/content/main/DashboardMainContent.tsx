@@ -4,7 +4,16 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import ActivityCard from '~/components/common/ActivityCard'
 import QuickStatic from '~/components/common/QuickStaticCard'
-import { fetchDashboardData, fetchTimeSeriesData, type DashboardDto, type TimeSeriesDto } from '~/api/instances/DashboardApi'
+import { 
+  fetchDashboardData, 
+  fetchTimeSeriesData,
+  fetchTopSpenders,
+  fetchTopHosts,
+  type DashboardDto, 
+  type TimeSeriesDto,
+  type TopSpenderDto,
+  type TopHostDto
+} from '~/api/instances/DashboardApi'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -16,17 +25,25 @@ import {
   BarChart,
   Bar
 } from 'recharts'
-import type {
-  QuickStaticFeedProps,
-  QuickStaticCardProps,
-  ActivityFeedProps,
-  ActivityCardProps
-} from '~/types/common'
+
+
+// Format currency helper
+const formatCurrency = (value: number): string => {
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(2)} tỷ VNĐ`
+  }
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(0)} triệu VNĐ`
+  }
+  return `${value.toLocaleString('vi-VN')} VNĐ`
+}
 
 export default function MainDashBoardContent() {
   const [dashboardData, setDashboardData] = useState<DashboardDto | null>(null)
   const [monthlyTimeSeriesData, setMonthlyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'month', startDate: '', endDate: '', data: [] })
   const [dailyTimeSeriesData, setDailyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'day', startDate: '', endDate: '', data: [] })
+  const [topSpenders, setTopSpenders] = useState<TopSpenderDto[]>([])
+  const [topHosts, setTopHosts] = useState<TopHostDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,50 +58,39 @@ export default function MainDashBoardContent() {
         console.log('Dashboard main data loaded:', data)
         setDashboardData(data)
 
-        // Load time series data for charts in parallel
+        // Load time series data for charts
         try {
-          const [monthlyData, dailyData] = await Promise.all([
-            fetchTimeSeriesData('month'), // Last 12 months
-            fetchTimeSeriesData('day') // Last 30 days
+          const [yearlyData, monthlyData] = await Promise.all([
+            fetchTimeSeriesData('year'), // Doanh thu theo từng tháng trong năm
+            fetchTimeSeriesData('month') // Doanh thu theo từng ngày trong tháng hiện tại
           ])
+          console.log('Yearly time series data loaded:', yearlyData)
           console.log('Monthly time series data loaded:', monthlyData)
-          console.log('Daily time series data loaded:', dailyData)
-          setMonthlyTimeSeriesData(monthlyData)
-          setDailyTimeSeriesData(dailyData)
+          setMonthlyTimeSeriesData(yearlyData)
+          setDailyTimeSeriesData(monthlyData)
         } catch (timeSeriesError) {
-          // Nếu time series API fail, giữ empty data (đã khởi tạo ban đầu)
-          console.warn('Time series API failed, using empty data:', timeSeriesError)
+          console.warn('Time series API failed:', timeSeriesError)
+        }
+
+        // Load top spenders and hosts (separate try-catch to not affect charts)
+        try {
+          const spendersData = await fetchTopSpenders(6)
+          console.log('Top spenders loaded:', spendersData)
+          setTopSpenders(spendersData)
+        } catch (spendersError) {
+          console.warn('Top spenders API failed:', spendersError)
+        }
+
+        try {
+          const hostsData = await fetchTopHosts(6)
+          console.log('Top hosts loaded:', hostsData)
+          setTopHosts(hostsData)
+        } catch (hostsError) {
+          console.warn('Top hosts API failed:', hostsError)
         }
       } catch (error) {
         console.error('Error loading dashboard:', error)
         setError(error instanceof Error ? error.message : 'Không thể tải dữ liệu')
-        // Time series data đã được khởi tạo với empty array, không cần set lại
-        // Set fallback data
-        setDashboardData({
-          totalUsers: 0,
-          userGrowth: '',
-          totalPosts: 0,
-          postGrowth: '',
-          totalServiceCombos: 0,
-          serviceComboGrowth: '',
-          totalRevenue: 0,
-          revenueGrowth: '',
-          totalBookings: 0,
-          bookingGrowth: '',
-          pendingSupports: 0,
-          totalViews: 0,
-          todayComments: 0,
-          todayReactions: 0,
-          todayChatMessages: 0,
-          unreadNotifications: 0,
-          activeTours: 0,
-          todayBookings: 0,
-          recentActivities: [],
-          urgentSupports: 0,
-          pendingUpgradeRequests: 0,
-          unreadMessages: 0,
-          popularPosts: []
-        })
       } finally {
         setLoading(false)
       }
@@ -135,95 +141,47 @@ export default function MainDashBoardContent() {
     )
   }
 
-  // Quick Static Config: Top doanh nghiệp có thu nhập cao (mock)
-  const quickStaticFeeds: QuickStaticFeedProps[] = [
-    {
-      title: 'Công ty Du lịch ABC',
-      value: '320.000.000 VNĐ',
-      valueClassName: 'bg-emerald-500'
-    },
-    {
-      title: 'Travel Agency XYZ',
-      value: '280.000.000 VNĐ',
-      valueClassName: 'bg-sky-500'
-    },
-    {
-      title: 'Homestay Đà Lạt Xinh',
-      value: '215.000.000 VNĐ',
-      valueClassName: 'bg-violet-500'
-    },
-    {
-      title: 'Resort Biển Xanh',
-      value: '190.000.000 VNĐ',
-      valueClassName: 'bg-amber-500'
-    },
-    {
-      title: 'Tour Trekking Highlands',
-      value: '155.000.000 VNĐ',
-      valueClassName: 'bg-rose-500'
-    },
-    {
-      title: 'Hostel City Center',
-      value: '130.000.000 VNĐ',
-      valueClassName: 'bg-lime-500'
-    }
-  ]
+  // Color palette for ranking
+  const colorPalette = ['bg-emerald-500', 'bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-lime-500']
 
-  const quickStaticConfig: QuickStaticCardProps = {
-    title: 'Top doanh nghiệp có thu nhập cao',
-    data: quickStaticFeeds
+  // Top Host có doanh thu cao nhất (QuickStatic)
+  const topHostsFeeds = topHosts.length > 0
+    ? topHosts.map((host, index) => ({
+        title: host.hostName || 'Unknown Host',
+        value: formatCurrency(host.totalRevenue),
+        valueClassName: colorPalette[index % colorPalette.length]
+      }))
+    : [{ title: 'Chưa có dữ liệu', value: '0 VNĐ', valueClassName: 'bg-gray-400' }]
+
+  const quickStaticConfig = {
+    title: 'Top Host có doanh thu cao nhất',
+    data: topHostsFeeds
   }
 
-  // Thay "Hoạt động gần đây" bằng "Top chi tiêu trong hệ thống"
-  const spendingFeeds: ActivityFeedProps[] = [
-    {
-      desc: 'Nguyễn Văn A - 120.000.000 VNĐ',
-      time: '15 đơn đặt tour',
-      markColorClassName: 'bg-emerald-500'
-    },
-    {
-      desc: 'Trần Thị B - 95.000.000 VNĐ',
-      time: '12 đơn đặt tour',
-      markColorClassName: 'bg-sky-500'
-    },
-    {
-      desc: 'Lê Văn C - 72.500.000 VNĐ',
-      time: '9 đơn đặt tour',
-      markColorClassName: 'bg-violet-500'
-    },
-    {
-      desc: 'Hoàng Minh D - 50.000.000 VNĐ',
-      time: '6 đơn đặt tour',
-      markColorClassName: 'bg-amber-500'
-    }
-  ]
+  // Top Users có chi tiêu cao nhất (ActivityCard)
+  const topSpendersFeeds = topSpenders.length > 0
+    ? topSpenders.map((spender, index) => ({
+        desc: `${spender.userName} - ${formatCurrency(spender.totalSpent)}`,
+        time: `${spender.bookingCount} đơn đặt tour`,
+        markColorClassName: colorPalette[index % colorPalette.length]
+      }))
+    : [{ desc: 'Chưa có dữ liệu', time: '', markColorClassName: 'bg-gray-400' }]
 
-  const activityConfig: ActivityCardProps = {
-    data: spendingFeeds,
-    title: 'Top chi tiêu trong hệ thống',
+  const activityConfig = {
+    data: topSpendersFeeds,
+    title: 'Top User có chi tiêu cao nhất',
     bgClassName: 'bg-white'
   }
 
-  // ============================
-  // BIỂU ĐỒ DOANH THU TỪ API
-  // ============================
-  // Sử dụng dữ liệu từ time-series API
-  // 1. Doanh thu theo từng tháng (từ time-series với period=month)
-  // 2. Doanh thu theo từng ngày trong tháng hiện tại (từ time-series với period=day)
-
-  // Prepare monthly revenue data from time-series
+  // Prepare monthly revenue data from time-series (period=year -> theo tháng)
   const monthlyRevenueData = monthlyTimeSeriesData.data
-    .filter((item) => item.revenue > 0) // Only show months with revenue
-    .slice(-12) // Last 12 months
     .map((item) => ({
       month: item.label || 'N/A',
       revenue: Number(item.revenue) || 0
     }))
 
-  // Prepare daily revenue data from time-series
+  // Prepare daily revenue data from time-series (period=month -> theo ngày trong tháng)
   const dailyRevenueData = dailyTimeSeriesData.data
-    .filter((item) => item.revenue > 0) // Only show days with revenue
-    .slice(-30) // Last 30 days
     .map((item) => ({
       day: item.label || 'N/A',
       revenue: Number(item.revenue) || 0
@@ -285,7 +243,7 @@ export default function MainDashBoardContent() {
           </Box>
         </Paper>
 
-        {/* Biểu đồ 2: Doanh thu theo từng ngày trong tháng */}
+        {/* Biểu đồ 2: Doanh thu trong tháng */}
         <Paper
           sx={{
             p: 3,
@@ -296,10 +254,10 @@ export default function MainDashBoardContent() {
           }}
         >
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Doanh thu theo ngày trong tháng
+            Doanh thu trong tháng
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ cột thể hiện doanh thu theo từng ngày trong tháng.
+            Biểu đồ cột thể hiện doanh thu theo từng ngày trong tháng hiện tại.
           </Typography>
           <Box sx={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -327,8 +285,8 @@ export default function MainDashBoardContent() {
 
       {/* Hàng 2: Hoạt động & Thống kê nhanh */}
       <Box className="grid grid-cols-2 p-[2.4rem] gap-x-[2.4rem]">
-        <ActivityCard {...activityConfig} />
-        <QuickStatic {...quickStaticConfig} />
+        <ActivityCard {...(activityConfig as any)} />
+        <QuickStatic {...(quickStaticConfig as any)} />
       </Box>
     </Box>
   )

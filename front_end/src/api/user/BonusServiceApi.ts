@@ -12,6 +12,7 @@ export interface BonusService {
   ServiceId?: number;
   Image?: string;
   Status?: string;
+  TargetAudience?: string; // JSON string cho target audience config
   CreatedAt?: string;
   UpdatedAt?: string;
 }

@@ -959,6 +959,7 @@ const PaymentPage = () => {
                         selectedServices={selectedComplementaryServices}
                         onSelectionChange={setSelectedComplementaryServices}
                         disabled={processing}
+                        hostId={(booking?.ServiceCombo || booking?.serviceCombo)?.HostId || (booking?.ServiceCombo || booking?.serviceCombo)?.hostId}
                       />
                     </div>
                   )}

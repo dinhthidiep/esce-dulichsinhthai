@@ -77,7 +77,7 @@ export default function ServiceApprovalsContent() {
     loadServices()
   }, [])
 
-  // Filter by status first, then by search query
+  // Filter by status first, then by search query, then sort by newest first
   const filteredServices = useMemo(() => {
     let result = services
     
@@ -97,6 +97,13 @@ export default function ServiceApprovalsContent() {
         s.id?.toString().includes(query)
       )
     }
+    
+    // Sort by createdAt descending (newest first)
+    result = [...result].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
     
     return result
   }, [services, statusFilter, searchQuery])
@@ -276,7 +283,10 @@ export default function ServiceApprovalsContent() {
                                   <Chip label={meta.label} color={meta.color} size="small" sx={{ fontWeight: 600 }} />
                                 </Stack>
                                 <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-                                  ID: {service.id} • Tạo lúc: {formatDateTime(service.createdAt)}
+                                  Người gửi: {service.hostName || 'Chưa rõ'}
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+                                  Tạo lúc: {formatDateTime(service.createdAt)}
                                 </Typography>
                               </Box>
                             </Stack>

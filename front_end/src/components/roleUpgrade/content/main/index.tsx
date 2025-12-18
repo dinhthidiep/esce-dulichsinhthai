@@ -132,6 +132,15 @@ export default function MainRoleUpgradeContent() {
     open: false,
     request: null
   })
+  const [licenseDialog, setLicenseDialog] = useState<{
+    open: boolean
+    imageUrl: string
+    applicantName: string
+  }>({
+    open: false,
+    imageUrl: '',
+    applicantName: ''
+  })
 
   const loadAdminRequests = async () => {
     setAdminLoading(true)
@@ -354,10 +363,13 @@ export default function MainRoleUpgradeContent() {
                           <Stack spacing={1.2}>
                             <Button
                               variant="outlined"
-                              href={request.licenseFile || '#'}
-                              target="_blank"
-                              rel="noreferrer"
+                              onClick={() => setLicenseDialog({
+                                open: true,
+                                imageUrl: request.licenseFile || '',
+                                applicantName: request.applicantName
+                              })}
                               startIcon={<UploadFileIcon />}
+                              disabled={!request.licenseFile}
                             >
                               Giấy phép / Hồ sơ
                             </Button>
@@ -497,6 +509,45 @@ export default function MainRoleUpgradeContent() {
             disabled={processingId !== null}
           >
             {processingId !== null ? 'Đang xử lý...' : 'Từ chối'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* License Image Dialog */}
+      <Dialog
+        open={licenseDialog.open}
+        onClose={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '' })}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Giấy phép / Hồ sơ - {licenseDialog.applicantName}
+        </DialogTitle>
+        <DialogContent>
+          {licenseDialog.imageUrl ? (
+            <Box sx={{ textAlign: 'center' }}>
+              <Box
+                component="img"
+                src={licenseDialog.imageUrl}
+                alt="Giấy phép"
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '70vh',
+                  borderRadius: '1rem',
+                  objectFit: 'contain'
+                }}
+              />
+            </Box>
+          ) : (
+            <Alert severity="warning">Không có hình ảnh giấy phép.</Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '' })}
+            sx={{ borderRadius: '0.8rem' }}
+          >
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>
