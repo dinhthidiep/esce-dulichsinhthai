@@ -17,7 +17,7 @@ namespace ESCE_SYSTEM.Repositories
             // Load bookings first without includes to check if basic columns exist
             return await _context.Bookings
                 .Include(b => b.User)
-                    .ThenInclude(u => u.Role)
+                   .ThenInclude(u => u.Role)
                 .Include(b => b.ServiceCombo)
                 .Include(b => b.Service)
                 .ToListAsync();

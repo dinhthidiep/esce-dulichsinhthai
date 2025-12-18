@@ -556,6 +556,8 @@ const EditServiceComboModal: React.FC<EditServiceComboModalProps> = ({
                             </button>
                           )}
                         </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 

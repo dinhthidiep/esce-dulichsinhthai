@@ -181,8 +181,8 @@ const Support: React.FC = () => {
   // Ẩn Support chat widget khi:
   // 1. Chưa đăng nhập
   // 2. Đăng nhập bằng tài khoản Admin (Admin đã có mục Chat riêng)
-  if (!isLoggedIn || isAdmin) {
-    return null
+  if (!isLoggedIn) {
+    return null  // Chỉ ẩn nếu: chưa đăng nhập
   }
 
   return (

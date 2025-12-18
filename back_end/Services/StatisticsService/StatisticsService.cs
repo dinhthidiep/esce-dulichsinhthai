@@ -26,7 +26,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             var currentPosts = await _context.Posts
                 .CountAsync(p => p.CreatedAt >= startDate && p.CreatedAt <= endDate && !p.IsDeleted);
             var currentRevenue = await _context.Payments
-                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && p.Status == "completed")
+                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
             var currentBookings = await _context.Bookings
                 .CountAsync(b => b.BookingDate >= startDate && b.BookingDate <= endDate);
@@ -39,7 +39,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             var previousPosts = await _context.Posts
                 .CountAsync(p => p.CreatedAt >= previousStartDate && p.CreatedAt < startDate && !p.IsDeleted);
             var previousRevenue = await _context.Payments
-                .Where(p => p.PaymentDate >= previousStartDate && p.PaymentDate < startDate && p.Status == "completed")
+                .Where(p => p.PaymentDate >= previousStartDate && p.PaymentDate < startDate && p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
             var previousBookings = await _context.Bookings
                 .CountAsync(b => b.BookingDate >= previousStartDate && b.BookingDate < startDate);
@@ -49,7 +49,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             var totalServiceCombos = await _context.Servicecombos.CountAsync();
             var totalPosts = await _context.Posts.CountAsync(p => !p.IsDeleted);
             var totalRevenue = await _context.Payments
-                .Where(p => p.Status == "completed")
+                .Where(p => p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
             var totalBookings = await _context.Bookings.CountAsync();
 
@@ -89,7 +89,7 @@ namespace ESCE_SYSTEM.Services.StatisticsService
                     .CountAsync(p => p.CreatedAt >= pointStart && p.CreatedAt < pointEnd && !p.IsDeleted);
 
                 var revenue = await _context.Payments
-                    .Where(p => p.PaymentDate >= pointStart && p.PaymentDate < pointEnd && p.Status == "completed")
+                    .Where(p => p.PaymentDate >= pointStart && p.PaymentDate < pointEnd && p.Status == "success")
                     .SumAsync(p => (decimal?)p.Amount) ?? 0;
 
                 var newBookings = await _context.Bookings
@@ -156,15 +156,15 @@ namespace ESCE_SYSTEM.Services.StatisticsService
             var (startDate, endDate, previousStartDate, _) = GetDateRange(filter);
 
             var totalRevenue = await _context.Payments
-                .Where(p => p.Status == "completed")
+                .Where(p => p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
 
             var revenueThisPeriod = await _context.Payments
-                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && p.Status == "completed")
+                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
 
             var revenuePreviousPeriod = await _context.Payments
-                .Where(p => p.PaymentDate >= previousStartDate && p.PaymentDate < startDate && p.Status == "completed")
+                .Where(p => p.PaymentDate >= previousStartDate && p.PaymentDate < startDate && p.Status == "success")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
 
             var totalBookings = await _context.Bookings.CountAsync();

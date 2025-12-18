@@ -46,7 +46,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",  // Vite dev server
                 "http://localhost:3000",  // React dev server
                 "http://localhost:5002",  // Backend HTTP
-                "https://localhost:7267"  // Backend HTTPS
+                "https://localhost:7267",  // Backend HTTPS
+                "https://esce-fe.vercel.app/"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -247,10 +248,11 @@ if (app.Environment.IsDevelopment())
         logger.LogInformation("Database + Seed completed.");
     }
 
-    // Swagger
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
+
+// Swagger
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // static files
 app.UseStaticFiles();

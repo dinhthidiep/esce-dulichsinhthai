@@ -1,6 +1,6 @@
 namespace ESCE_SYSTEM.DTOs.Statistics
 {
-    // DTO cho th?ng kê t?ng quan
+    // DTO cho th?ng kï¿½ t?ng quan
     public class DashboardStatisticsDto
     {
         public int TotalUsers { get; set; }
@@ -9,7 +9,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public decimal TotalRevenue { get; set; }
         public int TotalBookings { get; set; }
 
-        // So sánh v?i k? tru?c
+        // So sï¿½nh v?i k? tru?c
         public double UsersGrowthPercent { get; set; }
         public double ServiceCombosGrowthPercent { get; set; }
         public double PostsGrowthPercent { get; set; }
@@ -17,7 +17,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public double BookingsGrowthPercent { get; set; }
     }
 
-    // DTO cho th?ng kê theo th?i gian
+    // DTO cho th?ng kï¿½ theo th?i gian
     public class TimeSeriesStatisticsDto
     {
         public string Period { get; set; } = string.Empty; // "day", "week", "month", "year"
@@ -28,7 +28,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
 
     public class TimeSeriesDataPoint
     {
-        public string Label { get; set; } = string.Empty; // Ngày/Tu?n/Tháng/Nam
+        public string Label { get; set; } = string.Empty; // Ngï¿½y/Tu?n/Thï¿½ng/Nam
         public DateTime Date { get; set; }
         public int NewUsers { get; set; }
         public int NewServiceCombos { get; set; }
@@ -37,7 +37,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public int NewBookings { get; set; }
     }
 
-    // DTO cho th?ng kê chi ti?t ngu?i dùng
+    // DTO cho th?ng kï¿½ chi ti?t ngu?i dï¿½ng
     public class UserStatisticsDto
     {
         public int TotalUsers { get; set; }
@@ -54,7 +54,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public int Count { get; set; }
     }
 
-    // DTO cho th?ng kê doanh thu
+    // DTO cho th?ng kï¿½ doanh thu
     public class RevenueStatisticsDto
     {
         public decimal TotalRevenue { get; set; }
@@ -68,7 +68,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public decimal AverageOrderValue { get; set; }
     }
 
-    // DTO cho th?ng kê Servicecombo
+    // DTO cho th?ng kï¿½ Servicecombo
 
     public class ServiceComboStatisticsDto
     {
@@ -86,7 +86,7 @@ namespace ESCE_SYSTEM.DTOs.Statistics
         public decimal Revenue { get; set; }
     }
 
-    // DTO cho th?ng kê bài vi?t
+    // DTO cho th?ng kï¿½ bï¿½i vi?t
     public class PostStatisticsDto
     {
         public int TotalPosts { get; set; }

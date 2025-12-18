@@ -804,16 +804,29 @@ const ServiceDetail = () => {
       
       // Ưu tiên sử dụng selectedBookingId (từ ProfilePage hoặc checkCanReview)
       let bookingId = selectedBookingId;
+      let bookingObject: any | null = null;
       
-      // Nếu không có selectedBookingId, tìm từ API
-      if (!bookingId) {
-        const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/user/${userId}`);
+      // Nếu đã có selectedBookingId, cố gắng lấy full booking từ state userBookings
+      if (bookingId && userBookings && userBookings.length > 0) {
+        const existing = userBookings.find(
+          (b: any) => (b.Id || b.id) === bookingId
+        );
+        if (existing) {
+          bookingObject = existing;
+        }
+      }
+
+      // Nếu không có selectedBookingId hoặc chưa tìm được bookingObject, fetch từ API
+      if (!bookingId || !bookingObject) {
+        const bookingsResponse = await axiosInstance.get(
+          `${API_ENDPOINTS.BOOKING}/user/${userId}`
+        );
         const userBookingsData = bookingsResponse.data || [];
         
         // Tìm booking có ServiceComboId = id và status = completed (chỉ cho phép review khi hoàn thành)
         const validBooking = userBookingsData.find((booking: any) => {
           const comboId = booking.ServiceComboId || booking.serviceComboId;
-          const status = (booking.Status || booking.status)?.toLowerCase();
+          const status = (booking.Status || booking.status || '').toLowerCase();
           return comboId === parseInt(id as string) && status === 'completed';
         });
         
@@ -824,14 +837,153 @@ const ServiceDetail = () => {
         }
         
         bookingId = validBooking.Id || validBooking.id;
+        bookingObject = validBooking;
+      }
+
+      if (!bookingId || !bookingObject) {
+        alert('Không tìm thấy thông tin booking hợp lệ để đánh giá.');
+        setSubmittingReview(false);
+        return;
       }
       
       // Gửi theo format database: BookingId, UserId, Rating, Comment
+      // Backend yêu cầu: BookingId (int, Required), UserId (int, Required),
+      // Rating (int, Required, Range 1-5), Comment (string?, Optional, MaxLength 1000)
+      // Đồng thời model Review ở backend có navigation property không nullable:
+      //   public virtual Booking Booking { get; set; } = null!;
+      //   public virtual Account User { get; set; } = null!;
+      // => Để tránh lỗi "The User field is required." và "The Booking field is required."
+      //    cần gửi thêm object User và Booking với dữ liệu đầy đủ hơn (ít nhất các trường chính).
+      const parsedBookingId = parseInt(bookingId.toString(), 10);
+      const parsedUserId = parseInt(userId.toString(), 10);
+      const parsedRating = parseInt(reviewForm.rating.toString(), 10);
+
+      // LẤY ĐẦY ĐỦ DỮ LIỆU Booking VÀ User TỪ API (sau đó thu gọn lại để tránh yêu cầu quá nhiều navigation properties)
+      // User: luôn fetch từ API /user/{userId} để lấy đúng model từ backend, rồi chuẩn hoá lại
+      let rawUserPayload: any = null;
+      try {
+        const userResponse = await axiosInstance.get(
+          `${API_ENDPOINTS.USER}/${parsedUserId}`
+        );
+        rawUserPayload = userResponse.data || null;
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.error('❌ [ServiceDetail] Không thể fetch user từ API:', err);
+        }
+        alert('Không thể lấy thông tin người dùng từ hệ thống. Vui lòng thử lại sau.');
+        setSubmittingReview(false);
+        return;
+      }
+
+      if (!rawUserPayload) {
+        alert('Không tìm thấy thông tin người dùng hợp lệ.');
+        setSubmittingReview(false);
+        return;
+      }
+
+      // Chuẩn hoá User: đảm bảo các field đang bị backend yêu cầu như Role, PasswordHash có giá trị
+      const nowIso = new Date().toISOString();
+      const safeRoleId =
+        rawUserPayload.RoleId ??
+        rawUserPayload.roleId ??
+        0;
+
+      const userPayload = {
+        // Id: rawUserPayload.Id ?? rawUserPayload.id ?? parsedUserId,
+        Name: rawUserPayload.Name ?? rawUserPayload.name ?? 'Unknown',
+        Email: rawUserPayload.Email ?? rawUserPayload.email ?? 'unknown@example.com',
+        PasswordHash:
+          rawUserPayload.PasswordHash ??
+          rawUserPayload.passwordHash ??
+          'placeholder-password-hash',
+        Password: rawUserPayload.Password ?? rawUserPayload.password ?? null,
+        Avatar: rawUserPayload.Avatar ?? rawUserPayload.avatar ?? null,
+        Phone: rawUserPayload.Phone ?? rawUserPayload.phone ?? null,
+        Dob: rawUserPayload.Dob ?? rawUserPayload.dob ?? null,
+        Gender: rawUserPayload.Gender ?? rawUserPayload.gender ?? null,
+        Address: rawUserPayload.Address ?? rawUserPayload.address ?? null,
+        IsActive:
+          rawUserPayload.IsActive !== undefined
+            ? rawUserPayload.IsActive
+            : rawUserPayload.isActive ?? true,
+        CreatedAt:
+          rawUserPayload.CreatedAt ?? rawUserPayload.createdAt ?? nowIso,
+        UpdatedAt:
+          rawUserPayload.UpdatedAt ?? rawUserPayload.updatedAt ?? nowIso,
+        RoleId: safeRoleId,
+        IS_BANNED:
+          rawUserPayload.IS_BANNED !== undefined
+            ? rawUserPayload.IS_BANNED
+            : rawUserPayload.isBanned ?? false,
+        Role:
+          rawUserPayload.Role ??
+          rawUserPayload.role ?? {
+            Id: safeRoleId,
+            Name: 'User',
+            Description: ''
+          }
+      };
+
+      // Thu gọn Booking: chỉ giữ các scalar chính và thêm User (đã chuẩn hoá) để thoả mãn Booking.User
+      const bookingPayload = {
+        // Id: parsedBookingId,
+        UserId: parsedUserId,
+        BookingNumber:
+          bookingObject.BookingNumber || bookingObject.bookingNumber || '',
+        ServiceComboId:
+          bookingObject.ServiceComboId || bookingObject.serviceComboId || null,
+        ServiceId: bookingObject.ServiceId || bookingObject.serviceId || null,
+        BonusServiceId:
+          bookingObject.BonusServiceId || bookingObject.bonusServiceId || null,
+        Quantity: bookingObject.Quantity || bookingObject.quantity || 1,
+        UnitPrice:
+          bookingObject.UnitPrice ??
+          bookingObject.unitPrice ??
+          bookingObject.Price ??
+          bookingObject.price ??
+          0,
+        TotalAmount:
+          bookingObject.TotalAmount ??
+          bookingObject.totalAmount ??
+          bookingObject.TotalPrice ??
+          bookingObject.totalPrice ??
+          0,
+        ItemType: bookingObject.ItemType || bookingObject.itemType || '',
+        Status: bookingObject.Status || bookingObject.status || '',
+        Notes: bookingObject.Notes || bookingObject.notes || null,
+        BookingDate:
+          bookingObject.BookingDate || bookingObject.bookingDate || null,
+        ConfirmedDate:
+          bookingObject.ConfirmedDate || bookingObject.confirmedDate || null,
+        CompletedDate:
+          bookingObject.CompletedDate || bookingObject.completedDate || null,
+        CreatedAt:
+          bookingObject.CreatedAt || bookingObject.createdAt || nowIso,
+        UpdatedAt:
+          bookingObject.UpdatedAt || bookingObject.updatedAt || nowIso,
+        // Quan trọng: cung cấp luôn User cho Booking để tránh lỗi "Booking.User is required"
+        User: userPayload
+        // KHÔNG gửi ServiceCombo, BonusService... để tránh backend yêu cầu thêm Host, v.v.
+      };
+
       const reviewData = {
-        BookingId: bookingId,
-        UserId: userId,
-        Rating: reviewForm.rating,
-        Comment: reviewForm.comment || null // Backend dùng Comment, không phải Content
+        // Thuộc tính scalar chính
+        BookingId: parsedBookingId, // ✅ integer
+        UserId: parsedUserId, // ✅ integer
+        Rating: parsedRating, // ✅ integer (1-5)
+        Comment:
+          reviewForm.comment && reviewForm.comment.trim()
+            ? reviewForm.comment.trim()
+            : null, // Backend dùng Comment, không phải Content. Gửi null nếu rỗng
+
+        // Các field tuỳ chọn khác trong model Review (theo swagger)
+        CreatedDate: new Date().toISOString(), // BE có default nhưng gửi lên cũng hợp lệ
+        Status: 'pending', // Trạng thái mặc định khi mới tạo review
+        ParentReviewId: null, // Đây là review gốc, không phải reply
+
+        // Navigation properties lấy trực tiếp từ API backend
+        Booking: bookingPayload,
+        User: userPayload
       };
 
       if (import.meta.env.DEV) {
@@ -888,10 +1040,11 @@ const ServiceDetail = () => {
 
     try {
       setSubmittingReview(true);
+      // Backend yêu cầu: Rating (int, Required, Range 1-5), Comment (string?, Optional, MaxLength 1000)
       // Backend dùng Comment, không phải Content
       const reviewData = {
-        Rating: editForm.rating,
-        Comment: editForm.comment || null
+        Rating: parseInt(editForm.rating.toString(), 10), // Đảm bảo là integer (1-5)
+        Comment: editForm.comment && editForm.comment.trim() ? editForm.comment.trim() : null // Gửi null nếu rỗng
       };
 
       await axiosInstance.put(`${API_ENDPOINTS.REVIEW}/${editingReviewId}`, reviewData);
