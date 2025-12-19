@@ -63,6 +63,39 @@ const TrashIcon = ({ className = '', ...props }) => (
   </svg>
 );
 
+// Icon for Upgrade Status
+const ShieldIcon = ({ className = '', ...props }) => (
+  <svg 
+    className={className} 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none"
+    stroke="currentColor" 
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+
+// Interface for upgrade requests
+interface UpgradeRequest {
+  id: number;
+  type: 'Agency' | 'Host';
+  status: string;
+  companyName?: string;
+  businessName?: string;
+  phone: string;
+  email: string;
+  website?: string;
+  rejectComment?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
@@ -91,6 +124,10 @@ const ProfilePage = () => {
   const [deletingReviewId, setDeletingReviewId] = useState(null);
   const [openReviewMenuId, setOpenReviewMenuId] = useState(null);
   const [submittingReview, setSubmittingReview] = useState(false);
+  
+  // Upgrade status states
+  const [upgradeRequests, setUpgradeRequests] = useState<UpgradeRequest[]>([]);
+  const [loadingUpgrades, setLoadingUpgrades] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState<{ name: string; email: string; phone: string; dob: string; gender: string; address: string; avatar: string }>({
@@ -391,6 +428,100 @@ const ProfilePage = () => {
       });
     }
   }, [reviews, loadingReviews, error, activeTab]);
+
+  // Fetch upgrade requests when tab is upgrade-status
+  useEffect(() => {
+    const fetchUpgradeRequests = async () => {
+      if (activeTab !== 'upgrade-status') return;
+      
+      const userId = getUserId();
+      if (!userId) {
+        console.warn('ProfilePage: Không có userId để fetch upgrade requests');
+        setUpgradeRequests([]);
+        setLoadingUpgrades(false);
+        return;
+      }
+
+      try {
+        setLoadingUpgrades(true);
+        setError(null);
+        
+        const requests: UpgradeRequest[] = [];
+        
+        // Fetch Agency certificates
+        try {
+          const agencyResponse = await axiosInstance.get(`${API_ENDPOINTS.USER}/agency-certificates`);
+          const agencyCerts = agencyResponse.data || [];
+          
+          // Filter certificates của user hiện tại
+          const userAgencyCerts = agencyCerts.filter((cert: any) => 
+            cert.accountId === userId || cert.AccountId === userId
+          );
+          
+          userAgencyCerts.forEach((cert: any) => {
+            requests.push({
+              id: cert.agencyId || cert.AgencyId,
+              type: 'Agency',
+              status: cert.status || cert.Status || 'Pending',
+              companyName: cert.companyName || cert.CompanyName,
+              phone: cert.phone || cert.Phone,
+              email: cert.email || cert.Email,
+              website: cert.website || cert.Website,
+              rejectComment: cert.rejectComment || cert.RejectComment,
+              createdAt: cert.createdAt || cert.CreatedAt,
+              updatedAt: cert.updatedAt || cert.UpdatedAt
+            });
+          });
+        } catch (agencyErr: any) {
+          console.warn('ProfilePage: Không thể tải Agency certificates:', agencyErr?.message);
+        }
+        
+        // Fetch Host certificates
+        try {
+          const hostResponse = await axiosInstance.get(`${API_ENDPOINTS.USER}/host-certificates`);
+          const hostCerts = hostResponse.data || [];
+          
+          // Filter certificates của user hiện tại
+          const userHostCerts = hostCerts.filter((cert: any) => 
+            cert.hostId === userId || cert.HostId === userId
+          );
+          
+          userHostCerts.forEach((cert: any) => {
+            requests.push({
+              id: cert.certificateId || cert.CertificateId,
+              type: 'Host',
+              status: cert.status || cert.Status || 'Pending',
+              businessName: cert.businessName || cert.BusinessName,
+              phone: cert.phone || cert.Phone,
+              email: cert.email || cert.Email,
+              rejectComment: cert.rejectComment || cert.RejectComment,
+              createdAt: cert.createdAt || cert.CreatedAt,
+              updatedAt: cert.updatedAt || cert.UpdatedAt
+            });
+          });
+        } catch (hostErr: any) {
+          console.warn('ProfilePage: Không thể tải Host certificates:', hostErr?.message);
+        }
+        
+        // Sort by createdAt descending (newest first)
+        requests.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA;
+        });
+        
+        setUpgradeRequests(requests);
+      } catch (err: any) {
+        console.error('ProfilePage: Lỗi khi tải upgrade requests:', err);
+        setError('Không thể tải trạng thái nâng cấp. Vui lòng thử lại sau.');
+        setUpgradeRequests([]);
+      } finally {
+        setLoadingUpgrades(false);
+      }
+    };
+
+    fetchUpgradeRequests();
+  }, [activeTab, getUserId]);
 
   // Validate individual field
   const validateField = (name, value) => {
@@ -1319,8 +1450,46 @@ const ProfilePage = () => {
         return 'Lịch sử đặt dịch vụ';
       case 'reviews':
         return 'Đánh giá của tôi';
+      case 'upgrade-status':
+        return 'Trạng thái nâng cấp';
       default:
         return 'Thông tin cá nhân';
+    }
+  };
+
+  // Get upgrade status display
+  const getUpgradeStatusDisplay = (status: string) => {
+    const statusLower = (status || '').toLowerCase();
+    switch (statusLower) {
+      case 'pending':
+        return { text: 'Chờ thanh toán', className: 'profile-upgrade-status-pending' };
+      case 'paidpending':
+        return { text: 'Đã thanh toán - Chờ duyệt', className: 'profile-upgrade-status-paid' };
+      case 'review':
+        return { text: 'Đang xét duyệt', className: 'profile-upgrade-status-review' };
+      case 'approved':
+        return { text: 'Đã duyệt', className: 'profile-upgrade-status-approved' };
+      case 'rejected':
+        return { text: 'Bị từ chối', className: 'profile-upgrade-status-rejected' };
+      default:
+        return { text: status || 'Không xác định', className: 'profile-upgrade-status-unknown' };
+    }
+  };
+
+  // Format date for display
+  const formatUpgradeDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
     }
   };
 
@@ -1367,6 +1536,13 @@ const ProfilePage = () => {
               >
                 <StarIcon className="profile-sidebar-menu-icon" />
                 <span>Đánh giá của tôi</span>
+              </button>
+              <button
+                onClick={() => handleTabChange('upgrade-status')}
+                className={`profile-sidebar-menu-item ${activeTab === 'upgrade-status' ? 'profile-active' : ''}`}
+              >
+                <ShieldIcon className="profile-sidebar-menu-icon" />
+                <span>Trạng thái nâng cấp</span>
               </button>
             </nav>
           </aside>
@@ -2116,6 +2292,174 @@ const ProfilePage = () => {
                         )}
                   </div>
                   </>
+                )}
+              </div>
+            )}
+
+            {/* Upgrade Status Tab */}
+            {activeTab === 'upgrade-status' && (
+              <div className="profile-tab-content">
+                {loadingUpgrades ? (
+                  <LoadingSpinner message="Đang tải trạng thái nâng cấp..." />
+                ) : !upgradeRequests || upgradeRequests.length === 0 ? (
+                  <div className="profile-empty-state">
+                    <ShieldIcon className="profile-empty-state-icon" />
+                    <h3>Chưa có yêu cầu nâng cấp</h3>
+                    <p>Bạn chưa gửi yêu cầu nâng cấp tài khoản nào.</p>
+                    <Button variant="default" onClick={() => navigate('/upgrade-account')}>
+                      Nâng cấp tài khoản
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="profile-upgrade-list">
+                    {upgradeRequests.map((request) => {
+                      const statusDisplay = getUpgradeStatusDisplay(request.status);
+                      const displayName = request.type === 'Agency' 
+                        ? request.companyName 
+                        : request.businessName;
+                      
+                      return (
+                        <div key={`${request.type}-${request.id}`} className="profile-upgrade-card">
+                          <div className="profile-upgrade-card-header">
+                            <div className="profile-upgrade-type">
+                              <span className={`profile-upgrade-type-badge profile-upgrade-type-${request.type.toLowerCase()}`}>
+                                {request.type === 'Agency' ? 'Agency' : 'Host'}
+                              </span>
+                              <span className={`profile-upgrade-status-badge ${statusDisplay.className}`}>
+                                {statusDisplay.text}
+                              </span>
+                            </div>
+                            <div className="profile-upgrade-date">
+                              <CalendarIcon className="profile-upgrade-date-icon" />
+                              <span>{formatUpgradeDate(request.createdAt)}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="profile-upgrade-card-body">
+                            <div className="profile-upgrade-info-row">
+                              <span className="profile-upgrade-label">
+                                {request.type === 'Agency' ? 'Tên công ty:' : 'Tên doanh nghiệp:'}
+                              </span>
+                              <span className="profile-upgrade-value">{displayName || 'N/A'}</span>
+                            </div>
+                            <div className="profile-upgrade-info-row">
+                              <span className="profile-upgrade-label">Số điện thoại:</span>
+                              <span className="profile-upgrade-value">{request.phone || 'N/A'}</span>
+                            </div>
+                            <div className="profile-upgrade-info-row">
+                              <span className="profile-upgrade-label">Email:</span>
+                              <span className="profile-upgrade-value">{request.email || 'N/A'}</span>
+                            </div>
+                            {request.website && (
+                              <div className="profile-upgrade-info-row">
+                                <span className="profile-upgrade-label">Website:</span>
+                                <a 
+                                  href={request.website} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="profile-upgrade-value profile-upgrade-link"
+                                >
+                                  {request.website}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Status-specific messages */}
+                          {request.status?.toLowerCase() === 'pending' && (
+                            <div className="profile-upgrade-notice profile-upgrade-notice-pending">
+                              <AlertCircleIcon className="profile-upgrade-notice-icon" />
+                              <div>
+                                <strong>Chờ thanh toán</strong>
+                                <p>Vui lòng hoàn tất thanh toán để yêu cầu được xử lý.</p>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => navigate(`/register/${request.type.toLowerCase()}`)}
+                                  className="profile-upgrade-action-btn"
+                                >
+                                  Thanh toán ngay
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.status?.toLowerCase() === 'paidpending' && (
+                            <div className="profile-upgrade-notice profile-upgrade-notice-paid">
+                              <CheckCircleIcon className="profile-upgrade-notice-icon" />
+                              <div>
+                                <strong>Đã thanh toán thành công</strong>
+                                <p>Yêu cầu của bạn đang chờ Admin xét duyệt. Thời gian xử lý: 1-3 ngày làm việc.</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.status?.toLowerCase() === 'review' && (
+                            <div className="profile-upgrade-notice profile-upgrade-notice-review">
+                              <AlertCircleIcon className="profile-upgrade-notice-icon" />
+                              <div>
+                                <strong>Đang xét duyệt</strong>
+                                <p>Admin đang xem xét yêu cầu của bạn. Vui lòng chờ kết quả.</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.status?.toLowerCase() === 'approved' && (
+                            <div className="profile-upgrade-notice profile-upgrade-notice-approved">
+                              <CheckCircleIcon className="profile-upgrade-notice-icon" />
+                              <div>
+                                <strong>Đã được duyệt!</strong>
+                                <p>Chúc mừng! Tài khoản của bạn đã được nâng cấp lên {request.type}.</p>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => navigate(request.type === 'Agency' ? '/agency/dashboard' : '/host/dashboard')}
+                                  className="profile-upgrade-action-btn"
+                                >
+                                  Đi đến Dashboard
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.status?.toLowerCase() === 'rejected' && (
+                            <div className="profile-upgrade-notice profile-upgrade-notice-rejected">
+                              <AlertCircleIcon className="profile-upgrade-notice-icon" />
+                              <div>
+                                <strong>Yêu cầu bị từ chối</strong>
+                                {request.rejectComment && (
+                                  <p className="profile-upgrade-reject-reason">
+                                    <strong>Lý do:</strong> {request.rejectComment}
+                                  </p>
+                                )}
+                                <p>Bạn có thể gửi lại yêu cầu với thông tin chính xác hơn.</p>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => navigate(`/register/${request.type.toLowerCase()}`)}
+                                  className="profile-upgrade-action-btn"
+                                >
+                                  Gửi lại yêu cầu
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Button to create new upgrade request */}
+                    <div className="profile-upgrade-new-request">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate('/upgrade-account')}
+                        className="profile-upgrade-new-btn"
+                      >
+                        <ArrowRightIcon className="profile-button-icon" />
+                        Gửi yêu cầu nâng cấp mới
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

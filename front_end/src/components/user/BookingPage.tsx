@@ -1171,210 +1171,87 @@ const BookingPage = () => {
                       )}
                     </div>
 
-                    {/* Booking Type Selection */}
+
+
+                    {/* Ngày đi */}
                     <div className="bk-form-group">
-                      <label className="bk-form-label">
-                        Loại đặt dịch vụ <span className="bk-required">*</span>
+                      <label htmlFor="startDate" className="bk-form-label">
+                        Ngày đi <span className="bk-required">*</span>
                       </label>
-                      <div className="bk-booking-type-selector">
-                        <label className={`bk-booking-type-option ${bookingType === 'single-day' ? 'bk-active' : ''}`}>
-                          <input
-                            type="radio"
-                            name="bookingType"
-                            value="single-day"
-                            checked={bookingType === 'single-day'}
-                            onChange={(e) => {
-                              setBookingType(e.target.value);
-                              setEndDate(''); // Reset endDate khi chuyển sang single-day
-                              setStartTime(startTime || '08:00'); // Đảm bảo có giá trị mặc định
-                              setValidationError('');
-                            }}
-                            disabled={!isAvailable}
-                          />
-                          <div className="bk-booking-type-content">
-                            <span className="bk-booking-type-title">Đi trong ngày</span>
-                            <span className="bk-booking-type-desc">Chọn ngày và thời gian cụ thể</span>
-                          </div>
-                        </label>
-                        <label className={`bk-booking-type-option ${bookingType === 'multi-day' ? 'bk-active' : ''}`}>
-                          <input
-                            type="radio"
-                            name="bookingType"
-                            value="multi-day"
-                            checked={bookingType === 'multi-day'}
-                            onChange={(e) => {
-                              setBookingType(e.target.value);
-                              setStartTime('08:00'); // Reset time khi chuyển sang multi-day
-                              // Nếu chưa có endDate hoặc endDate = startDate, tự động set endDate = startDate + 1 ngày
-                              if (startDate && (!endDate || endDate === startDate)) {
-                                const nextDay = new Date(startDate);
-                                nextDay.setDate(nextDay.getDate() + 1);
-                                setEndDate(nextDay.toISOString().split('T')[0]);
-                              }
-                              setValidationError('');
-                            }}
-                            disabled={!isAvailable}
-                          />
-                          <div className="bk-booking-type-content">
-                            <span className="bk-booking-type-title">Đi nhiều ngày</span>
-                            <span className="bk-booking-type-desc">Chọn khoảng thời gian từ ngày này đến ngày khác</span>
-                          </div>
-                        </label>
+                      <div className="bk-date-input-wrapper">
+                        <CalendarIcon className="bk-date-input-icon" />
+                        <input
+                          type="date"
+                          id="startDate"
+                          className="bk-date-input"
+                          value={startDate}
+                          onChange={(e) => {
+                            const selectedDate = e.target.value;
+                            setStartDate(selectedDate);
+                            setValidationError('');
+                            
+                            // Nếu chọn ngày hôm nay, tự động set giờ hiện tại
+                            const today = new Date();
+                            const todayStr = today.toISOString().split('T')[0];
+                            if (selectedDate === todayStr) {
+                              const currentTime = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+                              setStartTime(currentTime);
+                            }
+                          }}
+                          min={new Date().toISOString().split('T')[0]}
+                          required
+                          disabled={!isAvailable}
+                          placeholder="dd / mm / yyyy"
+                        />
+                        {!startDate && (
+                          <span className="bk-date-placeholder">dd / mm / yyyy</span>
+                        )}
                       </div>
+                      <p className="bk-form-hint">
+                        Chọn ngày bạn muốn sử dụng dịch vụ
+                      </p>
                     </div>
 
-                    {/* Single Day Booking Fields */}
-                    {bookingType === 'single-day' && (
-                      <>
-                        <div className="bk-form-group">
-                          <label htmlFor="startDate" className="bk-form-label">
-                            Ngày đi <span className="bk-required">*</span>
-                          </label>
-                          <div className="bk-date-input-wrapper">
-                            <CalendarIcon className="bk-date-input-icon" />
-                            <input
-                              type="date"
-                              id="startDate"
-                              className="bk-date-input"
-                              value={startDate}
-                              onChange={(e) => {
-                                const selectedDate = e.target.value;
-                                setStartDate(selectedDate);
-                                setValidationError('');
-                                
-                                // Nếu chọn ngày hôm nay, tự động set giờ hiện tại
-                                const today = new Date();
-                                const todayStr = today.toISOString().split('T')[0];
-                                if (selectedDate === todayStr) {
-                                  const currentTime = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
-                                  setStartTime(currentTime);
-                                }
-                              }}
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                              disabled={!isAvailable}
-                              placeholder="dd / mm / yyyy"
-                            />
-                            {!startDate && (
-                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
-                            )}
-                          </div>
-                          <p className="bk-form-hint">
-                            Chọn ngày bạn muốn sử dụng dịch vụ
-                          </p>
-                        </div>
+                    {/* Thời gian bắt đầu */}
+                    <div className="bk-form-group">
+                      <label htmlFor="startTime" className="bk-form-label">
+                        Thời gian bắt đầu <span className="bk-required">*</span>
+                      </label>
+                      <div className="bk-time-input-wrapper">
+                        <svg className="bk-time-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <input
+                          type="time"
+                          id="startTime"
+                          className="bk-time-input"
+                          value={startTime}
+                          onChange={(e) => {
+                            setStartTime(e.target.value);
+                            setValidationError('');
+                            setSlotCheckError(''); // Reset lỗi khi thay đổi thời gian
+                          }}
+                          required
+                          disabled={!isAvailable}
+                        />
+                      </div>
+                      {checkingSlot ? (
+                        <p className="bk-form-hint" style={{ color: '#64748b', fontStyle: 'italic' }}>
+                          Đang kiểm tra slot...
+                        </p>
+                      ) : slotCheckError ? (
+                        <p className="bk-form-hint bk-form-hint-error" style={{ marginTop: '0.5rem' }}>
+                          {slotCheckError}
+                        </p>
+                      ) : (
+                        <p className="bk-form-hint">
+                          Chọn thời gian bắt đầu sử dụng dịch vụ
+                        </p>
+                      )}
+                    </div>
 
-                        <div className="bk-form-group">
-                          <label htmlFor="startTime" className="bk-form-label">
-                            Thời gian bắt đầu <span className="bk-required">*</span>
-                          </label>
-                          <div className="bk-time-input-wrapper">
-                            <svg className="bk-time-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10"/>
-                              <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            <input
-                              type="time"
-                              id="startTime"
-                              className="bk-time-input"
-                              value={startTime}
-                              onChange={(e) => {
-                                setStartTime(e.target.value);
-                                setValidationError('');
-                                setSlotCheckError(''); // Reset lỗi khi thay đổi thời gian
-                              }}
-                              required
-                              disabled={!isAvailable}
-                            />
-                          </div>
-                          {checkingSlot ? (
-                            <p className="bk-form-hint" style={{ color: '#64748b', fontStyle: 'italic' }}>
-                              Đang kiểm tra slot...
-                            </p>
-                          ) : slotCheckError ? (
-                            <p className="bk-form-hint bk-form-hint-error" style={{ marginTop: '0.5rem' }}>
-                              {slotCheckError}
-                            </p>
-                          ) : (
-                            <p className="bk-form-hint">
-                              Chọn thời gian bắt đầu sử dụng dịch vụ
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    )}
 
-                    {/* Multi-Day Booking Fields */}
-                    {bookingType === 'multi-day' && (
-                      <>
-                        <div className="bk-form-group">
-                          <label htmlFor="startDate" className="bk-form-label">
-                            Ngày bắt đầu <span className="bk-required">*</span>
-                          </label>
-                          <div className="bk-date-input-wrapper">
-                            <CalendarIcon className="bk-date-input-icon" />
-                            <input
-                              type="date"
-                              id="startDate"
-                              className="bk-date-input"
-                              value={startDate}
-                              onChange={(e) => {
-                                setStartDate(e.target.value);
-                                // Nếu endDate nhỏ hơn hoặc bằng startDate, tự động cập nhật endDate
-                                if (e.target.value) {
-                                  const newStartDate = new Date(e.target.value);
-                                  if (!endDate || new Date(endDate) <= newStartDate) {
-                                    const newEndDate = new Date(newStartDate);
-                                    newEndDate.setDate(newEndDate.getDate() + 1);
-                                    setEndDate(newEndDate.toISOString().split('T')[0]);
-                                  }
-                                }
-                                setValidationError('');
-                              }}
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                              disabled={!isAvailable}
-                              placeholder="dd / mm / yyyy"
-                            />
-                            {!startDate && (
-                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
-                            )}
-                          </div>
-                          <p className="bk-form-hint">
-                            Chọn ngày bắt đầu sử dụng dịch vụ
-                          </p>
-                        </div>
-
-                        <div className="bk-form-group">
-                          <label htmlFor="endDate" className="bk-form-label">
-                            Ngày kết thúc <span className="bk-required">*</span>
-                          </label>
-                          <div className="bk-date-input-wrapper">
-                            <CalendarIcon className="bk-date-input-icon" />
-                            <input
-                              type="date"
-                              id="endDate"
-                              className="bk-date-input"
-                              value={endDate}
-                              onChange={(e) => {
-                                setEndDate(e.target.value);
-                                setValidationError('');
-                              }}
-                              min={startDate || new Date().toISOString().split('T')[0]}
-                              required
-                              disabled={!isAvailable}
-                              placeholder="dd / mm / yyyy"
-                            />
-                            {!endDate && (
-                              <span className="bk-date-placeholder">dd / mm / yyyy</span>
-                            )}
-                          </div>
-                          <p className="bk-form-hint">
-                            Chọn ngày kết thúc sử dụng dịch vụ
-                          </p>
-                        </div>
-                      </>
-                    )}
 
                     {/* Additional Services Section */}
                     {loadingServices ? (

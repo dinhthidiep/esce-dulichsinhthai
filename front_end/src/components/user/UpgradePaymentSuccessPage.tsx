@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import Button from './ui/Button'
@@ -22,18 +22,39 @@ interface PaymentSuccessData {
 const UpgradePaymentSuccessPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [successData, setSuccessData] = useState<PaymentSuccessData | null>(null)
 
   useEffect(() => {
-    // Lấy dữ liệu từ location.state
-    const data = location.state as PaymentSuccessData
-    if (data) {
-      setSuccessData(data)
-    } else {
-      // Nếu không có data, quay lại trang upgrade
-      navigate('/upgrade-account')
+    // Ưu tiên lấy dữ liệu từ location.state (khi navigate từ frontend)
+    const stateData = location.state as PaymentSuccessData
+    if (stateData) {
+      setSuccessData(stateData)
+      return
     }
-  }, [location, navigate])
+
+    // Fallback: Lấy từ query params (khi redirect từ PayOS qua backend)
+    const typeParam = searchParams.get('type')
+    const userIdParam = searchParams.get('userId')
+    const orderCodeParam = searchParams.get('orderCode')
+    
+    if (typeParam) {
+      // Xác định loại upgrade từ query params
+      const upgradeType = typeParam.toLowerCase() as 'host' | 'agency'
+      const amount = upgradeType === 'agency' ? 5000 : 0 // Test amount
+      const paymentMethod = upgradeType === 'host' ? 'free' : 'payos'
+      
+      setSuccessData({
+        type: upgradeType,
+        amount: amount,
+        paymentMethod: paymentMethod
+      })
+      return
+    }
+
+    // Nếu không có data nào, quay lại trang upgrade
+    navigate('/upgrade-account')
+  }, [location, navigate, searchParams])
 
   if (!successData) {
     return null
@@ -43,6 +64,7 @@ const UpgradePaymentSuccessPage = () => {
   const isFreeUpgrade = successData.paymentMethod === 'free'
   const methodLabel = 
     isFreeUpgrade ? 'Miễn phí' :
+    successData.paymentMethod === 'payos' ? 'PayOS' :
     successData.paymentMethod === 'vnpay' ? 'VNPay' :
     successData.paymentMethod === 'momo' ? 'MoMo' :
     'Chuyển khoản ngân hàng'
@@ -141,7 +163,7 @@ const UpgradePaymentSuccessPage = () => {
               {/* Action Buttons */}
               <div className="upg-success-action-buttons">
                 <Button
-                  onClick={() => navigate('/profile', { state: { activeTab: 'certificates' } })}
+                  onClick={() => navigate('/profile', { state: { activeTab: 'upgrade-status' } })}
                   variant="default"
                   size="lg"
                   className="upg-success-view-status-button"

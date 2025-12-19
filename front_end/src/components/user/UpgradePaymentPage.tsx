@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
 import Header from './Header'
@@ -26,23 +26,47 @@ interface UpgradePaymentData {
 const UpgradePaymentPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { upgradeRequestId } = useParams<{ upgradeRequestId: string }>()
   const [paymentData, setPaymentData] = useState<UpgradePaymentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedMethod, setSelectedMethod] = useState<'vnpay' | 'momo' | 'bank'>('vnpay')
+
+  console.log('🔧 [UpgradePaymentPage] Component rendered')
+  console.log('🔧 [UpgradePaymentPage] upgradeRequestId:', upgradeRequestId)
+  console.log('🔧 [UpgradePaymentPage] location.state:', location.state)
+  console.log('🔧 [UpgradePaymentPage] location.pathname:', location.pathname)
 
   useEffect(() => {
-    // Lấy dữ liệu từ location.state (được truyền từ RegisterHost/RegisterAgency)
-    const data = location.state as UpgradePaymentData
-    if (data) {
-      setPaymentData(data)
+    console.log('🔧 [UpgradePaymentPage] useEffect running')
+    
+    // Ưu tiên lấy dữ liệu từ location.state (được truyền từ RegisterHost/RegisterAgency)
+    const stateData = location.state as UpgradePaymentData
+    if (stateData) {
+      console.log('🔧 [UpgradePaymentPage] Got data from state:', stateData)
+      setPaymentData(stateData)
       setLoading(false)
-    } else {
-      // Nếu không có data, quay lại trang upgrade
-      navigate('/upgrade-account')
+      return
     }
-  }, [location, navigate])
+
+    // Fallback: Lấy type từ URL params (ví dụ: /upgrade/payment/agency)
+    if (upgradeRequestId) {
+      const typeFromUrl = upgradeRequestId.toLowerCase()
+      console.log('🔧 [UpgradePaymentPage] typeFromUrl:', typeFromUrl)
+      if (typeFromUrl === 'agency' || typeFromUrl === 'host') {
+        setPaymentData({
+          type: typeFromUrl as 'host' | 'agency',
+          amount: typeFromUrl === 'agency' ? 5000 : 0 // Test amount
+        })
+        setLoading(false)
+        return
+      }
+    }
+
+    // Nếu không có data nào, quay lại trang upgrade
+    console.log('🔧 [UpgradePaymentPage] No data, redirecting to /upgrade-account')
+    navigate('/upgrade-account')
+  }, [location, navigate, upgradeRequestId])
 
   // Get userId helper
   const getUserId = () => {
@@ -73,6 +97,8 @@ const UpgradePaymentPage = () => {
 
     try {
       const userId = getUserId()
+      console.log('🔧 [UpgradePayment] userId:', userId)
+      
       if (!userId) {
         setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.')
         setProcessing(false)
@@ -98,36 +124,46 @@ const UpgradePaymentPage = () => {
       // PayOS chỉ cho phép description tối đa 25 ký tự
       const description = `Nâng cấp Agency`.substring(0, 25)
       
+      const requestBody = {
+        UserId: userId,
+        UpgradeType: 'Agency', // Backend yêu cầu chữ hoa
+        Amount: paymentData.amount,
+        Description: description
+      }
+      
+      console.log('🔧 [UpgradePayment] Calling API:', `${API_ENDPOINTS.PAYMENT}/create-upgrade-payment`)
+      console.log('🔧 [UpgradePayment] Request body:', requestBody)
+      
       const response = await axiosInstance.post(
         `${API_ENDPOINTS.PAYMENT}/create-upgrade-payment`,
-        {
-          UserId: userId,
-          UpgradeType: 'Agency', // Backend yêu cầu chữ hoa
-          Amount: paymentData.amount,
-          Description: description
-        }
+        requestBody
       )
+
+      console.log('🔧 [UpgradePayment] Response:', response.data)
 
       // Nếu có payment URL từ PayOS, redirect đến đó
       if (response.data?.checkoutUrl) {
+        console.log('🔧 [UpgradePayment] Redirecting to PayOS:', response.data.checkoutUrl)
         window.location.href = response.data.checkoutUrl
         return
       }
 
+      console.log('🔧 [UpgradePayment] No checkoutUrl, navigating to success page')
       // Nếu không có checkout URL, chuyển tới trang success
       navigate('/upgrade-payment-success', {
         state: {
           type: paymentData.type,
           amount: paymentData.amount,
-          paymentMethod: selectedMethod,
+          paymentMethod: 'payos',
           certificateId: paymentData.certificateId,
           paymentId: response.data?.paymentId
         }
       })
     } catch (err: any) {
-      console.error('Error creating upgrade payment:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.'
-      setError(errorMessage)
+      console.error('❌ [UpgradePayment] Error:', err)
+      console.error('❌ [UpgradePayment] Error response:', err.response?.data)
+      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.'
+      setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage))
       setProcessing(false)
     }
   }
@@ -208,52 +244,15 @@ const UpgradePaymentPage = () => {
               <CardContent>
                 <h2 className="upg-pay-info-card-title">Phương thức thanh toán</h2>
                 <div className="upg-pay-payment-methods">
-                  <div 
-                    className={`upg-pay-payment-method ${selectedMethod === 'vnpay' ? 'upg-pay-selected' : ''}`}
-                    onClick={() => setSelectedMethod('vnpay')}
-                  >
+                  <div className="upg-pay-payment-method upg-pay-selected">
                     <div className="upg-pay-method-info">
                       <CreditCardIcon className="upg-pay-method-icon" />
                       <div>
-                        <div className="upg-pay-method-name">VNPay</div>
-                        <div className="upg-pay-method-description">Thanh toán qua cổng VNPay</div>
+                        <div className="upg-pay-method-name">PayOS</div>
+                        <div className="upg-pay-method-description">Thanh toán qua cổng PayOS (Thẻ ngân hàng, QR Code)</div>
                       </div>
                     </div>
-                    {selectedMethod === 'vnpay' && (
-                      <CheckCircleIcon className="upg-pay-check-icon" />
-                    )}
-                  </div>
-
-                  <div 
-                    className={`upg-pay-payment-method ${selectedMethod === 'momo' ? 'upg-pay-selected' : ''}`}
-                    onClick={() => setSelectedMethod('momo')}
-                  >
-                    <div className="upg-pay-method-info">
-                      <CreditCardIcon className="upg-pay-method-icon" />
-                      <div>
-                        <div className="upg-pay-method-name">MoMo</div>
-                        <div className="upg-pay-method-description">Ví điện tử MoMo</div>
-                      </div>
-                    </div>
-                    {selectedMethod === 'momo' && (
-                      <CheckCircleIcon className="upg-pay-check-icon" />
-                    )}
-                  </div>
-
-                  <div 
-                    className={`upg-pay-payment-method ${selectedMethod === 'bank' ? 'upg-pay-selected' : ''}`}
-                    onClick={() => setSelectedMethod('bank')}
-                  >
-                    <div className="upg-pay-method-info">
-                      <CreditCardIcon className="upg-pay-method-icon" />
-                      <div>
-                        <div className="upg-pay-method-name">Chuyển khoản ngân hàng</div>
-                        <div className="upg-pay-method-description">Chuyển khoản trực tiếp</div>
-                      </div>
-                    </div>
-                    {selectedMethod === 'bank' && (
-                      <CheckCircleIcon className="upg-pay-check-icon" />
-                    )}
+                    <CheckCircleIcon className="upg-pay-check-icon" />
                   </div>
                 </div>
 

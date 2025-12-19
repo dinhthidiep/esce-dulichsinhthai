@@ -2003,3 +2003,300 @@
   }
 }
 
+/* ==================== UPGRADE STATUS TAB ==================== */
+.profile-upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-upgrade-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.profile-upgrade-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.profile-upgrade-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.profile-upgrade-type {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-upgrade-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.profile-upgrade-type-agency {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.profile-upgrade-type-host {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.profile-upgrade-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.profile-upgrade-status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.profile-upgrade-status-paid {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.profile-upgrade-status-review {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.profile-upgrade-status-approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.profile-upgrade-status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.profile-upgrade-status-unknown {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.profile-upgrade-date {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.profile-upgrade-date-icon {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.profile-upgrade-card-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-upgrade-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.profile-upgrade-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.profile-upgrade-value {
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.profile-upgrade-link {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.profile-upgrade-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Upgrade Notice Styles */
+.profile-upgrade-notice {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  align-items: flex-start;
+}
+
+.profile-upgrade-notice-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.profile-upgrade-notice strong {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.profile-upgrade-notice p {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.profile-upgrade-notice-pending {
+  background: #fffbeb;
+}
+
+.profile-upgrade-notice-pending .profile-upgrade-notice-icon {
+  color: #f59e0b;
+}
+
+.profile-upgrade-notice-pending strong {
+  color: #92400e;
+}
+
+.profile-upgrade-notice-paid {
+  background: #eff6ff;
+}
+
+.profile-upgrade-notice-paid .profile-upgrade-notice-icon {
+  color: #3b82f6;
+}
+
+.profile-upgrade-notice-paid strong {
+  color: #1e40af;
+}
+
+.profile-upgrade-notice-review {
+  background: #eef2ff;
+}
+
+.profile-upgrade-notice-review .profile-upgrade-notice-icon {
+  color: #6366f1;
+}
+
+.profile-upgrade-notice-review strong {
+  color: #3730a3;
+}
+
+.profile-upgrade-notice-approved {
+  background: #ecfdf5;
+}
+
+.profile-upgrade-notice-approved .profile-upgrade-notice-icon {
+  color: #10b981;
+}
+
+.profile-upgrade-notice-approved strong {
+  color: #065f46;
+}
+
+.profile-upgrade-notice-rejected {
+  background: #fef2f2;
+}
+
+.profile-upgrade-notice-rejected .profile-upgrade-notice-icon {
+  color: #ef4444;
+}
+
+.profile-upgrade-notice-rejected strong {
+  color: #991b1b;
+}
+
+.profile-upgrade-reject-reason {
+  background: #fee2e2;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem !important;
+  color: #991b1b !important;
+}
+
+.profile-upgrade-action-btn {
+  margin-top: 0.5rem;
+}
+
+/* New Request Button */
+.profile-upgrade-new-request {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.profile-upgrade-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Responsive for Upgrade Status */
+@media (max-width: 768px) {
+  .profile-upgrade-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-upgrade-info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .profile-upgrade-label {
+    min-width: auto;
+  }
+
+  .profile-upgrade-notice {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-upgrade-type {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .profile-upgrade-card-body {
+    padding: 1rem;
+  }
+}
+

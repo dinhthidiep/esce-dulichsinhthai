@@ -48,6 +48,8 @@ const RegisterHost = lazy(() => import('~/components/user/RegisterHost'))
 const UpgradeAccount = lazy(() => import('~/components/user/UpgradeAccount'))
 const UpgradePaymentPage = lazy(() => import('~/components/user/UpgradePaymentPage'))
 const UpgradePaymentSuccessPage = lazy(() => import('~/components/user/UpgradePaymentSuccessPage'))
+const UpgradePaymentFailurePage = lazy(() => import('~/components/user/UpgradePaymentFailurePage'))
+const UpgradePaymentCallback = lazy(() => import('~/components/user/UpgradePaymentCallback'))
 const SubscriptionPackages = lazy(() => import('~/components/user/SubscriptionPackages'))
 
 // Host Dashboard
@@ -113,6 +115,8 @@ function App() {
             <Route path="/upgrade/payment/:upgradeRequestId" element={<UpgradePaymentPage />} />
             <Route path="/upgrade/payment/success/:upgradeRequestId" element={<UpgradePaymentSuccessPage />} />
             <Route path="/upgrade-payment-success" element={<UpgradePaymentSuccessPage />} />
+            <Route path="/upgrade-payment-failure" element={<UpgradePaymentFailurePage />} />
+            <Route path="/upgrade-payment-callback" element={<UpgradePaymentCallback />} />
             <Route path="/subscription-packages" element={<SubscriptionPackages />} />
             
             {/* Trang người dùng */}

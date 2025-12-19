@@ -58,7 +58,7 @@ export const NotificationProvider = ({ children }) => {
         const apiBase = (import.meta as any).env.VITE_API_URL || '/api'
         const backendRoot = apiBase.replace('/api', '')
         const newConnection = new signalR.HubConnectionBuilder()
-          .withUrl(`${backendRoot}/hubs/notification`, {
+          .withUrl(`${backendRoot}/notificationhub`, {
             accessTokenFactory: () => token,
             skipNegotiation: false,
             transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling

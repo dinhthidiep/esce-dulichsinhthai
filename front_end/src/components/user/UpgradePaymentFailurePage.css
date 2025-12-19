@@ -1,0 +1,109 @@
+.upg-fail-upgrade-payment-failure-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+}
+
+.upg-fail-upgrade-payment-failure-main {
+  flex: 1;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.upg-fail-upgrade-payment-failure-container {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.upg-fail-failure-icon-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.upg-fail-failure-icon {
+  width: 80px;
+  height: 80px;
+  color: #dc2626;
+}
+
+.upg-fail-failure-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.upg-fail-failure-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 0.75rem;
+}
+
+.upg-fail-failure-message {
+  color: #64748b;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.upg-fail-failure-details-section {
+  background: #fef2f2;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.upg-fail-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upg-fail-detail-label {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.upg-fail-detail-value {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.upg-fail-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.upg-fail-retry-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #059669;
+  color: white;
+}
+
+.upg-fail-retry-button:hover {
+  background: #047857;
+}
+
+.upg-fail-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.upg-fail-button-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.upg-fail-help-note {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}

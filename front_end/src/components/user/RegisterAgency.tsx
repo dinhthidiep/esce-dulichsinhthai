@@ -5,6 +5,8 @@ import Footer from './Footer'
 import Button from './ui/Button'
 import { Card, CardContent } from './ui/Card'
 import { requestAgencyUpgrade } from '~/api/user/instances/RoleUpgradeApi'
+import axiosInstance from '~/utils/axiosInstance'
+import { API_ENDPOINTS } from '~/config/api'
 import { 
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -140,40 +142,75 @@ const RegisterAgency = () => {
         })
       }
 
-      const response = await requestAgencyUpgrade({
+      // Bước 1: Tạo certificate request
+      await requestAgencyUpgrade({
         companyName: form.companyName,
         licenseFile: fileBase64 || 'pending_upload',
         phone: form.phone,
         email: form.email,
         website: form.website || undefined
-      }) as any
-
-      // Chuyển tới trang thành công
-      // Lưu ý: Agency cần thanh toán 1,000,000 VND - Admin sẽ xác nhận thanh toán
-      navigate('/upgrade-payment-success', {
-        state: {
-          type: 'agency',
-          amount: 1000000,
-          companyName: form.companyName,
-          certificateId: response?.agencyId || response?.id,
-          paymentMethod: 'bank_transfer' // Chuyển khoản ngân hàng
-        }
       })
+
+      // Bước 2: Lấy userId từ localStorage/sessionStorage
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+      if (!userInfoStr) {
+        setErrors({ submit: 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.' })
+        setLoading(false)
+        return
+      }
+      
+      const userInfo = JSON.parse(userInfoStr)
+      const userId = userInfo.Id || userInfo.id
+      if (!userId) {
+        setErrors({ submit: 'Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.' })
+        setLoading(false)
+        return
+      }
+
+      // Bước 3: Tạo payment và redirect đến PayOS
+      const paymentAmount = 5000 // Test amount - đổi thành 1000000 khi deploy production
+      const description = `Nâng cấp Agency`.substring(0, 25)
+      
+      console.log('🔧 [RegisterAgency] Creating upgrade payment:', { userId, paymentAmount })
+      
+      const paymentResponse = await axiosInstance.post(
+        `${API_ENDPOINTS.PAYMENT}/create-upgrade-payment`,
+        {
+          UserId: parseInt(userId),
+          UpgradeType: 'Agency',
+          Amount: paymentAmount,
+          Description: description
+        }
+      )
+
+      console.log('🔧 [RegisterAgency] Payment response:', paymentResponse.data)
+
+      // Redirect đến PayOS checkout
+      const checkoutUrl = paymentResponse.data?.checkoutUrl || paymentResponse.data?.CheckoutUrl
+      if (checkoutUrl) {
+        console.log('🔧 [RegisterAgency] Redirecting to PayOS:', checkoutUrl)
+        window.location.href = checkoutUrl
+        return
+      }
+
+      // Nếu không có checkoutUrl, hiển thị lỗi
+      setErrors({ submit: 'Không nhận được URL thanh toán từ server. Vui lòng thử lại.' })
+      setLoading(false)
     } catch (error: any) {
-      const errorMessage = error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+      console.error('❌ [RegisterAgency] Error:', error)
+      
+      const errorMessage = error.response?.data?.message || error.response?.data || error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+      const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
       
       // Kiểm tra nếu là lỗi đã có yêu cầu pending
       const isPendingError = 
-        errorMessage.includes('đã có yêu cầu') || 
-        errorMessage.includes('đang chờ xử lý') ||
-        errorMessage.includes('đang chờ') ||
-        errorMessage.includes('chờ xử lý') ||
-        errorMessage.includes('chờ Admin') ||
-        errorMessage.includes('pending') ||
-        errorMessage.includes('Pending') ||
-        errorMessage.includes('400') ||
-        errorMessage.includes('Bad Request') ||
-        (errorMessage.includes('yêu cầu') && errorMessage.includes('chờ'))
+        errorStr.includes('đã có yêu cầu') || 
+        errorStr.includes('đang chờ xử lý') ||
+        errorStr.includes('đang chờ') ||
+        errorStr.includes('chờ xử lý') ||
+        errorStr.includes('chờ Admin') ||
+        errorStr.includes('pending payment') ||
+        errorStr.includes('already have a pending')
       
       if (isPendingError) {
         setHasPendingRequest(true)
@@ -181,8 +218,8 @@ const RegisterAgency = () => {
         return
       }
       
-      // Các lỗi khác - vẫn hiển thị pending UI
-      setHasPendingRequest(true)
+      // Hiển thị lỗi thực sự
+      setErrors({ submit: errorStr })
       setLoading(false)
     }
   }
@@ -388,7 +425,22 @@ const RegisterAgency = () => {
                     </div>
                   </div>
 
-                  {/* Không hiển thị error submit nữa - đã xử lý bằng hasPendingRequest */}
+                  {/* Hiển thị lỗi submit nếu có */}
+                  {errors.submit && (
+                    <div className="reg-agency-error-alert" style={{ 
+                      background: '#fef2f2', 
+                      border: '1px solid #fecaca', 
+                      borderRadius: '0.5rem', 
+                      padding: '1rem', 
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem'
+                    }}>
+                      <AlertCircleIcon className="reg-agency-error-icon" style={{ color: '#dc2626', flexShrink: 0 }} />
+                      <span style={{ color: '#dc2626' }}>{errors.submit}</span>
+                    </div>
+                  )}
 
                   <div className="reg-agency-form-actions">
                     <Button

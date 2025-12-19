@@ -111,6 +111,7 @@ const ComplementaryServices = ({
   if (userTier === 'none') {
     return (
       <div className="comp-complementary-services-wrapper">
+        <h3 className="comp-services-title">Ưu đãi của bạn</h3>
         <div className="comp-complementary-services-empty">
           <p className="comp-empty-message">
             Bạn đang ở cấp 0. <a href="/services">Đặt ngay</a> để tích lũy và nhận ưu đãi đặc biệt!
@@ -124,6 +125,7 @@ const ComplementaryServices = ({
   if (loading) {
     return (
       <div className="comp-complementary-services-wrapper">
+        <h3 className="comp-services-title">Ưu đãi của bạn</h3>
         <div className="comp-complementary-services-empty">
           <p className="comp-empty-message">Đang tải ưu đãi...</p>
         </div>
@@ -135,6 +137,7 @@ const ComplementaryServices = ({
   if (!tierData || tierData.availableServices.length === 0) {
     return (
       <div className="comp-complementary-services-wrapper">
+        <h3 className="comp-services-title">Ưu đãi của bạn</h3>
         <div className="comp-complementary-services-empty">
           <p className="comp-empty-message">
             Hiện tại không có ưu đãi nào dành cho bạn.

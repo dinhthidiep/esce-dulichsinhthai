@@ -7,19 +7,20 @@ import Button from '~/components/user/ui/Button'
 import { Card, CardContent } from '~/components/user/ui/Card'
 import Badge from '~/components/user/ui/Badge'
 import LazyImage from '~/components/user/LazyImage'
-import { ArrowRightIcon, UsersIcon, LeafIcon, ShieldIcon, GiftIcon, StarIcon, ChevronLeftIcon, ChevronRightIcon } from '~/components/user/icons'
+import { ArrowRightIcon, UsersIcon, LeafIcon, ShieldIcon, GiftIcon, StarIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon, ClockIcon } from '~/components/user/icons'
 import { stats } from '~/data/stats'
 import { features } from '~/data/features'
 import { reviews } from '~/data/reviews'
 import { popularServices } from '~/data/services'
 import { formatPrice, createSlug, getImageUrl } from '~/lib/utils'
 import { useTours } from '~/hooks/useTours'
+import { getFallbackImageUrl } from '~/services/firebaseStorage'
 import type { ServiceComboResponse } from '~/types/serviceCombo'
 import { API_ENDPOINTS } from '~/config/api'
 import './LandingPage.css'
 
-// Sử dụng đường dẫn public URL thay vì import
-const baNaHillImage = '/img/banahills.jpg'
+// Fallback image mặc định (sẽ được thay thế bằng Firebase URL)
+const DEFAULT_FALLBACK_IMAGE = '/img/banahills.jpg'
 
 interface UserInfo {
   Name?: string
@@ -47,6 +48,7 @@ interface ServiceCardProps {
   service: ServiceItem
   index: number
   isVisible: boolean
+  fallbackImageUrl: string
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -66,6 +68,7 @@ const LandingPage = () => {
   const [loadingReviews, setLoadingReviews] = useState(false)
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0) // Index cho carousel
   const [autoPlayPaused, setAutoPlayPaused] = useState(false) // Tạm dừng auto play khi user click
+  const [fallbackImageUrl, setFallbackImageUrl] = useState<string>(DEFAULT_FALLBACK_IMAGE) // Fallback image từ Firebase
   const { tours, loading, error } = useTours()
   const location = useLocation()
   
@@ -86,6 +89,23 @@ const LandingPage = () => {
       document.documentElement.style.scrollBehavior = 'auto'
     }
   }, [location.pathname])
+
+  // Load fallback image từ Firebase Storage
+  useEffect(() => {
+    const loadFallbackImage = async () => {
+      try {
+        const firebaseUrl = await getFallbackImageUrl()
+        if (firebaseUrl) {
+          setFallbackImageUrl(firebaseUrl)
+          console.log('[LandingPage] Đã load fallback image từ Firebase:', firebaseUrl)
+        }
+      } catch (error) {
+        console.warn('[LandingPage] Không thể load fallback image từ Firebase, dùng local:', error)
+        // Giữ nguyên DEFAULT_FALLBACK_IMAGE
+      }
+    }
+    loadFallbackImage()
+  }, [])
 
   // Intersection Observer for scroll-triggered animations
   useEffect(() => {
@@ -203,42 +223,52 @@ const LandingPage = () => {
     }
   }, [])
 
-  // Fetch ratings for all services
+  // Fetch ratings cho ServiceCombo dựa trên danh sách Review (đồng bộ với ServicesPage)
   useEffect(() => {
-    const fetchRatings = async () => {
-      if (!tours || tours.length === 0) return
+    const fetchRatingsFromReviews = async () => {
+      try {
+        const response = await axiosInstance.get(API_ENDPOINTS.REVIEW)
+        const allReviews = response.data || []
 
-      const ratingPromises = tours.map(async (tour) => {
-        const id = tour.Id !== undefined ? tour.Id : null
-        if (!id) return null
+        // Gom rating theo ServiceComboId qua Booking
+        const sumMap: Record<number, { sum: number; count: number }> = {}
 
-        try {
-          const response = await axiosInstance.get<{ AverageRating?: number }>(
-            `${API_ENDPOINTS.REVIEW}/ServiceCombo/${id}/average-rating`
-          )
-          const rating = response.data.AverageRating || 0
-          return { id, rating: parseFloat(String(rating)) || 0 }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.warn(`Không thể lấy rating cho service ${id}:`, error)
+        allReviews.forEach((review: any) => {
+          const booking = review.Booking || review.booking
+          if (!booking) return
+
+          const comboId = booking.ServiceComboId || booking.serviceComboId
+          const rating = review.Rating || review.rating || 0
+
+          if (!comboId || rating <= 0) return
+
+          if (!sumMap[comboId]) {
+            sumMap[comboId] = { sum: 0, count: 0 }
           }
-          return { id, rating: 0 }
-        }
-      })
+          sumMap[comboId].sum += Number(rating)
+          sumMap[comboId].count += 1
+        })
 
-      const ratingResults = await Promise.all(ratingPromises)
-      const ratingsMap: Record<number, number> = {}
-      ratingResults.forEach((result) => {
-        if (result) {
-          ratingsMap[result.id] = result.rating
+        const ratingsMap: Record<number, number> = {}
+        Object.keys(sumMap).forEach((key) => {
+          const id = Number(key)
+          const { sum, count } = sumMap[id]
+          if (count > 0) {
+            ratingsMap[id] = sum / count
+          }
+        })
+
+        setRatings(ratingsMap)
+        setRatingsLoaded(true)
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('Không thể tính rating từ Review:', error)
         }
-      })
-      setRatings(ratingsMap)
-      setRatingsLoaded(true)
+      }
     }
 
-    fetchRatings()
-  }, [tours])
+    fetchRatingsFromReviews()
+  }, [])
 
   // Fetch reviews from API
   useEffect(() => {
@@ -371,7 +401,7 @@ const LandingPage = () => {
       }
 
       // Sử dụng getImageUrl để xử lý đường dẫn ảnh từ database
-      const image = getImageUrl(firstImage, baNaHillImage)
+      const image = getImageUrl(firstImage, fallbackImageUrl)
 
       // Debug: Log để kiểm tra
       if (!imagePath || imagePath.trim() === '') {
@@ -545,10 +575,10 @@ const LandingPage = () => {
               <div className={`hero-image ${isVisible ? 'fade-in-right' : ''}`}>
                 <div className="hero-image-wrapper">
                   <LazyImage
-                    src={baNaHillImage}
+                    src={fallbackImageUrl}
                     alt="Du lịch sinh thái Đà Nẵng - Bà Nà Hills"
                     className="hero-img"
-                    fallbackSrc={baNaHillImage}
+                    fallbackSrc={fallbackImageUrl}
                   />
                 </div>
               </div>
@@ -711,7 +741,8 @@ const LandingPage = () => {
                     key={service.id} 
                     service={service as ServiceItem} 
                     index={index} 
-                    isVisible={visibleSections.has('services')} 
+                    isVisible={visibleSections.has('services')}
+                    fallbackImageUrl={fallbackImageUrl}
                   />
                 ))}
               </div>
@@ -903,94 +934,103 @@ const LandingPage = () => {
   )
 }
 
-// Service Card Component - Extracted for better organization
-const ServiceCard: React.FC<ServiceCardProps> = ({ service, index, isVisible }) => {
-  // Log để debug
-  useEffect(() => {
-    console.log(`[LandingPage ServiceCard ${index}]:`, {
-      id: service?.id,
-      name: service?.name,
-      image: service?.image,
-      imageType: typeof service?.image,
-      hasImage: !!service?.image,
-      serviceKeys: service ? Object.keys(service) : [],
-    })
-  }, [service, index])
+// Service Card Component - Đồng bộ với TourCard trong ServicesPage
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, index, isVisible, fallbackImageUrl }) => {
+  // Tính discount percent
+  const discountPercent = service.originalPrice && service.priceFrom
+    ? Math.round(((service.originalPrice - service.priceFrom) / service.originalPrice) * 100)
+    : service.discountPercent || null
 
-  // Đảm bảo service.image luôn có giá trị
-  const imageSrc = service?.image || baNaHillImage
+  // Đảm bảo service.image luôn có giá trị - ưu tiên Firebase fallback
+  const imageSrc = service?.image || fallbackImageUrl
+
+  // Scroll lên top khi click vào card
+  const handleClick = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   return (
     <article
       className={`lp-service-card ${isVisible ? 'fade-in-up' : ''}`}
       style={{ 
-        animationDelay: `${0.3 + index * 0.1}s`,
+        animationDelay: `${0.1 + index * 0.05}s`,
         opacity: isVisible ? 1 : 0
       }}
     >
-      <Card className="lp-service-card-inner">
-        <div className="lp-service-image-wrapper">
-          <LazyImage
-            src={imageSrc}
-            alt={service?.name || 'Service'}
-            className="lp-service-image"
-            fallbackSrc={baNaHillImage}
-          />
+      <Link to={`/services/${service.id}`} className="lp-service-card-link" onClick={handleClick}>
+        <Card className="lp-service-card-inner">
+          <div className="lp-service-image-wrapper">
+            <LazyImage
+              src={imageSrc}
+              alt={service?.name || 'Service'}
+              className="lp-service-image"
+              fallbackSrc={fallbackImageUrl}
+            />
 
-          {service.discountPercent && (
-            <Badge variant="danger" className="lp-service-badge">
-              Giảm {service.discountPercent}%
-            </Badge>
-          )}
-          {service.availableSlots !== undefined && service.availableSlots > 0 && (
-            <Badge variant="success" className="lp-service-badge lp-service-badge-slots">
-              Còn {service.availableSlots} chỗ
-            </Badge>
-          )}
-        </div>
-        <CardContent className="lp-service-content">
-          <h3 className="lp-service-name">{service.name}</h3>
-          {service.address && <p className="lp-service-address">{service.address}</p>}
-          <div className="lp-service-rating">
-            <div className="stars" aria-label={`Đánh giá ${service.rating || 0} sao`}>
-              {(() => {
-                const rating = service.rating !== undefined && service.rating !== null ? service.rating : 0
-                const fullStars = Math.floor(rating)
-                const hasHalfStar = rating % 1 >= 0.5
-                const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
-
-                return [
-                  ...Array(fullStars).fill('full'),
-                  ...(hasHalfStar ? ['half'] : []),
-                  ...Array(emptyStars).fill('empty'),
-                ].map((type, i) => (
-                  <StarIcon
-                    key={i}
-                    className="star-icon"
-                    filled={type === 'full'}
-                    half={type === 'half'}
-                    aria-hidden="true"
-                  />
-                ))
-              })()}
-            </div>
-            <span className="rating-text">({(service.rating !== undefined && service.rating !== null ? service.rating : 0).toFixed(1)})</span>
+            {/* Discount Badge */}
+            {discountPercent && discountPercent > 0 && (
+              <Badge variant="danger" className="lp-service-badge">
+                -{discountPercent}%
+              </Badge>
+            )}
           </div>
-          <div className="lp-service-price-wrapper">
-            <div>
-              <span className="lp-service-price">{formatPrice(service.priceFrom)}</span>
-              {service.originalPrice && (
-                <span className="lp-service-price-old">{formatPrice(service.originalPrice)}</span>
+
+          <CardContent className="lp-service-content">
+            <h3 className="lp-service-name">{service.name}</h3>
+
+            {/* Location + Available Slots */}
+            <div className="lp-service-location-slots">
+              {service.address && (
+                <>
+                  <MapPinIcon className="lp-location-icon" />
+                  <span className="lp-service-address">{service.address}</span>
+                </>
+              )}
+              {service.availableSlots !== undefined && service.availableSlots > 0 && (
+                <>
+                  <ClockIcon className="lp-clock-icon" />
+                  <span>Còn {service.availableSlots} chỗ</span>
+                </>
               )}
             </div>
-          </div>
-          <Button className="lp-service-button" asChild>
-            <Link to={`/services/${service.id}`} aria-label={`Xem chi tiết ${service.name}`}>
-              Xem chi tiết
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+
+            {/* Rating */}
+            <div className="lp-service-rating">
+              <div className="lp-stars" aria-label={`Đánh giá ${service.rating || 0} sao`}>
+                {(() => {
+                  const rating = service.rating !== undefined && service.rating !== null ? service.rating : 0
+                  const fullStars = Math.floor(rating)
+                  const hasHalfStar = rating % 1 >= 0.5
+                  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+
+                  return [
+                    ...Array(fullStars).fill('full'),
+                    ...(hasHalfStar ? ['half'] : []),
+                    ...Array(emptyStars).fill('empty'),
+                  ].map((type, i) => (
+                    <StarIcon
+                      key={i}
+                      className="lp-star-icon"
+                      filled={type === 'full'}
+                      half={type === 'half'}
+                      aria-hidden="true"
+                    />
+                  ))
+                })()}
+              </div>
+              <span className="lp-rating-value">({(service.rating !== undefined && service.rating !== null ? service.rating : 0).toFixed(1)})</span>
+            </div>
+
+            {/* Price */}
+            <div className="lp-service-price-section">
+              <span className="lp-service-price">{formatPrice(service.priceFrom)}</span>
+            </div>
+
+            {/* Detail Button */}
+            <div className="lp-service-detail-btn">Chi tiết</div>
+          </CardContent>
+        </Card>
+      </Link>
     </article>
   )
 }

@@ -218,14 +218,14 @@
 }
 
 .bk-quantity-btn {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f8fafc;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
   cursor: pointer;
@@ -244,13 +244,13 @@
 }
 
 .bk-quantity-input {
-  width: 80px;
-  height: 48px;
+  width: 50px;
+  height: 36px;
   border: none;
   border-left: 2px solid #e2e8f0;
   border-right: 2px solid #e2e8f0;
   text-align: center;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   background: white;
