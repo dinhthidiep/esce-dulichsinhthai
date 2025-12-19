@@ -373,3 +373,47 @@
     height: 2rem;
   }
 }
+
+
+/* Pending Request Notice */
+.reg-host-pending-request-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  gap: 1rem;
+}
+
+.reg-host-pending-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #059669;
+  margin-bottom: 0.5rem;
+}
+
+.reg-host-pending-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.reg-host-pending-message {
+  font-size: 1.125rem;
+  color: #059669;
+  margin: 0;
+  font-weight: 500;
+}
+
+.reg-host-pending-note {
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.reg-host-back-to-profile-button {
+  margin-top: 1rem;
+}

@@ -86,7 +86,7 @@ export default function HeaderDashBoardContent() {
     {
       title: 'Tổng Users',
       value: dashboardData.totalUsers.toLocaleString('vi-VN'),
-      subtitle: dashboardData.userGrowth,
+      subtitle: 'Người dùng hệ thống',
       bgColor: 'bg-linear-to-br from-blue-50 to-blue-100',
       textColor: 'text-blue-800',
       icon: <PeopleOutlineIcon sx={{ fontSize: '2rem' }} />
@@ -102,7 +102,7 @@ export default function HeaderDashBoardContent() {
     {
       title: 'Bài viết',
       value: dashboardData.totalPosts.toLocaleString('vi-VN'),
-      subtitle: dashboardData.postGrowth,
+      subtitle: 'Tổng bài viết',
       icon: <EmailIcon sx={{ fontSize: '2rem' }} />,
       bgColor: 'bg-linear-to-br from-purple-50 to-purple-100',
       textColor: 'text-purple-600'

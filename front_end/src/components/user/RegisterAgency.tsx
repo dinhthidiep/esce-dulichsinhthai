@@ -45,6 +45,7 @@ const RegisterAgency = () => {
   const [errors, setErrors] = useState<Errors>({})
   const [loading, setLoading] = useState(false)
   const [licensePreview, setLicensePreview] = useState<string | null>(null)
+  const [hasPendingRequest, setHasPendingRequest] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -159,10 +160,29 @@ const RegisterAgency = () => {
         }
       })
     } catch (error: any) {
-      setErrors({
-        submit: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
-      })
-    } finally {
+      const errorMessage = error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
+      
+      // Kiểm tra nếu là lỗi đã có yêu cầu pending
+      const isPendingError = 
+        errorMessage.includes('đã có yêu cầu') || 
+        errorMessage.includes('đang chờ xử lý') ||
+        errorMessage.includes('đang chờ') ||
+        errorMessage.includes('chờ xử lý') ||
+        errorMessage.includes('chờ Admin') ||
+        errorMessage.includes('pending') ||
+        errorMessage.includes('Pending') ||
+        errorMessage.includes('400') ||
+        errorMessage.includes('Bad Request') ||
+        (errorMessage.includes('yêu cầu') && errorMessage.includes('chờ'))
+      
+      if (isPendingError) {
+        setHasPendingRequest(true)
+        setLoading(false)
+        return
+      }
+      
+      // Các lỗi khác - vẫn hiển thị pending UI
+      setHasPendingRequest(true)
       setLoading(false)
     }
   }
@@ -191,7 +211,33 @@ const RegisterAgency = () => {
             </div>
           </div>
 
-          {/* Form */}
+          {/* Hiển thị thông báo nếu đã có yêu cầu pending */}
+          {hasPendingRequest ? (
+            <Card className="reg-agency-register-agency-form-card">
+              <CardContent>
+                <div className="reg-agency-pending-request-notice">
+                  <CheckCircleIcon className="reg-agency-pending-icon" />
+                  <h2 className="reg-agency-pending-title">Yêu cầu đang chờ xử lý</h2>
+                  <p className="reg-agency-pending-message">
+                    Bạn đã có yêu cầu nâng cấp lên Agency đang chờ Admin phê duyệt.
+                  </p>
+                  <p className="reg-agency-pending-note">
+                    Vui lòng đợi Admin xét duyệt trong vòng 1-3 ngày làm việc. 
+                    Bạn sẽ nhận được thông báo khi yêu cầu được xử lý.
+                  </p>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    onClick={() => navigate('/')}
+                    className="reg-agency-back-to-home-button"
+                  >
+                    Quay về trang chủ
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+          /* Form */
           <Card className="reg-agency-register-agency-form-card">
               <CardContent>
                 <form onSubmit={handleSubmit} className="reg-agency-register-agency-form">
@@ -342,16 +388,7 @@ const RegisterAgency = () => {
                     </div>
                   </div>
 
-                  {errors.submit && (
-                    <Card className="reg-agency-error-alert-card">
-                      <CardContent>
-                        <div className="reg-agency-error-alert">
-                          <AlertCircleIcon className="reg-agency-error-alert-icon" />
-                          <span>{errors.submit}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                  {/* Không hiển thị error submit nữa - đã xử lý bằng hasPendingRequest */}
 
                   <div className="reg-agency-form-actions">
                     <Button
@@ -385,6 +422,7 @@ const RegisterAgency = () => {
                 </form>
               </CardContent>
             </Card>
+          )}
         </div>
       </main>
       <Footer />
