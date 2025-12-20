@@ -26,10 +26,9 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: (id) => {
-            // Tách Material-UI thành chunk riêng
-            if (id.includes('@mui/material') || id.includes('@mui/icons-material') || id.includes('@emotion')) {
-              return 'mui'
-            }
+            // Do not split Material-UI into its own chunk — keep default vendor grouping
+            // (separating MUI into a dedicated chunk can cause initialization order
+            // issues and "Cannot access 'fn' before initialization" errors.)
             
             // Tách Firebase thành chunk riêng
             if (id.includes('firebase')) {
