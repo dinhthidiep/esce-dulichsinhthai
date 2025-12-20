@@ -172,16 +172,31 @@ const ServicesManagement = forwardRef<ServicesManagementRef, ServicesManagementP
     
     setIsDeleting(true);
     try {
+      // Check if service is being used in any service combo
+      const comboDetailsResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/service/${deletingServiceId}`);
+      const comboDetails = comboDetailsResponse.data;
+      
+      if (comboDetails && comboDetails.length > 0) {
+        if (onError) {
+          onError('Không thể xóa dịch vụ này vì đang được sử dụng trong gói dịch vụ (combo).');
+        }
+        handleCloseDeleteModal();
+        setIsDeleting(false);
+        return;
+      }
+      
       await axiosInstance.delete(`${API_ENDPOINTS.SERVICE}/${deletingServiceId}`);
       setServices(prevServices => prevServices.filter(s => (s.Id || s.id) !== deletingServiceId));
       setFilteredServices(prevFiltered => prevFiltered.filter(s => (s.Id || s.id) !== deletingServiceId));
       if (onSuccess) onSuccess('Dịch vụ đã được xóa thành công!');
       handleCloseDeleteModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting service:', err);
+      // Show generic error message for any delete failure
       if (onError) {
-        onError('Có lỗi xảy ra khi xóa dịch vụ. Vui lòng thử lại.');
+        onError('Không thể xóa dịch vụ này, vui lòng thử lại sau!');
       }
+      handleCloseDeleteModal();
     } finally {
       setIsDeleting(false);
     }

@@ -154,7 +154,8 @@ const PaymentPage = () => {
   const [originalTotal, setOriginalTotal] = useState(0)
   const [validatingCoupon, setValidatingCoupon] = useState(false)
   const [couponError, setCouponError] = useState('')
-  const [additionalServices, setAdditionalServices] = useState<Array<{ Name?: string; Description?: string }>>([])
+  const [additionalServices, setAdditionalServices] = useState<Array<{ Name?: string; Description?: string; Price?: number; id?: number }>>([])
+  const [additionalServicesTotal, setAdditionalServicesTotal] = useState(0)
   
   // Complementary Services state
   const [userTier, setUserTier] = useState<MembershipTier>('none')
@@ -289,22 +290,36 @@ const PaymentPage = () => {
                 const comboDetailResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO_DETAIL}/combo/${serviceComboId}`)
                 const comboDetails = comboDetailResponse.data || []
                 
-                // Lọc các dịch vụ theo ID
+                // Lọc các dịch vụ theo ID và lấy cả Price
                 const services = comboDetails
                   .map((detail: any) => detail.Service || detail.service)
                   .filter((service: any) => service && serviceIds.includes(service.Id || service.id))
+                  .map((service: any) => ({
+                    id: service.Id || service.id,
+                    Name: service.Name || service.name,
+                    Description: service.Description || service.description,
+                    Price: service.Price || service.price || 0
+                  }))
                 
                 setAdditionalServices(services)
+                
+                // Tính tổng tiền dịch vụ thêm (nhân với số lượng người)
+                const quantity = (bookingData.Quantity || bookingData.quantity || 1) as number
+                const servicesTotal = services.reduce((sum: number, s: any) => sum + (s.Price || 0) * quantity, 0)
+                setAdditionalServicesTotal(servicesTotal)
               }
             } catch (err) {
               console.warn('Không thể lấy thông tin dịch vụ thêm:', err)
               setAdditionalServices([])
+              setAdditionalServicesTotal(0)
             }
           } else {
             setAdditionalServices([])
+            setAdditionalServicesTotal(0)
           }
         } else {
           setAdditionalServices([])
+          setAdditionalServicesTotal(0)
         }
 
         const bookingTotal = (bookingData.TotalAmount || bookingData.totalAmount || 0) as number
@@ -587,18 +602,19 @@ const PaymentPage = () => {
         throw new Error('Thông tin đặt dịch vụ không hợp lệ')
       }
 
-      // Backend đã giữ TotalAmount sau khi áp dụng coupon
-      const paymentAmount = totalAmount
-      if (paymentAmount <= 0) {
+      // Sử dụng Thành tiền (totalAmount + dịch vụ thêm) để thanh toán
+      const fullTotal = totalAmount + additionalServicesTotal
+      
+      if (fullTotal <= 0) {
         throw new Error('Số tiền thanh toán phải lớn hơn 0')
       }
 
       // PayOS chỉ cho phép description tối đa 25 ký tự
-      const description = `TT đặt DV #${bookingIdValue}`.substring(0, 25)
+      const description = `TT DV #${bookingIdValue}`.substring(0, 25)
       
       const paymentRequest = {
         BookingId: bookingIdValue,
-        Amount: paymentAmount,
+        Amount: fullTotal,
         Description: description,
       }
 
@@ -766,8 +782,8 @@ const PaymentPage = () => {
     bookingStatusLower !== 'confirmed' &&
     bookingStatusLower !== 'completed'
 
-  // Tổng tiền hiển thị (backend đã trừ discount)
-  const finalTotal = totalAmount
+  // Tổng tiền hiển thị (backend đã trừ discount) + dịch vụ thêm
+  const finalTotal = totalAmount + additionalServicesTotal
   const hasDiscount = discountAmount > 0 && originalTotal > totalAmount
 
   return (
@@ -959,7 +975,7 @@ const PaymentPage = () => {
                         selectedServices={selectedComplementaryServices}
                         onSelectionChange={setSelectedComplementaryServices}
                         disabled={processing}
-                        hostId={(booking?.ServiceCombo || booking?.serviceCombo)?.HostId || (booking?.ServiceCombo || booking?.serviceCombo)?.hostId}
+                        hostId={(booking?.ServiceCombo as any)?.HostId || (booking?.ServiceCombo as any)?.hostId || (booking?.serviceCombo as any)?.HostId || (booking?.serviceCombo as any)?.hostId}
                       />
                     </div>
                   )}
@@ -975,9 +991,19 @@ const PaymentPage = () => {
 
                   <div className="pay-payment-summary-content">
                     <div className="pay-summary-row">
-                      <span className="pay-summary-label">Tổng tiền</span>
+                      <span className="pay-summary-label">Giá dịch vụ</span>
                       <span className="pay-summary-value">{formatPrice(hasDiscount ? originalTotal : totalAmount)}</span>
                     </div>
+
+                    {additionalServicesTotal > 0 && (
+                      <>
+                        <div className="pay-summary-divider"></div>
+                        <div className="pay-summary-row">
+                          <span className="pay-summary-label">Dịch vụ thêm ({additionalServices.length})</span>
+                          <span className="pay-summary-value">+{formatPrice(additionalServicesTotal)}</span>
+                        </div>
+                      </>
+                    )}
 
                     {hasDiscount && (
                       <>
@@ -1001,9 +1027,9 @@ const PaymentPage = () => {
                       <>
                         <div className="pay-summary-divider"></div>
                         <div className="pay-summary-row">
-                          <span className="pay-summary-label">Số tiền đã thanh toán</span>
+                          <span className="pay-summary-label">Số tiền cọc (10%)</span>
                           <span className="pay-summary-value">
-                            {formatPrice((paymentStatus.Amount || paymentStatus.amount || 0) as number)}
+                            {formatPrice(Math.round(finalTotal * 0.1))}
                           </span>
                         </div>
                       </>

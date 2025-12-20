@@ -55,9 +55,11 @@ export default function ServiceApprovalsContent() {
   const [confirmDialog, setConfirmDialog] = useState<{ 
     open: boolean; 
     service: ServiceComboForApproval | null; 
-    action: 'approve' | 'reject' | null 
+    action: 'approve' | 'reject' | null;
+    rejectComment: string;
+    error: string;
   }>({
-    open: false, service: null, action: null
+    open: false, service: null, action: null, rejectComment: '', error: ''
   })
 
   const loadServices = async () => {
@@ -114,7 +116,7 @@ export default function ServiceApprovalsContent() {
       setProcessingId(confirmDialog.service.id)
       await approveServiceCombo(confirmDialog.service.id)
       setSuccess(`Đã phê duyệt dịch vụ "${confirmDialog.service.name}"`)
-      setConfirmDialog({ open: false, service: null, action: null })
+      setConfirmDialog({ open: false, service: null, action: null, rejectComment: '', error: '' })
       await loadServices()
     } catch (err: any) {
       setError(err?.message || 'Không thể phê duyệt dịch vụ')
@@ -125,14 +127,18 @@ export default function ServiceApprovalsContent() {
 
   const handleReject = async () => {
     if (!confirmDialog.service) return
+    if (!confirmDialog.rejectComment.trim()) {
+      setConfirmDialog(prev => ({ ...prev, error: 'Vui lòng nhập lý do từ chối' }))
+      return
+    }
     try {
       setProcessingId(confirmDialog.service.id)
-      await rejectServiceCombo(confirmDialog.service.id)
+      await rejectServiceCombo(confirmDialog.service.id, confirmDialog.rejectComment)
       setSuccess(`Đã từ chối dịch vụ "${confirmDialog.service.name}"`)
-      setConfirmDialog({ open: false, service: null, action: null })
+      setConfirmDialog({ open: false, service: null, action: null, rejectComment: '', error: '' })
       await loadServices()
     } catch (err: any) {
-      setError(err?.message || 'Không thể từ chối dịch vụ')
+      setConfirmDialog(prev => ({ ...prev, error: err?.message || 'Không thể từ chối dịch vụ' }))
     } finally {
       setProcessingId(null)
     }
@@ -379,7 +385,7 @@ export default function ServiceApprovalsContent() {
                                       color="success"
                                       startIcon={<CheckCircleIcon />}
                                       disabled={processingId === service.id}
-                                      onClick={() => setConfirmDialog({ open: true, service, action: 'approve' })}
+                                      onClick={() => setConfirmDialog({ open: true, service, action: 'approve', rejectComment: '', error: '' })}
                                       fullWidth
                                       sx={{ borderRadius: '0.8rem', py: 1 }}
                                     >
@@ -394,7 +400,7 @@ export default function ServiceApprovalsContent() {
                                       color="error"
                                       startIcon={<CancelIcon />}
                                       disabled={processingId === service.id}
-                                      onClick={() => setConfirmDialog({ open: true, service, action: 'reject' })}
+                                      onClick={() => setConfirmDialog({ open: true, service, action: 'reject', rejectComment: '', error: '' })}
                                       fullWidth
                                       sx={{ borderRadius: '0.8rem', py: 1 }}
                                     >
@@ -417,7 +423,7 @@ export default function ServiceApprovalsContent() {
       </Card>
 
       {/* Confirm Dialog */}
-      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, service: null, action: null })} maxWidth="sm" fullWidth>
+      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, service: null, action: null, rejectComment: '', error: '' })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>
           {confirmDialog.action === 'approve' ? 'Xác nhận phê duyệt' : 'Xác nhận từ chối'}
         </DialogTitle>
@@ -456,11 +462,25 @@ export default function ServiceApprovalsContent() {
                   Sau khi phê duyệt, dịch vụ sẽ được hiển thị công khai cho người dùng.
                 </Alert>
               )}
+              {confirmDialog.action === 'reject' && (
+                <TextField
+                  label="Lý do từ chối"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={confirmDialog.rejectComment}
+                  onChange={(e) => setConfirmDialog(prev => ({ ...prev, rejectComment: e.target.value, error: '' }))}
+                  placeholder="Nhập lý do từ chối để Host biết..."
+                  error={!!confirmDialog.error}
+                  helperText={confirmDialog.error}
+                  sx={{ mt: 2, '& .MuiOutlinedInput-root': { borderRadius: '1rem' } }}
+                />
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConfirmDialog({ open: false, service: null, action: null })} sx={{ borderRadius: '0.8rem' }}>
+          <Button onClick={() => setConfirmDialog({ open: false, service: null, action: null, rejectComment: '', error: '' })} sx={{ borderRadius: '0.8rem' }}>
             Hủy
           </Button>
           <Button

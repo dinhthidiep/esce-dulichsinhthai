@@ -42,8 +42,8 @@ export default function PostApprovalsContent() {
   const [processingId, setProcessingId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   
-  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; post: PendingPost | null; comment: string }>({
-    open: false, post: null, comment: ''
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; post: PendingPost | null; comment: string; error: string }>({
+    open: false, post: null, comment: '', error: ''
   })
   const [approveDialog, setApproveDialog] = useState<{ open: boolean; post: PendingPost | null }>({
     open: false, post: null
@@ -105,17 +105,17 @@ export default function PostApprovalsContent() {
 
   const handleReject = async () => {
     if (!rejectDialog.post || !rejectDialog.comment.trim()) {
-      setError('Vui lòng nhập lý do từ chối')
+      setRejectDialog(prev => ({ ...prev, error: 'Vui lòng nhập lý do từ chối' }))
       return
     }
     try {
       setProcessingId(rejectDialog.post.id)
       await rejectPost(rejectDialog.post.id, rejectDialog.comment)
       setSuccess(`Đã từ chối bài viết của ${rejectDialog.post.posterName}`)
-      setRejectDialog({ open: false, post: null, comment: '' })
+      setRejectDialog({ open: false, post: null, comment: '', error: '' })
       await loadPosts()
     } catch (err: any) {
-      setError(err?.message || 'Không thể từ chối bài viết')
+      setRejectDialog(prev => ({ ...prev, error: err?.message || 'Không thể từ chối bài viết' }))
     } finally {
       setProcessingId(null)
     }
@@ -333,7 +333,7 @@ export default function PostApprovalsContent() {
                                   color="error"
                                   startIcon={<CancelIcon />}
                                   disabled={processingId === post.id}
-                                  onClick={() => setRejectDialog({ open: true, post, comment: '' })}
+                                  onClick={() => setRejectDialog({ open: true, post, comment: '', error: '' })}
                                   fullWidth
                                   sx={{ borderRadius: '0.8rem', py: 1 }}
                                 >
@@ -391,7 +391,7 @@ export default function PostApprovalsContent() {
       </Dialog>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialog.open} onClose={() => setRejectDialog({ open: false, post: null, comment: '' })} maxWidth="sm" fullWidth>
+      <Dialog open={rejectDialog.open} onClose={() => setRejectDialog({ open: false, post: null, comment: '', error: '' })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Từ chối bài viết</DialogTitle>
         <DialogContent>
           {rejectDialog.post && (
@@ -410,13 +410,15 @@ export default function PostApprovalsContent() {
             rows={3}
             fullWidth
             value={rejectDialog.comment}
-            onChange={(e) => setRejectDialog(prev => ({ ...prev, comment: e.target.value }))}
+            onChange={(e) => setRejectDialog(prev => ({ ...prev, comment: e.target.value, error: '' }))}
             placeholder="Nhập lý do từ chối để người dùng biết..."
+            error={!!rejectDialog.error}
+            helperText={rejectDialog.error}
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: '1rem' } }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRejectDialog({ open: false, post: null, comment: '' })} sx={{ borderRadius: '0.8rem' }}>
+          <Button onClick={() => setRejectDialog({ open: false, post: null, comment: '', error: '' })} sx={{ borderRadius: '0.8rem' }}>
             Hủy
           </Button>
           <Button

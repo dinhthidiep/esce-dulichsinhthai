@@ -37,6 +37,10 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
+    // Basic info
+    name: '',
+    description: '',
+    price: '',
     serviceId: '',
     // Target audience
     forAgency: false,
@@ -72,6 +76,24 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
     }
   };
 
+  // Auto-fill form when service is selected
+  const handleServiceSelect = (serviceId: string) => {
+    setFormData(prev => ({ ...prev, serviceId }));
+    
+    if (serviceId) {
+      const selectedService = services.find(s => (s.Id || s.id)?.toString() === serviceId);
+      if (selectedService) {
+        setFormData(prev => ({
+          ...prev,
+          serviceId,
+          name: selectedService.Name || selectedService.name || '',
+          description: selectedService.Description || selectedService.description || '',
+          price: (selectedService.Price || selectedService.price || 0).toString(),
+        }));
+      }
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -91,8 +113,12 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.serviceId) {
-      newErrors.serviceId = 'Vui lòng chọn dịch vụ';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Vui lòng nhập tên ưu đãi';
+    }
+
+    if (!formData.price || parseFloat(formData.price) < 0) {
+      newErrors.price = 'Vui lòng nhập giá hợp lệ';
     }
 
     // Validate target audience
@@ -115,13 +141,6 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const selectedService = services.find(s => (s.Id || s.id)?.toString() === formData.serviceId);
-      if (!selectedService) {
-        setErrors({ serviceId: 'Dịch vụ không hợp lệ' });
-        setIsSubmitting(false);
-        return;
-      }
-
       const targetAudience = {
         forAgency: formData.forAgency,
         agencyLevels: formData.forAgency ? {
@@ -138,11 +157,13 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
       };
 
       const submitData = new FormData();
-      submitData.append('Name', selectedService.Name || selectedService.name || '');
-      submitData.append('Description', selectedService.Description || selectedService.description || '');
-      submitData.append('Price', (selectedService.Price || selectedService.price || 0).toString());
+      submitData.append('Name', formData.name.trim());
+      submitData.append('Description', formData.description.trim());
+      submitData.append('Price', formData.price);
       submitData.append('HostId', hostId.toString());
-      submitData.append('ServiceId', formData.serviceId);
+      if (formData.serviceId) {
+        submitData.append('ServiceId', formData.serviceId);
+      }
       submitData.append('TargetAudience', JSON.stringify(targetAudience));
 
       await axiosInstance.post(`${API_ENDPOINTS.BONUS_SERVICE}`, submitData, {
@@ -164,6 +185,9 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
 
   const handleClose = () => {
     setFormData({
+      name: '',
+      description: '',
+      price: '',
       serviceId: '',
       forAgency: false,
       agencyLevel1: false,
@@ -195,19 +219,19 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
           </div>
           
           <form onSubmit={handleSubmit} noValidate>
-            {/* Select Service from Host's services */}
+            {/* Select Service from Host's services (optional - to auto-fill) */}
             <div className="create-privilege-field">
               <label htmlFor="create-privilege-serviceId">
-                Chọn dịch vụ tặng kèm <span className="create-privilege-required-indicator">*</span>
+                Chọn từ dịch vụ có sẵn (tùy chọn)
               </label>
               <select
                 id="create-privilege-serviceId"
                 name="serviceId"
                 value={formData.serviceId}
-                onChange={handleInputChange}
+                onChange={(e) => handleServiceSelect(e.target.value)}
                 disabled={loadingServices}
               >
-                <option value="">-- Chọn dịch vụ --</option>
+                <option value="">-- Không chọn (nhập thủ công) --</option>
                 {services.map(service => (
                   <option key={service.Id || service.id} value={(service.Id || service.id)?.toString()}>
                     {service.Name || service.name} - {(service.Price || service.price || 0).toLocaleString('vi-VN')} VNĐ
@@ -215,12 +239,56 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
                 ))}
               </select>
               {loadingServices && <div className="create-privilege-hint">Đang tải danh sách dịch vụ...</div>}
-              {!loadingServices && services.length === 0 && (
-                <div className="create-privilege-hint" style={{ color: '#f59e0b' }}>
-                  ⚠️ Bạn chưa có dịch vụ thêm nào. Vui lòng tạo dịch vụ thêm trước.
-                </div>
-              )}
-              {errors.serviceId && <div className="create-privilege-error">{errors.serviceId}</div>}
+              <div className="create-privilege-hint">💡 Chọn dịch vụ để tự động điền thông tin, hoặc nhập thủ công bên dưới</div>
+            </div>
+
+            {/* Name */}
+            <div className="create-privilege-field">
+              <label htmlFor="create-privilege-name">
+                Tên ưu đãi <span className="create-privilege-required-indicator">*</span>
+              </label>
+              <input
+                type="text"
+                id="create-privilege-name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Nhập tên ưu đãi..."
+              />
+              {errors.name && <div className="create-privilege-error">{errors.name}</div>}
+            </div>
+
+            {/* Description */}
+            <div className="create-privilege-field">
+              <label htmlFor="create-privilege-description">
+                Mô tả
+              </label>
+              <textarea
+                id="create-privilege-description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Nhập mô tả ưu đãi..."
+                rows={3}
+              />
+            </div>
+
+            {/* Price */}
+            <div className="create-privilege-field">
+              <label htmlFor="create-privilege-price">
+                Giá trị (VNĐ) <span className="create-privilege-required-indicator">*</span>
+              </label>
+              <input
+                type="number"
+                id="create-privilege-price"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="0"
+                min="0"
+              />
+              {errors.price && <div className="create-privilege-error">{errors.price}</div>}
+              <div className="create-privilege-hint">💰 Giá trị của ưu đãi này (có thể là 0 nếu miễn phí)</div>
             </div>
 
             {/* Target Audience */}
@@ -237,21 +305,25 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
                       onChange={handleInputChange}
                     />
                     <span className="create-privilege-role-icon">🏢</span>
-                    <span>Agency</span>
+                    <span>Agency (Đại lý)</span>
                   </label>
                   {formData.forAgency && (
                     <div className="create-privilege-level-group">
+                      <div className="create-privilege-level-title">Chọn hạng Agency:</div>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="agencyLevel1" checked={formData.agencyLevel1} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥉</span><span>Đồng</span>
+                        <span className="create-privilege-level-icon">🥉</span>
+                        <span>Đồng (Level 1)</span>
                       </label>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="agencyLevel2" checked={formData.agencyLevel2} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥈</span><span>Bạc</span>
+                        <span className="create-privilege-level-icon">🥈</span>
+                        <span>Bạc (Level 2)</span>
                       </label>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="agencyLevel3" checked={formData.agencyLevel3} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥇</span><span>Vàng</span>
+                        <span className="create-privilege-level-icon">🥇</span>
+                        <span>Vàng (Level 3)</span>
                       </label>
                     </div>
                   )}
@@ -267,21 +339,25 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
                       onChange={handleInputChange}
                     />
                     <span className="create-privilege-role-icon">🧳</span>
-                    <span>Tourist</span>
+                    <span>Tourist (Khách du lịch)</span>
                   </label>
                   {formData.forTourist && (
                     <div className="create-privilege-level-group">
+                      <div className="create-privilege-level-title">Chọn hạng Tourist:</div>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="touristLevel1" checked={formData.touristLevel1} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥉</span><span>Đồng</span>
+                        <span className="create-privilege-level-icon">🥉</span>
+                        <span>Đồng (Level 1)</span>
                       </label>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="touristLevel2" checked={formData.touristLevel2} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥈</span><span>Bạc</span>
+                        <span className="create-privilege-level-icon">🥈</span>
+                        <span>Bạc (Level 2)</span>
                       </label>
                       <label className="create-privilege-checkbox-label">
                         <input type="checkbox" name="touristLevel3" checked={formData.touristLevel3} onChange={handleInputChange} />
-                        <span className="create-privilege-level-icon">🥇</span><span>Vàng</span>
+                        <span className="create-privilege-level-icon">🥇</span>
+                        <span>Vàng (Level 3)</span>
                       </label>
                     </div>
                   )}
@@ -292,6 +368,39 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
               </div>
               {errors.targetAudience && <div className="create-privilege-error">{errors.targetAudience}</div>}
             </div>
+
+            {/* Summary */}
+            {(formData.forAgency || formData.forTourist) && (
+              <div className="create-privilege-summary">
+                <div className="create-privilege-summary-title">📋 Tóm tắt đối tượng:</div>
+                <div className="create-privilege-summary-content">
+                  {formData.forAgency && (
+                    <div className="create-privilege-summary-item">
+                      <span>🏢 Agency:</span>
+                      <span>
+                        {[
+                          formData.agencyLevel1 && '🥉 Đồng',
+                          formData.agencyLevel2 && '🥈 Bạc',
+                          formData.agencyLevel3 && '🥇 Vàng'
+                        ].filter(Boolean).join(', ') || 'Chưa chọn hạng'}
+                      </span>
+                    </div>
+                  )}
+                  {formData.forTourist && (
+                    <div className="create-privilege-summary-item">
+                      <span>🧳 Tourist:</span>
+                      <span>
+                        {[
+                          formData.touristLevel1 && '🥉 Đồng',
+                          formData.touristLevel2 && '🥈 Bạc',
+                          formData.touristLevel3 && '🥇 Vàng'
+                        ].filter(Boolean).join(', ') || 'Chưa chọn hạng'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Form Actions */}
             <div className="create-privilege-form-action">
@@ -310,8 +419,3 @@ const CreatePrivilegeModal: React.FC<CreatePrivilegeModalProps> = ({
 };
 
 export default CreatePrivilegeModal;
-
-
-
-
-

@@ -5,6 +5,7 @@ import Footer from './Footer'
 import Button from './ui/Button'
 import { Card, CardContent } from './ui/Card'
 import { requestAgencyUpgrade } from '~/api/user/instances/RoleUpgradeApi'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
 import { 
@@ -12,8 +13,7 @@ import {
   ArrowRightIcon,
   UploadIcon, 
   FileTextIcon,
-  AlertCircleIcon,
-  CheckCircleIcon
+  AlertCircleIcon
 } from './icons/index'
 import './RegisterAgency.css'
 
@@ -47,7 +47,7 @@ const RegisterAgency = () => {
   const [errors, setErrors] = useState<Errors>({})
   const [loading, setLoading] = useState(false)
   const [licensePreview, setLicensePreview] = useState<string | null>(null)
-  const [hasPendingRequest, setHasPendingRequest] = useState(false)
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -108,10 +108,10 @@ const RegisterAgency = () => {
     if (form.website && !/^https?:\/\/.+/.test(form.website)) {
       err.website = 'Website phải bắt đầu bằng http:// hoặc https://'
     }
-    // Tạm thời không bắt buộc upload file
-    // if (!form.licenseFile) {
-    //   err.licenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
-    // }
+    // Bắt buộc upload giấy phép kinh doanh
+    if (!form.licenseFile) {
+      err.licenseFile = 'Vui lòng tải lên giấy phép kinh doanh'
+    }
     return err
   }
 
@@ -125,27 +125,29 @@ const RegisterAgency = () => {
 
     setLoading(true)
     setErrors({})
+    setPendingMessage(null)
 
     try {
-      let fileBase64 = ''
+      let licenseFileUrl = ''
       
-      // Chỉ convert file nếu có upload
+      // Upload file to Firebase Storage
       if (form.licenseFile) {
-        fileBase64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onloadend = () => {
-            const base64String = reader.result as string
-            resolve(base64String)
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(form.licenseFile!)
-        })
+        try {
+          console.log('Uploading file to Firebase:', form.licenseFile.name, form.licenseFile.type)
+          licenseFileUrl = await uploadImageToFirebase(form.licenseFile, 'agency-licenses')
+          console.log('Upload successful, URL:', licenseFileUrl)
+        } catch (uploadError: any) {
+          console.error('Firebase upload error:', uploadError)
+          setErrors({ licenseFile: uploadError.message || 'Không thể tải lên giấy phép. Vui lòng thử lại.' })
+          setLoading(false)
+          return
+        }
       }
 
       // Bước 1: Tạo certificate request
       await requestAgencyUpgrade({
         companyName: form.companyName,
-        licenseFile: fileBase64 || 'pending_upload',
+        licenseFile: licenseFileUrl,
         phone: form.phone,
         email: form.email,
         website: form.website || undefined
@@ -201,8 +203,17 @@ const RegisterAgency = () => {
       
       const errorMessage = error.response?.data?.message || error.response?.data || error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'
       const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
+      const errorStatus = error.response?.status
       
-      // Kiểm tra nếu là lỗi đã có yêu cầu pending
+      // Kiểm tra nếu là lỗi HTTP 400 - thường là đã có yêu cầu pending
+      // Kiểm tra cả status code và message string (vì API có thể throw error với message "HTTP 400: ...")
+      if (errorStatus === 400 || errorStr.includes('HTTP 400') || errorStr.includes('400')) {
+        setPendingMessage('Bạn đã gửi đơn trước đó rồi, vui lòng đợi Admin xử lý!')
+        setLoading(false)
+        return
+      }
+      
+      // Kiểm tra nếu là lỗi đã có yêu cầu pending (qua message)
       const isPendingError = 
         errorStr.includes('đã có yêu cầu') || 
         errorStr.includes('đang chờ xử lý') ||
@@ -213,7 +224,7 @@ const RegisterAgency = () => {
         errorStr.includes('already have a pending')
       
       if (isPendingError) {
-        setHasPendingRequest(true)
+        setPendingMessage('Bạn đã gửi đơn trước đó rồi, vui lòng đợi Admin xử lý!')
         setLoading(false)
         return
       }
@@ -248,38 +259,12 @@ const RegisterAgency = () => {
             </div>
           </div>
 
-          {/* Hiển thị thông báo nếu đã có yêu cầu pending */}
-          {hasPendingRequest ? (
-            <Card className="reg-agency-register-agency-form-card">
-              <CardContent>
-                <div className="reg-agency-pending-request-notice">
-                  <CheckCircleIcon className="reg-agency-pending-icon" />
-                  <h2 className="reg-agency-pending-title">Yêu cầu đang chờ xử lý</h2>
-                  <p className="reg-agency-pending-message">
-                    Bạn đã có yêu cầu nâng cấp lên Agency đang chờ Admin phê duyệt.
-                  </p>
-                  <p className="reg-agency-pending-note">
-                    Vui lòng đợi Admin xét duyệt trong vòng 1-3 ngày làm việc. 
-                    Bạn sẽ nhận được thông báo khi yêu cầu được xử lý.
-                  </p>
-                  <Button
-                    variant="default"
-                    size="lg"
-                    onClick={() => navigate('/')}
-                    className="reg-agency-back-to-home-button"
-                  >
-                    Quay về trang chủ
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-          /* Form */
+          {/* Form */}
           <Card className="reg-agency-register-agency-form-card">
-              <CardContent>
-                <form onSubmit={handleSubmit} className="reg-agency-register-agency-form">
-                  <div className="reg-agency-form-section">
-                    <h2 className="reg-agency-section-title">Thông tin công ty</h2>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="reg-agency-register-agency-form">
+                <div className="reg-agency-form-section">
+                  <h2 className="reg-agency-section-title">Thông tin công ty</h2>
                     
                     <div className="reg-agency-form-group">
                       <label htmlFor="companyName" className="reg-agency-form-label">
@@ -425,6 +410,17 @@ const RegisterAgency = () => {
                     </div>
                   </div>
 
+                  {/* Hiển thị thông báo pending nếu có */}
+                  {pendingMessage && (
+                    <div className="reg-agency-pending-alert">
+                      <div className="reg-agency-pending-alert-icon">ℹ️</div>
+                      <div className="reg-agency-pending-alert-content">
+                        <strong>Thông báo</strong>
+                        <p>{pendingMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Hiển thị lỗi submit nếu có */}
                   {errors.submit && (
                     <div className="reg-agency-error-alert" style={{ 
@@ -474,7 +470,6 @@ const RegisterAgency = () => {
                 </form>
               </CardContent>
             </Card>
-          )}
         </div>
       </main>
       <Footer />

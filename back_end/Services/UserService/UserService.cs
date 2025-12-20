@@ -459,7 +459,9 @@ namespace ESCE_SYSTEM.Services.UserService
             IsActive = account.IsActive,
             IS_BANNED = account.IS_BANNED,
             CreatedAt = account.CreatedAt,
-            UpdatedAt = account.UpdatedAt
+            UpdatedAt = account.UpdatedAt,
+            Level = account.Level,
+            TotalSpent = account.TotalSpent
         })
         .FirstOrDefaultAsync();
 
@@ -1121,19 +1123,19 @@ namespace ESCE_SYSTEM.Services.UserService
                 return 0;
             }
 
-            if (totalSpent >= 5000000) // 5 triệu trở lên là Level 3
+            if (totalSpent >= 3000000) // 3 triệu trở lên là Level 3 (Gold)
             {
                 return 3;
             }
-            else if (totalSpent >= 1000000) // Từ 1 triệu đến dưới 5 triệu là Level 2
+            else if (totalSpent >= 1000000) // Từ 1 triệu đến dưới 3 triệu là Level 2 (Silver)
             {
                 return 2;
             }
-            else if (totalSpent > 0) // Tiêu > 0 đến dưới 1 triệu là Level 1
+            else if (totalSpent > 0) // Có chi tiêu (> 0) là Level 1 (Bronze)
             {
                 return 1;
             }
-            else // Chi tiêu 0
+            else // Chưa chi tiêu (= 0) là Level 0 (Default)
             {
                 return 0;
             }

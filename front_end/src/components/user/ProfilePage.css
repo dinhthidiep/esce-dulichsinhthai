@@ -911,6 +911,30 @@
   line-height: 1.6;
 }
 
+/* Host Congratulation State */
+.profile-host-congrats {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  border: 1px solid #86efac;
+}
+
+.profile-host-congrats-icon {
+  color: #10b981 !important;
+  width: 64px;
+  height: 64px;
+}
+
+.profile-host-congrats h3 {
+  color: #059669;
+  font-size: 1.25rem;
+}
+
+.profile-host-congrats p {
+  color: #047857;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
 /* Bookings List */
 .profile-bookings-list {
   display: flex;
@@ -2300,3 +2324,323 @@
   }
 }
 
+
+
+/* Revenue Section Styles */
+.profile-revenue-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-revenue-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.profile-revenue-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.profile-revenue-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.profile-revenue-amount {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.profile-revenue-note {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.profile-revenue-chart-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.profile-revenue-chart-container h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.profile-revenue-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-revenue-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2rem;
+  height: 200px;
+  padding: 1rem 0;
+}
+
+.profile-revenue-bar {
+  width: 80px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.profile-revenue-bar-fill {
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem;
+  min-height: 60px;
+  transition: height 0.3s ease;
+}
+
+.profile-revenue-bar-original {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}
+
+.profile-revenue-bar-actual {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+}
+
+.profile-revenue-bar-savings {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+
+.profile-revenue-bar-label {
+  font-size: 0.625rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.profile-revenue-bar-value {
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.profile-revenue-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.profile-revenue-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.profile-revenue-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.profile-revenue-legend-original {
+  background: #64748b;
+}
+
+.profile-revenue-legend-actual {
+  background: #10b981;
+}
+
+.profile-revenue-legend-savings {
+  background: #f59e0b;
+}
+
+.profile-revenue-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.profile-revenue-info-icon {
+  width: 20px;
+  height: 20px;
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.profile-revenue-info p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #166534;
+  line-height: 1.5;
+}
+
+/* Line Chart Styles */
+.profile-revenue-line-chart {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.profile-revenue-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.profile-revenue-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-revenue-field-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.profile-revenue-field-label {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.profile-revenue-field-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Responsive for revenue chart */
+@media (max-width: 768px) {
+  .profile-revenue-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-revenue-line-chart {
+    height: 250px;
+  }
+}
+
+/* Revenue chart header with year filter */
+.profile-revenue-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.profile-revenue-chart-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.profile-revenue-year-filter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.profile-revenue-year-filter:hover {
+  border-color: #10b981;
+}
+
+.profile-revenue-year-filter:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Revenue loading state */
+.profile-revenue-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 1rem;
+}
+
+.profile-revenue-loading p {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* Revenue filters container */
+.profile-revenue-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-revenue-month-filter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.profile-revenue-month-filter:hover {
+  border-color: #10b981;
+}
+
+.profile-revenue-month-filter:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+@media (max-width: 768px) {
+  .profile-revenue-chart-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .profile-revenue-filters {
+    width: 100%;
+  }
+  
+  .profile-revenue-month-filter,
+  .profile-revenue-year-filter {
+    flex: 1;
+  }
+}

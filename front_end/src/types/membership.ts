@@ -1,4 +1,4 @@
-export type MembershipTier = 'none' | 'silver' | 'gold' | 'diamond'
+export type MembershipTier = 'none' | 'bronze' | 'silver' | 'gold'
 
 export interface ComplementaryService {
   id: number

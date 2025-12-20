@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
@@ -22,8 +22,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  BarChart,
-  Bar
+  Legend
 } from 'recharts'
 
 
@@ -40,13 +39,17 @@ const formatCurrency = (value: number): string => {
 
 export default function MainDashBoardContent() {
   const [dashboardData, setDashboardData] = useState<DashboardDto | null>(null)
-  const [monthlyTimeSeriesData, setMonthlyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'month', startDate: '', endDate: '', data: [] })
   const [dailyTimeSeriesData, setDailyTimeSeriesData] = useState<TimeSeriesDto>({ period: 'day', startDate: '', endDate: '', data: [] })
   const [topSpenders, setTopSpenders] = useState<TopSpenderDto[]>([])
   const [topHosts, setTopHosts] = useState<TopHostDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Filter by month and year
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
 
+  // Load dashboard data on mount
   useEffect(() => {
     const loadDashboard = async () => {
       try {
@@ -57,20 +60,6 @@ export default function MainDashBoardContent() {
         const data = await fetchDashboardData('day')
         console.log('Dashboard main data loaded:', data)
         setDashboardData(data)
-
-        // Load time series data for charts
-        try {
-          const [yearlyData, monthlyData] = await Promise.all([
-            fetchTimeSeriesData('year'), // Doanh thu theo từng tháng trong năm
-            fetchTimeSeriesData('month') // Doanh thu theo từng ngày trong tháng hiện tại
-          ])
-          console.log('Yearly time series data loaded:', yearlyData)
-          console.log('Monthly time series data loaded:', monthlyData)
-          setMonthlyTimeSeriesData(yearlyData)
-          setDailyTimeSeriesData(monthlyData)
-        } catch (timeSeriesError) {
-          console.warn('Time series API failed:', timeSeriesError)
-        }
 
         // Load top spenders and hosts (separate try-catch to not affect charts)
         try {
@@ -97,6 +86,35 @@ export default function MainDashBoardContent() {
     }
     loadDashboard()
   }, [])
+
+  // Load time series data when month/year changes
+  useEffect(() => {
+    const loadTimeSeriesData = async () => {
+      try {
+        // Calculate start and end date for selected month/year
+        const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate()
+        const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${lastDay}`
+        
+        console.log(`Loading time series for ${startDate} to ${endDate}`)
+        
+        const monthlyData = await fetchTimeSeriesData('month', startDate, endDate)
+        console.log('Monthly time series data loaded:', monthlyData)
+        setDailyTimeSeriesData(monthlyData)
+      } catch (timeSeriesError) {
+        console.warn('Time series API failed:', timeSeriesError)
+      }
+    }
+    loadTimeSeriesData()
+  }, [selectedMonth, selectedYear])
+
+  // Prepare chart data - MUST be before any conditional returns
+  const chartData = useMemo(() => {
+    return dailyTimeSeriesData.data.map((item) => ({
+      label: item.label || 'N/A',
+      revenue: Number(item.revenue) || 0
+    }))
+  }, [dailyTimeSeriesData])
 
   if (loading) {
     return (
@@ -173,25 +191,10 @@ export default function MainDashBoardContent() {
     bgClassName: 'bg-white'
   }
 
-  // Prepare monthly revenue data from time-series (period=year -> theo tháng)
-  const monthlyRevenueData = monthlyTimeSeriesData.data
-    .map((item) => ({
-      month: item.label || 'N/A',
-      revenue: Number(item.revenue) || 0
-    }))
-
-  // Prepare daily revenue data from time-series (period=month -> theo ngày trong tháng)
-  const dailyRevenueData = dailyTimeSeriesData.data
-    .map((item) => ({
-      day: item.label || 'N/A',
-      revenue: Number(item.revenue) || 0
-    }))
-
   return (
     <Box className="flex flex-col gap-[2.4rem]">
-      {/* Hàng 1: Biểu đồ doanh thu (mỗi biểu đồ chiếm 1 hàng) */}
+      {/* Biểu đồ doanh thu gộp */}
       <Box className="flex flex-col gap-[2.4rem] px-[2.4rem] pt-[2.4rem]">
-        {/* Biểu đồ 1: Doanh thu theo từng tháng */}
         <Paper
           sx={{
             p: 3,
@@ -201,83 +204,81 @@ export default function MainDashBoardContent() {
             gap: 2
           }}
         >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Doanh thu theo từng tháng
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ area thể hiện tổng doanh thu theo từng tháng trong năm.
-          </Typography>
-          <Box sx={{ width: '100%', height: 260 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Typography variant="h6" fontWeight="bold">
+              Doanh thu
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px' }}
+              >
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map((m) => (
+                  <option key={m} value={m}>Tháng {m}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                min={2020}
+                max={new Date().getFullYear()}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px', width: '80px' }}
+              />
+            </Box>
+          </Box>
+          <Box sx={{ width: '100%', height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={monthlyRevenueData.length > 0 ? monthlyRevenueData : [{ month: 'Chưa có dữ liệu', revenue: 0 }]}
+                data={chartData.length > 0 ? chartData : [{ label: 'Chưa có dữ liệu', revenue: 0 }]}
                 margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
+                  <linearGradient id="colorRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.8} />
+                    <stop offset="50%" stopColor="#f59e0b" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
+                  </linearGradient>
+                  <linearGradient id="strokeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#16a34a" />
+                    <stop offset="50%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#dc2626" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 11 }} 
+                  interval={2}
+                  tickMargin={8}
+                />
                 <YAxis
                   domain={[0, 'auto']}
                   tickFormatter={(v) => `${Math.round(v / 1_000_000)}tr`}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
                 />
                 <Tooltip
-                  formatter={(value: number) => `${value.toLocaleString('vi-VN')} VNĐ`}
+                  formatter={(value: number) => [`${value.toLocaleString('vi-VN')} VNĐ`, 'Doanh thu']}
                   labelFormatter={(label) => label}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+                    border: 'none', 
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
                 />
+                <Legend />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#16a34a"
+                  name="Doanh thu (VNĐ)"
+                  stroke="url(#strokeGradient)"
                   strokeWidth={3}
                   fillOpacity={1}
-                  fill="url(#colorRevenue)"
+                  fill="url(#colorRevenueGradient)"
                 />
               </AreaChart>
-            </ResponsiveContainer>
-          </Box>
-        </Paper>
-
-        {/* Biểu đồ 2: Doanh thu trong tháng */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: '1.6rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Doanh thu trong tháng
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Biểu đồ cột thể hiện doanh thu theo từng ngày trong tháng hiện tại.
-          </Typography>
-          <Box sx={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={dailyRevenueData.length > 0 ? dailyRevenueData : [{ day: 'Chưa có dữ liệu', revenue: 0 }]}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={3} tickMargin={8} />
-                <YAxis
-                  domain={[0, 'auto']}
-                  tickFormatter={(v) => `${Math.round(v / 1_000_000)}tr`}
-                  tick={{ fontSize: 10 }}
-                />
-                <Tooltip
-                  formatter={(value: number) => `${value.toLocaleString('vi-VN')} VNĐ`}
-                  labelFormatter={(label) => label}
-                />
-                <Bar dataKey="revenue" radius={[8, 8, 0, 0]} fill="#0ea5e9" />
-              </BarChart>
             </ResponsiveContainer>
           </Box>
         </Paper>

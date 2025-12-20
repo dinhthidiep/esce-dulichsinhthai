@@ -25,5 +25,9 @@
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        public int Level { get; set; }
+
+        public decimal TotalSpent { get; set; }
     }
 }

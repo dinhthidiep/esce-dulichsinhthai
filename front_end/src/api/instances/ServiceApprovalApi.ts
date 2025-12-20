@@ -129,22 +129,26 @@ export const getPendingServiceCombos = async (): Promise<ServiceComboForApproval
  * Cập nhật status của ServiceCombo (Admin)
  * Endpoint: PUT /api/ServiceCombo/{id}/status
  * @param status - 'pending' | 'approved' | 'rejected' | 'open' | 'closed'
+ * @param rejectComment - Lý do từ chối (optional)
  */
-export const updateServiceComboStatus = async (id: number, status: string): Promise<string> => {
+export const updateServiceComboStatus = async (id: number, status: string, rejectComment?: string): Promise<string> => {
   try {
     if (!status?.trim()) {
       throw new Error('Status không được để trống')
     }
     
     const endpoint = `/api/ServiceCombo/${id}/status`
-    console.log('[ServiceApprovalApi] Updating service combo status:', { id, status })
+    console.log('[ServiceApprovalApi] Updating service combo status:', { id, status, rejectComment })
+    
+    const body: any = { Status: status.trim() }
+    if (rejectComment?.trim()) {
+      body.RejectComment = rejectComment.trim()
+    }
     
     const response = await fetchWithFallback(endpoint, {
       method: 'PUT',
       headers: ensureAuthHeaders(),
-      body: JSON.stringify({
-        Status: status.trim()
-      })
+      body: JSON.stringify(body)
     })
     
     const result = await handleResponse<any>(response)
@@ -165,7 +169,8 @@ export const approveServiceCombo = async (id: number): Promise<string> => {
 
 /**
  * Từ chối ServiceCombo (Admin)
+ * @param rejectComment - Lý do từ chối
  */
-export const rejectServiceCombo = async (id: number): Promise<string> => {
-  return updateServiceComboStatus(id, 'rejected')
+export const rejectServiceCombo = async (id: number, rejectComment?: string): Promise<string> => {
+  return updateServiceComboStatus(id, 'rejected', rejectComment)
 }

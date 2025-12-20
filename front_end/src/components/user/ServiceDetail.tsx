@@ -20,7 +20,7 @@ import {
   CalendarIcon
 } from './icons/index';
 import { formatPrice, getImageUrl } from '~/lib/utils';
-import { API_ENDPOINTS } from '~/config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '~/config/api';
 import './ServiceDetail.css';
 
 // Sử dụng đường dẫn public URL thay vì import
@@ -248,6 +248,19 @@ const ServiceDetail = () => {
     title: '',
     message: ''
   });
+
+  // Confirm modal state for delete review
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    reviewId: number | null;
+  }>({
+    show: false,
+    reviewId: null
+  });
+  
+  // Host booking warning modal state
+  const [hostWarningModal, setHostWarningModal] = useState(false);
+  
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Show toast notification function
@@ -268,6 +281,23 @@ const ServiceDetail = () => {
     toastTimeoutRef.current = setTimeout(() => {
       setToast(prev => ({ ...prev, show: false }));
     }, duration);
+  }, []);
+
+  // Get user roleId from localStorage
+  const getUserRoleId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const roleId = userInfo.RoleId || userInfo.roleId;
+        if (roleId) {
+          return parseInt(roleId);
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }, []);
 
   // Hide toast function
@@ -1173,31 +1203,50 @@ const ServiceDetail = () => {
     }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.')) {
-      return;
-    }
+  // Mở confirm modal để xóa review
+  const handleDeleteReview = (reviewId) => {
+    setConfirmModal({ show: true, reviewId });
+    setOpenMenuId(null);
+  };
+
+  // Xác nhận xóa review
+  const confirmDeleteReview = async () => {
+    const reviewId = confirmModal.reviewId;
+    if (!reviewId) return;
 
     try {
       setDeletingReviewId(reviewId);
+      setConfirmModal({ show: false, reviewId: null });
+      
+      const deleteUrl = `${API_BASE_URL}${API_ENDPOINTS.REVIEW}/${reviewId}`;
+      console.log('🗑️ [ServiceDetail] Đang xóa review:', { reviewId, deleteUrl });
+      
       await axiosInstance.delete(`${API_ENDPOINTS.REVIEW}/${reviewId}`);
       
-      setOpenMenuId(null);
+      console.log('✅ [ServiceDetail] Xóa review thành công');
+      
       await reloadReviews();
       
       // Reload can-review status sau khi delete review (user có thể review lại)
       await checkCanReview();
       
       showToast('success', 'Xóa thành công!', 'Đánh giá đã được xóa.');
-    } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(' Lỗi khi xóa review:', err);
-      }
-      const errorMessage = err.response?.data?.message || 'Không thể xóa đánh giá. Vui lòng thử lại.';
-      showToast('error', 'Lỗi', errorMessage);
+    } catch (err: any) {
+      console.error('❌ [ServiceDetail] Lỗi khi xóa review:', err);
+      console.error('  - Status:', err?.response?.status);
+      console.error('  - Data:', err?.response?.data);
+      console.error('  - Message:', err?.message);
+      
+      const errorMessage = err?.response?.data?.message || err?.response?.data || err?.message || 'Không thể xóa đánh giá. Vui lòng thử lại.';
+      showToast('error', 'Lỗi', typeof errorMessage === 'string' ? errorMessage : 'Không thể xóa đánh giá. Vui lòng thử lại.');
     } finally {
       setDeletingReviewId(null);
     }
+  };
+
+  // Hủy xóa review
+  const cancelDeleteReview = () => {
+    setConfirmModal({ show: false, reviewId: null });
   };
 
   // Close menu when clicking outside
@@ -2155,6 +2204,14 @@ const ServiceDetail = () => {
                           return;
                         }
                         
+                        // Check if user is Host (roleId = 2)
+                        const roleId = getUserRoleId();
+                        if (roleId === 2) {
+                          // Host cannot book - show warning modal
+                          setHostWarningModal(true);
+                          return;
+                        }
+                        
                         // Đã đăng nhập - chuyển đến trang booking với selected services
                         if (import.meta.env.DEV) {
                           console.log('  - Navigating to booking page:', `/booking/${id}`)
@@ -2227,6 +2284,66 @@ const ServiceDetail = () => {
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {confirmModal.show && (
+        <div className="sd-confirm-overlay" onClick={cancelDeleteReview}>
+          <div className="sd-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-confirm-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h3 className="sd-confirm-title">Xác nhận xóa đánh giá</h3>
+            <p className="sd-confirm-message">
+              Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.
+            </p>
+            <div className="sd-confirm-actions">
+              <button 
+                className="sd-confirm-btn sd-confirm-btn-cancel"
+                onClick={cancelDeleteReview}
+              >
+                Hủy
+              </button>
+              <button 
+                className="sd-confirm-btn sd-confirm-btn-delete"
+                onClick={confirmDeleteReview}
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Host Booking Warning Modal */}
+      {hostWarningModal && (
+        <div className="sd-confirm-overlay" onClick={() => setHostWarningModal(false)}>
+          <div className="sd-confirm-modal sd-warning-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-confirm-icon sd-warning-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <h3 className="sd-confirm-title">Không thể đặt dịch vụ</h3>
+            <p className="sd-confirm-message">
+              Chỉ khách du lịch hoặc công ty du lịch mới có thể sử dụng chức năng này!
+            </p>
+            <div className="sd-confirm-actions">
+              <button 
+                className="sd-confirm-btn sd-confirm-btn-ok"
+                onClick={() => setHostWarningModal(false)}
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

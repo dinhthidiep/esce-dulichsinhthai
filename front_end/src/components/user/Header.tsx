@@ -4,6 +4,7 @@ import { BellIcon, UserIcon, ChevronDownIcon, StarIcon, CrownIcon, LogOutIcon } 
 import NotificationDropdown from '~/components/user/NotificationDropdown'
 import { getNotifications } from '~/api/user/NotificationApi'
 import type { NotificationDto } from '~/api/user/NotificationApi'
+import { calculateLevel, getLevelInfo } from '~/utils/levelUtils'
 import './Header.css'
 
 const Header = React.memo(() => {
@@ -136,23 +137,35 @@ const Header = React.memo(() => {
   const getRoleName = (): string => {
     if (!userInfo) return 'User'
     
+    let roleName = 'User'
+    
     if (userInfo.Role?.Name || userInfo.role?.name) {
-      const roleName = userInfo.Role?.Name || userInfo.role?.name
-      if (roleName === 'User') return 'Tourist'
-      return roleName
-    }
-    if (userInfo.RoleName || userInfo.roleName) {
-      const roleName = userInfo.RoleName || userInfo.roleName
-      if (roleName === 'User') return 'Tourist'
-      return roleName
+      roleName = userInfo.Role?.Name || userInfo.role?.name
+      if (roleName === 'User') roleName = 'Tourist'
+    } else if (userInfo.RoleName || userInfo.roleName) {
+      roleName = userInfo.RoleName || userInfo.roleName
+      if (roleName === 'User') roleName = 'Tourist'
+    } else {
+      const roleId = userInfo.RoleId || userInfo.roleId
+      if (roleId === 1) roleName = 'Admin'
+      else if (roleId === 2) roleName = 'Host'
+      else if (roleId === 3) roleName = 'Agency'
+      else if (roleId === 4) roleName = 'Tourist'
     }
     
+    // Thêm level cho Tourist (roleId 4) và Agency (roleId 3)
     const roleId = userInfo.RoleId || userInfo.roleId
-    if (roleId === 1) return 'Admin'
-    if (roleId === 2) return 'Host'
-    if (roleId === 3) return 'Agency'
-    if (roleId === 4) return 'Tourist'
-    return 'User'
+    if (roleId === 4 || roleId === 3 || roleId === '4' || roleId === '3') {
+      const totalSpent = userInfo.TotalSpent ?? userInfo.totalSpent ?? 0
+      const level = calculateLevel(Number(totalSpent) || 0)
+      const levelInfo = getLevelInfo(level)
+      // Chỉ hiển thị level nếu không phải default
+      if (level !== 'default') {
+        return `${roleName} - ${levelInfo.icon} ${levelInfo.name}`
+      }
+    }
+    
+    return roleName
   }
 
   // Memoize getUserAvatar để tránh tính toán lại
@@ -307,26 +320,27 @@ const Header = React.memo(() => {
                       <span>Hồ sơ của tôi</span>
                     </Link>
                     <div className="header-user-menu-divider" />
-                    {/* Ẩn "Cấp độ của bạn" và "Nâng cấp tài khoản" nếu là Admin (roleId = 1) hoặc Agency (roleId = 3) */}
-                    {userInfo && ![1, 3, '1', '3'].includes(userInfo.RoleId || userInfo.roleId) && (
-                      <>
-                        <Link
-                          to="/subscription-packages"
-                          className="header-user-menu-item"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <StarIcon style={{ width: '18px', height: '18px' }} />
-                          <span>Cấp độ của bạn</span>
-                        </Link>
-                        <Link
-                          to="/upgrade"
-                          className="header-user-menu-item header-user-menu-item-upgrade"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <CrownIcon style={{ width: '18px', height: '18px' }} />
-                          <span>Nâng cấp tài khoản</span>
-                        </Link>
-                      </>
+                    {/* Hiển thị "Cấp độ của bạn" cho Tourist (4) và Agency (3), ẩn cho Admin (1) và Host (2) */}
+                    {userInfo && ![1, 2, '1', '2'].includes(userInfo.RoleId || userInfo.roleId) && (
+                      <Link
+                        to="/subscription-packages"
+                        className="header-user-menu-item"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <StarIcon style={{ width: '18px', height: '18px' }} />
+                        <span>Cấp độ của bạn</span>
+                      </Link>
+                    )}
+                    {/* Hiển thị "Nâng cấp tài khoản" chỉ cho Tourist (4), ẩn cho Admin, Host, Agency */}
+                    {userInfo && ![1, 2, 3, '1', '2', '3'].includes(userInfo.RoleId || userInfo.roleId) && (
+                      <Link
+                        to="/upgrade"
+                        className="header-user-menu-item header-user-menu-item-upgrade"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <CrownIcon style={{ width: '18px', height: '18px' }} />
+                        <span>Nâng cấp tài khoản</span>
+                      </Link>
                     )}
                     <div className="header-user-menu-divider" />
                     <button

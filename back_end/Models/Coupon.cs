@@ -31,7 +31,6 @@ namespace ESCE_SYSTEM.Models
         public int RequiredLevel { get; set; } = 0;
         
         [Column("TARGET_AUDIENCE")]
-        [NotMapped] // Tạm thời bỏ qua cho đến khi chạy SQL script thêm cột
         public string? TargetAudience { get; set; }
 
         [JsonIgnore]

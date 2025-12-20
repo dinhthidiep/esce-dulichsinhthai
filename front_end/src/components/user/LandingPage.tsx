@@ -287,6 +287,16 @@ const LandingPage = () => {
           }
         })
 
+        // Lấy unique ServiceComboIds để fetch tên dịch vụ
+        const serviceComboIds = new Set<number>()
+        allReviews.forEach((review: any) => {
+          const booking = review.Booking || review.booking
+          if (booking) {
+            const comboId = booking.ServiceComboId || booking.serviceComboId
+            if (comboId) serviceComboIds.add(comboId)
+          }
+        })
+
         // Fetch User data batch nếu cần
         const userMap = new Map<number, any>()
         if (userIds.size > 0) {
@@ -309,22 +319,51 @@ const LandingPage = () => {
           }
         }
 
-        // Enrich reviews với User data
-        const enrichedReviews = allReviews.map((review: any) => {
-          // Nếu review đã có User data từ API, dùng luôn
-          if (review.User || review.user) {
-            return review
+        // Fetch ServiceCombo data batch để lấy tên dịch vụ
+        const serviceComboMap = new Map<number, string>()
+        if (serviceComboIds.size > 0) {
+          try {
+            const comboPromises = Array.from(serviceComboIds).map(async (comboId) => {
+              try {
+                const comboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/${comboId}`)
+                const comboName = comboResponse.data?.Name || comboResponse.data?.name || ''
+                return { comboId, name: comboName }
+              } catch (error) {
+                console.warn(`Không thể lấy ServiceCombo data cho comboId ${comboId}:`, error)
+                return { comboId, name: '' }
+              }
+            })
+            const comboResults = await Promise.all(comboPromises)
+            comboResults.forEach(({ comboId, name }) => {
+              if (name) serviceComboMap.set(comboId, name)
+            })
+          } catch (error) {
+            console.warn('Lỗi khi fetch batch ServiceCombo data:', error)
           }
+        }
 
-          // Nếu chưa có, lấy từ userMap
-          const userId = review.UserId || review.userId
-          if (userId && userMap.has(userId)) {
-            return {
-              ...review,
-              User: userMap.get(userId),
+        // Enrich reviews với User data và ServiceCombo name
+        const enrichedReviews = allReviews.map((review: any) => {
+          let enrichedReview = { ...review }
+
+          // Nếu review chưa có User data, lấy từ userMap
+          if (!review.User && !review.user) {
+            const userId = review.UserId || review.userId
+            if (userId && userMap.has(userId)) {
+              enrichedReview.User = userMap.get(userId)
             }
           }
-          return review
+
+          // Thêm tên dịch vụ từ Booking -> ServiceComboId
+          const booking = review.Booking || review.booking
+          if (booking) {
+            const comboId = booking.ServiceComboId || booking.serviceComboId
+            if (comboId && serviceComboMap.has(comboId)) {
+              enrichedReview.ServiceComboName = serviceComboMap.get(comboId)
+            }
+          }
+
+          return enrichedReview
         })
 
         // Sắp xếp: rating cao nhất và mới nhất
@@ -813,6 +852,7 @@ const LandingPage = () => {
                   const userName = user.Name || user.name || 'Khách hàng'
                   const userAvatar = user.Avatar || user.avatar || ''
                   const createdAt = review.CreatedAt || review.createdAt || ''
+                  const serviceComboName = review.ServiceComboName || ''
                   
                   // Tạo initials từ tên
                   const getInitials = (name: string) => {
@@ -863,7 +903,9 @@ const LandingPage = () => {
                               />
                             ))}
                           </div>
-                          <blockquote className="review-text">{comment}</blockquote>
+                          {serviceComboName && (
+                            <p className="review-service-name">{serviceComboName}</p>
+                          )}
                           <div className="review-divider"></div>
                           <div className="review-author">
                             <div className="review-avatar" aria-hidden="true">
@@ -875,7 +917,7 @@ const LandingPage = () => {
                             </div>
                             <div className="review-author-info">
                               <p className="review-author-name">{userName}</p>
-                              <p className="review-author-meta">{getTimeAgo(createdAt)}</p>
+                              <blockquote className="review-text">{comment}</blockquote>
                             </div>
                           </div>
                         </CardContent>

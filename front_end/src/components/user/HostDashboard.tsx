@@ -86,7 +86,34 @@ const HostDashboard = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'services');
+  
+  // Initialize activeTab from URL hash, localStorage, or location.state, defaulting to 'services'
+  const getInitialTab = () => {
+    // First check URL hash
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['services', 'service-combos', 'bookings', 'coupons', 'privileges', 'reviews', 'revenue'].includes(hash)) {
+      return hash;
+    }
+    // Then check location.state
+    if (location.state?.activeTab) {
+      return location.state.activeTab;
+    }
+    // Then check localStorage
+    const savedTab = localStorage.getItem('hostDashboardActiveTab');
+    if (savedTab && ['services', 'service-combos', 'bookings', 'coupons', 'privileges', 'reviews', 'revenue'].includes(savedTab)) {
+      return savedTab;
+    }
+    return 'services';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  
+  // Persist activeTab to localStorage and URL hash when it changes
+  useEffect(() => {
+    localStorage.setItem('hostDashboardActiveTab', activeTab);
+    // Update URL hash without triggering navigation
+    window.history.replaceState(null, '', `#${activeTab}`);
+  }, [activeTab]);
   const [couponToggleState, setCouponToggleState] = useState(false); // Track coupon toggle state: false = coupons list, true = promotions list
   
   // Sync coupon toggle state when tab changes
@@ -163,6 +190,36 @@ const HostDashboard = () => {
       return null;
     }
   }, []);
+
+  // Get user roleId from localStorage
+  const getUserRoleId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const roleId = userInfo.RoleId || userInfo.roleId;
+        if (roleId) {
+          const parsedRoleId = parseInt(roleId);
+          if (!isNaN(parsedRoleId)) {
+            return parsedRoleId;
+          }
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error('Error getting user role ID:', err);
+      return null;
+    }
+  }, []);
+
+  // Check if user has Host role (roleId = 2)
+  useEffect(() => {
+    const roleId = getUserRoleId();
+    if (roleId !== null && roleId !== 2) {
+      // User is not a Host, redirect to home or profile
+      navigate('/', { replace: true });
+    }
+  }, [getUserRoleId, navigate]);
 
   // Fetch user data
   useEffect(() => {

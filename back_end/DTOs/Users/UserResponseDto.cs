@@ -27,5 +27,9 @@ namespace ESCE_SYSTEM.DTOs.Users
         // Dấu thời gian
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        // Level & Spending
+        public int Level { get; set; }
+        public decimal TotalSpent { get; set; }
     }
 }

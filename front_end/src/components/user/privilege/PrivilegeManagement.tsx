@@ -299,7 +299,6 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                   <thead>
                     <tr>
                       <th>Tên dịch vụ</th>
-                      <th>Giá gốc</th>
                       <th>Đối tượng</th>
                       <th></th>
                     </tr>
@@ -307,7 +306,6 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                   <tbody>
                     {paginationData.paginatedPromotions.map(promotion => {
                       const name = promotion.Name || promotion.name || 'Không có';
-                      const price = promotion.Price || promotion.price || 0;
                       const targetAudienceStr = promotion.TargetAudience || promotion.targetAudience;
                       
                       // Parse target audience
@@ -340,9 +338,6 @@ const PrivilegeManagement = forwardRef<PrivilegeManagementRef, PrivilegeManageme
                         <tr key={promotion.Id || promotion.id}>
                           <td className="priv-mgr-promotion-service-name-cell">
                             {name}
-                          </td>
-                          <td className="priv-mgr-promotion-price-cell">
-                            {price.toLocaleString('vi-VN')} VNĐ
                           </td>
                           <td className="priv-mgr-promotion-target-cell">
                             <span className="priv-mgr-target-badge">

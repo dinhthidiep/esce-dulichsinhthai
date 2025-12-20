@@ -268,6 +268,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
 
     let ranks: string[] = [];
     let userTypes: string[] = [];
+    let pairedSegments: string[] = [];
 
     if (targetAudienceStr) {
       try {
@@ -276,15 +277,23 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
           const ta = JSON.parse(targetAudienceStr);
           if (ta.forAgency) {
             userTypes.push('Công ty');
-            if (ta.agencyLevels?.level1) ranks.push('Đồng');
-            if (ta.agencyLevels?.level2) ranks.push('Bạc');
-            if (ta.agencyLevels?.level3) ranks.push('Vàng');
+            const agencyRanks: string[] = [];
+            if (ta.agencyLevels?.level0) agencyRanks.push('Tất cả');
+            if (ta.agencyLevels?.level1) agencyRanks.push('Đồng');
+            if (ta.agencyLevels?.level2) agencyRanks.push('Bạc');
+            if (ta.agencyLevels?.level3) agencyRanks.push('Vàng');
+            ranks.push(...agencyRanks);
+            if (agencyRanks.length > 0) pairedSegments.push(`Công ty: ${agencyRanks.join(', ')}`);
           }
           if (ta.forTourist) {
             userTypes.push('Khách hàng');
-            if (ta.touristLevels?.level1) ranks.push('Đồng');
-            if (ta.touristLevels?.level2) ranks.push('Bạc');
-            if (ta.touristLevels?.level3) ranks.push('Vàng');
+            const touristRanks: string[] = [];
+            if (ta.touristLevels?.level0) touristRanks.push('Tất cả');
+            if (ta.touristLevels?.level1) touristRanks.push('Đồng');
+            if (ta.touristLevels?.level2) touristRanks.push('Bạc');
+            if (ta.touristLevels?.level3) touristRanks.push('Vàng');
+            ranks.push(...touristRanks);
+            if (touristRanks.length > 0) pairedSegments.push(`Khách hàng: ${touristRanks.join(', ')}`);
           }
         } else if (typeof targetAudienceStr === 'string' && targetAudienceStr.trim() !== '' && targetAudienceStr.trim() !== 'string') {
           // If it's not JSON and not the default placeholder "string", treat it as a display value
@@ -305,14 +314,17 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
       if (requiredLevel === 3) rankDisplayFromLevel = 'Vàng';
     }
     // Prefer explicit level-derived rank when ranks weren't derived from TargetAudience
-    if (ranks.length === 0 && rankDisplayFromLevel && rankDisplayFromLevel !== 'Tất cả') {
+    if (ranks.length === 0 && rankDisplayFromLevel) {
       ranks.push(rankDisplayFromLevel);
     }
+
+    const pairedDisplay = pairedSegments.length > 0 ? pairedSegments.join(' | ') : (rankDisplayFromLevel || 'N/A');
 
     return {
       code,
       ranks: [...new Set(ranks)],
       userTypes: [...new Set(userTypes)],
+      pairedDisplay,
       rankDisplay: rankDisplayFromLevel || (ranks.length > 0 ? ranks.join(', ') : 'N/A'),
       userTypeDisplay: userTypes.length > 0 ? userTypes.join(', ') : 'N/A'
     };
@@ -495,6 +507,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                   accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   multiple
                   onChange={onImageChange}
+                  onClick={(e) => e.stopPropagation()}
                   className="combo-create-file-input"
                 />
                 <div className="combo-create-upload-content">
@@ -779,15 +792,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <thead>
                         <tr>
                           <th>Tên ưu đãi</th>
-                          <th>Hạng người dùng</th>
-                          <th>Loại người dùng</th>
+                          <th>Cho người dùng</th>
                           <th>Chọn</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPromotions.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="combo-create-create-service-combo-empty-cell">
+                            <td colSpan={3} className="combo-create-create-service-combo-empty-cell">
                               Không có ưu đãi nào
                             </td>
                           </tr>
@@ -800,7 +812,6 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                               <tr key={promotionId}>
                                 <td>{info.name}</td>
                                 <td>{info.pairedDisplay}</td>
-                                <td>{info.userTypeDisplay}</td>
                                 <td>
                                   <input
                                     type="checkbox"
@@ -940,21 +951,6 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                         <option value="Tất cả">Tất cả</option>
                       </select>
                     </div>
-                    <div className="combo-create-create-service-combo-filter-field">
-                      <label>Loại người dùng:</label>
-                      <select
-                        value={couponFilterUserType}
-                        onChange={(e) => {
-                          onCouponFilterUserTypeChange(e.target.value);
-                          onCouponsPageChange(1);
-                        }}
-                        className="combo-create-create-service-combo-filter-select"
-                      >
-                        <option value="all">Tất cả</option>
-                        <option value="Khách hàng">Khách hàng</option>
-                        <option value="Công ty">Công ty</option>
-                      </select>
-                    </div>
                   </div>
                   
                   <div className="combo-create-create-service-combo-table-wrapper">
@@ -962,15 +958,14 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                       <thead>
                         <tr>
                           <th>Mã</th>
-                          <th>Hạng</th>
-                          <th>Loại người dùng</th>
+                          <th>Cho người dùng</th>
                           <th>Chọn</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredCoupons.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="combo-create-create-service-combo-empty-cell">
+                            <td colSpan={3} className="combo-create-create-service-combo-empty-cell">
                               Không có mã giảm giá nào
                             </td>
                           </tr>
@@ -982,22 +977,7 @@ const CreateServiceComboModal: React.FC<CreateServiceComboModalProps> = ({
                             return (
                               <tr key={couponId}>
                                 <td>{info.code}</td>
-                                <td>
-                                  {info.ranks.length > 0 ? (
-                                    info.ranks.map((rank, idx) => (
-                                      <span
-                                        key={idx}
-                                        className={`combo-create-create-service-combo-rank-badge combo-create-rank-${rank.toLowerCase().replace(/\s+/g, '-')}`}
-                                        style={{ marginRight: '0.25rem' }}
-                                      >
-                                        {rank}
-                                      </span>
-                                    ))
-                                  ) : (
-                                    <span>{info.rankDisplay}</span>
-                                  )}
-                                </td>
-                                <td>{info.userTypeDisplay}</td>
+                                <td>{info.pairedDisplay}</td>
                                 <td>
                                   <input
                                     type="checkbox"

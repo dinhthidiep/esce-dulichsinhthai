@@ -11,6 +11,7 @@ import { API_ENDPOINTS } from '~/config/api';
 import { useUserLevel } from '~/hooks/useUserLevel';
 import LevelProgressBar from './LevelProgressBar';
 import { uploadImageToFirebase, deleteImageFromFirebase, getFallbackImageUrl } from '~/services/firebaseStorage'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { 
   UserIcon, 
   CalendarIcon, 
@@ -129,6 +130,10 @@ const ProfilePage = () => {
   const [upgradeRequests, setUpgradeRequests] = useState<UpgradeRequest[]>([]);
   const [loadingUpgrades, setLoadingUpgrades] = useState(false);
   
+  // Revenue chart filters
+  const [revenueYear, setRevenueYear] = useState(new Date().getFullYear());
+  const [revenueMonth, setRevenueMonth] = useState<number>(0); // 0 = all months, 1-12 = specific month
+  
   // Form state
   const [formData, setFormData] = useState<{ name: string; email: string; phone: string; dob: string; gender: string; address: string; avatar: string }>({
     name: '',
@@ -160,6 +165,29 @@ const ProfilePage = () => {
       return null;
     }
   }, []);
+
+  // Get user roleId from localStorage
+  const getUserRoleId = useCallback(() => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const roleId = userInfo.RoleId || userInfo.roleId;
+        if (roleId) {
+          return parseInt(roleId);
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Check if user is Host (roleId = 2)
+  const isHost = getUserRoleId() === 2;
+
+  // Check if user is Agency (roleId = 3)
+  const isAgency = getUserRoleId() === 3;
 
   // Get user level data
   const userId = getUserId();
@@ -307,7 +335,7 @@ const ProfilePage = () => {
   // Fetch bookings when tab is profile-active
   useEffect(() => {
     const fetchBookings = async () => {
-      if (activeTab !== 'bookings') return;
+      if (activeTab !== 'bookings' && activeTab !== 'revenue') return;
       
       const userId = getUserId();
       if (!userId) return;
@@ -349,6 +377,126 @@ const ProfilePage = () => {
 
     fetchBookings();
   }, [activeTab, getUserId]);
+
+  // Calculate monthly revenue data from real bookings
+  const revenueChartData = useMemo(() => {
+    const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+    
+    // Initialize monthly data
+    const monthlyData: { [key: number]: number } = {};
+    for (let i = 0; i < 12; i++) {
+      monthlyData[i] = 0;
+    }
+    
+    // Aggregate bookings by month for selected year
+    bookings.forEach((booking: any) => {
+      // Handle both camelCase and PascalCase property names
+      const bookingDate = new Date(booking.BookingDate || booking.bookingDate || booking.CreatedAt || booking.createdAt);
+      const status = booking.Status || booking.status;
+      const amount = booking.TotalAmount || booking.totalAmount || 0;
+      
+      if (bookingDate.getFullYear() === revenueYear) {
+        const month = bookingDate.getMonth();
+        // Include all paid/completed/confirmed bookings
+        const statusLower = (status || '').toLowerCase();
+        if (statusLower === 'completed' || statusLower === 'confirmed' || statusLower === 'paid' || statusLower === 'pending') {
+          monthlyData[month] += amount;
+        }
+      }
+    });
+    
+    // Build cumulative chart data
+    let cumulative = 0;
+    return months.map((month, index) => {
+      cumulative += monthlyData[index];
+      const originalPrice = cumulative / 0.97;
+      const savings = originalPrice - cumulative;
+      return {
+        name: month,
+        monthIndex: index,
+        'Giá gốc': Math.round(originalPrice),
+        'Giá Agency': Math.round(cumulative),
+        'Tiết kiệm': Math.round(savings),
+        monthlyAmount: monthlyData[index]
+      };
+    });
+  }, [bookings, revenueYear]);
+
+  // Calculate daily revenue data for specific month
+  const dailyChartData = useMemo(() => {
+    if (revenueMonth === 0) return [];
+    
+    // Get number of days in selected month
+    const daysInMonth = new Date(revenueYear, revenueMonth, 0).getDate();
+    
+    // Initialize daily data
+    const dailyData: { [key: number]: number } = {};
+    for (let i = 1; i <= daysInMonth; i++) {
+      dailyData[i] = 0;
+    }
+    
+    // Aggregate bookings by day for selected month
+    bookings.forEach((booking: any) => {
+      const bookingDate = new Date(booking.BookingDate || booking.bookingDate || booking.CreatedAt || booking.createdAt);
+      const status = booking.Status || booking.status;
+      const amount = booking.TotalAmount || booking.totalAmount || 0;
+      
+      if (bookingDate.getFullYear() === revenueYear && bookingDate.getMonth() === revenueMonth - 1) {
+        const day = bookingDate.getDate();
+        const statusLower = (status || '').toLowerCase();
+        if (statusLower === 'completed' || statusLower === 'confirmed' || statusLower === 'paid' || statusLower === 'pending') {
+          dailyData[day] += amount;
+        }
+      }
+    });
+    
+    // Build cumulative daily chart data
+    let cumulative = 0;
+    const result = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      cumulative += dailyData[day];
+      const originalPrice = cumulative / 0.97;
+      const savings = originalPrice - cumulative;
+      result.push({
+        name: day.toString(),
+        'Giá gốc': Math.round(originalPrice),
+        'Giá Agency': Math.round(cumulative),
+        'Tiết kiệm': Math.round(savings),
+        dailyAmount: dailyData[day]
+      });
+    }
+    return result;
+  }, [bookings, revenueYear, revenueMonth]);
+
+  // Calculate totals based on month filter
+  const filteredTotals = useMemo(() => {
+    if (revenueMonth === 0) {
+      // All months - use cumulative totals
+      const lastMonth = revenueChartData[revenueChartData.length - 1];
+      return {
+        agencyPrice: lastMonth?.['Giá Agency'] || 0,
+        originalPrice: lastMonth?.['Giá gốc'] || 0,
+        savings: lastMonth?.['Tiết kiệm'] || 0
+      };
+    } else {
+      // Specific month - use daily data totals
+      const lastDay = dailyChartData[dailyChartData.length - 1];
+      return {
+        agencyPrice: lastDay?.['Giá Agency'] || 0,
+        originalPrice: lastDay?.['Giá gốc'] || 0,
+        savings: lastDay?.['Tiết kiệm'] || 0
+      };
+    }
+  }, [revenueChartData, dailyChartData, revenueMonth]);
+
+  // Get chart data based on month selection (monthly or daily view)
+  const filteredChartData = useMemo(() => {
+    if (revenueMonth === 0) {
+      return revenueChartData;
+    }
+    // Show daily data for selected month
+    return dailyChartData;
+  }, [revenueChartData, dailyChartData, revenueMonth]);
 
   // Cập nhật activeTab khi location.state thay đổi (khi quay về từ PaymentPage)
   useEffect(() => {
@@ -838,12 +986,16 @@ const ProfilePage = () => {
       const currentDOB = dobString || userInfo?.DOB || userInfo?.Dob || userInfo?.dob || null;
       const currentAvatar = getValue(formData.avatar, userInfo?.Avatar || userInfo?.avatar);
       
+      // Lấy TotalSpent từ userInfo (backend yêu cầu field này)
+      const currentTotalSpent = userInfo?.TotalSpent ?? userInfo?.totalSpent ?? 0;
+      
       const updateData: any = {
         Name: formData.name ? formData.name.trim() : (userInfo?.Name || userInfo?.name || ''),
         Phone: currentPhone,
         Gender: currentGender,
         Address: currentAddress,
-        DOB: currentDOB
+        DOB: currentDOB,
+        TotalSpent: String(currentTotalSpent) // Backend DTO expects string
       };
       
       // Avatar là optional, chỉ thêm nếu có giá trị
@@ -1452,16 +1604,22 @@ const ProfilePage = () => {
         return 'Đánh giá của tôi';
       case 'upgrade-status':
         return 'Trạng thái nâng cấp';
+      case 'revenue':
+        return 'Doanh thu';
       default:
         return 'Thông tin cá nhân';
     }
   };
 
   // Get upgrade status display
-  const getUpgradeStatusDisplay = (status: string) => {
+  const getUpgradeStatusDisplay = (status: string, type?: string) => {
     const statusLower = (status || '').toLowerCase();
     switch (statusLower) {
       case 'pending':
+        // Host doesn't require payment, so show different status
+        if (type === 'Host') {
+          return { text: 'Đang chờ duyệt', className: 'profile-upgrade-status-review' };
+        }
         return { text: 'Chờ thanh toán', className: 'profile-upgrade-status-pending' };
       case 'paidpending':
         return { text: 'Đã thanh toán - Chờ duyệt', className: 'profile-upgrade-status-paid' };
@@ -1523,20 +1681,24 @@ const ProfilePage = () => {
                 <UserIcon className="profile-sidebar-menu-icon" />
                 <span>Thông tin cá nhân</span>
               </button>
-              <button
-                onClick={() => handleTabChange('bookings')}
-                className={`profile-sidebar-menu-item ${activeTab === 'bookings' ? 'profile-active' : ''}`}
-              >
-                <CalendarIcon className="profile-sidebar-menu-icon" />
-                <span>Lịch sử đặt dịch vụ</span>
-              </button>
-              <button
-                onClick={() => handleTabChange('reviews')}
-                className={`profile-sidebar-menu-item ${activeTab === 'reviews' ? 'profile-active' : ''}`}
-              >
-                <StarIcon className="profile-sidebar-menu-icon" />
-                <span>Đánh giá của tôi</span>
-              </button>
+              {!isHost && (
+                <button
+                  onClick={() => handleTabChange('bookings')}
+                  className={`profile-sidebar-menu-item ${activeTab === 'bookings' ? 'profile-active' : ''}`}
+                >
+                  <CalendarIcon className="profile-sidebar-menu-icon" />
+                  <span>Lịch sử đặt dịch vụ</span>
+                </button>
+              )}
+              {!isHost && (
+                <button
+                  onClick={() => handleTabChange('reviews')}
+                  className={`profile-sidebar-menu-item ${activeTab === 'reviews' ? 'profile-active' : ''}`}
+                >
+                  <StarIcon className="profile-sidebar-menu-icon" />
+                  <span>Đánh giá của tôi</span>
+                </button>
+              )}
               <button
                 onClick={() => handleTabChange('upgrade-status')}
                 className={`profile-sidebar-menu-item ${activeTab === 'upgrade-status' ? 'profile-active' : ''}`}
@@ -1544,6 +1706,15 @@ const ProfilePage = () => {
                 <ShieldIcon className="profile-sidebar-menu-icon" />
                 <span>Trạng thái nâng cấp</span>
               </button>
+              {isAgency && (
+                <button
+                  onClick={() => handleTabChange('revenue')}
+                  className={`profile-sidebar-menu-item ${activeTab === 'revenue' ? 'profile-active' : ''}`}
+                >
+                  <StarIcon className="profile-sidebar-menu-icon" />
+                  <span>Doanh thu</span>
+                </button>
+              )}
             </nav>
           </aside>
 
@@ -2301,6 +2472,15 @@ const ProfilePage = () => {
               <div className="profile-tab-content">
                 {loadingUpgrades ? (
                   <LoadingSpinner message="Đang tải trạng thái nâng cấp..." />
+                ) : isHost ? (
+                  <div className="profile-empty-state profile-host-congrats">
+                    <CheckCircleIcon className="profile-empty-state-icon profile-host-congrats-icon" />
+                    <h3>Chúc mừng! Bạn đã trở thành Host</h3>
+                    <p>Ngày nâng cấp: {userInfo?.UpdatedAt || userInfo?.updatedAt ? new Date(userInfo.UpdatedAt || userInfo.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <Button variant="default" onClick={() => navigate('/host-dashboard')}>
+                      Đi đến Host Dashboard
+                    </Button>
+                  </div>
                 ) : !upgradeRequests || upgradeRequests.length === 0 ? (
                   <div className="profile-empty-state">
                     <ShieldIcon className="profile-empty-state-icon" />
@@ -2313,7 +2493,7 @@ const ProfilePage = () => {
                 ) : (
                   <div className="profile-upgrade-list">
                     {upgradeRequests.map((request) => {
-                      const statusDisplay = getUpgradeStatusDisplay(request.status);
+                      const statusDisplay = getUpgradeStatusDisplay(request.status, request.type);
                       const displayName = request.type === 'Agency' 
                         ? request.companyName 
                         : request.businessName;
@@ -2366,7 +2546,7 @@ const ProfilePage = () => {
                           </div>
                           
                           {/* Status-specific messages */}
-                          {request.status?.toLowerCase() === 'pending' && (
+                          {request.status?.toLowerCase() === 'pending' && request.type === 'Agency' && (
                             <div className="profile-upgrade-notice profile-upgrade-notice-pending">
                               <AlertCircleIcon className="profile-upgrade-notice-icon" />
                               <div>
@@ -2461,6 +2641,135 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Revenue Tab - Only for Agency */}
+            {activeTab === 'revenue' && isAgency && (
+              <div className="profile-tab-content">
+                <div className="profile-revenue-section">
+                  <div className="profile-revenue-summary">
+                    <div className="profile-revenue-card">
+                      <h4>Doanh thu của bạn</h4>
+                      <p className="profile-revenue-amount">{formatPrice(filteredTotals.savings)}</p>
+                      <span className="profile-revenue-note">{revenueMonth === 0 ? `Năm ${revenueYear}` : `Tháng ${revenueMonth}/${revenueYear}`}</span>
+                    </div>
+                    <div className="profile-revenue-card">
+                      <h4>Tổng chi tiêu</h4>
+                      <p className="profile-revenue-amount">{formatPrice(filteredTotals.agencyPrice)}</p>
+                      <span className="profile-revenue-note">{revenueMonth === 0 ? `Năm ${revenueYear}` : `Tháng ${revenueMonth}/${revenueYear}`}</span>
+                    </div>
+                    <div className="profile-revenue-card">
+                      <h4>Giá gốc</h4>
+                      <p className="profile-revenue-amount">{formatPrice(filteredTotals.originalPrice)}</p>
+                      <span className="profile-revenue-note">Giá trước khi giảm</span>
+                    </div>
+                  </div>
+                  
+                  <div className="profile-revenue-chart-container">
+                    <div className="profile-revenue-chart-header">
+                      <h3>Biểu đồ tiết kiệm theo thời gian</h3>
+                      <div className="profile-revenue-filters">
+                        <select 
+                          className="profile-revenue-month-filter"
+                          value={revenueMonth}
+                          onChange={(e) => setRevenueMonth(Number(e.target.value))}
+                        >
+                          <option value={0}>Tất cả tháng</option>
+                          {['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'].map((month, index) => (
+                            <option key={index + 1} value={index + 1}>{month}</option>
+                          ))}
+                        </select>
+                        <select 
+                          className="profile-revenue-year-filter"
+                          value={revenueYear}
+                          onChange={(e) => setRevenueYear(Number(e.target.value))}
+                        >
+                          {[2023, 2024, 2025].map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    {loadingBookings ? (
+                      <div className="profile-revenue-loading">
+                        <LoadingSpinner />
+                        <p>Đang tải dữ liệu...</p>
+                      </div>
+                    ) : (
+                      <div className="profile-revenue-line-chart">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart
+                            data={filteredChartData}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                            <YAxis 
+                              stroke="#64748b" 
+                              fontSize={12}
+                              tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : `${(value / 1000).toFixed(0)}K`}
+                            />
+                            <Tooltip 
+                              formatter={(value: number) => formatPrice(value)}
+                              contentStyle={{ 
+                                backgroundColor: 'white', 
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                              }}
+                            />
+                            <Legend />
+                            <Line 
+                              type="monotone" 
+                              dataKey="Giá gốc" 
+                              stroke="#64748b" 
+                              strokeWidth={2}
+                              dot={{ fill: '#64748b', strokeWidth: 2 }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="Giá Agency" 
+                              stroke="#10b981" 
+                              strokeWidth={2}
+                              dot={{ fill: '#10b981', strokeWidth: 2 }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="Tiết kiệm" 
+                              stroke="#f59e0b" 
+                              strokeWidth={2}
+                              dot={{ fill: '#f59e0b', strokeWidth: 2 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    
+                    <div className="profile-revenue-fields">
+                      <div className="profile-revenue-field">
+                        <span className="profile-revenue-field-dot" style={{ backgroundColor: '#64748b' }}></span>
+                        <span className="profile-revenue-field-label">Giá gốc (100%)</span>
+                        <span className="profile-revenue-field-value">{formatPrice(filteredTotals.originalPrice)}</span>
+                      </div>
+                      <div className="profile-revenue-field">
+                        <span className="profile-revenue-field-dot" style={{ backgroundColor: '#10b981' }}></span>
+                        <span className="profile-revenue-field-label">Giá Agency (97%)</span>
+                        <span className="profile-revenue-field-value">{formatPrice(filteredTotals.agencyPrice)}</span>
+                      </div>
+                      <div className="profile-revenue-field">
+                        <span className="profile-revenue-field-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                        <span className="profile-revenue-field-label">Tiết kiệm (3%)</span>
+                        <span className="profile-revenue-field-value">{formatPrice(filteredTotals.savings)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="profile-revenue-info">
+                    <AlertCircleIcon className="profile-revenue-info-icon" />
+                    <p>Là Agency, bạn được hưởng ưu đãi giảm 3% trên tất cả các đặt dịch vụ. Dữ liệu được tính từ các đơn đặt dịch vụ đã hoàn thành hoặc đã xác nhận.</p>
+                  </div>
+                </div>
               </div>
             )}
 

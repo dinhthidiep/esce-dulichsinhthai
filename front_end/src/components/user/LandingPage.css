@@ -1276,8 +1276,17 @@
 .landing-page .review-stars {
   display: flex;
   gap: 0.25rem;
-  margin-bottom: var(--landing-spacing-md);
+  margin-bottom: 0.5rem;
   justify-content: center;
+}
+
+.landing-page .review-service-name {
+  font-size: 1rem;
+  color: #059669;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .landing-page .review-star {
@@ -1303,12 +1312,11 @@
 }
 
 .landing-page .review-text {
-  font-size: 1rem;
-  color: #475569;
-  line-height: 1.7;
-  margin-bottom: var(--landing-spacing-md);
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
   font-style: italic;
-  flex: 1;
 }
 
 .landing-page .review-divider {

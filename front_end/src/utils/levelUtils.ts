@@ -16,15 +16,15 @@ export const LEVEL_CONFIG: Record<UserLevel, LevelInfo> = {
     level: 'default',
     name: 'Mới bắt đầu',
     minAmount: 0,
-    maxAmount: 1000000,
+    maxAmount: 0,
     color: '#94a3b8', // Gray
     icon: '⭐',
   },
   bronze: {
     level: 'bronze',
     name: 'Đồng',
-    minAmount: 0,
-    maxAmount: 1000000,
+    minAmount: 1,
+    maxAmount: 999999,
     color: '#cd7f32', // Bronze
     icon: '🥉',
   },
@@ -32,7 +32,7 @@ export const LEVEL_CONFIG: Record<UserLevel, LevelInfo> = {
     level: 'silver',
     name: 'Bạc',
     minAmount: 1000000,
-    maxAmount: 3000000,
+    maxAmount: 2999999,
     color: '#c0c0c0', // Silver
     icon: '🥈',
   },
@@ -48,20 +48,32 @@ export const LEVEL_CONFIG: Record<UserLevel, LevelInfo> = {
 
 /**
  * Tính level của user dựa trên tổng tiền đã tiêu
- * Level 0 (default): 0 VNĐ (chưa chi tiêu)
- * Level 1 (bronze): > 0 và < 1 triệu
- * Level 2 (silver): >= 1 triệu và < 3 triệu
+ * Level 0 (default): < 1 triệu
+ * Level 1 (bronze): 0 - 999,999
+ * Level 2 (silver): 1,000,000 - 2,999,999
  * Level 3 (gold): >= 3 triệu trở lên
  */
 export const calculateLevel = (totalSpent: number): UserLevel => {
-  if (totalSpent >= LEVEL_CONFIG.gold.minAmount) {
+  if (totalSpent >= 3000000) {
     return 'gold'
-  } else if (totalSpent >= LEVEL_CONFIG.silver.minAmount) {
+  } else if (totalSpent >= 1000000) {
     return 'silver'
-  } else if (totalSpent > 0 && totalSpent < LEVEL_CONFIG.silver.minAmount) {
+  } else if (totalSpent > 0) {
     return 'bronze'
   }
   return 'default'
+}
+
+/**
+ * Convert level number (từ database) sang UserLevel string
+ */
+export const levelNumberToUserLevel = (levelNum: number): UserLevel => {
+  switch (levelNum) {
+    case 3: return 'gold'
+    case 2: return 'silver'
+    case 1: return 'bronze'
+    default: return 'default'
+  }
 }
 
 /**
@@ -80,50 +92,43 @@ export const getLevelInfo = (level: UserLevel): LevelInfo => {
  * Tính progress trong level hiện tại (0-100)
  */
 export const calculateProgress = (totalSpent: number, level: UserLevel): number => {
-  const levelInfo = LEVEL_CONFIG[level]
-  
   if (level === 'gold') {
-    // Level vàng không có max, progress dựa trên mốc 3M
-    const baseAmount = levelInfo.minAmount
-    const progressAmount = totalSpent - baseAmount
-    // Mỗi 2M thêm = 10% progress, tối đa 100%
-    const progress = Math.min((progressAmount / 2000000) * 10, 100)
-    return Math.max(0, Math.min(100, progress))
+    // Level vàng không có max, luôn 100%
+    return 100
   }
   
   if (level === 'default') {
-    // Level 0: 0 - 1 triệu
-    const nextAmount = 1000000
-    return Math.min(100, (totalSpent / nextAmount) * 100)
+    // Chưa chi tiêu, progress = 0
+    return 0
   }
   
   if (level === 'bronze') {
-    // Level 1: 0 - 1 triệu (tính từ 0)
-    const nextAmount = 1000000
-    return Math.min(100, (totalSpent / nextAmount) * 100)
+    // Đồng: 1 - 999,999 → tiến tới 1,000,000
+    const progress = (totalSpent / 1000000) * 100
+    return Math.max(0, Math.min(100, progress))
   }
   
-  // Level 2 (silver): 1 triệu - 3 triệu
-  const range = levelInfo.maxAmount - levelInfo.minAmount
-  const progressAmount = totalSpent - levelInfo.minAmount
-  const progress = (progressAmount / range) * 100
+  if (level === 'silver') {
+    // Bạc: 1,000,000 - 2,999,999 → tiến tới 3,000,000
+    const progressAmount = totalSpent - 1000000
+    const range = 3000000 - 1000000 // 2,000,000
+    const progress = (progressAmount / range) * 100
+    return Math.max(0, Math.min(100, progress))
+  }
   
-  return Math.max(0, Math.min(100, progress))
+  return 0
 }
 
 /**
  * Lấy số tiền cần để lên level tiếp theo
  */
 export const getNextLevelAmount = (currentLevel: UserLevel): number | null => {
-  if (currentLevel === 'gold') {
-    return null // Đã đạt level cao nhất
+  switch (currentLevel) {
+    case 'default': return 1 // Cần chi tiêu > 0 để lên Đồng
+    case 'bronze': return 1000000 // Cần 1 triệu để lên Bạc
+    case 'silver': return 3000000 // Cần 3 triệu để lên Vàng
+    case 'gold': return null // Đã đạt level cao nhất
+    default: return 1
   }
-  
-  const levels: UserLevel[] = ['default', 'bronze', 'silver', 'gold']
-  const currentIndex = levels.indexOf(currentLevel)
-  if (currentIndex < levels.length - 1) {
-    return LEVEL_CONFIG[levels[currentIndex + 1]].minAmount
-  }
-  return null
 }
 

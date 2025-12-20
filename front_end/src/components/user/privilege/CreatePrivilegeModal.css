@@ -330,3 +330,126 @@
     margin: 0.5rem;
   }
 }
+
+/* Image Upload Styles */
+.create-privilege-image-upload {
+  margin-top: 0.5rem;
+}
+
+.create-privilege-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+
+.create-privilege-image-placeholder:hover {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.create-privilege-image-placeholder span:first-child {
+  font-size: 2rem;
+}
+
+.create-privilege-image-placeholder span:last-child {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.create-privilege-image-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.create-privilege-image-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.create-privilege-remove-image {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.create-privilege-remove-image:hover {
+  background: #dc2626;
+}
+
+.create-privilege-remove-image svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Level Title */
+.create-privilege-level-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Summary Section */
+.create-privilege-summary {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.create-privilege-summary-title {
+  font-weight: 600;
+  color: #166534;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.create-privilege-summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.create-privilege-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.create-privilege-summary-item span:first-child {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.create-privilege-summary-item span:last-child {
+  color: #64748b;
+}

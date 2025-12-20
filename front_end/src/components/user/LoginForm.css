@@ -496,3 +496,31 @@
     font-size: 14px;
   }
 }
+
+/* Toggle Password Button */
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  z-index: 2;
+}
+
+.toggle-password-btn:hover {
+  transform: scale(1.1);
+}
+
+.toggle-password-btn:focus {
+  outline: none;
+}
+
+.input-wrapper.with-toggle input {
+  padding-right: 50px;
+}

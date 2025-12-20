@@ -423,3 +423,41 @@
 .reg-agency-back-to-home-button {
   margin-top: 1rem;
 }
+
+/* Pending Alert - Info Style */
+.reg-agency-pending-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.reg-agency-pending-alert-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.reg-agency-pending-alert-content {
+  flex: 1;
+}
+
+.reg-agency-pending-alert-content strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 0.375rem;
+}
+
+.reg-agency-pending-alert-content p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #1e3a8a;
+  line-height: 1.5;
+}

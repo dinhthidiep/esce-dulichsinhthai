@@ -175,18 +175,21 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
   }, []);
   
   // Filter and sort function for service combos
-  const applyServiceComboFilters = useCallback((comboList, nameFilter, statusFilter, order) => {
+  const applyServiceComboFilters = useCallback((comboList, searchFilter, statusFilter, order) => {
     if (!Array.isArray(comboList) || comboList.length === 0) {
       return [];
     }
     
     let filtered = [...comboList];
 
-    // Filter by name
-    if (nameFilter && nameFilter.trim() !== '') {
+    // Filter by name, address, or price
+    if (searchFilter && searchFilter.trim() !== '') {
+      const searchTerm = searchFilter.toLowerCase().trim();
       filtered = filtered.filter(s => {
         const name = (s.Name || s.name || '').toLowerCase();
-        return name.includes(nameFilter.toLowerCase().trim());
+        const address = (s.Address || s.address || '').toLowerCase();
+        const price = String(s.Price || s.price || '');
+        return name.includes(searchTerm) || address.includes(searchTerm) || price.includes(searchTerm);
       });
     }
 
@@ -285,14 +288,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
       isLastPage
     };
   }, [filteredServiceCombos, serviceComboItemsPerPage, serviceComboCurrentPage]);
-
-  // Handle service combo search
-  const handleServiceComboSearch = () => {
-    const filtered = applyServiceComboFilters(serviceCombos, serviceComboFilterName, serviceComboFilterStatus, serviceComboSortOrder);
-    setFilteredServiceCombos(filtered);
-    setServiceComboCurrentPage(1);
-    setServiceComboPageInput('');
-  };
 
   // Handle delete service combo - show confirmation modal
   const handleDeleteServiceCombo = (serviceComboId: number, comboName?: string) => {
@@ -1252,23 +1247,16 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
           <div className="combo-service-filter-container">
             <div className="combo-filter-row">
               <div className="combo-filter-field">
-                <label htmlFor="service-combo-filter-name">Lọc theo tên:</label>
                 <input
                   id="service-combo-filter-name"
                   type="text"
                   className="combo-filter-input"
-                  placeholder="Nhập tên combo..."
+                  placeholder="Tìm theo tên, địa điểm, giá..."
                   value={serviceComboFilterName}
                   onChange={(e) => setServiceComboFilterName(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleServiceComboSearch();
-                    }
-                  }}
                 />
               </div>
               <div className="combo-filter-field">
-                <label htmlFor="service-combo-filter-status">Trạng thái:</label>
                 <select
                   id="service-combo-filter-status"
                   className="combo-filter-select"
@@ -1282,7 +1270,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                 </select>
               </div>
               <div className="combo-filter-field">
-                <label htmlFor="service-combo-sort-order">Thứ tự:</label>
                 <select
                   id="service-combo-sort-order"
                   className="combo-filter-select"
@@ -1293,9 +1280,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                   <option value="oldest">Cũ nhất</option>
                 </select>
               </div>
-              <button className="combo-btn-search" onClick={handleServiceComboSearch}>
-                Tìm kiếm
-              </button>
             </div>
           </div>
 
@@ -1320,7 +1304,6 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                       if (isAbsolute) {
                         candidates.push(imageName);
                       } else {
-                        // Use relative paths cho FE và backend deploy
                         const backendRoot = API_BASE_URL.replace('/api', '');
                         candidates.push(`/img/uploads/${imageName}`);
                         candidates.push(`${backendRoot}/img/uploads/${imageName}`);
@@ -1331,16 +1314,28 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                       candidates.push(DEFAULT_IMAGE_URL);
                     }
                     
+                    const status = (s.Status || s.status || '').toLowerCase();
+                    const statusMeta: Record<string, { label: string; colorClass: string }> = {
+                      'open': { label: 'Đang mở', colorClass: 'status-open' },
+                      'mở': { label: 'Đang mở', colorClass: 'status-open' },
+                      'closed': { label: 'Đã đóng', colorClass: 'status-closed' },
+                      'đóng': { label: 'Đã đóng', colorClass: 'status-closed' },
+                      'canceled': { label: 'Đã hủy', colorClass: 'status-canceled' },
+                      'đã hủy': { label: 'Đã hủy', colorClass: 'status-canceled' },
+                      'pending': { label: 'Chờ duyệt', colorClass: 'status-pending' },
+                    };
+                    const meta = statusMeta[status] || { label: s.Status || s.status || 'N/A', colorClass: 'status-default' };
+                    
                     return (
                       <div key={s.Id || s.id} className="combo-servicecombo-card">
-                        <div className="combo-service-card-left">
-                          <div className="combo-service-image">
+                        <div className="combo-card-content">
+                          <div className="combo-card-preview">
                             <img
                               src={candidates[0]}
                               data-candidates={JSON.stringify(candidates)}
                               data-idx="0"
                               alt={s.Name || s.name}
-                              className="combo-service-image-img"
+                              className="combo-preview-img"
                               onError={(e) => {
                                 try {
                                   const list = JSON.parse((e.target as HTMLImageElement).dataset.candidates || '[]');
@@ -1358,32 +1353,64 @@ const ServiceComboManagement = forwardRef<ServiceComboManagementRef, ServiceComb
                               }}
                             />
                           </div>
-                          <div className="combo-service-details">
-                            <h3 className="combo-service-name">{s.Name || s.name}</h3>
-                            <p className="service-duration">
-                              Trong: {s.NumberOfDays || s.numberOfDays || 0} ngày {s.NumberOfNights || s.numberOfNights || 0} đêm
-                            </p>
-                            <p className="combo-service-status-gray">Trạng thái: {s.Status || s.status}</p>
-                            <p className="combo-service-price">Giá tiền: {(s.Price || s.price || 0).toLocaleString('vi-VN')} VND</p>
+                          
+                          <div className="combo-card-main">
+                            <div className="combo-card-header">
+                              <div className="combo-card-title-section">
+                                <div className="combo-card-title-row">
+                                  <h3 className="combo-service-name">{s.Name || s.name}</h3>
+                                </div>
+                                <p className="combo-card-date">Tạo lúc: {new Date(s.CreatedAt || s.createdAt || Date.now()).toLocaleString('vi-VN')}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="combo-card-info-box">
+                              {(s.Address || s.address) && (
+                                <div className="combo-info-row">
+                                  <span className="combo-info-icon location">📍</span>
+                                  <span className="combo-info-text">{s.Address || s.address}</span>
+                                </div>
+                              )}
+                              <div className="combo-info-row">
+                                <span className="combo-info-icon money">💰</span>
+                                <span className="combo-info-price">{(s.Price || s.price || 0).toLocaleString('vi-VN')} VND</span>
+                              </div>
+                              {(s.AvailableSlots || s.availableSlots) && (
+                                <div className="combo-info-row">
+                                  <span className="combo-info-icon slot">🎫</span>
+                                  <span className="combo-info-text">{s.AvailableSlots || s.availableSlots} chỗ</span>
+                                </div>
+                              )}
+                              {(s.Description || s.description) && (
+                                <p className="combo-info-description">
+                                  <span className="combo-info-label">Mô tả chi tiết:</span> {(s.Description || s.description).length > 150 
+                                    ? `${(s.Description || s.description).substring(0, 150)}...` 
+                                    : (s.Description || s.description)}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="combo-service-actions">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="btn-edit-service"
-                            onClick={() => handleEditServiceComboClick(s.Id || s.id)}
-                          >
-                            Chỉnh sửa
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="cancel-booking-btn"
-                            onClick={() => handleDeleteServiceCombo(s.Id || s.id, s.Name || s.name)}
-                          >
-                            Xóa
-                          </Button>
+                          
+                          <div className="combo-card-right">
+                            <div className="combo-service-actions">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="btn-edit-service"
+                                onClick={() => handleEditServiceComboClick(s.Id || s.id)}
+                              >
+                                ✏️ Chỉnh sửa
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="cancel-booking-btn"
+                                onClick={() => handleDeleteServiceCombo(s.Id || s.id, s.Name || s.name)}
+                              >
+                                🗑️ Xóa
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

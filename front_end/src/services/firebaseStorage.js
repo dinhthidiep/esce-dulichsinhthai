@@ -26,10 +26,10 @@ export const uploadImageToFirebase = async (file, folder = 'images') => {
     }
     */
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    // Validate file type - allow images and PDF for license files
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
-      throw new Error('Invalid file type. Only image files are allowed.');
+      throw new Error('Invalid file type. Only image files (JPG, PNG, GIF, WebP) and PDF are allowed.');
     }
 
     // Validate file size (5MB max)

@@ -54,7 +54,6 @@ const SubscriptionPackages = lazy(() => import('~/components/user/SubscriptionPa
 
 // Host Dashboard
 const HostDashboard = lazy(() => import('~/components/user/HostDashboard'))
-const AgencyDashboard = lazy(() => import('~/components/user/AgencyDashboard'))
 const UserCreateTour = lazy(() => import('~/components/user/CreateTour'))
 
 // User Management pages
@@ -137,15 +136,12 @@ function App() {
             <Route path="/host/coupons" element={<CouponManager />} />
             
             {/* ==================== AGENCY ROUTES ==================== */}
-            <Route path="/agency" element={<AgencyDashboard />} />
-            <Route path="/agency/dashboard" element={<AgencyDashboard />} />
             <Route path="/agency/tours" element={<ServiceComboManager />} />
             <Route path="/agency/bookings" element={<BookingManager />} />
             <Route path="/agency/revenue" element={<Revenue />} />
             
             {/* Legacy routes - giữ lại để tương thích */}
             <Route path="/host-dashboard" element={<HostDashboard />} />
-            <Route path="/agency-dashboard" element={<AgencyDashboard />} />
             <Route path="/create-tour" element={<UserCreateTour />} />
             
             {/* Quản lý dịch vụ */}

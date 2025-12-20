@@ -33,7 +33,7 @@ interface RevenueManagementProps {
 }
 
 // ========== MOCK DATA - Đặt USE_MOCK_DATA = true để xem demo ==========
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 const MOCK_PAYMENTS = [
   // Tháng 12/2025
@@ -67,7 +67,6 @@ const MOCK_PAYMENTS = [
 
 const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onError }) => {
   // Revenue states
-  const [revenueSubTab, setRevenueSubTab] = useState('revenue'); // 'revenue' or 'statistics'
   const [payments, setPayments] = useState<any[]>([]);
   const [chartViewBy, setChartViewBy] = useState('month'); // 'month' or 'year'
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -103,9 +102,9 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
     }
   }, []);
 
-  // Load payments from API
+  // Load completed bookings from API
   useEffect(() => {
-    const loadPayments = async () => {
+    const loadCompletedBookings = async () => {
       // Sử dụng mock data nếu USE_MOCK_DATA = true
       if (USE_MOCK_DATA) {
         console.log('📊 [RevenueManagement] Using MOCK_PAYMENTS data');
@@ -120,19 +119,23 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
           return;
         }
 
-        // Get payments for host's bookings
-        // First get host's service combos, then get bookings for those combos, then get payments
+        // Get host's service combos
         const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
         const serviceCombos = serviceCombosResponse.data || [];
         const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
         
         // Get bookings for each service combo
-        const allBookings: any[] = [];
+        const allCompletedBookings: any[] = [];
         for (const comboId of comboIds) {
           try {
             const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
             const comboBookings = bookingsResponse.data || [];
-            allBookings.push(...comboBookings);
+            // Filter only completed bookings
+            const completedBookings = comboBookings.filter((b: any) => {
+              const status = (b.Status || b.status || '').toLowerCase();
+              return status === 'completed';
+            });
+            allCompletedBookings.push(...completedBookings);
           } catch (err) {
             // Ignore 404 for combos without bookings
             if ((err as any)?.response?.status !== 404) {
@@ -141,33 +144,23 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
           }
         }
         
-        const bookingIds = allBookings.map((b: any) => b.Id || b.id);
+        // Transform bookings to payment-like format for chart compatibility
+        const revenueData = allCompletedBookings.map((booking: any) => ({
+          Id: booking.Id || booking.id,
+          Status: 'success', // Completed bookings are considered successful revenue
+          Amount: booking.TotalAmount || booking.totalAmount || 0,
+          PaymentDate: booking.CompletedDate || booking.completedDate || booking.BookingDate || booking.bookingDate
+        }));
 
-        // Get payments for each booking
-        const hostPayments: any[] = [];
-        for (const bookingId of bookingIds) {
-          try {
-            const paymentResponse = await axiosInstance.get(`${API_ENDPOINTS.PAYMENT}/status/${bookingId}`);
-            const payment = paymentResponse.data;
-            if (payment) {
-              hostPayments.push(payment);
-            }
-          } catch (err) {
-            // Ignore 404 for bookings without payments
-            if ((err as any)?.response?.status !== 404) {
-              console.error(`Error loading payment for booking ${bookingId}:`, err);
-            }
-          }
-        }
-
-        setPayments(hostPayments);
+        console.log('📊 [RevenueManagement] Loaded completed bookings:', revenueData.length);
+        setPayments(revenueData);
       } catch (err) {
-        console.error('Error loading payments:', err);
+        console.error('Error loading completed bookings:', err);
         setPayments([]);
       }
     };
 
-    loadPayments();
+    loadCompletedBookings();
   }, [getUserId]);
 
   // Revenue chart calculations
@@ -398,207 +391,98 @@ const RevenueManagement: React.FC<RevenueManagementProps> = ({ onSuccess, onErro
     }
   }), []);
 
-  // Load bookings for statistics
-  const [bookingsForStats, setBookingsForStats] = useState([]);
-
-  useEffect(() => {
-    const loadBookingsForStats = async () => {
-      try {
-        const userId = getUserId();
-        if (!userId) {
-          setBookingsForStats([]);
-          return;
-        }
-
-        // Get bookings for host's service combos
-        const serviceCombosResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
-        const serviceCombos = serviceCombosResponse.data || [];
-        const comboIds = serviceCombos.map((c: any) => c.Id || c.id).filter((id: any) => id);
-        
-        // Get bookings for each service combo
-        const allBookings: any[] = [];
-        for (const comboId of comboIds) {
-          try {
-            const bookingsResponse = await axiosInstance.get(`${API_ENDPOINTS.BOOKING}/combo/${comboId}`);
-            const comboBookings = bookingsResponse.data || [];
-            allBookings.push(...comboBookings);
-          } catch (err) {
-            // Ignore 404 for combos without bookings
-            if ((err as any)?.response?.status !== 404) {
-              console.error(`Error loading bookings for combo ${comboId}:`, err);
-            }
-          }
-        }
-        
-        setBookingsForStats(allBookings);
-      } catch (err) {
-        console.error('Error loading bookings for stats:', err);
-        setBookingsForStats([]);
-      }
-    };
-
-    loadBookingsForStats();
-  }, [getUserId]);
-
   return (
     <div className="revenue-mgr-revenue-management">
-      {/* Revenue Sub-tabs */}
-      <div className="service-view-toggle">
-        <button
-          className={`toggle-btn ${revenueSubTab === 'revenue' ? 'active' : ''}`}
-          onClick={() => setRevenueSubTab('revenue')}
-        >
-          Doanh thu
-        </button>
-        <button
-          className={`toggle-btn ${revenueSubTab === 'statistics' ? 'active' : ''}`}
-          onClick={() => setRevenueSubTab('statistics')}
-        >
-          Số liệu thống kê
-        </button>
-      </div>
-      
-      {revenueSubTab === 'revenue' ? (
-        <div className="revenue-mgr-revenue-content">
-          {/* Revenue Chart Section */}
-          <div className="revenue-mgr-revenue-chart-section">
-            <div className="revenue-mgr-revenue-chart-container">
-              {/* Chart View Filter */}
-              <div className="revenue-mgr-revenue-date-filter">
-                <div className="revenue-mgr-revenue-date-filter-group">
-                  <label htmlFor="chart-view-by" className="revenue-mgr-revenue-filter-label">Xem theo</label>
-                  <select
-                    id="chart-view-by"
-                    className="revenue-mgr-revenue-filter-select"
-                    value={chartViewBy}
-                    onChange={(e) => {
-                      setChartViewBy(e.target.value);
-                      // Reset to current month/year when switching
-                      if (e.target.value === 'month') {
-                        const now = new Date();
-                        setSelectedMonth(String(now.getMonth() + 1));
-                        setSelectedMonthYear(now.getFullYear().toString());
-                      } else {
-                        setSelectedYear(new Date().getFullYear().toString());
-                      }
-                    }}
-                  >
-                    <option value="month">Theo tháng</option>
-                    <option value="year">Theo năm</option>
-                  </select>
-                </div>
-                {chartViewBy === 'month' ? (
-                  <>
-                    <div className="revenue-mgr-revenue-date-filter-group">
-                      <label htmlFor="selected-month" className="revenue-mgr-revenue-filter-label">Tháng</label>
-                      <select
-                        id="selected-month"
-                        className="revenue-mgr-revenue-filter-select"
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                      >
-                        <option value="1">Tháng 1</option>
-                        <option value="2">Tháng 2</option>
-                        <option value="3">Tháng 3</option>
-                        <option value="4">Tháng 4</option>
-                        <option value="5">Tháng 5</option>
-                        <option value="6">Tháng 6</option>
-                        <option value="7">Tháng 7</option>
-                        <option value="8">Tháng 8</option>
-                        <option value="9">Tháng 9</option>
-                        <option value="10">Tháng 10</option>
-                        <option value="11">Tháng 11</option>
-                        <option value="12">Tháng 12</option>
-                      </select>
-                    </div>
-                    <div className="revenue-mgr-revenue-date-filter-group">
-                      <label htmlFor="selected-month-year" className="revenue-mgr-revenue-filter-label">Năm</label>
-                      <input
-                        type="number"
-                        id="selected-month-year"
-                        className="revenue-mgr-revenue-filter-date"
-                        min="2020"
-                        max={new Date().getFullYear()}
-                        value={selectedMonthYear}
-                        onChange={(e) => setSelectedMonthYear(e.target.value)}
-                      />
-                    </div>
-                  </>
-                ) : (
+      <div className="revenue-mgr-revenue-content">
+        {/* Revenue Chart Section */}
+        <div className="revenue-mgr-revenue-chart-section">
+          <div className="revenue-mgr-revenue-chart-container">
+            {/* Chart View Filter */}
+            <div className="revenue-mgr-revenue-date-filter">
+              <div className="revenue-mgr-revenue-date-filter-group">
+                <label htmlFor="chart-view-by" className="revenue-mgr-revenue-filter-label">Xem theo</label>
+                <select
+                  id="chart-view-by"
+                  className="revenue-mgr-revenue-filter-select"
+                  value={chartViewBy}
+                  onChange={(e) => {
+                    setChartViewBy(e.target.value);
+                    // Reset to current month/year when switching
+                    if (e.target.value === 'month') {
+                      const now = new Date();
+                      setSelectedMonth(String(now.getMonth() + 1));
+                      setSelectedMonthYear(now.getFullYear().toString());
+                    } else {
+                      setSelectedYear(new Date().getFullYear().toString());
+                    }
+                  }}
+                >
+                  <option value="month">Theo tháng</option>
+                  <option value="year">Theo năm</option>
+                </select>
+              </div>
+              {chartViewBy === 'month' ? (
+                <>
                   <div className="revenue-mgr-revenue-date-filter-group">
-                    <label htmlFor="selected-year" className="revenue-mgr-revenue-filter-label">Chọn năm</label>
+                    <label htmlFor="selected-month" className="revenue-mgr-revenue-filter-label">Tháng</label>
+                    <select
+                      id="selected-month"
+                      className="revenue-mgr-revenue-filter-select"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                    >
+                      <option value="1">Tháng 1</option>
+                      <option value="2">Tháng 2</option>
+                      <option value="3">Tháng 3</option>
+                      <option value="4">Tháng 4</option>
+                      <option value="5">Tháng 5</option>
+                      <option value="6">Tháng 6</option>
+                      <option value="7">Tháng 7</option>
+                      <option value="8">Tháng 8</option>
+                      <option value="9">Tháng 9</option>
+                      <option value="10">Tháng 10</option>
+                      <option value="11">Tháng 11</option>
+                      <option value="12">Tháng 12</option>
+                    </select>
+                  </div>
+                  <div className="revenue-mgr-revenue-date-filter-group">
+                    <label htmlFor="selected-month-year" className="revenue-mgr-revenue-filter-label">Năm</label>
                     <input
                       type="number"
-                      id="selected-year"
+                      id="selected-month-year"
                       className="revenue-mgr-revenue-filter-date"
                       min="2020"
                       max={new Date().getFullYear()}
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
+                      value={selectedMonthYear}
+                      onChange={(e) => setSelectedMonthYear(e.target.value)}
                     />
                   </div>
-                )}
-              </div>
-              <div className="revenue-mgr-revenue-chart-wrapper">
-                <Line 
-                  key={`chart-${chartViewBy}-${chartViewBy === 'month' ? `${selectedMonthYear}-${selectedMonth}` : selectedYear}`}
-                  data={chartConfig} 
-                  options={chartOptions} 
-                />
-              </div>
+                </>
+              ) : (
+                <div className="revenue-mgr-revenue-date-filter-group">
+                  <label htmlFor="selected-year" className="revenue-mgr-revenue-filter-label">Chọn năm</label>
+                  <input
+                    type="number"
+                    id="selected-year"
+                    className="revenue-mgr-revenue-filter-date"
+                    min="2020"
+                    max={new Date().getFullYear()}
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="revenue-mgr-revenue-chart-wrapper">
+              <Line 
+                key={`chart-${chartViewBy}-${chartViewBy === 'month' ? `${selectedMonthYear}-${selectedMonth}` : selectedYear}`}
+                data={chartConfig} 
+                options={chartOptions} 
+              />
             </div>
           </div>
         </div>
-      ) : (
-        <div className="revenue-mgr-revenue-content">
-          {/* Booking Statistics */}
-          <div className="revenue-mgr-revenue-stats-section">
-            <h3 className="revenue-mgr-revenue-section-title">Thống kê booking</h3>
-            <div className="revenue-mgr-revenue-stats-grid">
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Tổng số booking</div>
-                <div className="revenue-mgr-revenue-stat-value">{bookingsForStats.length}</div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã hoàn thành</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-completed">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'completed';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã chấp nhận</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-accepted">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'confirmed';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã từ chối</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-rejected">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'cancelled';
-                  }).length}
-                </div>
-              </div>
-              <div className="revenue-mgr-revenue-stat-card">
-                <div className="revenue-mgr-revenue-stat-label">Đã xử lý</div>
-                <div className="revenue-mgr-revenue-stat-value revenue-mgr-revenue-stat-pending">
-                  {bookingsForStats.filter(b => {
-                    const status = (b.Status || b.status || '').toLowerCase();
-                    return status === 'pending';
-                  }).length}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

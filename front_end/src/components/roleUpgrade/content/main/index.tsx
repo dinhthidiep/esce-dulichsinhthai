@@ -8,6 +8,7 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -120,10 +121,12 @@ export default function MainRoleUpgradeContent() {
     open: boolean
     request: AdminRequest | null
     comment: string
+    error: string
   }>({
     open: false,
     request: null,
-    comment: ''
+    comment: '',
+    error: ''
   })
   const [approveDialog, setApproveDialog] = useState<{
     open: boolean
@@ -136,10 +139,12 @@ export default function MainRoleUpgradeContent() {
     open: boolean
     imageUrl: string
     applicantName: string
+    loading: boolean
   }>({
     open: false,
     imageUrl: '',
-    applicantName: ''
+    applicantName: '',
+    loading: false
   })
 
   const loadAdminRequests = async () => {
@@ -194,7 +199,7 @@ export default function MainRoleUpgradeContent() {
   const handleRejectRequest = async () => {
     if (!rejectDialog.request) return
     if (!rejectDialog.comment.trim()) {
-      setAdminError('Vui lòng nhập lý do từ chối.')
+      setRejectDialog(prev => ({ ...prev, error: 'Vui lòng nhập lý do từ chối' }))
       return
     }
     
@@ -207,12 +212,12 @@ export default function MainRoleUpgradeContent() {
         type: request.type,
         comment: rejectDialog.comment.trim()
       })
-      setRejectDialog({ open: false, request: null, comment: '' })
+      setRejectDialog({ open: false, request: null, comment: '', error: '' })
       setAdminError(null)
       setAdminSuccess(`Đã từ chối yêu cầu nâng cấp ${request.type === 'Agency' ? 'Agency' : 'Host'} của ${request.applicantName}.`)
       await loadAdminRequests()
     } catch (error) {
-      setAdminError(error instanceof Error ? error.message : 'Không thể từ chối yêu cầu.')
+      setRejectDialog(prev => ({ ...prev, error: error instanceof Error ? error.message : 'Không thể từ chối yêu cầu.' }))
     } finally {
       setProcessingId(null)
     }
@@ -366,7 +371,8 @@ export default function MainRoleUpgradeContent() {
                               onClick={() => setLicenseDialog({
                                 open: true,
                                 imageUrl: request.licenseFile || '',
-                                applicantName: request.applicantName
+                                applicantName: request.applicantName,
+                                loading: false
                               })}
                               startIcon={<UploadFileIcon />}
                               disabled={!request.licenseFile}
@@ -398,7 +404,8 @@ export default function MainRoleUpgradeContent() {
                                     setRejectDialog({
                                       open: true,
                                       request,
-                                      comment: request.rejectComment ?? ''
+                                      comment: request.rejectComment ?? '',
+                                      error: ''
                                     })
                                   }
                                   fullWidth
@@ -469,7 +476,7 @@ export default function MainRoleUpgradeContent() {
       {/* Reject Dialog */}
       <Dialog
         open={rejectDialog.open}
-        onClose={() => setRejectDialog({ open: false, request: null, comment: '' })}
+        onClose={() => setRejectDialog({ open: false, request: null, comment: '', error: '' })}
         fullWidth
         maxWidth="sm"
       >
@@ -491,15 +498,18 @@ export default function MainRoleUpgradeContent() {
             onChange={(event) =>
               setRejectDialog((prev) => ({
                 ...prev,
-                comment: event.target.value
+                comment: event.target.value,
+                error: ''
               }))
             }
             fullWidth
             placeholder="Nhập lý do để người dùng biết cần bổ sung gì..."
+            error={!!rejectDialog.error}
+            helperText={rejectDialog.error}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejectDialog({ open: false, request: null, comment: '' })}>
+          <Button onClick={() => setRejectDialog({ open: false, request: null, comment: '', error: '' })}>
             Hủy
           </Button>
           <Button 
@@ -516,7 +526,7 @@ export default function MainRoleUpgradeContent() {
       {/* License Image Dialog */}
       <Dialog
         open={licenseDialog.open}
-        onClose={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '' })}
+        onClose={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '', loading: false })}
         maxWidth="md"
         fullWidth
       >
@@ -526,17 +536,27 @@ export default function MainRoleUpgradeContent() {
         <DialogContent>
           {licenseDialog.imageUrl ? (
             <Box sx={{ textAlign: 'center' }}>
-              <Box
-                component="img"
-                src={licenseDialog.imageUrl}
-                alt="Giấy phép"
-                sx={{
-                  maxWidth: '100%',
-                  maxHeight: '70vh',
-                  borderRadius: '1rem',
-                  objectFit: 'contain'
-                }}
-              />
+              {licenseDialog.loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Box
+                  component="img"
+                  src={licenseDialog.imageUrl}
+                  alt="Giấy phép"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                    console.error('Error loading license image:', licenseDialog.imageUrl)
+                    e.currentTarget.style.display = 'none'
+                  }}
+                  sx={{
+                    maxWidth: '100%',
+                    maxHeight: '70vh',
+                    borderRadius: '1rem',
+                    objectFit: 'contain'
+                  }}
+                />
+              )}
             </Box>
           ) : (
             <Alert severity="warning">Không có hình ảnh giấy phép.</Alert>
@@ -544,7 +564,7 @@ export default function MainRoleUpgradeContent() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button 
-            onClick={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '' })}
+            onClick={() => setLicenseDialog({ open: false, imageUrl: '', applicantName: '', loading: false })}
             sx={{ borderRadius: '0.8rem' }}
           >
             Đóng

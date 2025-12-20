@@ -1,17 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import axiosInstance from '~/utils/axiosInstance'
 import { API_ENDPOINTS } from '~/config/api'
-import { calculateLevel, getLevelInfo, calculateProgress, type UserLevel } from '~/utils/levelUtils'
-
-interface Booking {
-  Id?: number
-  id?: number
-  TotalAmount?: number
-  totalAmount?: number
-  Status?: string
-  status?: string
-  [key: string]: unknown
-}
+import { getLevelInfo, calculateProgress, calculateLevel, type UserLevel } from '~/utils/levelUtils'
 
 interface UserLevelData {
   totalSpent: number
@@ -25,91 +15,122 @@ interface UserLevelData {
 
 export const useUserLevel = (userId: number | null): UserLevelData => {
   const [totalSpent, setTotalSpent] = useState(0)
-  const [loading, setLoading] = useState(false) // Bắt đầu với false để tránh loading khi chưa có userId
+  const [level, setLevel] = useState<UserLevel>('default')
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTotalSpent = useCallback(async () => {
-    if (!userId) {
-      setTotalSpent(0)
-      setLoading(false)
-      return
-    }
+  useEffect(() => {
+    const fetchUserLevel = async () => {
+      if (!userId) {
+        setTotalSpent(0)
+        setLevel('default')
+        setLoading(false)
+        return
+      }
 
-    try {
-      setLoading(true)
-      setError(null)
+      try {
+        setLoading(true)
+        setError(null)
 
-      // Lấy tất cả bookings của user
-      const response = await axiosInstance.get<Booking[]>(`${API_ENDPOINTS.BOOKING}/user/${userId}`)
-      
-      if (response.data && Array.isArray(response.data)) {
-        // Tính tổng tiền từ các booking đã thanh toán (status = 'paid' hoặc 'completed')
-        const paidBookings = response.data.filter(
-          (booking) => {
-            const status = (booking.Status || booking.status || '').toLowerCase()
-            return status === 'paid' || status === 'completed' || status === 'success'
+        // Gọi API để lấy thông tin user mới nhất (bao gồm TotalSpent và Level)
+        const response = await axiosInstance.get(`${API_ENDPOINTS.USER}/${userId}`)
+        const userData = response.data
+
+        console.log('🔍 [useUserLevel] Raw API Response:', userData)
+
+        if (userData) {
+          // Lấy TotalSpent từ API response - check tất cả các casing có thể
+          const dbTotalSpent = userData.TotalSpent ?? userData.totalSpent ?? userData.totalspent ?? 0
+          const spent = Number(dbTotalSpent) || 0
+
+          // QUAN TRỌNG: Luôn tính level từ totalSpent để đảm bảo chính xác
+          // Không dựa vào database level vì có thể chưa được sync
+          const calculatedLevel = calculateLevel(spent)
+
+          console.log(`✅ [useUserLevel] API Response: TotalSpent=${spent}, Calculated Level=${calculatedLevel}`)
+
+          setTotalSpent(spent)
+          setLevel(calculatedLevel)
+
+          // Cập nhật localStorage để sync với các component khác (Header)
+          const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+          if (userInfoStr) {
+            try {
+              const userInfo = JSON.parse(userInfoStr)
+              const updatedUserInfo = {
+                ...userInfo,
+                TotalSpent: spent,
+                totalSpent: spent
+              }
+              if (localStorage.getItem('userInfo')) {
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
+              }
+              if (sessionStorage.getItem('userInfo')) {
+                sessionStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
+              }
+              // Dispatch event để Header cập nhật
+              window.dispatchEvent(new Event('userStorageChange'))
+            } catch (parseErr) {
+              console.warn('⚠️ [useUserLevel] Could not update localStorage:', parseErr)
+            }
           }
-        )
-
-        const total = paidBookings.reduce((sum, booking) => {
-          const amount = booking.TotalAmount || booking.totalAmount || 0
-          return sum + (typeof amount === 'number' ? amount : 0)
-        }, 0)
-
-        setTotalSpent(total)
-      } else {
-        setTotalSpent(0)
+        } else {
+          console.log('⚠️ [useUserLevel] No user data from API')
+          setTotalSpent(0)
+          setLevel('default')
+        }
+      } catch (err: any) {
+        console.error('❌ [useUserLevel] Error fetching user data:', err)
+        
+        // Fallback: đọc từ localStorage nếu API fail
+        try {
+          const userInfoStr = localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo')
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr)
+            const dbTotalSpent = userInfo.TotalSpent ?? userInfo.totalSpent ?? 0
+            const spent = Number(dbTotalSpent) || 0
+            const calculatedLevel = calculateLevel(spent)
+            
+            console.log(`⚠️ [useUserLevel] Fallback to localStorage: TotalSpent=${spent}, Level=${calculatedLevel}`)
+            
+            setTotalSpent(spent)
+            setLevel(calculatedLevel)
+            setError(null) // Clear error since we have fallback data
+          } else {
+            setError('Không thể tải thông tin level')
+            setTotalSpent(0)
+            setLevel('default')
+          }
+        } catch (fallbackErr) {
+          setError('Không thể tải thông tin level')
+          setTotalSpent(0)
+          setLevel('default')
+        }
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      const axiosError = err as { response?: { status?: number }; code?: string; message?: string }
-      const errorStatus = axiosError?.response?.status
-      const errorCode = axiosError?.code
-      
-      // 404 có nghĩa là user chưa có booking nào - đây là trường hợp bình thường, không phải lỗi
-      if (errorStatus === 404) {
-        // User chưa có booking, set totalSpent = 0 (đã là default)
-        setTotalSpent(0)
-        setError(null) // Không có lỗi
-      } else if (errorCode === 'ECONNABORTED' || axiosError?.message?.includes('timeout')) {
-        // Timeout - không hiển thị lỗi cho user, chỉ log và set giá trị mặc định
-        console.warn('⚠️ [useUserLevel] Request timeout, sử dụng giá trị mặc định')
-        setTotalSpent(0)
-        setError(null) // Không hiển thị lỗi timeout cho user
-      } else {
-        // Lỗi thực sự (network, server error, etc.)
-        console.error('Error fetching user spending:', err)
-        setError('Không thể tải thông tin level. Vui lòng thử lại sau.')
-        setTotalSpent(0)
-      }
-    } finally {
-      setLoading(false)
     }
+
+    fetchUserLevel()
   }, [userId])
 
-  useEffect(() => {
-    fetchTotalSpent()
-  }, [fetchTotalSpent])
-
-  // Tính toán level info - đảm bảo luôn có giá trị
-  const level = calculateLevel(totalSpent)
+  // Tính toán level info
   const levelInfo = getLevelInfo(level)
   const progress = calculateProgress(totalSpent, level)
-  const nextLevelAmount = level === 'gold' ? null : 
-    (level === 'default' ? 1000000 : 
-     level === 'bronze' ? 5000000 : 10000000)
 
-  // Đảm bảo levelInfo luôn có giá trị hợp lệ
-  if (!levelInfo || !levelInfo.icon || !levelInfo.name) {
-    console.warn('⚠️ [useUserLevel] levelInfo không hợp lệ, sử dụng default')
-    const defaultLevelInfo = getLevelInfo('default')
-    return {
-      totalSpent,
-      level: 'default',
-      levelInfo: defaultLevelInfo,
-      progress: 0,
-      nextLevelAmount: 1000000,
-      loading,
-      error,
+  // Tính nextLevelAmount dựa trên level hiện tại
+  const getNextLevelAmount = (): number | null => {
+    switch (level) {
+      case 'default':
+        return 1 // Cần chi tiêu > 0 để lên Đồng
+      case 'bronze':
+        return 1000000 // Cần 1 triệu để lên Bạc
+      case 'silver':
+        return 3000000 // Cần 3 triệu để lên Vàng
+      case 'gold':
+        return null
+      default:
+        return 1
     }
   }
 
@@ -118,9 +139,8 @@ export const useUserLevel = (userId: number | null): UserLevelData => {
     level,
     levelInfo,
     progress,
-    nextLevelAmount,
+    nextLevelAmount: getNextLevelAmount(),
     loading,
-    error,
+    error
   }
 }
-

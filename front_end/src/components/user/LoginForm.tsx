@@ -44,6 +44,7 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
   const [checkingBackend, setCheckingBackend] = useState(true)
   const [isBanned, setIsBanned] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Kiểm tra backend có đang chạy không
   useEffect(() => {
@@ -335,7 +336,7 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
               <label htmlFor="password">Mật khẩu</label>
               <div className="input-wrapper with-toggle">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={formData.password}
@@ -343,9 +344,14 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
                   placeholder="Nhập mật khẩu"
                   className={errors.password ? 'error' : ''}
                 />
-                <span className="toggle-icon" aria-hidden>
-                  👁️
-                </span>
+                <button
+                  type="button"
+                  className="toggle-password-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
               </div>
               {errors.password && <span className="error-message">{errors.password}</span>}
             </div>

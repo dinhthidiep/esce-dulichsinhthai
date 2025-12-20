@@ -75,25 +75,81 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
       try {
         setLoadingReviews(true);
         
-        // Get all reviews - backend should filter by host's service combos
-        // For now, get all reviews and filter client-side if needed
-        const response = await axiosInstance.get(API_ENDPOINTS.REVIEW);
-        const allReviews = response.data || [];
-        
-        // Filter reviews for host's service combos
-        // First get host's service combos, then filter reviews
+        // First get host's service combos
         const serviceComboResponse = await axiosInstance.get(`${API_ENDPOINTS.SERVICE_COMBO}/host/${userId}`);
         const hostCombos = serviceComboResponse.data || [];
         const hostComboIds = hostCombos.map(c => c.Id || c.id);
         
+        console.log('📊 [ReviewManagement] Host combos:', hostComboIds);
+        
+        if (hostComboIds.length === 0) {
+          console.log('📊 [ReviewManagement] No service combos found for host');
+          setReviews([]);
+          setLoadingReviews(false);
+          return;
+        }
+        
+        // Get all reviews
+        const response = await axiosInstance.get(API_ENDPOINTS.REVIEW);
+        const allReviews = response.data || [];
+        
+        console.log('📊 [ReviewManagement] All reviews:', allReviews.length);
+        
+        // Filter reviews for host's service combos
+        // Check both nested ServiceCombo and direct ServiceComboId from Booking
         const hostReviews = allReviews.filter(review => {
           const booking = review.Booking || review.booking;
-          const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo;
-          const comboId = serviceCombo?.Id || serviceCombo?.id;
-          return comboId && hostComboIds.includes(comboId);
+          if (!booking) {
+            console.log('📊 [ReviewManagement] Review has no booking:', review.Id || review.id);
+            return false;
+          }
+          
+          // Try to get ServiceComboId from different possible locations
+          const serviceComboId = 
+            booking.ServiceComboId || 
+            booking.serviceComboId || 
+            booking.ServicecomboId ||
+            booking.servicecomboId ||
+            (booking.ServiceCombo?.Id) || 
+            (booking.ServiceCombo?.id) ||
+            (booking.serviceCombo?.Id) || 
+            (booking.serviceCombo?.id);
+          
+          const isHostReview = serviceComboId && hostComboIds.includes(serviceComboId);
+          
+          if (!isHostReview) {
+            console.log('📊 [ReviewManagement] Review not for host combo:', {
+              reviewId: review.Id || review.id,
+              serviceComboId,
+              hostComboIds
+            });
+          }
+          
+          return isHostReview;
         });
         
-        setReviews(hostReviews);
+        // Enrich reviews with service combo info for display
+        const enrichedReviews = hostReviews.map(review => {
+          const booking = review.Booking || review.booking;
+          const serviceComboId = 
+            booking?.ServiceComboId || 
+            booking?.serviceComboId || 
+            booking?.ServicecomboId ||
+            booking?.servicecomboId;
+          
+          // Find the matching combo from host's combos
+          const matchingCombo = hostCombos.find(c => (c.Id || c.id) === serviceComboId);
+          
+          // If booking doesn't have ServiceCombo object, add it from our fetched data
+          if (matchingCombo && booking && !booking.ServiceCombo && !booking.serviceCombo) {
+            booking.ServiceCombo = matchingCombo;
+          }
+          
+          return review;
+        });
+        
+        console.log('📊 [ReviewManagement] Host reviews found:', enrichedReviews.length);
+        setReviews(enrichedReviews);
       } catch (err) {
         console.error('Error loading reviews:', err);
         if (onError) {
@@ -422,7 +478,13 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                 {paginatedReviews.map((review, index) => {
                   try {
                     const reviewId = review.Id || review.id || `review-${index}`;
-                    const serviceCombo = review.ServiceCombo || review.serviceCombo;
+                    const booking = review.Booking || review.booking;
+                    const serviceCombo = booking?.ServiceCombo || booking?.serviceCombo || review.ServiceCombo || review.serviceCombo;
+                    
+                    // Get reviewer info from review.User or booking.User
+                    const reviewer = review.User || review.user;
+                    const reviewerName = reviewer?.FullName || reviewer?.fullName || reviewer?.Name || reviewer?.name || 'Người dùng ẩn danh';
+                    const reviewerAvatar = reviewer?.Avatar || reviewer?.avatar;
                     
                     // Fallback nếu không có ServiceCombo - lấy từ ComboId
                     let serviceName = 'Dịch vụ không xác định';
@@ -438,10 +500,11 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                         imagePath = imagePath.split(',')[0].trim();
                       }
                       serviceImage = getImageUrl(imagePath, '/img/banahills.jpg');
-                    } else if (review.ComboId || review.comboId) {
+                    } else if (review.ComboId || review.comboId || booking?.ServiceComboId || booking?.serviceComboId) {
                       // Nếu chưa load được ServiceCombo, vẫn hiển thị review với thông tin cơ bản
-                      serviceName = `Dịch vụ #${review.ComboId || review.comboId}`;
-                      serviceId = review.ComboId || review.comboId;
+                      const comboId = review.ComboId || review.comboId || booking?.ServiceComboId || booking?.serviceComboId;
+                      serviceName = `Dịch vụ #${comboId}`;
+                      serviceId = comboId;
                     }
                     
                     const rating = review.Rating || review.rating || 0;
@@ -487,6 +550,23 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ onSuccess, onError 
                               ) : (
                                 <h3 className="review-mgr-review-service-title">{serviceName}</h3>
                               )}
+                              
+                              {/* Reviewer Info */}
+                              <div className="review-mgr-review-reviewer-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px' }}>
+                                {reviewerAvatar ? (
+                                  <img 
+                                    src={getImageUrl(reviewerAvatar, '/img/default-avatar.png')} 
+                                    alt={reviewerName}
+                                    style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
+                                    onError={(e) => { e.currentTarget.src = '/img/default-avatar.png'; }}
+                                  />
+                                ) : (
+                                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#64748b' }}>
+                                    {reviewerName.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <span style={{ fontSize: '0.875rem', color: '#475569', fontWeight: 500 }}>{reviewerName}</span>
+                              </div>
                               
                               {createdAt && (
                                 <div className="review-mgr-review-date-row">

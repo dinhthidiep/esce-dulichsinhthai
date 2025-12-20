@@ -29,6 +29,27 @@
   font-weight: 600;
 }
 
+.comp-services-instruction {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.comp-services-note {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: #f59e0b;
+  font-style: italic;
+}
+
+.comp-services-thanks {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #059669;
+  font-weight: 500;
+}
+
 .comp-limit-reached-alert {
   display: flex;
   align-items: center;
@@ -85,6 +106,66 @@
   opacity: 0.5;
   cursor: not-allowed;
   background: #f8fafc;
+}
+
+.comp-voucher-card.comp-locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.comp-voucher-card.comp-locked:hover {
+  border-color: #e2e8f0;
+  box-shadow: none;
+  transform: none;
+}
+
+.comp-voucher-card.comp-locked .comp-voucher-name {
+  color: #94a3b8;
+}
+
+.comp-voucher-card.comp-locked .comp-voucher-description {
+  color: #94a3b8;
+}
+
+.comp-checkbox-locked {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comp-voucher-locked-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.comp-voucher-target-audience {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.comp-target-label {
+  color: #94a3b8;
+}
+
+.comp-target-value {
+  color: #3b82f6;
+  font-weight: 500;
 }
 
 .comp-voucher-checkbox {
@@ -157,6 +238,16 @@
   font-weight: 600;
   color: #059669;
   margin-top: 0.25rem;
+}
+
+.comp-voucher-value.comp-free-tag {
+  display: inline-block;
+  background: #dcfce7;
+  color: #059669;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .comp-value-currency {
@@ -258,4 +349,64 @@
   .comp-voucher-value {
     font-size: 0.9375rem;
   }
+}
+
+
+/* Level Badges */
+.comp-target-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.comp-target-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.comp-target-role {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.comp-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.comp-level-badge[data-level="level1"] {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.comp-level-badge[data-level="level2"] {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
+  border: 1px solid #94a3b8;
+}
+
+.comp-level-badge[data-level="level3"] {
+  background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+  color: #854d0e;
+  border: 1px solid #eab308;
+}
+
+.comp-level-icon {
+  font-size: 0.875rem;
+}
+
+.comp-level-name {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 }

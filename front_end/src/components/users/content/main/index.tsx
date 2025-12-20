@@ -220,6 +220,8 @@ export default function MainUsersContent() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [banReason, setBanReason] = useState('')
   const [unbanReason, setUnbanReason] = useState('')
+  const [banError, setBanError] = useState('')
+  const [unbanError, setUnbanError] = useState('')
 
   // Helper function to reload users from API (only when necessary)
   const reloadUsersFromAPI = async (silent = false): Promise<boolean> => {
@@ -405,6 +407,7 @@ export default function MainUsersContent() {
   const handleBanAccount = (user: User) => {
     setSelectedUser(user)
     setBanReason('')
+    setBanError('')
     setBanDialogOpen(true)
   }
 
@@ -412,11 +415,17 @@ export default function MainUsersContent() {
   const handleConfirmBan = async () => {
     if (!selectedUser) return
 
+    if (!banReason.trim()) {
+      setBanError('Vui lòng nhập lý do khóa tài khoản')
+      return
+    }
+
     setActionLoading(true)
     setError(null)
+    setBanError('')
 
     try {
-      const reason = banReason.trim() || 'Tài khoản bị khóa bởi admin'
+      const reason = banReason.trim()
       await banAccount(selectedUser.id, reason)
 
       // Optimistic update - update local state immediately
@@ -437,11 +446,12 @@ export default function MainUsersContent() {
       setBanDialogOpen(false)
       setSelectedUser(null)
       setBanReason('')
+      setBanError('')
 
       // No need to reload - optimistic update is sufficient
     } catch (err: any) {
       console.error('Failed to ban account:', err)
-      setError(err.message || 'Không thể khóa tài khoản')
+      setBanError(err.message || 'Không thể khóa tài khoản')
       // On error, reload to get correct state from backend
       await reloadUsersFromAPI(true)
     } finally {
@@ -453,6 +463,7 @@ export default function MainUsersContent() {
   const handleUnbanAccount = (user: User) => {
     setSelectedUser(user)
     setUnbanReason('')
+    setUnbanError('')
     setUnbanDialogOpen(true)
   }
 
@@ -460,11 +471,17 @@ export default function MainUsersContent() {
   const handleConfirmUnban = async () => {
     if (!selectedUser) return
 
+    if (!unbanReason.trim()) {
+      setUnbanError('Vui lòng nhập lý do mở khóa tài khoản')
+      return
+    }
+
     setActionLoading(true)
     setError(null)
+    setUnbanError('')
 
     try {
-      const reason = unbanReason.trim() || 'Tài khoản đã được mở khóa bởi admin'
+      const reason = unbanReason.trim()
       await unbanAccount(selectedUser.id, reason)
 
       // Optimistic update - update local state immediately
@@ -487,11 +504,12 @@ export default function MainUsersContent() {
       setUnbanDialogOpen(false)
       setSelectedUser(null)
       setUnbanReason('')
+      setUnbanError('')
 
       // No need to reload - optimistic update is sufficient
     } catch (err: any) {
       console.error('Failed to unban account:', err)
-      setError(err.message || 'Không thể mở khóa tài khoản')
+      setUnbanError(err.message || 'Không thể mở khóa tài khoản')
       // On error, reload to get correct state from backend
       await reloadUsersFromAPI(true)
     } finally {
@@ -937,6 +955,7 @@ export default function MainUsersContent() {
           if (!actionLoading) {
             setBanDialogOpen(false)
             setBanReason('')
+            setBanError('')
             setSelectedUser(null)
             setError(null)
           }
@@ -983,7 +1002,12 @@ export default function MainUsersContent() {
                 label="Lý do khóa tài khoản"
                 placeholder="Nhập lý do khóa tài khoản (sẽ được gửi đến người dùng)..."
                 value={banReason}
-                onChange={(e) => setBanReason(e.target.value)}
+                onChange={(e) => {
+                  setBanReason(e.target.value)
+                  setBanError('')
+                }}
+                error={!!banError}
+                helperText={banError}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '1.2rem'
@@ -998,6 +1022,7 @@ export default function MainUsersContent() {
             onClick={() => {
               setBanDialogOpen(false)
               setBanReason('')
+              setBanError('')
               setSelectedUser(null)
               setError(null)
             }}
@@ -1033,6 +1058,7 @@ export default function MainUsersContent() {
           if (!actionLoading) {
             setUnbanDialogOpen(false)
             setUnbanReason('')
+            setUnbanError('')
             setSelectedUser(null)
             setError(null)
           }
@@ -1079,7 +1105,12 @@ export default function MainUsersContent() {
                 label="Lý do mở khóa tài khoản"
                 placeholder="Nhập lý do mở khóa tài khoản (sẽ được gửi đến người dùng)..."
                 value={unbanReason}
-                onChange={(e) => setUnbanReason(e.target.value)}
+                onChange={(e) => {
+                  setUnbanReason(e.target.value)
+                  setUnbanError('')
+                }}
+                error={!!unbanError}
+                helperText={unbanError}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '1.2rem'
@@ -1094,6 +1125,7 @@ export default function MainUsersContent() {
             onClick={() => {
               setUnbanDialogOpen(false)
               setUnbanReason('')
+              setUnbanError('')
               setSelectedUser(null)
               setError(null)
             }}

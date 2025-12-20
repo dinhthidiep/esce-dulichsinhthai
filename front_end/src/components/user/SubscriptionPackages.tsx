@@ -67,8 +67,8 @@ const SubscriptionPackages = () => {
     {
       level: 1,
       name: 'Đồng',
-      minAmount: 0,
-      maxAmount: 1000000,
+      minAmount: 1,
+      maxAmount: 999999,
       icon: '🥉',
       color: '#cd7f32',
       gradient: 'linear-gradient(135deg, #cd7f32 0%, #b87333 100%)',
@@ -84,7 +84,7 @@ const SubscriptionPackages = () => {
       level: 2,
       name: 'Bạc',
       minAmount: 1000000,
-      maxAmount: 3000000,
+      maxAmount: 2999999,
       icon: '🥈',
       color: '#c0c0c0',
       gradient: 'linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%)',
@@ -122,6 +122,9 @@ const SubscriptionPackages = () => {
   const getLevelRange = (level: LevelInfo) => {
     if (level.level === 0) {
       return '0 VNĐ'
+    }
+    if (level.level === 1) {
+      return `1 ₫ - ${formatPrice(level.maxAmount!)} VNĐ`
     }
     if (level.maxAmount === null) {
       return `Từ ${formatPrice(level.minAmount)} VNĐ trở lên`
