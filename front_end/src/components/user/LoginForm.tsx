@@ -24,8 +24,8 @@ interface LoginFormProps {
 const getRedirectPathByRole = (roleId: number | undefined): string => {
   switch (roleId) {
     case 1: return '/admin'    // Admin - redirect to admin panel
-    case 2: return '/host'     // Host - redirect to host panel
-    case 3: return '/agency'   // Agency - redirect to agency panel
+    case 2: return '/'     // Host - redirect to host panel
+    case 3: return '/'   // Agency - redirect to agency panel
     case 4: return '/'         // Tourist - redirect to home
     default: return '/'
   }
@@ -440,8 +440,3 @@ const LoginForm = ({ isAdmin = false }: LoginFormProps) => {
 }
 
 export default LoginForm
-
-
-
-
-
