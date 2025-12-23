@@ -1,14 +1,19 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Services
 {
     public interface IServiceComboService
     {
-        Task<IEnumerable<ServiceCombo>> GetAllAsync();
-        Task<ServiceCombo?> GetByIdAsync(int id);
+        Task<IEnumerable<ServiceCombo>> GetAllAsync(int? currentUserId = null);
+        Task<ServiceCombo?> GetByIdAsync(int id, int? currentUserId = null);
         Task<ServiceCombo?> GetByNameAsync(string name);
-        Task<ServiceCombo> CreateAsync(ServiceCombo serviceCombo);
-        Task<ServiceCombo?> UpdateAsync(int id, ServiceCombo serviceCombo);
+        Task<IEnumerable<ServiceCombo>> GetByHostIdAsync(int hostId);
+        Task<IEnumerable<ServiceCombo>> GetApprovedByHostIdAsync(int hostId);
+        Task<IEnumerable<ServiceCombo>> GetMyServiceCombosAsync(int hostId);
+        Task<ServiceCombo> CreateAsync(ServiceCombo ServiceCombo);
+        Task<ServiceCombo?> UpdateAsync(int id, ServiceCombo ServiceCombo);
         Task<ServiceCombo?> DeleteAsync(int id);
+        Task<bool> UpdateStatusAsync(int id, string status); // Admin duyệt ServiceCombo
+        Task<IEnumerable<ServiceCombo>> GetAllForAdminAsync(); // Admin xem tất cả (kể cả chưa duyệt)
     }
 }

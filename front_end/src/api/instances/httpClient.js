@@ -1,8 +1,15 @@
-const backend_url_https = "http://localhost:7267";
-const backend_url_http = "http://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+
+// Dùng chung domain với API deploy; bỏ đuôi /api để gọi các endpoint khác (ví dụ: /tour, /chathub, ...)
+const backend_url_https = API_BASE_URL.replace('/api', '');
+const backend_url_http = backend_url_https;
+
+// Kết nối trực tiếp backend
+export const DISABLE_BACKEND = false;
 
 export const getAuthToken = () => {
-  return localStorage.getItem("token") || "";
+  const stored = localStorage.getItem("token") || "";
+  return stored;
 };
 
 export const fetchWithFallback = async (url, options = {}, useHttps = true) => {
@@ -10,12 +17,27 @@ export const fetchWithFallback = async (url, options = {}, useHttps = true) => {
   const fullUrl = `${baseUrl}${url}`;
 
   try {
-    return await fetch(fullUrl, options);
+    // Log headers để debug Authorization
+    const hasAuth = options.headers?.Authorization || options.headers?.authorization;
+    console.log('[httpClient] Fetching:', { 
+      url, 
+      fullUrl, 
+      method: options.method || 'GET',
+      hasAuthHeader: !!hasAuth,
+      authHeaderPreview: hasAuth ? `${hasAuth.substring(0, 30)}...` : 'NONE'
+    });
+    const response = await fetch(fullUrl, options);
+    console.log('[httpClient] Response:', { url, status: response.status, ok: response.ok });
+    return response;
   } catch (error) {
+    console.error('[httpClient] Fetch error:', { url, fullUrl, error: error.message, useHttps });
+    
     if (
       useHttps &&
       (error.message.includes("Failed to fetch") ||
-        error.message.includes("NetworkError"))
+        error.message.includes("NetworkError") ||
+        error.message.includes("Network request failed") ||
+        error.name === "TypeError")
     ) {
       console.warn("HTTPS failed, trying HTTP fallback...");
       return fetchWithFallback(url, options, false);

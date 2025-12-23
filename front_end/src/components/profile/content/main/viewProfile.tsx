@@ -38,7 +38,7 @@ interface ViewProfileProps {
   onEdit: () => void
 }
 
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
+const StyledAvatar = styled(Avatar)(() => ({
   width: 150,
   height: 150,
   border: '4px solid white',
@@ -47,7 +47,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
   fontWeight: 600
 }))
 
-const InfoItem = styled(Box)(({ theme }) => ({
+const InfoItem = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1.6rem',
@@ -77,7 +77,24 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
       try {
         const userInfoStr = localStorage.getItem('userInfo')
         if (userInfoStr) {
-          return JSON.parse(userInfoStr)
+          const parsed = JSON.parse(userInfoStr)
+          // Normalize role information from localStorage
+          const roleObj = parsed?.Role ?? parsed?.role
+          return {
+            ...parsed,
+            roleName:
+              parsed?.roleName ??
+              parsed?.RoleName ??
+              roleObj?.Name ??
+              roleObj?.name ??
+              (typeof parsed?.Role === 'string' ? parsed.Role : null) ??
+              (typeof parsed?.role === 'string' ? parsed.role : null),
+            role:
+              parsed?.role ??
+              parsed?.Role ??
+              (typeof parsed?.Role === 'string' ? parsed.Role : null),
+            roleId: parsed?.roleId ?? parsed?.RoleId ?? roleObj?.Id ?? roleObj?.id ?? undefined
+          }
         }
       } catch (error) {
         console.error('Error parsing userInfo:', error)
@@ -86,7 +103,9 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
         id: 1,
         name: 'Admin',
         email: 'admin@example.com',
-        role: 'Admin'
+        role: 'Admin',
+        roleName: 'Admin',
+        roleId: 1
       }
     }
     setUserInfo(getUserInfo())
@@ -98,8 +117,11 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
       setIsLoading(true)
       setError(null)
       try {
+        console.log('[ViewProfile] Loading profile from API...')
         const profile = await fetchProfile()
         if (!isMounted) return
+
+        console.log('[ViewProfile] Profile received from API:', profile)
 
         const normalizedProfile: UserInfo = {
           id: profile.id,
@@ -113,13 +135,21 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
           dateOfBirth: profile.dob ?? undefined,
           dob: profile.dob ?? null,
           roleId: profile.roleId,
-          roleName: profile.roleName
+          roleName: profile.roleName,
+          // Also set role for backward compatibility
+          role:
+            profile.roleName ??
+            (profile.roleId
+              ? { 1: 'Admin', 2: 'Host', 3: 'Travel Agency', 4: 'Customer' }[profile.roleId] ||
+                'Customer'
+              : undefined)
         }
 
+        console.log('[ViewProfile] Normalized profile:', normalizedProfile)
         setUserInfo(normalizedProfile)
         localStorage.setItem('userInfo', JSON.stringify(normalizedProfile))
       } catch (err) {
-        console.error('Failed to load profile', err)
+        console.error('[ViewProfile] Failed to load profile', err)
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Không thể tải thông tin hồ sơ.')
         }
@@ -131,8 +161,22 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
     }
 
     loadProfile()
+
+    // Listen for profile update events
+    const handleProfileUpdate = () => {
+      console.log('[ViewProfile] Received userProfileUpdated event, reloading...')
+      if (isMounted) {
+        // Delay một chút để đảm bảo API đã update xong
+        setTimeout(() => {
+          loadProfile()
+        }, 500)
+      }
+    }
+    window.addEventListener('userProfileUpdated', handleProfileUpdate)
+
     return () => {
       isMounted = false
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate)
     }
   }, [])
 
@@ -146,13 +190,52 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
   }
 
   const getRoleDisplay = () => {
+    // Priority: roleName > role > map from roleId > default
     if (userInfo.roleName) {
       return userInfo.roleName
     }
     if (userInfo.role) {
       return userInfo.role
     }
-    return 'Admin'
+
+    // Map roleId to role name if available
+    if (userInfo.roleId) {
+      const roleMap: Record<number, string> = {
+        1: 'Admin',
+        2: 'Host',
+        3: 'Travel Agency',
+        4: 'Customer'
+      }
+      return roleMap[userInfo.roleId] || 'Customer'
+    }
+
+    // Try to get from localStorage userInfo
+    try {
+      const storedUserInfo = localStorage.getItem('userInfo')
+      if (storedUserInfo) {
+        const parsed = JSON.parse(storedUserInfo)
+        if (parsed.roleName) return parsed.roleName
+        if (parsed.role) return parsed.role
+        if (parsed.RoleName) return parsed.RoleName
+        if (parsed.Role) {
+          if (typeof parsed.Role === 'string') return parsed.Role
+          if (parsed.Role?.Name) return parsed.Role.Name
+        }
+        if (parsed.roleId) {
+          const roleMap: Record<number, string> = {
+            1: 'Admin',
+            2: 'Host',
+            3: 'Travel Agency',
+            4: 'Customer'
+          }
+          return roleMap[parsed.roleId] || 'Customer'
+        }
+      }
+    } catch (err) {
+      console.error('Error reading role from localStorage:', err)
+    }
+
+    return 'Customer'
   }
 
   const getGenderDisplay = () => {
@@ -197,7 +280,14 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
             position: 'relative'
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column'
+            }}
+          >
             <Box sx={{ position: 'relative', mb: 2 }}>
               <StyledAvatar
                 src={userInfo.avatar}
@@ -440,4 +530,3 @@ export default function ViewProfile({ onEdit }: ViewProfileProps) {
     </Box>
   )
 }
-

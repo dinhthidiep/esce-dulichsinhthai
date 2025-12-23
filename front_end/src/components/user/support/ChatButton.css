@@ -1,0 +1,103 @@
+.support-chat-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  /* Disable transition để tránh vấn đề với click events */
+  transition: none;
+  z-index: 9999;
+  pointer-events: auto;
+  /* Ngăn double-tap zoom trên mobile */
+  touch-action: manipulation;
+}
+
+.support-chat-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+}
+
+.support-chat-button:active {
+  transform: scale(0.95);
+}
+
+.support-chat-button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.support-chat-notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid white;
+}
+
+.support-chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* Tạm disable animation để debug */
+  /* animation: badge-pulse 2s infinite; */
+  pointer-events: none;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .support-chat-button {
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .support-chat-notification-dot {
+    width: 10px;
+    height: 10px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .support-chat-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    top: -2px;
+    right: -2px;
+  }
+}
+

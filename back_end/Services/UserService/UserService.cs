@@ -1,4 +1,5 @@
-﻿using ESCE_SYSTEM.DTOs.Users;
+
+using ESCE_SYSTEM.DTOs.Users;
 using ESCE_SYSTEM.Helper;
 using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Options;
@@ -15,6 +16,8 @@ using ESCE_SYSTEM.SignalR;
 using System.IO;
 using System.Text.Json;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace ESCE_SYSTEM.Services.UserService
@@ -31,14 +34,14 @@ namespace ESCE_SYSTEM.Services.UserService
         private readonly IHubContext<NotificationHub> _hubNotificationContext;
 
         public UserService(
-            ESCEContext dbContext,
-            EmailHelper emailHelper,
-            IUserContextService userContextService,
-            IOptions<JwtSetting> jwtSettings,
-            IOtpRepository otpRepository,
-            IWebHostEnvironment env,
-            IOptions<EmailConfig> emailConfigOptions,
-            IHubContext<NotificationHub> hubContext)
+          ESCEContext dbContext,
+          EmailHelper emailHelper,
+          IUserContextService userContextService,
+          IOptions<JwtSetting> jwtSettings,
+          IOtpRepository otpRepository,
+          IWebHostEnvironment env,
+          IOptions<EmailConfig> emailConfigOptions,
+          IHubContext<NotificationHub> hubContext)
         {
             _dbContext = dbContext;
             _emailHelper = emailHelper;
@@ -59,8 +62,8 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             return await _dbContext.Accounts
-                .Include(account => account.Role) //  THÊM INCLUDE ROLE
-                .FirstOrDefaultAsync(account => account.Email.ToLower() == userEmail.ToLower());
+              .Include(account => account.Role) //  THÊM INCLUDE ROLE
+                      .FirstOrDefaultAsync(account => account.Email.ToLower() == userEmail.ToLower());
         }
 
         public async Task CreateUserAsync(RegisterUserDto user, bool verifyOtp, bool isGoogleAccount, int roleId = 4)
@@ -89,9 +92,9 @@ namespace ESCE_SYSTEM.Services.UserService
             if (verifyOtp)
             {
                 var otp = await _dbContext.Otps
-                    .Where(otpRecord => otpRecord.Email == user.UserEmail)
-                    .OrderByDescending(otpRecord => otpRecord.CreatedAt)
-                    .FirstOrDefaultAsync();
+                  .Where(otpRecord => otpRecord.Email == user.UserEmail)
+                  .OrderByDescending(otpRecord => otpRecord.CreatedAt)
+                  .FirstOrDefaultAsync();
 
                 if (otp == null || otp.IsVerified != true)
                 {
@@ -112,8 +115,8 @@ namespace ESCE_SYSTEM.Services.UserService
 
             // Create password hash
             string passwordHash = isGoogleAccount
-                ? BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString())
-                : HashPassword(user.Password);
+        ? BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString())
+        : HashPassword(user.Password);
 
             // Create new account
 
@@ -127,7 +130,9 @@ namespace ESCE_SYSTEM.Services.UserService
                 IsActive = isGoogleAccount || !verifyOtp,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                
+                Level = 0,
+                TotalSpent = 0.00M
+
             };
 
             try
@@ -179,9 +184,9 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             var latestOtp = await _dbContext.Otps
-                .Where(otp => otp.User.Email.ToLower() == resetPassword.Email.ToLower())
-                .OrderByDescending(otp => otp.CreatedAt)
-                .FirstOrDefaultAsync();
+              .Where(otp => otp.User.Email.ToLower() == resetPassword.Email.ToLower())
+              .OrderByDescending(otp => otp.CreatedAt)
+              .FirstOrDefaultAsync();
 
             if (latestOtp == null)
             {
@@ -202,6 +207,12 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Check if new password is same as old password
+            if (VerifyPassword(resetPassword.NewPassword, user.PasswordHash))
+            {
+                throw new InvalidOperationException("Mật khẩu mới không được trùng với mật khẩu cũ");
+            }
+
             // Ensure entity is tracked by DbContext
             if (_dbContext.Entry(user).State == EntityState.Detached)
             {
@@ -217,19 +228,38 @@ namespace ESCE_SYSTEM.Services.UserService
 
             // Save changes to database
             var rowsAffected = await _dbContext.SaveChangesAsync();
-            
+
             if (rowsAffected == 0)
             {
                 throw new InvalidOperationException("Failed to save password changes to database");
             }
         }
 
-        public async Task<List<Account>> GetAllUsersAsync()
+        public async Task<List<UserResponseDto>> GetAllUsersAsync()
         {
+            // Đảm bảo Include(account => account.Role) để truy cập Role.Name
             return await _dbContext.Accounts
-                .Include(account => account.Role)
-                .OrderByDescending(account => account.CreatedAt)
-                .ToListAsync();
+        .Include(account => account.Role)
+        .OrderByDescending(account => account.CreatedAt)
+        .Select(account => new UserResponseDto // Ánh xạ sang DTO
+        {
+            Id = account.Id,
+            Name = account.Name,
+            Email = account.Email,
+            Avatar = account.Avatar,
+            Phone = account.Phone,
+            Dob = account.Dob,
+            Gender = account.Gender,
+            Address = account.Address,
+            RoleId = account.RoleId,
+            // Lấy Tên Role từ đối tượng Role đã được Include
+            RoleName = account.Role.Name,
+            IsActive = account.IsActive,
+            IS_BANNED = account.IS_BANNED,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt
+        })
+        .ToListAsync();
         }
 
         public async Task<Account> UpdateProfileAsync(int userId, UpdateProfileDto updateDto)
@@ -240,7 +270,7 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             var user = await _dbContext.Accounts
-                .FirstOrDefaultAsync(account => account.Id == userId);
+              .FirstOrDefaultAsync(account => account.Id == userId);
 
             if (user == null)
             {
@@ -286,10 +316,10 @@ namespace ESCE_SYSTEM.Services.UserService
                 }
                 // Thử các định dạng khác
                 else if (DateTime.TryParseExact(updateDto.DOB, new[]
-                {
-            "dd/MM/yyyy", "MM/dd/yyyy", "dd-MM-yyyy", "MM-dd-yyyy",
-            "yyyy/MM/dd", "dd MMM yyyy", "dd MMMM yyyy"
-        }, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateOfBirth))
+        {
+      "dd/MM/yyyy", "MM/dd/yyyy", "dd-MM-yyyy", "MM-dd-yyyy",
+      "yyyy/MM/dd", "dd MMM yyyy", "dd MMMM yyyy"
+    }, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateOfBirth))
                 {
                     parseSuccess = true;
                 }
@@ -312,8 +342,8 @@ namespace ESCE_SYSTEM.Services.UserService
                 else
                 {
                     throw new ArgumentException(
-                        $"Invalid date format for Date of Birth: '{updateDto.DOB}'. " +
-                        "Please use one of these formats: yyyy-MM-dd, dd/MM/yyyy, MM/dd/yyyy, dd-MM-yyyy"
+                      $"Invalid date format for Date of Birth: '{updateDto.DOB}'. " +
+                      "Please use one of these formats: yyyy-MM-dd, dd/MM/yyyy, MM/dd/yyyy, dd-MM-yyyy"
                     );
                 }
             }
@@ -345,61 +375,58 @@ namespace ESCE_SYSTEM.Services.UserService
 
             var account = await GetAccountByIdAsync(id);
 
-            if (account.IsActive == false || account.IsBanned)
+            if (account.IS_BANNED)
             {
                 throw new InvalidOperationException("Account is already banned");
             }
 
             account.IsActive = false;
-            account.IsBanned = true;
+            account.IS_BANNED = true;
             account.UpdatedAt = DateTime.UtcNow;
 
             await _dbContext.SaveChangesAsync();
 
             await SendUserEmailAsync(account, "BanAccount.html",
-                "NOTIFICATION: Your account has been BANNED", reason);
+              "THÔNG BÁO: Tài khoản của bạn đã bị khóa", reason);
 
             await SendWebNotificationAsync(account, "Ban", "Account",
-                accountId, $"Your account has been banned. Reason: {reason}");
+              accountId, $"Tài khoản của bạn đã bị khóa. Lý do: {reason}");
         }
 
         public async Task UnbanAccount(string accountId)
         {
             if (!int.TryParse(accountId, out int id))
             {
-                throw new ArgumentException($"Invalid account ID: {accountId}");
+                throw new ArgumentException($"ID tài khoản không hợp lệ: {accountId}");
             }
 
             var account = await GetAccountByIdAsync(id);
 
-            if (account.IsActive == true && !account.IsBanned)
+            if (!account.IS_BANNED)
             {
-                throw new InvalidOperationException("Account is not banned");
+                throw new InvalidOperationException("Tài khoản không bị khóa");
             }
 
             account.IsActive = true;
-            account.IsBanned = false;
+            account.IS_BANNED = false;
             account.UpdatedAt = DateTime.UtcNow;
 
             await _dbContext.SaveChangesAsync();
 
             await SendUserEmailAsync(account, "UnbanAccount.html",
-                "NOTIFICATION: Your account has been RESTORED");
+              "THÔNG BÁO: Tài khoản của bạn đã được khôi phục");
 
             await SendWebNotificationAsync(account, "Unban", "Account",
-                accountId, "Your account has been unbanned");
+              accountId, "Tài khoản của bạn đã được mở khóa");
         }
 
-        public async Task<Account> GetAccountById(int accountId)
-        {
-            return await GetAccountByIdAsync(accountId);
-        }
-
+        // KHÔI PHỤC: Phương thức GetAccountByIdAsync trả về Entity Model
+        // (Đã fix lỗi CS0029, CS1503 trong Ban/UnbanAccount)
         public async Task<Account> GetAccountByIdAsync(int accountId)
         {
             var account = await _dbContext.Accounts
-                .Include(account => account.Role)
-                .FirstOrDefaultAsync(account => account.Id == accountId);
+              .Include(account => account.Role)
+              .FirstOrDefaultAsync(account => account.Id == accountId);
 
             if (account == null)
             {
@@ -408,6 +435,45 @@ namespace ESCE_SYSTEM.Services.UserService
 
             return account;
         }
+
+        // TRIỂN KHAI: Phương thức DTO mới cho Controller
+        // (Đã fix lỗi CS0535, CS0103 trong Controller GetUserById)
+        public async Task<UserResponseDto> GetUserDtoByIdAsync(int accountId)
+        {
+            // Sử dụng Projection (Select) để trả về DTO với đầy đủ thông tin
+            var userDto = await _dbContext.Accounts
+        .Where(account => account.Id == accountId)
+        .Include(account => account.Role)
+        .Select(account => new UserResponseDto
+        {
+            Id = account.Id,
+            Name = account.Name,
+            Email = account.Email,
+            Avatar = account.Avatar,
+            Phone = account.Phone,
+            Dob = account.Dob,
+            Gender = account.Gender,
+            Address = account.Address,
+            RoleId = account.RoleId,
+            RoleName = account.Role.Name,
+            IsActive = account.IsActive,
+            IS_BANNED = account.IS_BANNED,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Level = account.Level,
+            TotalSpent = account.TotalSpent
+        })
+        .FirstOrDefaultAsync();
+
+            if (userDto == null)
+            {
+                throw new InvalidOperationException($"Account not found with ID: {accountId}");
+            }
+
+            return userDto;
+        }
+
+
         #endregion
 
         #region OTP Management
@@ -482,9 +548,9 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             var latestOtp = await _dbContext.Otps
-                .Where(otp => otp.Email != null && otp.Email.ToLower() == verifyOtpDto.Email.ToLower())
-                .OrderByDescending(otp => otp.CreatedAt)
-                .FirstOrDefaultAsync();
+              .Where(otp => otp.Email != null && otp.Email.ToLower() == verifyOtpDto.Email.ToLower())
+              .OrderByDescending(otp => otp.CreatedAt)
+              .FirstOrDefaultAsync();
 
             // Fallback: nếu OTP quên mật khẩu trước đây không lưu Email, tìm theo UserId
             if (latestOtp == null)
@@ -493,9 +559,9 @@ namespace ESCE_SYSTEM.Services.UserService
                 if (user != null)
                 {
                     latestOtp = await _dbContext.Otps
-                        .Where(otp => otp.UserId == user.Id)
-                        .OrderByDescending(otp => otp.CreatedAt)
-                        .FirstOrDefaultAsync();
+                      .Where(otp => otp.UserId == user.Id)
+                      .OrderByDescending(otp => otp.CreatedAt)
+                      .FirstOrDefaultAsync();
                 }
             }
 
@@ -523,8 +589,8 @@ namespace ESCE_SYSTEM.Services.UserService
         public async Task<List<AgencyCertificateResponseDto>> GetAllAgencyCertificatesAsync(string status = null)
         {
             var query = _dbContext.AgencieCertificates
-                .Include(agencyCertificate => agencyCertificate.Account)
-                .AsQueryable();
+              .Include(agencyCertificate => agencyCertificate.Account)
+              .AsQueryable();
 
             if (!string.IsNullOrEmpty(status) && status != "All")
             {
@@ -532,8 +598,8 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             var certificates = await query
-                .OrderByDescending(agencyCertificate => agencyCertificate.CreatedAt)
-                .ToListAsync();
+              .OrderByDescending(agencyCertificate => agencyCertificate.CreatedAt)
+              .ToListAsync();
 
             return certificates.Select(agencyCertificate => new AgencyCertificateResponseDto
             {
@@ -547,9 +613,8 @@ namespace ESCE_SYSTEM.Services.UserService
                 Status = agencyCertificate.Status,
                 RejectComment = agencyCertificate.RejectComment,
 
-                // --- KHẮC PHỤC LỖI CS0104 & CS8601 ---
-                ReviewComments = JsonSerializer.Deserialize<List<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>>(agencyCertificate.ReviewComments)
-                                 ?? new List<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>(), // Chỉ định rõ Namespace và dùng ??
+                // --- FIX: Xử lý ReviewComments an toàn ---
+                ReviewComments = ParseReviewComments<ESCE_SYSTEM.DTOs.Users.AgencyCertificateReViewComment>(agencyCertificate.ReviewComments),
 
                 CreatedAt = agencyCertificate.CreatedAt,
                 UpdatedAt = agencyCertificate.UpdatedAt,
@@ -561,8 +626,8 @@ namespace ESCE_SYSTEM.Services.UserService
         public async Task<List<HostCertificateResponseDto>> GetAllHostCertificatesAsync(string status = null)
         {
             var query = _dbContext.HostCertificates
-                .Include(hostCertificate => hostCertificate.Host)
-                .AsQueryable();
+              .Include(hostCertificate => hostCertificate.Host)
+              .AsQueryable();
 
             if (!string.IsNullOrEmpty(status) && status != "All")
             {
@@ -570,8 +635,8 @@ namespace ESCE_SYSTEM.Services.UserService
             }
 
             var certificates = await query
-                .OrderByDescending(hostCertificate => hostCertificate.CreatedAt)
-                .ToListAsync();
+              .OrderByDescending(hostCertificate => hostCertificate.CreatedAt)
+              .ToListAsync();
 
             return certificates.Select(hostCertificate => new HostCertificateResponseDto
             {
@@ -584,9 +649,8 @@ namespace ESCE_SYSTEM.Services.UserService
                 Status = hostCertificate.Status,
                 RejectComment = hostCertificate.RejectComment,
 
-                // --- KHẮC PHỤC LỖI CS0104 & CS8601 ---
-                ReviewComments = JsonSerializer.Deserialize<List<HostCertificateReViewComment>>(hostCertificate.ReviewComments)
-                                 ?? new List<HostCertificateReViewComment>(), // Chỉ định rõ kiểu và dùng ??
+                // --- FIX: Xử lý ReviewComments an toàn ---
+                ReviewComments = ParseReviewComments<HostCertificateReViewComment>(hostCertificate.ReviewComments),
 
                 CreatedAt = hostCertificate.CreatedAt,
                 UpdatedAt = hostCertificate.UpdatedAt,
@@ -602,30 +666,70 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(requestDto.CompanyName))
+            {
+                throw new ArgumentException("Tên công ty không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Phone))
+            {
+                throw new ArgumentException("Số điện thoại không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Email))
+            {
+                throw new ArgumentException("Email không được để trống");
+            }
+
             var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Kiểm tra user đã là Agency chưa
+            if (user.RoleId == 3) // Assuming RoleId 3 is Agency
+            {
+                throw new InvalidOperationException("Bạn đã là Agency rồi");
+            }
+
+            // Kiểm tra đã có certificate pending chưa
+            var existingCertificate = await _dbContext.AgencieCertificates
+                .FirstOrDefaultAsync(c => c.AccountId == userId && (c.Status == "Pending" || c.Status == "Review"));
+            
+            if (existingCertificate != null)
+            {
+                throw new InvalidOperationException("Bạn đã có yêu cầu nâng cấp đang chờ xử lý. Vui lòng đợi Admin xét duyệt.");
+            }
+
+            // Xử lý file license - lưu base64 thành file thực
+            var licenseFilePath = await SaveBase64FileAsync(requestDto.LicenseFile, "certificates/agency", $"agency_{userId}");
+
             var agencyCertificate = new Models.AgencieCertificate
             {
                 AccountId = userId,
                 Status = "Pending",
-                Companyname = requestDto.CompanyName,
-                LicenseFile = requestDto.LicenseFile,
-                Phone = requestDto.Phone,
-                Email = requestDto.Email,
-                Website = requestDto.Website,
+                Companyname = requestDto.CompanyName.Trim(),
+                LicenseFile = licenseFilePath,
+                Phone = requestDto.Phone.Trim(),
+                Email = requestDto.Email.Trim(),
+                Website = requestDto.Website?.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.AgencieCertificates.Add(agencyCertificate);
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                _dbContext.AgencieCertificates.Add(agencyCertificate);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"[RequestUpgradeToAgencyAsync] DbUpdateException: {ex.InnerException?.Message ?? ex.Message}");
+                throw new InvalidOperationException($"Không thể tạo yêu cầu nâng cấp: {ex.InnerException?.Message ?? ex.Message}");
+            }
 
             await SendWebNotificationAsync(user, "Pending", "Agency Certificate", agencyCertificate.AgencyId.ToString(),
-                $"User {user.Name} has submitted an upgrade request to Agency.");
+              $"Người dùng {user.Name} đã gửi yêu cầu nâng cấp lên Agency.");
         }
 
         public async Task RequestUpgradeToHostAsync(int userId, RequestHostUpgradeDto requestDto)
@@ -635,34 +739,154 @@ namespace ESCE_SYSTEM.Services.UserService
                 throw new ArgumentNullException(nameof(requestDto));
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(requestDto.BusinessName))
+            {
+                throw new ArgumentException("Tên doanh nghiệp không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Phone))
+            {
+                throw new ArgumentException("Số điện thoại không được để trống");
+            }
+            if (string.IsNullOrWhiteSpace(requestDto.Email))
+            {
+                throw new ArgumentException("Email không được để trống");
+            }
+
             var user = await _dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == userId);
             if (user == null)
             {
                 throw new InvalidOperationException("User does not exist");
             }
 
+            // Kiểm tra user đã là Host chưa
+            if (user.RoleId == 2) // Assuming RoleId 2 is Host
+            {
+                throw new InvalidOperationException("Bạn đã là Host rồi");
+            }
+
+            // Kiểm tra đã có certificate pending chưa
+            var existingCertificate = await _dbContext.HostCertificates
+                .FirstOrDefaultAsync(c => c.HostId == userId && (c.Status == "Pending" || c.Status == "Review"));
+            
+            if (existingCertificate != null)
+            {
+                throw new InvalidOperationException("Bạn đã có yêu cầu nâng cấp đang chờ xử lý. Vui lòng đợi Admin xét duyệt.");
+            }
+
+            // Xử lý file license - lưu base64 thành file thực
+            var licenseFilePath = await SaveBase64FileAsync(requestDto.BusinessLicenseFile, "certificates/host", $"host_{userId}");
+
             var hostCertificate = new Models.HostCertificate
             {
                 HostId = userId,
                 Status = "Pending",
-                BusinessLicenseFile = requestDto.BusinessLicenseFile,
-                Phone = requestDto.Phone,
-                Email = requestDto.Email,
-                BusinessName = requestDto.BusinessName,
+                BusinessLicenseFile = licenseFilePath,
+                Phone = requestDto.Phone.Trim(),
+                Email = requestDto.Email.Trim(),
+                BusinessName = requestDto.BusinessName.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.HostCertificates.Add(hostCertificate);
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                _dbContext.HostCertificates.Add(hostCertificate);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"[RequestUpgradeToHostAsync] DbUpdateException: {ex.InnerException?.Message ?? ex.Message}");
+                throw new InvalidOperationException($"Không thể tạo yêu cầu nâng cấp: {ex.InnerException?.Message ?? ex.Message}");
+            }
 
             await SendWebNotificationAsync(user, "Pending", "Host Certificate", hostCertificate.CertificateId.ToString(),
-                $"User {user.Name} has submitted an upgrade request to Host.");
+              $"Người dùng {user.Name} đã gửi yêu cầu nâng cấp lên Host.");
+        }
+
+        /// <summary>
+        /// Lưu file base64 thành file thực trong wwwroot/uploads
+        /// </summary>
+        private async Task<string> SaveBase64FileAsync(string base64Data, string subFolder, string filePrefix)
+        {
+            // Nếu không có data hoặc không phải base64, trả về placeholder
+            if (string.IsNullOrWhiteSpace(base64Data) || base64Data == "pending_upload")
+            {
+                return "pending_upload";
+            }
+
+            // Nếu không phải base64 (có thể là URL), trả về nguyên
+            if (!base64Data.StartsWith("data:"))
+            {
+                return base64Data;
+            }
+
+            try
+            {
+                // Parse base64 data
+                // Format: data:image/jpeg;base64,/9j/4AAQ...
+                var parts = base64Data.Split(',');
+                if (parts.Length != 2)
+                {
+                    return "pending_upload";
+                }
+
+                var header = parts[0]; // data:image/jpeg;base64
+                var data = parts[1];   // actual base64 data
+
+                // Xác định extension từ MIME type
+                var extension = ".jpg"; // default
+                if (header.Contains("image/png"))
+                    extension = ".png";
+                else if (header.Contains("image/jpeg") || header.Contains("image/jpg"))
+                    extension = ".jpg";
+                else if (header.Contains("application/pdf"))
+                    extension = ".pdf";
+
+                // Tạo tên file unique
+                var fileName = $"{filePrefix}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+
+                // Tạo đường dẫn thư mục
+                var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", subFolder);
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Lưu file
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                var fileBytes = Convert.FromBase64String(data);
+                await File.WriteAllBytesAsync(filePath, fileBytes);
+
+                // Trả về đường dẫn relative để lưu vào database
+                return $"/uploads/{subFolder}/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SaveBase64FileAsync] Error saving file: {ex.Message}");
+                return "pending_upload";
+            }
         }
 
         public async Task ApproveUpgradeCertificateAsync(ApproveCertificateDto dto)
         {
             var (certificate, user, newRoleId, objectType) = await GetCertificateAndUserForProcessing(dto.CertificateId, dto.Type);
+
+            // Kiểm tra payment cho Agency upgrade (Host upgrade miễn phí)
+            if (dto.Type == CertificateType.Agency)
+            {
+                var payment = await _dbContext.Payments
+                    .Where(p => p.UserId == user.Id 
+                        && p.PaymentType == "UpgradeAgency" 
+                        && p.Status == "success")
+                    .OrderByDescending(p => p.PaymentDate)
+                    .FirstOrDefaultAsync();
+
+                if (payment == null)
+                {
+                    throw new InvalidOperationException("Cannot approve Agency upgrade. Payment not completed. User must complete payment first.");
+                }
+            }
 
             certificate.Status = "Approved";
             certificate.UpdatedAt = DateTime.UtcNow;
@@ -672,12 +896,20 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "ApproveCertificate.html",
-                "NOTIFICATION: Role upgrade request has been APPROVED");
+              "THÔNG BÁO: Yêu cầu nâng cấp vai trò đã được duyệt");
 
             await SendWebNotificationAsync(user, "Approved", objectType,
-                dto.CertificateId.ToString(),
-                $"Your {objectType} upgrade request has been approved successfully.");
+              dto.CertificateId.ToString(),
+              $"Yêu cầu {objectTypeVi} của bạn đã được duyệt thành công.");
         }
 
         public async Task RejectUpgradeCertificateAsync(RejectCertificateDto dto)
@@ -690,12 +922,20 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "RejectCertificate.html",
-                "NOTIFICATION: Role upgrade request has been REJECTED", dto.Comment);
+              "THÔNG BÁO: Yêu cầu nâng cấp vai trò đã bị từ chối", dto.Comment);
 
             await SendWebNotificationAsync(user, "Rejected", objectType,
-                dto.CertificateId.ToString(),
-                $"Your {objectType} upgrade request has been rejected. Reason: {dto.Comment}");
+              dto.CertificateId.ToString(),
+              $"Yêu cầu {objectTypeVi} của bạn đã bị từ chối. Lý do: {dto.Comment}");
         }
 
         public async Task ReviewUpgradeCertificateAsync(ReviewCertificateDto dto)
@@ -722,16 +962,24 @@ namespace ESCE_SYSTEM.Services.UserService
 
             await _dbContext.SaveChangesAsync();
 
+            // Chuyển objectType sang tiếng Việt cho thông báo
+            var objectTypeVi = objectType switch
+            {
+                "HostCertificate" => "nâng cấp Host",
+                "AgencyCertificate" => "nâng cấp Agency",
+                _ => objectType
+            };
+
             await SendUserEmailAsync(user, "AddCertificateReviewComment.html",
-                "NOTIFICATION: Additional information required for Role upgrade", dto.Comment);
+              "THÔNG BÁO: Yêu cầu bổ sung thông tin cho nâng cấp vai trò", dto.Comment);
 
             await SendWebNotificationAsync(user, "Review", objectType,
-                dto.CertificateId.ToString(),
-                $"Your {objectType} upgrade request requires additional information. Content: {dto.Comment}");
+              dto.CertificateId.ToString(),
+              $"Yêu cầu {objectTypeVi} của bạn cần bổ sung thông tin. Nội dung: {dto.Comment}");
         }
 
         private async Task<(dynamic Certificate, Account User, int SuccessRoleId, string ObjectType)>
-            GetCertificateAndUserForProcessing(int certificateId, CertificateType type)
+          GetCertificateAndUserForProcessing(int certificateId, CertificateType type)
         {
             dynamic certificate = null;
             Account user = null;
@@ -742,8 +990,8 @@ namespace ESCE_SYSTEM.Services.UserService
             {
                 case CertificateType.Agency:
                     certificate = await _dbContext.AgencieCertificates
-                        .Include(agencyCertificate => agencyCertificate.Account)
-                        .FirstOrDefaultAsync(agencyCertificate => agencyCertificate.AgencyId == certificateId);
+                      .Include(agencyCertificate => agencyCertificate.Account)
+                      .FirstOrDefaultAsync(agencyCertificate => agencyCertificate.AgencyId == certificateId);
                     if (certificate != null)
                     {
                         user = certificate.Account;
@@ -754,13 +1002,12 @@ namespace ESCE_SYSTEM.Services.UserService
 
                 case CertificateType.Host:
                     certificate = await _dbContext.HostCertificates
-                        .Include(hostCertificate => hostCertificate.Host)
-                        .FirstOrDefaultAsync(hostCertificate => hostCertificate.CertificateId == certificateId);
+                      .Include(hostCertificate => hostCertificate.Host)
+                      .FirstOrDefaultAsync(hostCertificate => hostCertificate.CertificateId == certificateId);
                     if (certificate != null)
                     {
                         user = certificate.Host;
                         successRoleId = 2; // Role ID for Host
-                        objectType = "Host Certificate";
                     }
                     break;
 
@@ -787,6 +1034,28 @@ namespace ESCE_SYSTEM.Services.UserService
             public DateTime CreatedDate { get; set; }
             public string Content { get; set; } = string.Empty;
         }
+
+        // Helper method để parse ReviewComments an toàn
+        private List<T> ParseReviewComments<T>(string reviewCommentsJson)
+        {
+            if (string.IsNullOrWhiteSpace(reviewCommentsJson))
+            {
+                return new List<T>();
+            }
+
+            try
+            {
+                // Thử deserialize JSON
+                var result = JsonSerializer.Deserialize<List<T>>(reviewCommentsJson);
+                return result ?? new List<T>();
+            }
+            catch (JsonException)
+            {
+                // Nếu không phải JSON, trả về empty list
+                // (Vì frontend không cần hiển thị ReviewComments dạng text cũ)
+                return new List<T>();
+            }
+        }
         #endregion
 
         public async Task<List<int>> GetAllAdminAndHostId()
@@ -794,9 +1063,9 @@ namespace ESCE_SYSTEM.Services.UserService
             // Giả định Role Admin có RoleId = 1 và Role Host có RoleId = 2
             // Nếu bạn có nhiều Role cần nhận thông báo, hãy thêm RoleId vào điều kiện Where
             var adminHostIds = await _dbContext.Accounts
-                .Where(a => a.RoleId == 1 || a.RoleId == 2) // Lọc Admin (1) và Host (2)
+        .Where(a => a.RoleId == 1 || a.RoleId == 2) // Lọc Admin (1) và Host (2)
                 .Select(a => a.Id)
-                .ToListAsync();
+        .ToListAsync();
 
             return adminHostIds;
         }
@@ -806,9 +1075,9 @@ namespace ESCE_SYSTEM.Services.UserService
             // Giả định Role Admin có RoleId = 1 và Role Host có RoleId = 2
             // Nếu bạn có nhiều Role cần nhận thông báo, hãy thêm RoleId vào điều kiện Where
             var adminHostIds = await _dbContext.Accounts
-                .Where(a => a.RoleId == 1 || a.RoleId == 3) // Lọc Admin (1) và Host (2)
+        .Where(a => a.RoleId == 1 || a.RoleId == 3) // Lọc Admin (1) và Host (2)
                 .Select(a => a.Id)
-                .ToListAsync();
+        .ToListAsync();
 
             return adminHostIds;
         }
@@ -818,14 +1087,59 @@ namespace ESCE_SYSTEM.Services.UserService
             // Giả định Role Admin có RoleId = 1 và Role Host có RoleId = 2
             // Nếu bạn có nhiều Role cần nhận thông báo, hãy thêm RoleId vào điều kiện Where
             var adminHostIds = await _dbContext.Accounts
-                .Where(a => a.RoleId == 1 || a.RoleId == 4) // Lọc Admin (1) và Host (2)
+        .Where(a => a.RoleId == 1 || a.RoleId == 4) // Lọc Admin (1) và Host (2)
                 .Select(a => a.Id)
-                .ToListAsync();
+        .ToListAsync();
 
             return adminHostIds;
         }
 
+        public async Task UpdateTotalSpentAndLevelAsync(int userId, decimal amountSpent)
+        {
+            var user = await GetAccountByIdAsync(userId);
+            if (user == null) throw new InvalidOperationException("User not found.");
 
+            // Chỉ áp dụng Level cho Customer (4) và Agency (3)
+            if (user.RoleId == 4 || user.RoleId == 3)
+            {
+                // Cập nhật tổng chi tiêu
+                user.TotalSpent += amountSpent;
+
+                // Tính toán Level mới
+                user.Level = CalculateLevel(user.TotalSpent, user.RoleId);
+
+                user.UpdatedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
+            }
+            // Các role khác (Admin/Host) không cần Level
+
+        }
+
+        private int CalculateLevel(decimal totalSpent, int roleId)
+        {
+            // Nếu không phải Customer (4) hoặc Agency (3), giữ Level 0
+            if (roleId != 4 && roleId != 3)
+            {
+                return 0;
+            }
+
+            if (totalSpent >= 3000000) // 3 triệu trở lên là Level 3 (Gold)
+            {
+                return 3;
+            }
+            else if (totalSpent >= 1000000) // Từ 1 triệu đến dưới 3 triệu là Level 2 (Silver)
+            {
+                return 2;
+            }
+            else if (totalSpent > 0) // Có chi tiêu (> 0) là Level 1 (Bronze)
+            {
+                return 1;
+            }
+            else // Chưa chi tiêu (= 0) là Level 0 (Default)
+            {
+                return 0;
+            }
+        }
 
         #region Helper Methods
         private static string HashPassword(string password)
@@ -880,7 +1194,7 @@ namespace ESCE_SYSTEM.Services.UserService
             }
         }
 
-        private async Task SendUserEmailAsync(Account user, string templateName, string subject, string comment = null)
+        public async Task SendUserEmailAsync(Account user, string templateName, string subject, string comment = null)
         {
             try
             {
@@ -892,10 +1206,10 @@ namespace ESCE_SYSTEM.Services.UserService
 
                 string htmlBody = await File.ReadAllTextAsync(filePath);
                 string body = htmlBody
-                    .Replace("{{UserName}}", user.Name)
-                    .Replace("{{Hompage}}", _emailConfig.HomePage ?? "https://your-website.com")
-                    .Replace("{{Comment}}", comment ?? "")
-                    .Replace("{{Reason}}", comment ?? "");
+                .Replace("{{UserName}}", user.Name)
+                .Replace("{{Hompage}}", _emailConfig.HomePage ?? "https://your-website.com")
+                .Replace("{{Comment}}", comment ?? "")
+                .Replace("{{Reason}}", comment ?? "");
 
                 await _emailHelper.SendEmailAsync(subject, body, new List<string> { user.Email }, true);
             }
@@ -906,16 +1220,36 @@ namespace ESCE_SYSTEM.Services.UserService
             }
         }
 
-        private async Task SendWebNotificationAsync(Account user, string status, string objectType, string objectId, string content)
+        // CHUYỂN TỪ PRIVATE SANG PUBLIC (FIX CS0737)
+        public async Task SendWebNotificationAsync(Account user, string status, string objectType, string objectId, string content)
         {
             try
             {
+                // Chuyển status sang tiếng Việt
+                var statusVi = status switch
+                {
+                    "approved" => "đã được duyệt",
+                    "rejected" => "đã bị từ chối",
+                    "pending" => "đang chờ duyệt",
+                    "review" => "cần xem xét lại",
+                    _ => status
+                };
+
+                // Chuyển objectType sang tiếng Việt
+                var objectTypeVi = objectType switch
+                {
+                    "Certificate" => "Chứng chỉ",
+                    "HostCertificate" => "Yêu cầu nâng cấp Host",
+                    "AgencyCertificate" => "Yêu cầu nâng cấp Agency",
+                    _ => objectType
+                };
+
                 // Create notification for the user
                 var userNotification = new Notification
                 {
                     UserId = user.Id,
                     Message = content,
-                    Title = $"Status update: {status}",
+                    Title = $"Cập nhật trạng thái: {statusVi}",
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -927,10 +1261,10 @@ namespace ESCE_SYSTEM.Services.UserService
                 // Notify admins for certificate-related actions
                 if (objectType.Contains("Certificate"))
                 {
-                    var adminContent = $"{objectType} request from {user.Name} has been updated to {status}.";
+                    var adminContent = $"{objectTypeVi} từ {user.Name} đã được cập nhật thành: {statusVi}.";
                     var admins = await _dbContext.Accounts
-                        .Where(admin => admin.RoleId == 1) // Role 1 = Admin
-                        .ToListAsync();
+                    .Where(admin => admin.RoleId == 1) // Role 1 = Admin
+                                                      .ToListAsync();
 
                     foreach (var admin in admins)
                     {
@@ -938,7 +1272,7 @@ namespace ESCE_SYSTEM.Services.UserService
                         {
                             UserId = admin.Id,
                             Message = adminContent,
-                            Title = $"System update: {status}",
+                            Title = $"Cập nhật hệ thống: {statusVi}",
                             IsRead = false,
                             CreatedAt = DateTime.UtcNow
                         });
@@ -964,7 +1298,7 @@ namespace ESCE_SYSTEM.Services.UserService
                 };
 
                 await _hubNotificationContext.Clients.User(user.Id.ToString())
-                    .SendAsync("ReceiveNotification", userNotificationDto);
+                .SendAsync("ReceiveNotification", userNotificationDto);
 
                 // Send signalR message to each admin
                 foreach (var adminNotification in adminNotifications)
@@ -982,7 +1316,7 @@ namespace ESCE_SYSTEM.Services.UserService
                         };
 
                         await _hubNotificationContext.Clients.User(adminNotification.UserId.ToString())
-                            .SendAsync("ReceiveNotification", adminNotificationDto);
+                        .SendAsync("ReceiveNotification", adminNotificationDto);
                     }
                     catch (Exception exception)
                     {
@@ -999,3 +1333,5 @@ namespace ESCE_SYSTEM.Services.UserService
         #endregion
     }
 }
+
+

@@ -1,4 +1,7 @@
-export const backend_url = 'http://localhost:7267'
+import { API_BASE_URL } from '~/config/api'
+
+// Dùng cùng domain với API deploy; Auth endpoints sẽ gọi dưới /api/Auth/...
+export const backend_url = API_BASE_URL.replace('/api', '')
 
 export const login = async (userEmail, password) => {
   try {
@@ -63,8 +66,40 @@ export const forgotPassword = async (email, phoneNumber) => {
     })
 
     if (!response.ok) {
+      const status = response.status
       const errText = await response.text()
-      throw new Error(`API error: ${response.status} - ${errText}`)
+
+      // Cố gắng parse JSON để lấy message thân thiện từ backend (nếu có)
+      let backendMessage = ''
+      try {
+        if (errText && errText.trim().startsWith('{')) {
+          const parsed = JSON.parse(errText)
+          backendMessage =
+            parsed?.message ||
+            parsed?.error ||
+            parsed?.Message ||
+            parsed?.Error ||
+            ''
+        }
+      } catch {
+        // ignore parse error, fallback bên dưới
+      }
+
+      // Nếu backend báo sai email / không tồn tại → hiển thị thông báo rõ ràng
+      if (status === 400 || status === 404) {
+        const msg =
+          backendMessage ||
+          'Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại hoặc thử email khác.'
+        throw new Error(msg)
+      }
+
+      // Các lỗi khác
+      const generic =
+        backendMessage ||
+        (errText && errText.trim()) ||
+        'Không thể gửi yêu cầu quên mật khẩu. Vui lòng thử lại sau.'
+
+      throw new Error(generic)
     }
 
     // Some backends return 204 No Content or non-JSON bodies even on success

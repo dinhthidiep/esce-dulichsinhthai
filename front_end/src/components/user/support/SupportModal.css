@@ -1,0 +1,239 @@
+.support-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.support-modal-container {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 420px;
+  max-height: 90vh;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.support-modal-header {
+  background-color: #2563eb;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.support-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.support-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.support-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.support-modal-close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.support-modal-content {
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.support-modal-icon-large {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.support-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.support-modal-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 32px 0;
+}
+
+.support-modal-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.support-modal-option-card {
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.support-modal-option-card:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.support-modal-option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.support-modal-option-icon.admin-icon {
+  background-color: #2563eb;
+}
+
+.support-modal-option-icon.ai-icon {
+  background-color: #9333ea;
+}
+
+.support-modal-option-content {
+  flex: 1;
+  text-align: left;
+}
+
+.support-modal-option-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 6px 0;
+}
+
+.support-modal-option-description {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.support-modal-option-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.support-modal-tag {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.support-modal-tag.tag-tourist {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.support-modal-tag.tag-host {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.support-modal-tag.tag-agency {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.support-modal-option-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.support-modal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.support-modal-status-text {
+  font-size: 13px;
+  color: #9333ea;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .support-modal-container {
+    bottom: 90px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: 420px;
+  }
+
+  .support-modal-content {
+    padding: 24px 20px;
+  }
+}
+

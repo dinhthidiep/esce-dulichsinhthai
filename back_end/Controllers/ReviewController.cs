@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.DTOs;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -52,11 +54,11 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
-        [HttpGet("servicecombo/{serviceComboId}/average-rating")]
-        public async Task<IActionResult> GetAverageRatingByServiceCombo(int serviceComboId)
+        [HttpGet("ServiceCombo/{ServiceComboId}/average-rating")]
+        public async Task<IActionResult> GetAverageRatingByServiceCombo(int ServiceComboId)
         {
-            var rating = await _service.GetAverageRatingByServiceComboAsync(serviceComboId);
-            return Ok(new { ServiceComboId = serviceComboId, AverageRating = rating });
+            var rating = await _service.GetAverageRatingByServicecomboAsync(ServiceComboId);
+            return Ok(new { ServiceComboId = ServiceComboId, AverageRating = rating });
         }
 
         [HttpGet("service/{serviceId}/average-rating")]
@@ -74,10 +76,24 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Review review)
+        public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
             try
             {
+                // Chỉ map các trường scalar, không gắn navigation để tránh lỗi EF double-tracking
+                var review = new Review
+                {
+                    BookingId = dto.BookingId,
+                    UserId = dto.UserId,
+                    Rating = dto.Rating,
+                    Comment = dto.Comment
+                };
+
                 var result = await _service.CreateAsync(review);
                 return Ok(result);
             }
@@ -88,10 +104,21 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Review review)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateReviewDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
             try
             {
+                var review = new Review
+                {
+                    Rating = dto.Rating,
+                    Comment = dto.Comment
+                };
+
                 var result = await _service.UpdateAsync(id, review);
                 if (result == null) return NotFound();
                 return Ok(result);
@@ -117,10 +144,80 @@ namespace ESCE_SYSTEM.Controllers
             if (!updated) return NotFound();
             return Ok($"Review status updated to {request.Status}");
         }
+
+     
+        
+        [HttpPost("{parentReviewId}/reply")]
+        [Authorize]
+        public async Task<IActionResult> CreateReply(int parentReviewId, [FromBody] CreateReplyRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Content))
+                {
+                    return BadRequest(new { message = "Content is required" });
+                }
+
+                var reply = await _service.CreateReplyAsync(parentReviewId, request.AuthorId, request.Content);
+                return Ok(reply);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("reply/{replyId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateReply(int replyId, [FromBody] UpdateReplyRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Content))
+                {
+                    return BadRequest(new { message = "Content is required" });
+                }
+
+                var reply = await _service.UpdateReplyAsync(replyId, request.Content);
+                if (reply == null) return NotFound();
+                return Ok(reply);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("reply/{replyId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteReply(int replyId)
+        {
+            var deleted = await _service.DeleteReplyAsync(replyId);
+            if (!deleted) return NotFound();
+            return Ok("Reply deleted successfully");
+        }
+
+        [HttpGet("{parentReviewId}/replies")]
+        public async Task<IActionResult> GetReplies(int parentReviewId)
+        {
+            var replies = await _service.GetRepliesByParentIdAsync(parentReviewId);
+            return Ok(replies);
+        }
     }
 
     public class UpdateReviewStatusRequest
     {
         public string Status { get; set; } = string.Empty;
+    }
+
+    public class CreateReplyRequest
+    {
+        public int AuthorId { get; set; }
+        public string Content { get; set; } = string.Empty;
+    }
+
+    public class UpdateReplyRequest
+    {
+        public string Content { get; set; } = string.Empty;
     }
 }

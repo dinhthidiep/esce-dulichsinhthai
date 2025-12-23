@@ -47,8 +47,10 @@ namespace ESCE_SYSTEM.Repositories
             return await _context.Reviews
                 .Include(r => r.Booking)
                     .ThenInclude(b => b.User)
+                .Include(r => r.Booking)
+                    .ThenInclude(b => b.ServiceCombo)
                 .Include(r => r.User)
-                .Where(r => r.UserId == userId)
+                .Where(r => r.UserId == userId && r.ParentReviewId == null) // Chỉ lấy review chính, không lấy reply
                 .OrderByDescending(r => r.CreatedDate)
                 .ToListAsync();
         }

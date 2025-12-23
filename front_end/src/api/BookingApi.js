@@ -1,4 +1,7 @@
-const backend_url = "http://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+
+// Dùng cùng domain với API deploy; các endpoint bên dưới đã tự thêm /api/booking...
+const backend_url = API_BASE_URL.replace('/api', '');
 
 // Get all bookings
 export const getAllBookings = async () => {

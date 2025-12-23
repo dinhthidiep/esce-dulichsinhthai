@@ -10,4 +10,7 @@ public interface IMessageService
     Task<IEnumerable<ChatUserDto>> GetAllUserForChat(string userId);
     Task<IEnumerable<Message>> GetChatHistory(string userAId, string userBId);
     Task AddNewChatMessage(string senderId, string receiverId, string content);
+    Task<bool> DeleteConversation(string currentUserId, string otherUserId);
+    Task<int> GetUnreadMessageCount(string userId);
+    Task MarkMessagesAsRead(string currentUserId, string otherUserId);
 }

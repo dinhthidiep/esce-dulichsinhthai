@@ -13,5 +13,6 @@ namespace ESCE_SYSTEM.Repositories
         Task<Commentreaction> AddAsync(Commentreaction commentReaction);
         Task<bool> DeleteAsync(int id);
         Task<int> GetCountByCommentIdAsync(int commentId);
+        Task<List<Commentreaction>> GetByCommentIdsAsync(List<int> commentIds);
     }
 }

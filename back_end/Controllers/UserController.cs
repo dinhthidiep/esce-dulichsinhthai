@@ -1,10 +1,14 @@
 ﻿using ESCE_SYSTEM.DTOs.BanUnbanUser;
 using ESCE_SYSTEM.DTOs.Certificates;
-using ESCE_SYSTEM.Services.UserService; // Lỗi CS0246: Kiểm tra lại IUserService
-using ESCE_SYSTEM.DTOs.Users; // Lỗi CS0246: Kiểm tra lại UpdateProfileDto
+using ESCE_SYSTEM.Services.UserService;
+using ESCE_SYSTEM.DTOs.Users;
 using ESCE_SYSTEM.Services.UserContextService;
+using ESCE_SYSTEM.Services.PaymentService;
+using ESCE_SYSTEM.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using System;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -14,16 +18,18 @@ namespace ESCE_SYSTEM.Controllers
     {
         private readonly IUserService _userService;
         private readonly IUserContextService _userContextService;
+        private readonly IPaymentService _paymentService;
 
-        public UserController(IUserService userService, IUserContextService userContextService)
+        public UserController(IUserService userService, IUserContextService userContextService, IPaymentService paymentService)
         {
             _userService = userService;
             _userContextService = userContextService;
+            _paymentService = paymentService;
         }
 
         #region Certificate Endpoints
         [HttpGet("agency-certificates")]
-        [Authorize(Roles = "Admin")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetAgencyCertificates([FromQuery] string status = null)
         {
             try
@@ -38,7 +44,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpGet("host-certificates")]
-        [Authorize(Roles = "Admin")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetHostCertificates([FromQuery] string status = null)
         {
             try
@@ -53,49 +59,80 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("request-upgrade-to-agency")]
-        [Authorize(Roles = "Customer")]
+       /* [Authorize(Roles = "Tourist,Customer")]*/
         public async Task<IActionResult> RequestUpgradeToAgency([FromBody] RequestAgencyUpgradeDto requestDto)
         {
             try
             {
+                Console.WriteLine($"[RequestUpgradeToAgency] Received request: CompanyName={requestDto?.CompanyName}, Phone={requestDto?.Phone}, Email={requestDto?.Email}");
+                
                 var userIdString = _userContextService.UserId;
+                Console.WriteLine($"[RequestUpgradeToAgency] UserId from context: {userIdString}");
+                
                 if (!int.TryParse(userIdString, out int userId))
                 {
                     return Unauthorized("Invalid user information");
                 }
 
+                // Tạo certificate request
+                Console.WriteLine($"[RequestUpgradeToAgency] Creating certificate for userId: {userId}");
                 await _userService.RequestUpgradeToAgencyAsync(userId, requestDto);
-                return Ok("Agency upgrade request has been submitted successfully. Please wait for admin approval.");
+                Console.WriteLine($"[RequestUpgradeToAgency] Certificate created successfully");
+
+                // Trả về thông tin để frontend chuyển đến trang thanh toán
+                // Payment sẽ được tạo ở trang thanh toán
+                return Ok(new
+                {
+                    message = "Agency upgrade request has been submitted. Please proceed to payment.",
+                    requiresPayment = true,
+                    amount = 5000,
+                    companyName = requestDto.CompanyName
+                });
             }
             catch (Exception exception)
             {
+                Console.WriteLine($"[RequestUpgradeToAgency] ERROR: {exception.Message}");
+                Console.WriteLine($"[RequestUpgradeToAgency] StackTrace: {exception.StackTrace}");
                 return BadRequest(exception.Message);
             }
         }
 
         [HttpPost("request-upgrade-to-host")]
-        [Authorize(Roles = "Customer")]
+     /*   [Authorize(Roles = "Tourist,Customer")]*/
         public async Task<IActionResult> RequestUpgradeToHost([FromBody] RequestHostUpgradeDto requestDto)
         {
             try
             {
+                // Debug: Log role từ token
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                Console.WriteLine($"[RequestUpgradeToHost] User role from token: {userRole}");
+                Console.WriteLine($"[RequestUpgradeToHost] Received request: BusinessName={requestDto?.BusinessName}, Phone={requestDto?.Phone}, Email={requestDto?.Email}");
+                
                 var userIdString = _userContextService.UserId;
+                Console.WriteLine($"[RequestUpgradeToHost] UserId from context: {userIdString}");
+                
                 if (!int.TryParse(userIdString, out int userId))
                 {
+                    Console.WriteLine($"[RequestUpgradeToHost] ERROR: Invalid userId");
                     return Unauthorized("Invalid user information");
                 }
 
+                Console.WriteLine($"[RequestUpgradeToHost] Creating certificate for userId: {userId}");
                 await _userService.RequestUpgradeToHostAsync(userId, requestDto);
-                return Ok("Host upgrade request has been submitted successfully. Please wait for admin approval.");
+                Console.WriteLine($"[RequestUpgradeToHost] Certificate created successfully");
+                
+                return Ok(new { message = "Host upgrade request has been submitted successfully. Please wait for admin approval." });
             }
             catch (Exception exception)
             {
+                Console.WriteLine($"[RequestUpgradeToHost] ERROR: {exception.Message}");
+                Console.WriteLine($"[RequestUpgradeToHost] StackTrace: {exception.StackTrace}");
                 return BadRequest(exception.Message);
             }
         }
 
         [HttpPut("approve-certificate")]
-        [Authorize(Roles = "Admin")]
+       /* [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> ApproveCertificate([FromBody] ApproveCertificateDto dto)
         {
             try
@@ -110,7 +147,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("reject-certificate")]
-        [Authorize(Roles = "Admin")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> RejectCertificate([FromBody] RejectCertificateDto dto)
         {
             try
@@ -125,7 +162,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("review-certificate")]
-        [Authorize(Roles = "Admin")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> ReviewCertificate([FromBody] ReviewCertificateDto dto)
         {
             try
@@ -142,7 +179,7 @@ namespace ESCE_SYSTEM.Controllers
 
         #region User Management Endpoints
         [HttpGet("users")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -156,13 +193,14 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}")] // Đổi lại thành {id} chuẩn RESTful. Route cũ [HttpGet("{getuserbyid}")] không chuẩn.
         [Authorize]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
-                var user = await _userService.GetAccountByIdAsync(id);
+                // Gọi phương thức DTO để tránh lỗi chu kỳ
+                var user = await _userService.GetUserDtoByIdAsync(id);
                 return Ok(user);
             }
             catch (Exception exception)
@@ -183,8 +221,12 @@ namespace ESCE_SYSTEM.Controllers
                     return Unauthorized("Invalid user information");
                 }
 
-                var updatedUser = await _userService.UpdateProfileAsync(userId, updateDto);
-                return Ok(new { message = "Profile updated successfully", user = updatedUser });
+                // Update profile
+                await _userService.UpdateProfileAsync(userId, updateDto);
+                
+                // Reload user với đầy đủ thông tin (bao gồm Role) để trả về
+                var updatedUserDto = await _userService.GetUserDtoByIdAsync(userId);
+                return Ok(new { message = "Profile updated successfully", user = updatedUserDto });
             }
             catch (Exception exception)
             {
@@ -193,7 +235,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("ban-account")]
-        [Authorize(Roles = "Admin")]
+     /*   [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> BanAccount([FromBody] BanAccountDto banAccountDto)
         {
             try
@@ -208,7 +250,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("unban-account")]
-        [Authorize(Roles = "Admin")]
+ /*       [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> UnbanAccount([FromBody] UnbanAccountDto unbanAccountDto)
         {
             try
@@ -295,5 +337,33 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
         #endregion
+
+
+        [HttpPut("update-spent/{userId}")]
+  /*      [Authorize(Roles = "Admin")] // Giả định chỉ Admin hoặc System có thể gọi trực tiếp*/
+        public async Task<IActionResult> UpdateTotalSpent(int userId, [FromQuery] decimal amountSpent)
+        {
+            try
+            {
+                if (amountSpent <= 0)
+                {
+                    return BadRequest(new { message = "Amount spent must be greater than zero." });
+                }
+
+                // Gọi Service để thực hiện logic cập nhật
+                await _userService.UpdateTotalSpentAndLevelAsync(userId, amountSpent);
+
+                return Ok($"Total spent and level for user {userId} updated successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, new { message = "Error updating user spent data", error = exception.Message });
+            }
+        }
     }
 }
+

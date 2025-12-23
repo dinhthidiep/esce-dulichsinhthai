@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Repositories
@@ -14,7 +14,7 @@ namespace ESCE_SYSTEM.Repositories
 
         public async Task<IEnumerable<ServiceComboDetail>> GetAllAsync()
         {
-            return await _context.ServiceComboDetails
+            return await _context.ServicecomboDetails
                 .Include(scd => scd.ServiceCombo)
                 .Include(scd => scd.Service)
                 .ToListAsync();
@@ -22,61 +22,61 @@ namespace ESCE_SYSTEM.Repositories
 
         public async Task<ServiceComboDetail?> GetByIdAsync(int id)
         {
-            return await _context.ServiceComboDetails
+            return await _context.ServicecomboDetails
                 .Include(scd => scd.ServiceCombo)
                 .Include(scd => scd.Service)
                 .FirstOrDefaultAsync(scd => scd.Id == id);
         }
 
-        public async Task<IEnumerable<ServiceComboDetail>> GetByServiceComboIdAsync(int serviceComboId)
+        public async Task<IEnumerable<ServiceComboDetail>> GetByServiceComboIdAsync(int ServicecomboId)
         {
-            return await _context.ServiceComboDetails
+            return await _context.ServicecomboDetails
                 .Include(scd => scd.ServiceCombo)
                 .Include(scd => scd.Service)
-                .Where(scd => scd.ServiceComboId == serviceComboId)
+                .Where(scd => scd.ServicecomboId == ServicecomboId)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<ServiceComboDetail>> GetByServiceIdAsync(int serviceId)
         {
-            return await _context.ServiceComboDetails
+            return await _context.ServicecomboDetails
                 .Include(scd => scd.ServiceCombo)
                 .Include(scd => scd.Service)
                 .Where(scd => scd.ServiceId == serviceId)
                 .ToListAsync();
         }
 
-        public async Task CreateAsync(ServiceComboDetail serviceComboDetail)
+        public async Task CreateAsync(ServiceComboDetail ServicecomboDetail)
         {
-            _context.ServiceComboDetails.Add(serviceComboDetail);
+            _context.ServicecomboDetails.Add(ServicecomboDetail);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(ServiceComboDetail serviceComboDetail)
+        public async Task UpdateAsync(ServiceComboDetail ServicecomboDetail)
         {
-            _context.ServiceComboDetails.Update(serviceComboDetail);
+            _context.ServicecomboDetails.Update(ServicecomboDetail);
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var serviceComboDetail = await _context.ServiceComboDetails.FindAsync(id);
-            if (serviceComboDetail != null)
+            var ServicecomboDetail = await _context.ServicecomboDetails.FindAsync(id);
+            if (ServicecomboDetail != null)
             {
-                _context.ServiceComboDetails.Remove(serviceComboDetail);
+                _context.ServicecomboDetails.Remove(ServicecomboDetail);
                 await _context.SaveChangesAsync();
             }
         }
 
-        public async Task DeleteByServiceComboIdAsync(int serviceComboId)
+        public async Task DeleteByServiceComboIdAsync(int ServicecomboId)
         {
-            var serviceComboDetails = await _context.ServiceComboDetails
-                .Where(scd => scd.ServiceComboId == serviceComboId)
+            var ServicecomboDetails = await _context.ServicecomboDetails
+                .Where(scd => scd.ServicecomboId == ServicecomboId)
                 .ToListAsync();
 
-            if (serviceComboDetails.Any())
+            if (ServicecomboDetails.Any())
             {
-                _context.ServiceComboDetails.RemoveRange(serviceComboDetails);
+                _context.ServicecomboDetails.RemoveRange(ServicecomboDetails);
                 await _context.SaveChangesAsync();
             }
         }

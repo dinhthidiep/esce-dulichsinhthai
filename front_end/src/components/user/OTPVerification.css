@@ -1,0 +1,235 @@
+/* Import styles từ LoginForm.css để sử dụng chung */
+@import './LoginForm.css';
+
+/* Sử dụng lại styles từ ForgotPassword.css và thêm styles cho OTP */
+.otp-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 20px;
+}
+
+.otp-form {
+  margin-bottom: 20px;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.otp-input {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.otp-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+  transform: scale(1.05);
+}
+
+.otp-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+}
+
+.otp-input:not(:placeholder-shown) {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.resend-section {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.resend-button {
+  background: none;
+  border: none;
+  color: #fffb00;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.resend-button:hover {
+  color: #059669;
+}
+
+.resend-timer {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  border-radius: 20px;
+  display: inline-block;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  text-align: center;
+  margin: 8px 0 16px 0;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.fp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: #000000;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.fp-back:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+/* Success Modal */
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.success-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 40px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px;
+}
+
+.success-icon-wrapper.success-check {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
+.success-icon-wrapper.success-check .success-icon {
+  color: white;
+}
+
+.success-icon {
+  font-size: 40px;
+}
+
+.success-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #16a34a;
+  margin: 0 0 12px;
+}
+
+.success-message {
+  font-size: 16px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.success-message strong {
+  color: #1f2937;
+}
+
+.success-button {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.success-button:hover {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 480px) {
+  .otp-inputs {
+    gap: 8px;
+  }
+  
+  .otp-input {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .success-modal {
+    padding: 24px 20px;
+  }
+}

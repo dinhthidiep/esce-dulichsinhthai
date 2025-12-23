@@ -4,7 +4,10 @@ import { useLocation } from 'react-router-dom';
 import { getServiceComboById, getServicesByComboId } from '../API/ServiceComboApi';
 import Header from './Header';
 
-const backend_url = "http://localhost:7267";
+// Dùng cùng domain với API deploy
+const backend_url = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace('/api', '')
+  : window.location.origin;
 
 const ServiceComboPreview = () => {
   const location = useLocation();

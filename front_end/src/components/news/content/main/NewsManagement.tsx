@@ -35,6 +35,7 @@ import {
   Close as CloseIcon,
   Link as LinkIcon
 } from '@mui/icons-material'
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage'
 import {
   fetchAllNews,
   createNews,
@@ -62,7 +63,7 @@ const getRoleColor = (role: string) => {
 
 const formatTimeAgo = (dateString?: string) => {
   if (!dateString) return 'Vừa xong'
-  
+
   try {
     const date = new Date(dateString)
     const now = new Date()
@@ -81,33 +82,12 @@ const formatTimeAgo = (dateString?: string) => {
   }
 }
 
-// Convert File to Base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => {
-      const result = reader.result as string
-      // Ensure we have a valid data URL
-      if (result && result.startsWith('data:image/')) {
-        resolve(result)
-      } else {
-        reject(new Error('Invalid image format'))
-      }
-    }
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error)
-      reject(error)
-    }
-  })
-}
-
 export default function NewsManagement() {
   const [news, setNews] = useState<NewsDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
-  
+
   // Create News State
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [newContent, setNewContent] = useState('')
@@ -148,7 +128,7 @@ export default function NewsManagement() {
   }
 
   const currentUser = getCurrentUser()
-  
+
   // Debug: Log user info to console with full details
   useEffect(() => {
     console.log('=== NEWS COMPONENT DEBUG ===')
@@ -165,11 +145,11 @@ export default function NewsManagement() {
     console.log('isAdmin will be calculated from above values')
     console.log('==========================')
   }, [currentUser])
-  
+
   // Check if user is Admin - check multiple possible property names and roleId
-  const isAdmin = 
-    currentUser?.role === 'Admin' || 
-    currentUser?.roleName === 'Admin' || 
+  const isAdmin =
+    currentUser?.role === 'Admin' ||
+    currentUser?.roleName === 'Admin' ||
     currentUser?.Role === 'Admin' ||
     currentUser?.RoleName === 'Admin' ||
     currentUser?.roleId === 1 || // Admin thường có roleId = 1
@@ -177,7 +157,7 @@ export default function NewsManagement() {
     (typeof currentUser?.role === 'string' && currentUser.role.toLowerCase() === 'admin') ||
     (typeof currentUser?.roleName === 'string' && currentUser.roleName.toLowerCase() === 'admin') ||
     (typeof currentUser?.RoleName === 'string' && currentUser.RoleName.toLowerCase() === 'admin')
-  
+
   // Log isAdmin result
   useEffect(() => {
     console.log('isAdmin result:', isAdmin)
@@ -233,42 +213,43 @@ export default function NewsManagement() {
     setNewSocialLink('')
     setNewImages([])
     setNewImagePreviews([])
+    setError(null) // Clear error when closing dialog
   }
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
       const fileArray = Array.from(files)
-      
+
       // Validate file types
-      const validFiles = fileArray.filter(file => {
+      const validFiles = fileArray.filter((file) => {
         if (!file.type.startsWith('image/')) {
           console.warn(`File ${file.name} is not an image, skipping`)
           return false
         }
         return true
       })
-      
+
       if (validFiles.length === 0) {
         return
       }
-      
+
       // Add new files (don't append to existing, replace if needed)
       setNewImages((prev) => {
         // If we want to allow multiple, use: [...prev, ...validFiles]
         // For now, let's allow multiple but ensure no duplicates
-        const existingNames = new Set(prev.map(f => f.name))
-        const newFiles = validFiles.filter(f => !existingNames.has(f.name))
+        const existingNames = new Set(prev.map((f) => f.name))
+        const newFiles = validFiles.filter((f) => !existingNames.has(f.name))
         return [...prev, ...newFiles]
       })
-      
+
       // Create previews
       const previews = validFiles.map((file) => URL.createObjectURL(file))
       setNewImagePreviews((prev) => {
         // Ensure no duplicate previews
         return [...prev, ...previews]
       })
-      
+
       // Reset input to allow selecting same file again
       e.target.value = ''
     }
@@ -283,60 +264,75 @@ export default function NewsManagement() {
   }
 
   const handleCreateNews = async () => {
-    if (!newContent.trim() && newImages.length === 0) {
+    // Backend requires Content to be non-empty (Required attribute)
+    if (!newContent.trim()) {
+      setError('Nội dung tin tức không được để trống')
+      return
+    }
+
+    // Validate content length
+    if (newContent.trim().length > 4000) {
+      setError('Nội dung tin tức tối đa 4000 ký tự')
+      return
+    }
+
+    // Validate social link length if provided
+    if (newSocialLink.trim().length > 500) {
+      setError('Link mạng xã hội tối đa 500 ký tự')
       return
     }
 
     try {
       setCreating(true)
-      
-      // Convert images to base64 - ensure no duplicates
-      const imageBase64s: string[] = []
+      setError(null) // Clear previous errors
+
+      // Upload images to Firebase - ensure no duplicates
+      const imageUrls: string[] = []
       const processedFiles = new Set<string>() // Track processed file names to avoid duplicates
-      
+
       for (const file of newImages) {
         // Skip if already processed (duplicate check)
         if (processedFiles.has(file.name)) {
           console.warn(`Skipping duplicate file: ${file.name}`)
           continue
         }
-        
+
         try {
-          const base64 = await fileToBase64(file)
-          // Validate base64 string
-          if (base64 && base64.startsWith('data:image/')) {
-            // Store the full data URL (includes data:image/...;base64, prefix)
-            imageBase64s.push(base64)
-            processedFiles.add(file.name)
-            console.log(`Successfully converted file: ${file.name}, base64 length: ${base64.length}`)
-          } else {
-            console.warn(`Invalid base64 for file: ${file.name}, base64: ${base64?.substring(0, 50)}`)
-          }
+          const url = await uploadImageToFirebase(file, 'news')
+          imageUrls.push(url)
+          processedFiles.add(file.name)
+          console.log(`Successfully uploaded file to Firebase: ${file.name}, url: ${url}`)
         } catch (fileError) {
-          console.error(`Error converting file ${file.name}:`, fileError)
-          setError(`Lỗi khi xử lý ảnh ${file.name}. Vui lòng thử lại.`)
+          console.error(`Error uploading file ${file.name} to Firebase:`, fileError)
+          setError(`Lỗi khi upload ảnh ${file.name} lên server. Vui lòng thử lại.`)
+          setCreating(false)
+          return
         }
       }
 
-      if (imageBase64s.length === 0 && newImages.length > 0) {
-        setError('Không thể xử lý ảnh. Vui lòng thử lại với ảnh khác.')
+      if (imageUrls.length === 0 && newImages.length > 0) {
+        setError('Không thể upload ảnh. Vui lòng thử lại với ảnh khác.')
         setCreating(false)
         return
       }
 
-      console.log(`Creating news with ${imageBase64s.length} images`)
+      console.log(`Creating news with ${imageUrls.length} images`)
 
       const dto: CreateNewsDto = {
         content: newContent.trim(),
         socialMediaLink: newSocialLink.trim() || undefined,
-        images: imageBase64s.length > 0 ? imageBase64s : undefined
+        images: imageUrls.length > 0 ? imageUrls : undefined
       }
 
       await createNews(dto)
       await loadNews()
       handleCloseCreateDialog()
+
+      // Show success message (optional)
+      console.log('News created successfully')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tạo tin tức')
+      const errorMessage = err instanceof Error ? err.message : 'Không thể tạo tin tức'
+      setError(errorMessage)
       console.error('Error creating news:', err)
     } finally {
       setCreating(false)
@@ -345,10 +341,14 @@ export default function NewsManagement() {
 
   // Edit News Handlers
   const handleOpenEditDialog = (newsItem: NewsDto) => {
+    console.log('🔵 [Edit News] Opening edit dialog for news:', newsItem.newsId)
+    console.log('🔵 [Edit News] newsItem.images:', newsItem.images)
+    console.log('🔵 [Edit News] newsItem.images length:', newsItem.images?.length)
+    
     setEditingNews(newsItem)
     setEditContent(newsItem.content)
     setEditSocialLink(newsItem.socialMediaLink || '')
-    setEditImages([...newsItem.images])
+    setEditImages(newsItem.images ? [...newsItem.images] : [])
     setEditNewImages([])
     setEditNewImagePreviews([])
     setEditDialogOpen(true)
@@ -367,16 +367,45 @@ export default function NewsManagement() {
 
   const handleEditImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
+    if (files && files.length > 0) {
       const fileArray = Array.from(files)
-      setEditNewImages((prev) => [...prev, ...fileArray])
-      
-      const previews = fileArray.map((file) => URL.createObjectURL(file))
+
+      // Validate file types
+      const validFiles = fileArray.filter((file) => {
+        if (!file.type.startsWith('image/')) {
+          console.warn(`File ${file.name} is not an image, skipping`)
+          return false
+        }
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          console.warn(`File ${file.name} exceeds 5MB limit, skipping`)
+          setError(`Ảnh ${file.name} vượt quá 5MB`)
+          return false
+        }
+        return true
+      })
+
+      if (validFiles.length === 0) {
+        return
+      }
+
+      // Add new files (avoid duplicates)
+      setEditNewImages((prev) => {
+        const existingNames = new Set(prev.map((f) => f.name))
+        const newFiles = validFiles.filter((f) => !existingNames.has(f.name))
+        return [...prev, ...newFiles]
+      })
+
+      // Create previews
+      const previews = validFiles.map((file) => URL.createObjectURL(file))
       setEditNewImagePreviews((prev) => [...prev, ...previews])
+
+      // Reset input to allow selecting same file again
+      e.target.value = ''
     }
   }
 
-  const removeEditImage = (index: number, isNew: boolean) => {
+  const removeEditImage = async (index: number, isNew: boolean) => {
     if (isNew) {
       setEditNewImages((prev) => prev.filter((_, i) => i !== index))
       setEditNewImagePreviews((prev) => {
@@ -384,6 +413,16 @@ export default function NewsManagement() {
         return prev.filter((_, i) => i !== index)
       })
     } else {
+      // Delete old Firebase image when removing existing image
+      const imageToDelete = editImages[index]
+      if (imageToDelete && imageToDelete.includes('firebasestorage')) {
+        try {
+          await deleteImageFromFirebase(imageToDelete)
+          console.log('✅ Đã xóa ảnh cũ từ Firebase:', imageToDelete)
+        } catch (deleteErr) {
+          console.warn('⚠️ Không thể xóa ảnh cũ từ Firebase:', deleteErr)
+        }
+      }
       setEditImages((prev) => prev.filter((_, i) => i !== index))
     }
   }
@@ -393,16 +432,21 @@ export default function NewsManagement() {
 
     try {
       setUpdating(true)
-      
-      // Convert new images to base64
-      const newImageBase64s: string[] = []
+      setError(null)
+
+      // Upload new images to Firebase
+      const newImageUrls: string[] = []
       for (const file of editNewImages) {
-        const base64 = await fileToBase64(file)
-        newImageBase64s.push(base64)
+        try {
+          const url = await uploadImageToFirebase(file, 'news')
+          newImageUrls.push(url)
+        } catch (fileError) {
+          console.error(`Error uploading edit image ${file.name} to Firebase:`, fileError)
+        }
       }
 
       // Combine existing and new images
-      const allImages = [...editImages, ...newImageBase64s]
+      const allImages = [...editImages, ...newImageUrls]
 
       const dto: UpdateNewsDto = {
         content: editContent.trim() || undefined,
@@ -449,8 +493,24 @@ export default function NewsManagement() {
     }
   }
 
-  // Like Handler
+  // Check if user is authenticated (has token)
+  const isAuthenticated = () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken')
+      return !!token
+    } catch {
+      return false
+    }
+  }
+
+  // Like Handler - chỉ cho phép khi đã đăng nhập
   const handleToggleLike = async (newsId: number) => {
+    // Kiểm tra đăng nhập trước khi like
+    if (!isAuthenticated()) {
+      setError('Vui lòng đăng nhập để thả tim tin tức')
+      return
+    }
+
     try {
       const result = await toggleLikeNews(newsId)
       setNews((prev) =>
@@ -460,8 +520,10 @@ export default function NewsManagement() {
             : item
         )
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error toggling like:', err)
+      const errorMessage = err?.message || 'Không thể thả tim tin tức'
+      setError(errorMessage)
     }
   }
 
@@ -474,9 +536,36 @@ export default function NewsManagement() {
     setMenuAnchor((prev) => ({ ...prev, [newsId]: null }))
   }
 
-  const canEditOrDelete = (newsItem: NewsDto) => {
-    // Chỉ Admin mới được chỉnh sửa và xóa tin tức
+  // Chỉ có thể edit tin tức của chính mình (kể cả Admin)
+  const canEdit = (newsItem: NewsDto) => {
+    if (!isAdmin || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const newsAuthorId = newsItem.authorId ?? 0
+
+    // Convert to numbers for comparison (handle both string and number)
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof newsAuthorId === 'string' ? parseInt(String(newsAuthorId), 10) : Number(newsAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Admin có thể delete bất kỳ tin tức nào
+  const canDelete = () => {
     return isAdmin
+  }
+
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho menu button)
+  const canEditOrDelete = (newsItem: NewsDto) => {
+    return canEdit(newsItem) || canDelete()
   }
 
   if (loading) {
@@ -490,12 +579,12 @@ export default function NewsManagement() {
   return (
     <Box sx={{ p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>
       {/* Header */}
-      <Box 
-        display="flex" 
-        justifyContent="space-between" 
-        alignItems="center" 
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
         mb={3}
-        sx={{ 
+        sx={{
           bgcolor: 'white',
           p: 2,
           borderRadius: 2,
@@ -510,7 +599,7 @@ export default function NewsManagement() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleOpenCreateDialog}
-            sx={{ 
+            sx={{
               borderRadius: 2,
               bgcolor: 'primary.main',
               '&:hover': {
@@ -521,14 +610,27 @@ export default function NewsManagement() {
             Tạo tin tức mới
           </Button>
         ) : (
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', p: 1, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.875rem',
+              p: 1,
+              bgcolor: 'warning.light',
+              borderRadius: 1
+            }}
+          >
             {/* Debug info - always show for now */}
             <Typography variant="caption" color="text.secondary" component="div">
-              <strong>Debug Info:</strong><br />
-              isAdmin = {String(isAdmin)}<br />
-              role = {currentUser?.role || 'N/A'}<br />
-              roleName = {currentUser?.roleName || currentUser?.RoleName || 'N/A'}<br />
-              roleId = {currentUser?.roleId || currentUser?.RoleId || 'N/A'}<br />
+              <strong>Debug Info:</strong>
+              <br />
+              isAdmin = {String(isAdmin)}
+              <br />
+              role = {currentUser?.role || 'N/A'}
+              <br />
+              roleName = {currentUser?.roleName || currentUser?.RoleName || 'N/A'}
+              <br />
+              roleId = {currentUser?.roleId || currentUser?.RoleId || 'N/A'}
+              <br />
               All keys: {currentUser ? Object.keys(currentUser).join(', ') : 'No user'}
             </Typography>
           </Box>
@@ -549,7 +651,7 @@ export default function NewsManagement() {
               </InputAdornment>
             )
           }}
-          sx={{ 
+          sx={{
             borderRadius: 2,
             bgcolor: 'white',
             '& .MuiOutlinedInput-root': {
@@ -580,9 +682,9 @@ export default function NewsManagement() {
       ) : (
         <Box display="flex" flexDirection="column" gap={2}>
           {filteredNews.map((newsItem) => (
-            <Card 
-              key={newsItem.newsId} 
-              sx={{ 
+            <Card
+              key={newsItem.newsId}
+              sx={{
                 borderRadius: 2,
                 bgcolor: 'white',
                 boxShadow: 2,
@@ -597,10 +699,10 @@ export default function NewsManagement() {
                 {/* Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Box display="flex" gap={2} alignItems="center">
-                    <Avatar 
-                      src={newsItem.authorAvatar} 
-                      sx={{ 
-                        width: 56, 
+                    <Avatar
+                      src={newsItem.authorAvatar}
+                      sx={{
+                        width: 56,
                         height: 56,
                         bgcolor: 'primary.main',
                         fontSize: '1.5rem',
@@ -610,7 +712,12 @@ export default function NewsManagement() {
                       {newsItem.authorName.charAt(0).toUpperCase()}
                     </Avatar>
                     <Box>
-                      <Typography variant="subtitle1" fontWeight="bold" color="text.primary" mb={0.5}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        color="text.primary"
+                        mb={0.5}
+                      >
                         {newsItem.authorName}
                       </Typography>
                       <Box display="flex" gap={1} alignItems="center">
@@ -620,7 +727,11 @@ export default function NewsManagement() {
                           color={getRoleColor(newsItem.authorRole)}
                           sx={{ fontWeight: 'medium' }}
                         />
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.875rem' }}
+                        >
                           {formatTimeAgo(newsItem.createdDate)}
                         </Typography>
                       </Box>
@@ -638,10 +749,10 @@ export default function NewsManagement() {
                 </Box>
 
                 {/* Content */}
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    mb: 2, 
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mb: 2,
                     whiteSpace: 'pre-wrap',
                     color: 'text.primary',
                     lineHeight: 1.7,
@@ -664,21 +775,24 @@ export default function NewsManagement() {
                         })
                         .map((image, index) => {
                           let imageSrc = image.trim()
-                          
+
                           // If it's already a data URL or HTTP(S) URL, use as is
                           if (imageSrc.startsWith('data:image/')) {
                             // Validate it has base64 data
                             if (!imageSrc.includes('base64,')) {
                               return null
                             }
-                          } else if (imageSrc.startsWith('http://') || imageSrc.startsWith('https://')) {
+                          } else if (
+                            imageSrc.startsWith('http://') ||
+                            imageSrc.startsWith('https://')
+                          ) {
                             // HTTP(S) URL, use as is
                           } else {
                             // Assume it's base64 without prefix
                             // Check if it looks like base64
                             const base64Pattern = /^[A-Za-z0-9+/=\s]+$/
                             const cleaned = imageSrc.replace(/\s/g, '') // Remove whitespace
-                            
+
                             if (base64Pattern.test(cleaned) && cleaned.length > 50) {
                               // It's likely base64, add prefix
                               imageSrc = `data:image/jpeg;base64,${cleaned}`
@@ -691,12 +805,12 @@ export default function NewsManagement() {
                               imageSrc = `data:image/jpeg;base64,${cleaned}`
                             }
                           }
-                          
+
                           // Skip if imageSrc is null (invalid)
                           if (!imageSrc) {
                             return null
                           }
-                          
+
                           return (
                             <ImageListItem key={`${newsItem.newsId}-img-${index}`}>
                               <img
@@ -711,17 +825,25 @@ export default function NewsManagement() {
                                   backgroundColor: '#f5f5f5' // Show background while loading
                                 }}
                                 onError={(e) => {
-                                  console.error(`Failed to load image ${index} for news ${newsItem.newsId}`)
-                                  console.error('Image src type:', imageSrc.startsWith('data:') ? 'data URL' : 'other')
+                                  console.error(
+                                    `Failed to load image ${index} for news ${newsItem.newsId}`
+                                  )
+                                  console.error(
+                                    'Image src type:',
+                                    imageSrc.startsWith('data:') ? 'data URL' : 'other'
+                                  )
                                   console.error('Image src length:', imageSrc.length)
-                                  console.error('Image src (first 200 chars):', imageSrc.substring(0, 200))
+                                  console.error(
+                                    'Image src (first 200 chars):',
+                                    imageSrc.substring(0, 200)
+                                  )
                                   console.error('Has base64,:', imageSrc.includes('base64,'))
-                                  
+
                                   // Try alternative: maybe it needs different format
                                   if (imageSrc.includes('base64,')) {
                                     const base64Part = imageSrc.split('base64,')[1]
                                     console.error('Base64 part length:', base64Part?.length)
-                                    
+
                                     if (base64Part && base64Part.length > 50) {
                                       // Try with different image type
                                       const alternatives = [
@@ -730,16 +852,20 @@ export default function NewsManagement() {
                                         `data:image/jpg;base64,${base64Part}`,
                                         `data:image/webp;base64,${base64Part}`
                                       ]
-                                      
+
                                       let tried = 0
                                       const tryNext = () => {
                                         if (tried < alternatives.length) {
-                                          console.log(`Trying alternative ${tried + 1}: ${alternatives[tried].substring(0, 50)}...`)
+                                          console.log(
+                                            `Trying alternative ${tried + 1}: ${alternatives[tried].substring(0, 50)}...`
+                                          )
                                           e.currentTarget.src = alternatives[tried]
                                           tried++
                                         } else {
                                           // All alternatives failed, show placeholder
-                                          console.error('All alternatives failed, showing placeholder')
+                                          console.error(
+                                            'All alternatives failed, showing placeholder'
+                                          )
                                           e.currentTarget.style.display = 'flex'
                                           e.currentTarget.style.alignItems = 'center'
                                           e.currentTarget.style.justifyContent = 'center'
@@ -747,7 +873,7 @@ export default function NewsManagement() {
                                           e.currentTarget.alt = 'Không thể tải ảnh'
                                         }
                                       }
-                                      
+
                                       e.currentTarget.onerror = tryNext
                                       tryNext()
                                     } else {
@@ -758,7 +884,9 @@ export default function NewsManagement() {
                                   }
                                 }}
                                 onLoad={() => {
-                                  console.log(`✅ Successfully loaded image ${index} for news ${newsItem.newsId}`)
+                                  console.log(
+                                    `✅ Successfully loaded image ${index} for news ${newsItem.newsId}`
+                                  )
                                 }}
                               />
                             </ImageListItem>
@@ -797,11 +925,31 @@ export default function NewsManagement() {
                 <Box display="flex" alignItems="center" gap={2}>
                   <IconButton
                     onClick={() => handleToggleLike(newsItem.newsId)}
+                    disabled={!isAuthenticated()}
+                    title={
+                      !isAuthenticated()
+                        ? 'Vui lòng đăng nhập để thả tim tin tức'
+                        : newsItem.isLiked
+                          ? 'Bỏ thích'
+                          : 'Thích'
+                    }
                     sx={{
                       color: newsItem.isLiked ? 'error.main' : 'text.secondary',
+                      opacity: !isAuthenticated() ? 0.5 : 1,
+                      cursor: !isAuthenticated() ? 'not-allowed' : 'pointer',
                       '&:hover': {
-                        bgcolor: newsItem.isLiked ? 'error.light' : 'grey.100',
-                        color: newsItem.isLiked ? 'error.dark' : 'error.main'
+                        bgcolor:
+                          !isAuthenticated()
+                            ? 'transparent'
+                            : newsItem.isLiked
+                              ? 'error.light'
+                              : 'grey.100',
+                        color:
+                          !isAuthenticated()
+                            ? 'text.secondary'
+                            : newsItem.isLiked
+                              ? 'error.dark'
+                              : 'error.main'
                       }
                     }}
                   >
@@ -819,14 +967,21 @@ export default function NewsManagement() {
                 open={Boolean(menuAnchor[newsItem.newsId])}
                 onClose={() => handleMenuClose(newsItem.newsId)}
               >
-                <MenuItem onClick={() => handleOpenEditDialog(newsItem)}>
-                  <EditIcon sx={{ mr: 1 }} fontSize="small" />
-                  Chỉnh sửa
-                </MenuItem>
-                <MenuItem onClick={() => handleOpenDeleteDialog(newsItem)} sx={{ color: 'error.main' }}>
-                  <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-                  Xóa
-                </MenuItem>
+                {canEdit(newsItem) && (
+                  <MenuItem onClick={() => handleOpenEditDialog(newsItem)}>
+                    <EditIcon sx={{ mr: 1 }} fontSize="small" />
+                    Chỉnh sửa
+                  </MenuItem>
+                )}
+                {canDelete() && (
+                  <MenuItem
+                    onClick={() => handleOpenDeleteDialog(newsItem)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
+                    Xóa
+                  </MenuItem>
+                )}
               </Menu>
             </Card>
           ))}
@@ -834,10 +989,10 @@ export default function NewsManagement() {
       )}
 
       {/* Create Dialog */}
-      <Dialog 
-        open={createDialogOpen} 
-        onClose={handleCloseCreateDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={createDialogOpen}
+        onClose={handleCloseCreateDialog}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -849,15 +1004,24 @@ export default function NewsManagement() {
           Tạo tin tức mới
         </DialogTitle>
         <DialogContent sx={{ bgcolor: 'background.default', pt: 3 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
           <TextField
             fullWidth
             multiline
             rows={6}
             placeholder="Nhập nội dung tin tức..."
             value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            sx={{ 
-              mb: 2, 
+            onChange={(e) => {
+              setNewContent(e.target.value)
+              // Clear error when user starts typing
+              if (error) setError(null)
+            }}
+            sx={{
+              mb: 2,
               mt: 1,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -872,7 +1036,7 @@ export default function NewsManagement() {
             placeholder="Link mạng xã hội (tùy chọn)"
             value={newSocialLink}
             onChange={(e) => setNewSocialLink(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -899,9 +1063,9 @@ export default function NewsManagement() {
               onChange={handleImageSelect}
             />
             <label htmlFor="create-image-upload">
-              <Button 
-                variant="outlined" 
-                component="span" 
+              <Button
+                variant="outlined"
+                component="span"
                 startIcon={<ImageIcon />}
                 sx={{
                   borderColor: 'primary.main',
@@ -920,11 +1084,11 @@ export default function NewsManagement() {
           {newImagePreviews.length > 0 && (
             <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               {newImagePreviews.map((preview, index) => (
-                <Box 
-                  key={index} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={index}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -950,7 +1114,7 @@ export default function NewsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -964,16 +1128,13 @@ export default function NewsManagement() {
           )}
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseCreateDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseCreateDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
           <Button
             onClick={handleCreateNews}
             variant="contained"
-            disabled={creating || (!newContent.trim() && newImages.length === 0)}
+            disabled={creating || !newContent.trim()}
             sx={{
               bgcolor: 'primary.main',
               '&:hover': {
@@ -990,10 +1151,10 @@ export default function NewsManagement() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog 
-        open={editDialogOpen} 
-        onClose={handleCloseEditDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={editDialogOpen}
+        onClose={handleCloseEditDialog}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -1012,8 +1173,8 @@ export default function NewsManagement() {
             placeholder="Nhập nội dung tin tức..."
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            sx={{ 
-              mb: 2, 
+            sx={{
+              mb: 2,
               mt: 1,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1028,7 +1189,7 @@ export default function NewsManagement() {
             placeholder="Link mạng xã hội (tùy chọn)"
             value={editSocialLink}
             onChange={(e) => setEditSocialLink(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1055,9 +1216,9 @@ export default function NewsManagement() {
               onChange={handleEditImageSelect}
             />
             <label htmlFor="edit-image-upload">
-              <Button 
-                variant="outlined" 
-                component="span" 
+              <Button
+                variant="outlined"
+                component="span"
                 startIcon={<ImageIcon />}
                 sx={{
                   borderColor: 'secondary.main',
@@ -1076,11 +1237,11 @@ export default function NewsManagement() {
           {(editImages.length > 0 || editNewImagePreviews.length > 0) && (
             <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               {editImages.map((image, index) => (
-                <Box 
-                  key={`existing-${index}`} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={`existing-${index}`}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -1106,7 +1267,7 @@ export default function NewsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -1117,11 +1278,11 @@ export default function NewsManagement() {
                 </Box>
               ))}
               {editNewImagePreviews.map((preview, index) => (
-                <Box 
-                  key={`new-${index}`} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={`new-${index}`}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -1147,7 +1308,7 @@ export default function NewsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -1161,16 +1322,16 @@ export default function NewsManagement() {
           )}
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseEditDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseEditDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
           <Button
             onClick={handleUpdateNews}
             variant="contained"
-            disabled={updating || (!editContent.trim() && editImages.length === 0 && editNewImages.length === 0)}
+            disabled={
+              updating ||
+              (!editContent.trim() && editImages.length === 0 && editNewImages.length === 0)
+            }
             sx={{
               bgcolor: 'secondary.main',
               '&:hover': {
@@ -1187,8 +1348,8 @@ export default function NewsManagement() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog 
-        open={deleteDialogOpen} 
+      <Dialog
+        open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
         PaperProps={{
           sx: {
@@ -1205,15 +1366,12 @@ export default function NewsManagement() {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseDeleteDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseDeleteDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleDeleteNews} 
-            variant="contained" 
+          <Button
+            onClick={handleDeleteNews}
+            variant="contained"
             disabled={deleting}
             sx={{
               bgcolor: 'error.main',
@@ -1232,4 +1390,3 @@ export default function NewsManagement() {
     </Box>
   )
 }
-

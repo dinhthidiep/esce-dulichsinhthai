@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 
@@ -31,10 +31,10 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
-        [HttpGet("combo/{serviceComboId}")]
-        public async Task<IActionResult> GetByServiceComboId(int serviceComboId)
+        [HttpGet("combo/{ServiceComboId}")]
+        public async Task<IActionResult> GetByServiceComboId(int ServiceComboId)
         {
-            var result = await _service.GetByServiceComboIdAsync(serviceComboId);
+            var result = await _service.GetByServiceComboIdAsync(ServiceComboId);
             return Ok(result);
         }
 
@@ -46,16 +46,16 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ServiceComboDetail serviceComboDetail)
+        public async Task<IActionResult> Create(ServiceComboDetail ServiceComboDetail)
         {
-            var result = await _service.CreateAsync(serviceComboDetail);
+            var result = await _service.CreateAsync(ServiceComboDetail);
             return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ServiceComboDetail serviceComboDetail)
+        public async Task<IActionResult> Update(int id, ServiceComboDetail ServiceComboDetail)
         {
-            var result = await _service.UpdateAsync(id, serviceComboDetail);
+            var result = await _service.UpdateAsync(id, ServiceComboDetail);
             if (result == null) return NotFound();
             return Ok(result);
         }
@@ -68,10 +68,10 @@ namespace ESCE_SYSTEM.Controllers
             return Ok("Deleted");
         }
 
-        [HttpDelete("combo/{serviceComboId}")]
-        public async Task<IActionResult> DeleteByServiceComboId(int serviceComboId)
+        [HttpDelete("combo/{ServiceComboId}")]
+        public async Task<IActionResult> DeleteByServiceComboId(int ServiceComboId)
         {
-            var deleted = await _service.DeleteByServiceComboIdAsync(serviceComboId);
+            var deleted = await _service.DeleteByServiceComboIdAsync(ServiceComboId);
             if (!deleted) return NotFound();
             return Ok("All details for this combo have been deleted");
         }

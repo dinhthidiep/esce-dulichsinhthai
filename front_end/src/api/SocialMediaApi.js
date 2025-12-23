@@ -1,4 +1,8 @@
-const backend_url = "http://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+import { uploadImageToFirebase, deleteImageFromFirebase } from '~/services/firebaseStorage'
+
+// Dùng cùng domain với API deploy; các endpoint bên dưới đã tự thêm /api/...
+const backend_url = API_BASE_URL.replace('/api', '');
 
 // Get comments by post ID API
 export const getCommentsByPostId = async (postId) => {
@@ -302,22 +306,21 @@ export const createPost = async (postData) => {
     // Upload image to Firebase Storage first if provided
     let imageUrl = null;
     if (postData.image instanceof File) {
-      const { uploadImageToFirebase } = await import('../services/firebaseStorage');
       imageUrl = await uploadImageToFirebase(postData.image, 'posts');
     }
 
-    // Use JSON instead of FormData since we're sending URL, not file
-    // Title and Content are separate entities - don't generate title from content
+    // DỮ LIỆU PHÙ HỢP VỚI PostDto TRONG BACKEND
+    // PostDto: PostContent (string), Images (List<string>), PosterName (string), Hashtags (List<string>), ArticleTitle (string?)
     const text = (postData.text || '').trim();
     const postContent = text || (imageUrl ? ' ' : ' ');
-    const title = (postData.title || '').trim(); // Send title as-is, empty string if not provided
+    const title = (postData.title || '').trim();
     
     const requestBody = {
       PostContent: postContent,
+      Images: imageUrl ? [imageUrl] : [],
       PosterName: posterName,
-      PostTitle: title,
-      Hashtags: [], // Send as array, not JSON string
-      ImageUrl: imageUrl // Send Firebase Storage URL instead of file
+      Hashtags: [],
+      ArticleTitle: title || null
     };
 
     const response = await fetch(`${backend_url}/api/Post/CreatePost`, {
@@ -414,7 +417,6 @@ export const createComment = async (commentData) => {
     // Upload image to Firebase Storage first if provided
     let imageUrl = null;
     if (commentData.image instanceof File) {
-      const { uploadImageToFirebase } = await import('../services/firebaseStorage');
       imageUrl = await uploadImageToFirebase(commentData.image, 'comments');
     }
 
@@ -514,14 +516,15 @@ export const createComment = async (commentData) => {
 };
 
 // Delete post API
-export const deletePost = async (postId) => {
+export const deletePost = async (postId, oldImageUrls = []) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
       throw new Error('Authentication required. Please log in again.');
     }
 
-    const response = await fetch(`${backend_url}/api/Post/${postId}`, {
+    // Backend: [HttpDelete("DeletePost")] DeletePost(int id)
+    const response = await fetch(`${backend_url}/api/Post/DeletePost?id=${postId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -569,6 +572,13 @@ export const deletePost = async (postId) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }// Backend
+    //  xoá bài viết thành công, giờ mới xoá ảnh Firebase
+    const urls = Array.isArray(oldImageUrls) ? oldImageUrls : [oldImageUrls];
+    for (const url of urls) {
+      if (url) {
+        await deleteImageFromFirebase(url);
+      }
     }
 
     return true;
@@ -579,7 +589,7 @@ export const deletePost = async (postId) => {
 };
 
 // Delete comment API
-export const deleteComment = async (commentId) => {
+export const deleteComment = async (commentId, oldImageUrl = null) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -642,6 +652,10 @@ export const deleteComment = async (commentId) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }
+
+    if (oldImageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
     }
 
     return true;
@@ -720,14 +734,25 @@ export const createReaction = async (reactionData) => {
       throw new Error('Authentication required. Please log in again.');
     }
 
+    // Validate và chuẩn hóa dữ liệu
+    if (!reactionData.targetType || !reactionData.targetId || !reactionData.reactionType) {
+      throw new Error('Thiếu thông tin reaction. Vui lòng thử lại.');
+    }
+
+    // Đảm bảo TargetId là số nguyên hợp lệ
+    const targetId = parseInt(String(reactionData.targetId), 10);
+    if (!targetId || isNaN(targetId) || targetId <= 0) {
+      throw new Error('ID không hợp lệ. Vui lòng thử lại.');
+    }
+
     // Prepare reaction data according to database schema
     // Schema: USER_ID, TARGET_TYPE, TARGET_ID, REACTION_TYPE
     // CREATED_AT is set by backend
     // USER_ID is set by backend from JWT token
     const reactionPayload = {
-      TargetType: reactionData.targetType, // 'POST' or 'COMMENT'
-      TargetId: reactionData.targetId,
-      ReactionType: reactionData.reactionType // 'like', 'love', 'haha', 'wow', 'dislike', etc.
+      TargetType: String(reactionData.targetType).toUpperCase(), // 'POST' or 'COMMENT'
+      TargetId: targetId, // Đảm bảo là số nguyên
+      ReactionType: String(reactionData.reactionType).toLowerCase() // 'like', 'love', 'haha', 'wow', 'dislike', etc.
     };
 
     const response = await fetch(`${backend_url}/api/Reaction`, {
@@ -788,6 +813,15 @@ export const createReaction = async (reactionData) => {
         } else if (errorDetails && errorDetails.message) {
           message = errorDetails.message;
         }
+      }
+
+      // Xử lý lỗi Entity Framework
+      if (message.includes('saving the entity changes') || 
+          message.includes('inner exception') ||
+          message.includes('database') ||
+          message.includes('constraint') ||
+          message.includes('foreign key')) {
+        message = 'Không thể lưu thay đổi. Vui lòng thử lại sau.';
       }
 
       const error = new Error(message);
@@ -986,7 +1020,7 @@ export const unsavePost = async (postId) => {
 };
 
 // Update post API
-export const updatePost = async (postId, postData) => {
+export const updatePost = async (postId, {postData, oldImageUrl: currentImageUrl}) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -1009,18 +1043,17 @@ export const updatePost = async (postId, postData) => {
       imageUrl = await uploadImageToFirebase(postData.image, 'posts');
     }
 
-    // Use JSON instead of FormData since we're sending URL, not file
-    // Title and Content are separate entities - don't generate title from content
+    // DỮ LIỆU PHÙ HỢP VỚI PostDto TRONG BACKEND KHI UPDATE
     const text = (postData.text || '').trim();
     const postContent = text || (imageUrl ? ' ' : ' ');
-    const title = (postData.title || '').trim(); // Send title as-is, empty string if not provided
+    const title = (postData.title || '').trim();
     
     const requestBody = {
       PostContent: postContent,
+      Images: imageUrl ? [imageUrl] : (Array.isArray(postData.images) ? postData.images : []),
       PosterName: posterName,
-      PostTitle: title,
-      Hashtags: [], // Send as array, not JSON string
-      ImageUrl: imageUrl // Send Firebase Storage URL (null if no new image)
+      Hashtags: [],
+      ArticleTitle: title || null
     };
 
     const response = await fetch(`${backend_url}/api/Post/UpdatePost?id=${postId}`, {
@@ -1089,6 +1122,11 @@ export const updatePost = async (postId, postData) => {
       throw error;
     }
 
+    const oldImageUrl = postData.oldImageUrl;
+    if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
+    }
+  
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const text = await response.text();
@@ -1177,7 +1215,7 @@ export const getPostById = async (postId) => {
 };
 
 // Update comment API
-export const updateComment = async (commentId, commentData) => {
+export const updateComment = async (commentId, {commentData, oldImageUrl: currentImageUrl}) => {
   try {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -1254,6 +1292,11 @@ export const updateComment = async (commentId, commentData) => {
       error.status = response.status;
       error.details = errorDetails;
       throw error;
+    }
+
+    const oldImageUrl = commentData.oldImageUrl; // truyền từ component
+    if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+      await deleteImageFromFirebase(oldImageUrl);
     }
 
     const contentType = response.headers.get('content-type');

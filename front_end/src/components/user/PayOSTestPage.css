@@ -1,0 +1,433 @@
+.payos-payos-test-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
+  font-family: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.payos-payos-test-main {
+  margin-top: 65px;
+  padding: 3rem 0 4rem;
+  min-height: calc(100vh - 65px);
+}
+
+.payos-payos-test-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Header */
+.payos-test-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.payos-test-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+}
+
+.payos-test-subtitle {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Content */
+.payos-test-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Cards */
+.payos-test-form-card,
+.payos-test-steps-card,
+.payos-test-result-card,
+.payos-test-info-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.payos-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Form */
+.payos-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.payos-form-label {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.payos-form-input,
+.payos-form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.payos-form-input:focus,
+.payos-form-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.payos-form-hint {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.payos-form-actions {
+  margin-top: 2rem;
+}
+
+.payos-test-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.payos-button-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.payos-button-icon.payos-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Steps */
+.payos-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.payos-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.payos-step-item.payos-completed {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.payos-step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.payos-step-item.payos-completed .payos-step-number {
+  background: #10b981;
+  color: white;
+}
+
+.payos-step-content {
+  flex: 1;
+}
+
+.payos-step-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.payos-step-description {
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.payos-step-loader {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Result Card */
+.payos-test-result-card {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.payos-test-result-card.payos-success {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+}
+
+.payos-test-result-card.payos-failed {
+  border-color: #dc2626;
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.payos-result-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.payos-result-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.payos-result-icon.payos-success-icon {
+  color: #10b981;
+}
+
+.payos-result-icon.payos-failed-icon {
+  color: #dc2626;
+}
+
+.payos-result-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.payos-result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.payos-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 3px solid #e5e7eb;
+}
+
+.payos-detail-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.payos-detail-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.payos-status-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.payos-status-badge.payos-status-success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.payos-status-badge.payos-status-failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.payos-result-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.payos-view-result-button,
+.payos-retry-button {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payos-view-result-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+}
+
+.payos-view-result-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Info Card */
+.payos-test-info-card {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.payos-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.payos-info-icon {
+  width: 24px;
+  height: 24px;
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.payos-info-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0c4a6e;
+  margin: 0;
+}
+
+.payos-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.payos-info-list li {
+  font-size: 0.9375rem;
+  color: #075985;
+  line-height: 1.6;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.payos-info-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #0284c7;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payos-payos-test-main {
+    padding: 2rem 0 3rem;
+  }
+
+  .payos-payos-test-container {
+    padding: 0 1rem;
+  }
+
+  .payos-test-title {
+    font-size: 2rem;
+  }
+
+  .payos-test-subtitle {
+    font-size: 1rem;
+  }
+
+  .payos-result-actions {
+    flex-direction: column;
+  }
+
+  .payos-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

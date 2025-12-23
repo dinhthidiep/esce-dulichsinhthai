@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,8 @@ namespace ESCE_SYSTEM.Repositories
             return await _context.Posts
                 .Include(p => p.Author)
                 .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => !c.IsDeleted))
+                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
+
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
@@ -36,13 +37,16 @@ namespace ESCE_SYSTEM.Repositories
                 .Where(p => !p.IsDeleted)
                 .Include(p => p.Author)
                 .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => !c.IsDeleted))
+                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
+                .Include(p => p.Postreactions)
+                .ThenInclude(pr => pr.ReactionType)
                 .Include(p => p.Postsaves)
                 .ThenInclude(ps => ps.Account)
                 .OrderByDescending(p => p.CreatedAt)
+                .AsSplitQuery() // Tối ưu performance cho nhiều Include
                 .ToListAsync();
         }
 
@@ -52,7 +56,7 @@ namespace ESCE_SYSTEM.Repositories
                 .Where(p => p.Status == "Approved" && !p.IsDeleted)
                 .Include(p => p.Author)
                 .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => !c.IsDeleted))
+                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
@@ -68,7 +72,7 @@ namespace ESCE_SYSTEM.Repositories
                 .Where(p => p.Status == "Pending" && !p.IsDeleted)
                 .Include(p => p.Author)
                 .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => !c.IsDeleted))
+                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
@@ -84,7 +88,7 @@ namespace ESCE_SYSTEM.Repositories
                 .Where(p => p.AuthorId == authorId && !p.IsDeleted)
                 .Include(p => p.Author)
                 .ThenInclude(a => a.Role)
-                .Include(p => p.Comments.Where(c => !c.IsDeleted))
+                .Include(p => p.Comments.Where(c => c.IsDeleted != true))
                 .ThenInclude(c => c.Author)
                 .Include(p => p.Postreactions)
                 .ThenInclude(pr => pr.User)
@@ -134,7 +138,7 @@ namespace ESCE_SYSTEM.Repositories
         public async Task<int> GetCommentsCountAsync(int postId)
         {
             return await _context.Comments
-                .Where(c => c.PostId == postId && !c.IsDeleted)
+                .Where(c => c.PostId == postId && c.IsDeleted != true)
                 .CountAsync();
         }
 

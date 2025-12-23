@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,6 +18,7 @@ namespace ESCE_SYSTEM.Models
 
         public int? ServiceComboId { get; set; }
         public int? ServiceId { get; set; }
+        public int? BonusServiceId { get; set; }
 
         [Required]
         public int Quantity { get; set; } = 1;
@@ -51,6 +52,9 @@ namespace ESCE_SYSTEM.Models
 
         [ForeignKey("ServiceId")]
         public virtual Service? Service { get; set; }
+
+        [ForeignKey("BonusServiceId")]
+        public virtual BonusService? BonusService { get; set; }
 
         public virtual ICollection<BookingCoupon> BookingCoupons { get; set; } = new List<BookingCoupon>();
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

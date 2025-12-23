@@ -1,0 +1,467 @@
+/* Force visibility for rev-page-content areas */
+.rev-page-content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 500px; /* Ensure it has height */
+}
+
+.rev-page-form-content {
+  z-index: 1 !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 400px; /* Ensure it has height */
+}
+
+.rev-page-reviews-list {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 200px; /* Ensure it has height */
+}
+
+.rev-page-review-card {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 150px; /* Ensure it has height */
+}
+
+/* Review Filters */
+.rev-page-review-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rev-page-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.rev-page-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+  flex: 1;
+}
+
+.rev-page-filter-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.rev-page-filter-select,
+.rev-page-filter-input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  height: 38px; /* Match height between select and input */
+  box-sizing: border-box;
+}
+
+.rev-page-filter-input {
+  min-width: 200px;
+}
+
+/* Reviews List */
+.rev-page-reviews-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.rev-page-review-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.rev-page-review-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rev-page-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.rev-page-review-user-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rev-page-review-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.rev-page-review-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rev-page-review-user-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.rev-page-review-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.rev-page-review-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rev-page-star {
+  font-size: 1.2rem;
+}
+
+.rev-page-star.rev-page-filled {
+  filter: grayscale(0%);
+  color: #ffc107; /* Yellow color for rev-page-filled stars */
+}
+
+.rev-page-star.rev-page-greyed {
+  filter: grayscale(100%);
+  opacity: 0.5;
+  color: #999; /* Grey color for 0 rating */
+}
+
+.rev-page-star.rev-page-empty {
+  filter: grayscale(100%);
+  opacity: 0.3;
+}
+
+.rev-page-rating-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.rev-page-review-combo-info {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.rev-page-review-comment {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #fafafa;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #333;
+  min-height: 60px;
+}
+
+.rev-page-review-reply-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #e8f5e9;
+  border-radius: 4px;
+  border-left: 3px solid #4caf50;
+}
+
+.rev-page-review-reply-label {
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+}
+
+.rev-page-review-reply-content {
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.rev-page-review-reply-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.rev-page-review-status {
+  margin-bottom: 1rem;
+}
+
+.rev-page-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rev-page-status-badge.rev-page-replied {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.rev-page-status-badge.rev-page-not-replied {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.rev-page-review-detail-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #008e05;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.rev-page-review-detail-btn:hover {
+  background: #006b04;
+}
+
+/* Review Detail Modal */
+.rev-page-review-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+}
+
+.rev-page-review-detail-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.rev-page-review-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.rev-page-review-detail-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.rev-page-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.rev-page-close-btn:hover {
+  background: #f5f5f5;
+}
+
+.rev-page-review-detail-content {
+  padding: 1.5rem;
+}
+
+.rev-page-review-detail-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.rev-page-review-detail-section:last-child {
+  border-bottom: none;
+}
+
+.rev-page-review-detail-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.rev-page-review-detail-user {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rev-page-review-detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.rev-page-review-rating-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rev-page-review-rating-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rev-page-review-detail-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rev-page-review-detail-comment {
+  padding: 1rem;
+  background: #fafafa;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.rev-page-review-detail-reply {
+  padding: 1rem;
+  background: #e8f5e9;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.rev-page-review-detail-reply-date {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.rev-page-review-reply-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.rev-page-review-reply-textarea:focus {
+  outline: none;
+  border-color: #008e05;
+}
+
+.rev-page-review-submit-reply-btn {
+  padding: 0.75rem 1.5rem;
+  background: #008e05;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.rev-page-review-submit-reply-btn:hover:not(:disabled) {
+  background: #006b04;
+}
+
+.rev-page-review-submit-reply-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.rev-page-review-delete-reply-btn {
+  padding: 0.75rem 1.5rem;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.rev-page-review-delete-reply-btn:hover:not(:disabled) {
+  background: #b71c1c;
+}
+
+.rev-page-review-delete-reply-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.rev-page-no-reviews {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rev-page-reviews-list {
+    grid-template-columns: 1fr;
+  }
+
+  .rev-page-review-filters {
+    flex-direction: column;
+  }
+
+  .rev-page-filter-group {
+    width: 100%;
+  }
+
+  .rev-page-review-detail-modal {
+    max-width: 100%;
+    margin: 1rem;
+  }
+}
+

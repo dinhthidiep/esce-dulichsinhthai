@@ -38,13 +38,20 @@ namespace ESCE_SYSTEM.Services
 
         public async Task LikePost(int postId)
         {
+            // Backward compatibility: gọi ReactToPost với reactionTypeId = 1 (Like)
+            await ReactToPost(postId, 1);
+        }
+
+        public async Task ReactToPost(int postId, byte reactionTypeId)
+        {
+            // Validate reactionTypeId (1-6: Like, Love, Haha, Wow, Sad, Angry)
+            if (reactionTypeId < 1 || reactionTypeId > 6)
+            {
+                throw new Exception("Loại cảm xúc không hợp lệ. Vui lòng chọn từ 1-6.");
+            }
+
             var currentUserId = _userContextService.GetCurrentUserId();
             var existingReaction = await _postReactionRepository.GetByUserAndPostAsync(currentUserId, postId);
-
-            if (existingReaction != null)
-            {
-                throw new Exception("Bạn đã thích bài viết này rồi");
-            }
 
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
@@ -52,26 +59,60 @@ namespace ESCE_SYSTEM.Services
                 throw new Exception("Không tìm thấy bài viết");
             }
 
-            var postReaction = new Postreaction
+            // Nếu user đã react với loại khác, update reaction type
+            if (existingReaction != null)
             {
-                UserId = currentUserId,
-                PostId = postId,
-                ReactionTypeId = 1, // Like
-                CreatedAt = DateTime.Now
-            };
+                // Nếu cùng loại reaction -> bỏ reaction (unlike)
+                if (existingReaction.ReactionTypeId == reactionTypeId)
+                {
+                    await UnlikePost(existingReaction.Id);
+                    return;
+                }
+                else
+                {
+                    // Update reaction type
+                    existingReaction.ReactionTypeId = reactionTypeId;
+                    existingReaction.CreatedAt = DateTime.Now;
+                    await _postReactionRepository.UpdateAsync(existingReaction);
+                }
+            }
+            else
+            {
+                // Tạo reaction mới
+                var postReaction = new Postreaction
+                {
+                    UserId = currentUserId,
+                    PostId = postId,
+                    ReactionTypeId = reactionTypeId,
+                    CreatedAt = DateTime.Now
+                };
 
-            await _postReactionRepository.AddAsync(postReaction);
+                await _postReactionRepository.AddAsync(postReaction);
 
-            // Update reaction count in post
-            post.ReactionsCount++;
-            await _postRepository.UpdateAsync(post);
+                // Update reaction count in post
+                post.ReactionsCount++;
+                await _postRepository.UpdateAsync(post);
+            }
 
-            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người like)
+            // Gửi thông báo cho tác giả của bài viết (trừ khi tác giả là người react)
             if (post.AuthorId != currentUserId)
             {
                 var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
-                await GuiThongBaoReaction(post.AuthorId, "Có người thích bài viết của bạn",
-                    $"{currentUser.Name} đã thích bài viết: {post.Title}");
+                var reactionNames = new Dictionary<byte, string>
+                {
+                    { 1, "thích" },
+                    { 2, "yêu thích" },
+                    { 3, "haha" },
+                    { 4, "wow" },
+                    { 5, "buồn" },
+                    { 6, "phẫn nộ" }
+                };
+                var reactionName = reactionNames.ContainsKey(reactionTypeId) 
+                    ? reactionNames[reactionTypeId] 
+                    : "phản ứng";
+                
+                await GuiThongBaoReaction(post.AuthorId, "Có người phản ứng với bài viết của bạn",
+                    $"{currentUser.Name} đã {reactionName} bài viết: {post.Title}");
             }
         }
 

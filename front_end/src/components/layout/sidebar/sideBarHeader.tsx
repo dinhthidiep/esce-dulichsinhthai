@@ -4,6 +4,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import type { Dispatch, SetStateAction } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
 
 interface SideBarHeaderProps {
   open: boolean
@@ -14,8 +15,10 @@ const SideBarHeader = ({ open, setOpen }: SideBarHeaderProps) => {
     <Box
       sx={{
         display: 'flex',
+        flexDirection: open ? 'row' : 'column',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: open ? 'space-between' : 'center',
+        gap: open ? 0 : pxToRem(8),
         padding: pxToRem(16),
         borderBottom: '1px solid',
         borderColor: 'grey.200',
@@ -23,24 +26,22 @@ const SideBarHeader = ({ open, setOpen }: SideBarHeaderProps) => {
         top: 0,
         bgcolor: 'common.white',
         zIndex: 1,
-        minHeight: pxToRem(64),
+        height: open ? pxToRem(64) : pxToRem(80),
+        paddingBottom: open ? pxToRem(16) : pxToRem(20),
         // Khi mini → chỉ giữ icon, căn giữa
         ...(open
           ? {}
           : {
-              justifyContent: 'center',
               padding: (theme) => theme.customLayout.closePaddingSideBar
             })
       }}
     >
-      {/* === TITLE – chỉ hiện khi open === */}
-      <Typography
+      {/* === LOGO + TITLE – chỉ hiện khi open === */}
+      <Box
         sx={{
-          fontSize: pxToRem(20),
-          fontWeight: 600,
-          background: (theme) => theme.customBackgroundColor.main,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          gap: pxToRem(12),
           opacity: open ? 1 : 0,
           width: open ? 'auto' : 0,
           transition: 'opacity 0.2s ease, width 0.2s ease',
@@ -48,8 +49,46 @@ const SideBarHeader = ({ open, setOpen }: SideBarHeaderProps) => {
           whiteSpace: 'nowrap'
         }}
       >
-        Admin Panel
-      </Typography>
+        <Avatar
+          src="/images/logo.png"
+          alt="ESCE Logo"
+          sx={{
+            width: pxToRem(40),
+            height: pxToRem(40),
+            borderRadius: 1,
+            objectFit: 'contain',
+            bgcolor: 'transparent'
+          }}
+          variant="rounded"
+        />
+        <Typography
+          sx={{
+            fontSize: pxToRem(20),
+            fontWeight: 600,
+            background: (theme) => theme.customBackgroundColor.main,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}
+        >
+          Admin Panel
+        </Typography>
+      </Box>
+
+      {/* === LOGO ONLY – chỉ hiện khi đóng === */}
+      {!open && (
+        <Avatar
+          src="/images/logo.png"
+          alt="ESCE Logo"
+          sx={{
+            width: pxToRem(36),
+            height: pxToRem(36),
+            borderRadius: 1,
+            objectFit: 'contain',
+            bgcolor: 'transparent'
+          }}
+          variant="rounded"
+        />
+      )}
 
       {/* === TOGGLE BUTTON – luôn hiện, căn giữa khi mini === */}
       <BaseButton
@@ -59,7 +98,7 @@ const SideBarHeader = ({ open, setOpen }: SideBarHeaderProps) => {
           width: pxToRem(40),
           height: pxToRem(40),
           padding: 0,
-          borderRadius: '50%',
+          borderRadius: open ? '50%' : pxToRem(8),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

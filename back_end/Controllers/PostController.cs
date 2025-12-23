@@ -21,7 +21,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("CreatePost")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<ActionResult> CreatePost([FromBody] PostDto postDto)
         {
             try
@@ -111,7 +111,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPut("UpdatePost")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<ActionResult> UpdatePost(int id, [FromBody] PostDto postDto)
         {
             try
@@ -130,7 +130,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpDelete("DeletePost")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<ActionResult> DeletePost(int id)
         {
             try

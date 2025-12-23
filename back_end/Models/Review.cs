@@ -27,10 +27,18 @@ namespace ESCE_SYSTEM.Models
         [MaxLength(50)]
         public string Status { get; set; } = "pending";
 
+        // Parent review ID for replies (null if this is a main review)
+        public int? ParentReviewId { get; set; }
+
         [ForeignKey("BookingId")]
         public virtual Booking Booking { get; set; } = null!;
 
         [ForeignKey("UserId")]
         public virtual Account User { get; set; } = null!;
+
+        [ForeignKey("ParentReviewId")]
+        public virtual Review? ParentReview { get; set; }
+
+        public virtual ICollection<Review> Replies { get; set; } = new List<Review>();
     }
 }

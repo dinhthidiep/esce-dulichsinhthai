@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  CircularProgress,
-  Alert,
-  Paper
-} from '@mui/material'
+import { Box, Card, CardContent, Typography, CircularProgress, Alert, Paper } from '@mui/material'
+import Grid from '@mui/material/Grid'
 import {
   People as PeopleIcon,
   Article as ArticleIcon,
@@ -19,12 +11,20 @@ import {
   PendingActions as PendingIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  AccountBalanceWallet as RevenueIcon,
-  BarChart as ChartIcon
+  AccountBalanceWallet as RevenueIcon
 } from '@mui/icons-material'
-import { fetchStatistics, StatisticsDto } from '~/api/instances/StatisticsApi'
+import { fetchStatistics, type StatisticsDto } from '~/api/instances/StatisticsApi'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300']
+const COLORS = [
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#8884d8',
+  '#82ca9d',
+  '#ffc658',
+  '#ff7300'
+]
 
 interface StatCardProps {
   title: string
@@ -136,7 +136,7 @@ export default function StatisticsDashboard() {
 
       {/* Main Statistics Cards */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Tổng người dùng"
             value={statistics.totalUsers}
@@ -145,7 +145,8 @@ export default function StatisticsDashboard() {
             subtitle={`Hoạt động: ${statistics.activeUsers} | Bị cấm: ${statistics.bannedUsers}`}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Tổng bài viết"
             value={statistics.totalPosts}
@@ -154,7 +155,8 @@ export default function StatisticsDashboard() {
             subtitle={`Đã duyệt: ${statistics.approvedPosts} | Chờ duyệt: ${statistics.pendingPosts}`}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Tổng đặt tour"
             value={statistics.totalBookings}
@@ -163,7 +165,8 @@ export default function StatisticsDashboard() {
             subtitle={`Đã xác nhận: ${statistics.confirmedBookings} | Chờ xử lý: ${statistics.pendingBookings}`}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Tổng doanh thu"
             value={`${statistics.totalRevenue.toLocaleString('vi-VN')} VNĐ`}
@@ -175,7 +178,7 @@ export default function StatisticsDashboard() {
 
       {/* Secondary Statistics */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Tin tức"
             value={statistics.totalNews}
@@ -183,7 +186,8 @@ export default function StatisticsDashboard() {
             color="#0288d1"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Dịch vụ"
             value={statistics.totalServices}
@@ -191,7 +195,8 @@ export default function StatisticsDashboard() {
             color="#388e3c"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Combo dịch vụ"
             value={statistics.totalServiceCombos}
@@ -199,7 +204,8 @@ export default function StatisticsDashboard() {
             color="#f57c00"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Chứng chỉ chờ duyệt"
             value={statistics.pendingAgencyCertificates + statistics.pendingHostCertificates}
@@ -213,7 +219,7 @@ export default function StatisticsDashboard() {
       {/* Charts Section */}
       <Grid container spacing={3} mb={4}>
         {/* User Role Distribution */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom mb={2}>
               Phân bố người dùng theo vai trò
@@ -257,14 +263,14 @@ export default function StatisticsDashboard() {
         </Grid>
 
         {/* Monthly Revenue */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom mb={2}>
               Doanh thu theo tháng (6 tháng gần nhất)
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {revenueChartData.length > 0 ? (
-                revenueChartData.map((item, index) => {
+                revenueChartData.map((item) => {
                   const maxRevenue = Math.max(...revenueChartData.map((r) => r.revenue), 1)
                   const percentage = (item.revenue / maxRevenue) * 100
                   return (
@@ -309,7 +315,7 @@ export default function StatisticsDashboard() {
 
       {/* Post Status Details */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" gap={2} mb={2}>
@@ -322,7 +328,8 @@ export default function StatisticsDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" gap={2} mb={2}>
@@ -335,7 +342,8 @@ export default function StatisticsDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" gap={2} mb={2}>
@@ -352,4 +360,3 @@ export default function StatisticsDashboard() {
     </Box>
   )
 }
-

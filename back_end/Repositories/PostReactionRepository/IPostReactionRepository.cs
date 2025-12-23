@@ -11,6 +11,7 @@ namespace ESCE_SYSTEM.Repositories
         Task<IEnumerable<Postreaction>> GetByUserIdAsync(int userId);
         Task<Postreaction> GetByUserAndPostAsync(int userId, int postId);
         Task<Postreaction> AddAsync(Postreaction postReaction);
+        Task<Postreaction> UpdateAsync(Postreaction postReaction);
         Task<bool> DeleteAsync(int id);
         Task<int> GetCountByPostIdAsync(int postId);
     }

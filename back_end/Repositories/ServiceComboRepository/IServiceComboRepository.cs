@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Repositories
 {
@@ -7,8 +7,10 @@ namespace ESCE_SYSTEM.Repositories
         Task<IEnumerable<ServiceCombo>> GetAllAsync();
         Task<ServiceCombo?> GetByIdAsync(int id);
         Task<ServiceCombo?> GetByNameAsync(string name);
-        Task CreateAsync(ServiceCombo serviceCombo);
-        Task UpdateAsync(ServiceCombo serviceCombo);
+        Task<IEnumerable<ServiceCombo>> GetByHostIdAsync(int hostId);
+        Task<IEnumerable<ServiceCombo>> GetApprovedByHostIdAsync(int hostId);
+        Task CreateAsync(ServiceCombo ServiceCombo);
+        Task UpdateAsync(ServiceCombo ServiceCombo);
         Task DeleteAsync(int id);
     }
 }

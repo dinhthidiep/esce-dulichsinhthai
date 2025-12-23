@@ -1,0 +1,121 @@
+.list-bank {
+    max-width: 90px !important;
+    margin-bottom: 2px;
+    margin-right: 4px;
+    width: 100%;
+}
+
+.list-bank-box {
+    background: #fff !important;
+    border: 1px solid #ccc;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.list-bank img {
+    object-fit: contain;
+    margin: 0px !important;
+}
+
+.payos-row {
+    display: -ms-flexbox;
+    display: flex;
+    justify-content: flex-start;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+}
+
+/* Button styles */
+button#payos_info_button {
+    border: none;
+    cursor: pointer;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+    min-width: 125px !important;
+    margin-bottom: 10px;
+}
+
+#payos_info_button.no-connection {
+    background-color: #af1818;
+}
+
+#payos_info_button.connected {
+    background-color: #15ab64;
+}
+
+/* PayOS Gateway Info */
+#payos_gateway_info {
+    padding: 20px;
+    background-color: #bdbdbd;
+    color: black;
+    border: 1px solid;
+    max-width: 500px;
+    border-radius: 10px;
+    display: none;
+}
+
+/* Hidden input */
+input[name="payos_gateway_settings[link_webhook]"] {
+    display: none;
+}
+
+/* Toggle button */
+#toggle_payos_gateway_settings {
+    border: none;
+    text-decoration: underline;
+    color: #2271b1;
+}
+
+#payos_gateway_settings_group {
+    display: none;
+}
+
+
+/* Form input styles */
+.button-show {
+    border: none;
+    background-color: #f0f0f1;
+    min-width: 45px !important;
+    color: #056fca;
+    border-radius: 5px;
+    padding: 6px;
+}
+
+#payos_checksum_key+br {
+    margin-top: 8px;
+}
+
+/* Submit button */
+#submit {
+    border: none;
+    background-color: #056fca;
+    color: white;
+    border-radius: 5px;
+    min-width: 95px !important;
+}
+
+.submit-container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* Link styles */
+a#instructions_link {
+    margin-left: 5px;
+    border: none;
+    color: #2271b1;
+    text-decoration: underline;
+    line-height: 30px;
+}
+
+label#transaction_prefix {
+    font-size: 13px;
+    font-style: oblique;
+}
+
+#payos_gateway_settings_redirect {
+    display: none;
+}

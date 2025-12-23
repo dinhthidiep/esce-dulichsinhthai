@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Box,
   Card,
@@ -37,11 +37,13 @@ import {
   Cancel as CancelIcon,
   Image as ImageIcon,
   Close as CloseIcon,
-  Favorite as FavoriteIcon,
-  FavoriteBorder as FavoriteBorderIcon,
+  ThumbUpAlt as LikeIcon,
+  ThumbUpOffAlt as LikeBorderIcon,
   Comment as CommentIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  Favorite as FavoriteIcon
 } from '@mui/icons-material'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import {
   fetchAllPosts,
   createPost,
@@ -49,18 +51,17 @@ import {
   deletePost,
   approvePost,
   rejectPost,
-  toggleLikePost,
+  reactToPost,
+  fetchPostById,
   fetchCommentsByPost,
   createComment,
   updateComment,
   deleteComment,
+  toggleCommentLike,
   type PostDto,
-  type PostLikeDto,
   type CreatePostDto,
   type UpdatePostDto,
-  type PostComment,
-  type CreateCommentDto,
-  type UpdateCommentDto
+  type PostComment
 } from '~/api/instances/PostsApi'
 
 const getRoleColor = (role: string) => {
@@ -77,6 +78,8 @@ const getRoleColor = (role: string) => {
   }
 }
 
+// ĐÃ BỎ dữ liệu ảo cho bài viết (MOCK_POSTS) theo yêu cầu, chỉ dùng dữ liệu thật từ backend
+
 const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'approved':
@@ -90,9 +93,31 @@ const getStatusColor = (status: string) => {
   }
 }
 
+// Reaction types for posts - map sang ReactionTypeId trong backend
+// Backend mapping: 1 Like, 2 Love, 3 Haha, 4 Wow, 5 Sad, 6 Angry
+type ReactionKey = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry'
+
+const REACTION_ID_MAP: Record<ReactionKey, number> = {
+  like: 1,
+  love: 2,
+  haha: 3,
+  wow: 4,
+  sad: 5,
+  angry: 6
+}
+
+const REACTIONS: { key: ReactionKey; label: string; emoji: string }[] = [
+  { key: 'like', label: 'Thích', emoji: '👍' },
+  { key: 'love', label: 'Tim', emoji: '❤️' },
+  { key: 'haha', label: 'Haha', emoji: '😂' },
+  { key: 'wow', label: 'Wow', emoji: '😮' },
+  { key: 'sad', label: 'Buồn', emoji: '😢' },
+  { key: 'angry', label: 'Phẫn nộ', emoji: '😡' }
+]
+
 const formatTimeAgo = (dateString?: string) => {
   if (!dateString) return 'Vừa xong'
-  
+
   try {
     const date = new Date(dateString)
     const now = new Date()
@@ -111,39 +136,31 @@ const formatTimeAgo = (dateString?: string) => {
   }
 }
 
-// Convert File to Base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => {
-      const result = reader.result as string
-      if (result && result.startsWith('data:image/')) {
-        resolve(result)
-      } else {
-        reject(new Error('Invalid image format'))
-      }
-    }
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error)
-      reject(error)
-    }
-  })
-}
-
 export default function PostsManagement() {
   const [posts, setPosts] = useState<PostDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('All')
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity?: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '' })
-  
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean
+    message: string
+    severity?: 'success' | 'error' | 'warning' | 'info'
+  }>({ open: false, message: '' })
+
   // Likes Dialog State
   const [likesDialogOpen, setLikesDialogOpen] = useState(false)
   const [selectedPostLikes, setSelectedPostLikes] = useState<PostDto['likes']>([])
-  const [selectedPostTitle, setSelectedPostTitle] = useState('')
+  const [_selectedPostTitle, setSelectedPostTitle] = useState('')
   
+  // Comment Likes Dialog State
+  const [commentLikesDialogOpen, setCommentLikesDialogOpen] = useState(false)
+  const [selectedCommentLikes, setSelectedCommentLikes] = useState<PostComment['likes']>([])
+  const [_selectedCommentContent, setSelectedCommentContent] = useState('')
+  // Hiển thị popup reaction khi hover vào nút like
+  const [reactionMenuPostId, setReactionMenuPostId] = useState<number | null>(null)
+  const reactionHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Create Post State
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -174,6 +191,25 @@ export default function PostsManagement() {
   const [rejectComment, setRejectComment] = useState('')
   const [reviewing, setReviewing] = useState(false)
 
+  // Helpers cho reaction menu (giữ menu mở lâu hơn một chút)
+  const showReactionMenu = (postId: number) => {
+    if (reactionHideTimeoutRef.current) {
+      clearTimeout(reactionHideTimeoutRef.current)
+      reactionHideTimeoutRef.current = null
+    }
+    setReactionMenuPostId(postId)
+  }
+
+  const scheduleHideReactionMenu = (postId: number) => {
+    if (reactionHideTimeoutRef.current) {
+      clearTimeout(reactionHideTimeoutRef.current)
+    }
+    reactionHideTimeoutRef.current = setTimeout(() => {
+      setReactionMenuPostId((current) => (current === postId ? null : current))
+      reactionHideTimeoutRef.current = null
+    }, 400) // giữ thêm ~0.4s sau khi rời chuột
+  }
+
   // Menu State
   const [menuAnchor, setMenuAnchor] = useState<{ [key: number]: HTMLElement | null }>({})
 
@@ -188,8 +224,11 @@ export default function PostsManagement() {
   const [creatingComment, setCreatingComment] = useState<{ [postId: number]: boolean }>({})
   const [updatingComment, setUpdatingComment] = useState<Set<string>>(new Set())
   const [deletingComment, setDeletingComment] = useState<Set<string>>(new Set())
+  const [likingComments, setLikingComments] = useState<Set<string>>(new Set())
 
-  // Get current user
+  // Get current user - make it a state so it can be updated
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
   const getCurrentUser = () => {
     try {
       const userInfoStr = localStorage.getItem('userInfo')
@@ -202,10 +241,42 @@ export default function PostsManagement() {
     return null
   }
 
-  const currentUser = getCurrentUser()
-  const isAdmin = currentUser?.role === 'Admin' || currentUser?.roleName === 'Admin' || currentUser?.Role === 'Admin' || currentUser?.roleId === 1
+  // Load user info on mount and when profile is updated
+  useEffect(() => {
+    const loadUserInfo = () => {
+      const user = getCurrentUser()
+      setCurrentUser(user)
+    }
+
+    loadUserInfo()
+
+    // Listen for profile update events
+    const handleProfileUpdate = () => {
+      console.log('Profile updated event received in PostsManagement, reloading userInfo...')
+      loadUserInfo()
+    }
+
+    window.addEventListener('userProfileUpdated', handleProfileUpdate)
+
+    // Reload when window gets focus
+    const handleFocus = () => {
+      loadUserInfo()
+    }
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
+
+  const isAdmin =
+    currentUser?.role === 'Admin' ||
+    currentUser?.roleName === 'Admin' ||
+    currentUser?.Role === 'Admin' ||
+    currentUser?.roleId === 1
   const isAuthenticated = !!currentUser
-  
+
   // Debug: Log current user info
   useEffect(() => {
     if (currentUser) {
@@ -215,10 +286,52 @@ export default function PostsManagement() {
         userId: currentUser.userId,
         UserId: currentUser.UserId,
         ID: currentUser.ID,
+        avatar: currentUser.avatar || currentUser.Avatar,
         allKeys: Object.keys(currentUser)
       })
     }
   }, [currentUser])
+
+  // Lấy reaction hiện tại của user cho 1 post (nếu có)
+  const getCurrentUserReaction = (post: PostDto): ReactionKey | null => {
+    if (!currentUser || !post.likes || post.likes.length === 0) return null
+
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      null
+    if (!userId) return null
+
+    const userIdStr = String(userId)
+    const userLike = post.likes.find((like) => String(like.accountId ?? '') === userIdStr)
+    if (!userLike) return null
+
+    const rawType = (userLike.reactionType ?? '').toString().toLowerCase()
+    switch (rawType) {
+      case 'like':
+        return 'like'
+      case 'love':
+        return 'love'
+      case 'haha':
+        return 'haha'
+      case 'wow':
+        return 'wow'
+      case 'sad':
+        return 'sad'
+      case 'angry':
+        return 'angry'
+      default:
+        return 'like'
+    }
+  }
+
+  const getReactionDisplay = (reaction: ReactionKey | null) => {
+    if (!reaction) return { label: 'Thích', emoji: '👍' }
+    return REACTIONS.find((r) => r.key === reaction) ?? { label: 'Thích', emoji: '👍' }
+  }
 
   // Load Posts
   useEffect(() => {
@@ -230,7 +343,7 @@ export default function PostsManagement() {
       setLoading(true)
       setError(null)
       const data = await fetchAllPosts()
-      setPosts(data)
+      setPosts(data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách bài viết')
       console.error('Error loading posts:', err)
@@ -243,13 +356,13 @@ export default function PostsManagement() {
   // Filter Posts - optimized
   const filteredPosts = useMemo(() => {
     if (posts.length === 0) return []
-    
+
     let filtered = posts
 
     // Filter by status (fast)
     if (statusFilter !== 'All') {
       const statusLower = statusFilter.toLowerCase()
-      filtered = filtered.filter(post => {
+      filtered = filtered.filter((post) => {
         const postStatus = post.status?.toLowerCase() ?? ''
         return postStatus === statusLower
       })
@@ -262,7 +375,11 @@ export default function PostsManagement() {
         const title = (item.title ?? '').toLowerCase()
         const content = (item.content ?? '').toLowerCase()
         const author = (item.authorName ?? '').toLowerCase()
-        return title.includes(lowerSearch) || content.includes(lowerSearch) || author.includes(lowerSearch)
+        return (
+          title.includes(lowerSearch) ||
+          content.includes(lowerSearch) ||
+          author.includes(lowerSearch)
+        )
       })
     }
 
@@ -289,16 +406,16 @@ export default function PostsManagement() {
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'))
-      
+      const fileArray = Array.from(files).filter((file) => file.type.startsWith('image/'))
+
       if (fileArray.length === 0) return
-      
+
       setNewImages((prev) => {
-        const existingNames = new Set(prev.map(f => f.name))
-        const newFiles = fileArray.filter(f => !existingNames.has(f.name))
+        const existingNames = new Set(prev.map((f) => f.name))
+        const newFiles = fileArray.filter((f) => !existingNames.has(f.name))
         return [...prev, ...newFiles]
       })
-      
+
       const previews = fileArray.map((file) => URL.createObjectURL(file))
       setNewImagePreviews((prev) => [...prev, ...previews])
       e.target.value = ''
@@ -320,26 +437,26 @@ export default function PostsManagement() {
 
     try {
       setCreating(true)
-      
-      const imageBase64s: string[] = []
+      setError(null)
+
+      const imageUrls: string[] = []
       const processedFiles = new Set<string>()
-      
+
       for (const file of newImages) {
         if (processedFiles.has(file.name)) continue
-        
+
         try {
-          const base64 = await fileToBase64(file)
-          if (base64 && base64.startsWith('data:image/')) {
-            imageBase64s.push(base64)
-            processedFiles.add(file.name)
-          }
+          // Upload từng ảnh lên Firebase, lấy URL
+          const url = await uploadImageToFirebase(file, 'posts')
+          imageUrls.push(url)
+          processedFiles.add(file.name)
         } catch (fileError) {
-          console.error(`Error converting file ${file.name}:`, fileError)
+          console.error(`Error uploading file ${file.name} to Firebase:`, fileError)
         }
       }
 
-      if (imageBase64s.length === 0 && newImages.length > 0) {
-        setError('Không thể xử lý ảnh. Vui lòng thử lại với ảnh khác.')
+      if (imageUrls.length === 0 && newImages.length > 0) {
+        setError('Không thể upload ảnh lên Firebase. Vui lòng thử lại với ảnh khác.')
         setCreating(false)
         return
       }
@@ -347,7 +464,7 @@ export default function PostsManagement() {
       const dto: CreatePostDto = {
         title: newTitle.trim(),
         content: newContent.trim(),
-        images: imageBase64s.length > 0 ? imageBase64s : undefined
+        images: imageUrls.length > 0 ? imageUrls : undefined
       }
 
       await createPost(dto)
@@ -386,9 +503,9 @@ export default function PostsManagement() {
   const handleEditImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'))
+      const fileArray = Array.from(files).filter((file) => file.type.startsWith('image/'))
       setEditNewImages((prev) => [...prev, ...fileArray])
-      
+
       const previews = fileArray.map((file) => URL.createObjectURL(file))
       setEditNewImagePreviews((prev) => [...prev, ...previews])
       e.target.value = ''
@@ -412,14 +529,20 @@ export default function PostsManagement() {
 
     try {
       setUpdating(true)
-      
-      const newImageBase64s: string[] = []
+      setError(null)
+
+      const newImageUrls: string[] = []
+
       for (const file of editNewImages) {
-        const base64 = await fileToBase64(file)
-        newImageBase64s.push(base64)
+        try {
+          const url = await uploadImageToFirebase(file, 'posts')
+          newImageUrls.push(url)
+        } catch (fileError) {
+          console.error(`Error uploading edit image ${file.name} to Firebase:`, fileError)
+        }
       }
 
-      const allImages = [...editImages, ...newImageBase64s]
+      const allImages = [...editImages, ...newImageUrls]
 
       const dto: UpdatePostDto = {
         title: editTitle.trim() || undefined,
@@ -456,13 +579,13 @@ export default function PostsManagement() {
     try {
       setDeleting(true)
       await deletePost(deletingPost.postId)
-      
+
       // Remove from local state immediately for better UX
-      setPosts(prev => prev.filter(p => p.postId !== deletingPost.postId))
-      
+      setPosts((prev) => prev.filter((p) => p.postId !== deletingPost.postId))
+
       // Reload to ensure sync with backend
       await loadPosts()
-      
+
       handleCloseDeleteDialog()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xóa bài viết')
@@ -540,78 +663,174 @@ export default function PostsManagement() {
     setMenuAnchor((prev) => ({ ...prev, [postId]: null }))
   }
 
-  const canEditOrDelete = (post: PostDto) => {
-    // Admin can edit/delete any post, or user can edit/delete their own posts
-    if (isAdmin) return true
-    
+  // Chỉ có thể edit bài viết của chính mình (kể cả Admin)
+  const canEdit = (post: PostDto) => {
     if (!currentUser) return false
-    
+
     // Check multiple possible user ID fields from currentUser
-    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? currentUser?.ID ?? 0
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
     const postAuthorId = post.authorId ?? 0
-    
+
     // Convert to numbers for comparison (handle both string and number)
     const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
-    const authorIdNum = typeof postAuthorId === 'string' ? parseInt(String(postAuthorId), 10) : Number(postAuthorId)
-    
-    // Debug log (remove in production)
-    if (userIdNum > 0 && authorIdNum > 0) {
-      console.log('canEditOrDelete check:', {
-        userId: userIdNum,
-        authorId: authorIdNum,
-        match: userIdNum === authorIdNum,
-        currentUser: currentUser,
-        postAuthorId: post.authorId
-      })
-    }
-    
+    const authorIdNum =
+      typeof postAuthorId === 'string' ? parseInt(String(postAuthorId), 10) : Number(postAuthorId)
+
     return userIdNum === authorIdNum && userIdNum > 0
   }
 
-  // Like/Unlike Handlers
-  const handleToggleLike = async (post: PostDto) => {
-    // Double check authentication - show immediate feedback
+  // Admin có thể delete bất kỳ bài viết nào, user thường chỉ delete của mình
+  const canDelete = (post: PostDto) => {
+    // Admin có thể delete bất kỳ bài viết nào
+    if (isAdmin) return true
+
+    if (!currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const postAuthorId = post.authorId ?? 0
+
+    // Convert to numbers for comparison (handle both string and number)
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof postAuthorId === 'string' ? parseInt(String(postAuthorId), 10) : Number(postAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho menu button)
+  const canEditOrDelete = (post: PostDto) => {
+    return canEdit(post) || canDelete(post)
+  }
+
+  // Reaction handler: chọn/bỏ reaction, gửi reactionTypeId tương ứng xuống backend
+  // Optimistic update: cập nhật UI ngay lập tức, không cần reload trang
+  const handleReactionClick = async (post: PostDto, reaction: ReactionKey) => {
+    // Double check authentication
     if (!isAuthenticated || !currentUser) {
-      const message = 'Vui lòng đăng nhập để thích bài viết'
+      const message = 'Vui lòng đăng nhập để bày tỏ cảm xúc'
       setError(message)
       setSnackbar({ open: true, message, severity: 'warning' })
-      console.log('Not authenticated - cannot like post', { isAuthenticated, currentUser })
       return
     }
 
+    const reactionTypeId = REACTION_ID_MAP[reaction] ?? REACTION_ID_MAP.like
+    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? currentUser?.ID ?? null
+    
+    if (!userId) {
+      setSnackbar({ open: true, message: 'Không thể xác định người dùng', severity: 'error' })
+      return
+    }
+
+    const userIdStr = String(userId)
+    const currentLikes = Array.isArray(post.likes) ? post.likes : []
+    const existingReaction = currentLikes.find((like: any) => String(like.accountId ?? '') === userIdStr)
+    const currentReactionTypeId = existingReaction?.reactionType 
+      ? (() => {
+          const rt = String(existingReaction.reactionType).toLowerCase()
+          if (rt === 'like') return 1
+          if (rt === 'love') return 2
+          if (rt === 'haha') return 3
+          if (rt === 'wow') return 4
+          if (rt === 'sad') return 5
+          if (rt === 'angry') return 6
+          return 1
+        })()
+      : null
+
+    // Nếu đã react với cùng loại -> unlike (xóa reaction)
+    const isUnliking = currentReactionTypeId === reactionTypeId
+
     try {
-      setLikingPosts(prev => new Set(prev).add(post.postId))
-      const result = await toggleLikePost(post.postId)
-      
-      // Reload posts to get updated likes list
-      await loadPosts()
-      
-      // Update post in state (fallback if reload fails)
-      setPosts(prev => prev.map(p => 
-        p.postId === post.postId 
-          ? { 
-              ...p, 
-              isLiked: result.isLiked,
-              likesCount: result.isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1)
+      setLikingPosts((prev) => new Set(prev).add(post.postId))
+
+      // Optimistic update: cập nhật UI ngay lập tức
+      setPosts((prev) => prev.map((p) => {
+        if (p.postId !== post.postId) return p
+
+        const updatedLikes = Array.isArray(p.likes) ? [...p.likes] : []
+        
+        if (isUnliking) {
+          // Remove reaction
+          const filteredLikes = updatedLikes.filter((like: any) => String(like.accountId ?? '') !== userIdStr)
+          return {
+            ...p,
+            likes: filteredLikes,
+            likesCount: Math.max(0, (p.likesCount ?? 0) - 1),
+            isLiked: false
+          }
+        } else {
+          // Add or update reaction
+          const existingIndex = updatedLikes.findIndex((like: any) => String(like.accountId ?? '') === userIdStr)
+          const reactionTypeNames: Record<number, string> = {
+            1: 'like',
+            2: 'love',
+            3: 'haha',
+            4: 'wow',
+            5: 'sad',
+            6: 'angry'
+          }
+          
+          if (existingIndex >= 0) {
+            // Update existing reaction
+            updatedLikes[existingIndex] = {
+              ...updatedLikes[existingIndex],
+              reactionType: reactionTypeNames[reactionTypeId] ?? 'like'
             }
-          : p
-      ))
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Không thể thích bài viết'
-      
-      // Check if it's an authentication error
-      if (errorMessage.includes('đăng nhập') || errorMessage.includes('login') || errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        const message = 'Vui lòng đăng nhập để thích bài viết'
-        setError(message)
-        setSnackbar({ open: true, message })
-      } else {
-        setError(errorMessage)
-        setSnackbar({ open: true, message: errorMessage })
+          } else {
+            // Add new reaction
+            updatedLikes.push({
+              postLikeId: `temp-${Date.now()}`,
+              accountId: userIdStr,
+              fullName: currentUser?.name ?? currentUser?.Name ?? 'Người dùng',
+              createdDate: new Date().toISOString(),
+              reactionType: reactionTypeNames[reactionTypeId] ?? 'like'
+            })
+          }
+          
+          return {
+            ...p,
+            likes: updatedLikes,
+            likesCount: existingIndex >= 0 ? (p.likesCount ?? 0) : (p.likesCount ?? 0) + 1,
+            isLiked: true
+          }
+        }
+      }))
+
+      // Gọi API
+      await reactToPost(post.postId, reactionTypeId)
+
+      // Sau khi API thành công, reload post để lấy dữ liệu chính xác từ backend
+      // (để có postReactionId thật, không phải temp)
+      try {
+        const updatedPost = await fetchPostById(post.postId)
+        setPosts((prev) => prev.map((p) => (p.postId === updatedPost.postId ? updatedPost : p)))
+      } catch (reloadError) {
+        console.warn('[PostsManagement] Could not reload post after reaction, using optimistic update:', reloadError)
+        // Giữ optimistic update nếu không reload được
       }
+    } catch (err) {
+      // Revert optimistic update on error
+      setPosts((prev) => prev.map((p) => (p.postId === post.postId ? post : p)))
       
-      console.error('Error toggling like:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Không thể bày tỏ cảm xúc'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error reacting to post:', err)
     } finally {
-      setLikingPosts(prev => {
+      setLikingPosts((prev) => {
         const next = new Set(prev)
         next.delete(post.postId)
         return next
@@ -622,66 +841,113 @@ export default function PostsManagement() {
   // Comment Handlers
   const handleToggleComments = async (postId: number) => {
     const isExpanded = expandedComments.has(postId)
-    
+
     if (isExpanded) {
-      setExpandedComments(prev => {
+      setExpandedComments((prev) => {
         const next = new Set(prev)
         next.delete(postId)
         return next
       })
     } else {
-      setExpandedComments(prev => new Set(prev).add(postId))
-      // Load comments if not already loaded
-      if (!postComments[postId]) {
-        try {
-          const comments = await fetchCommentsByPost(postId)
-          setPostComments(prev => ({ ...prev, [postId]: comments }))
-        } catch (err) {
-          console.error('Error loading comments:', err)
-          setPostComments(prev => ({ ...prev, [postId]: [] }))
-        }
+      setExpandedComments((prev) => new Set(prev).add(postId))
+      // Load comments if not already loaded or force reload
+      try {
+        setError(null) // Clear previous errors
+        console.log('[PostsManagement] Loading comments for post:', postId)
+        const comments = await fetchCommentsByPost(postId)
+        console.log('[PostsManagement] Loaded comments:', {
+          postId,
+          count: comments.length,
+          comments
+        })
+        setPostComments((prev) => ({ ...prev, [postId]: comments }))
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Không thể tải bình luận'
+        console.error('[PostsManagement] Error loading comments:', {
+          postId,
+          error: err,
+          message: errorMessage
+        })
+        setPostComments((prev) => ({ ...prev, [postId]: [] }))
+        setError(errorMessage)
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'error'
+        })
       }
     }
   }
 
   const handleCreateComment = async (postId: number) => {
     const content = commentTexts[postId]?.trim()
-    if (!content || !isAuthenticated) return
+    if (!content || !isAuthenticated) {
+      if (!isAuthenticated) {
+        setSnackbar({ open: true, message: 'Vui lòng đăng nhập để bình luận', severity: 'warning' })
+      }
+      return
+    }
 
     try {
-      setCreatingComment(prev => ({ ...prev, [postId]: true }))
+      setCreatingComment((prev) => ({ ...prev, [postId]: true }))
+      setError(null) // Clear previous errors
+
+      // Ensure comments section is expanded
+      if (!expandedComments.has(postId)) {
+        setExpandedComments((prev) => new Set(prev).add(postId))
+      }
+
+      console.log('[PostsManagement] Creating comment:', { postId, content })
+
       await createComment({
         postId: String(postId),
         content
       })
-      
-      // Reload comments
+
+      console.log('[PostsManagement] Comment created successfully, reloading comments...')
+
+      // Reload comments after a short delay to ensure backend has processed
+      await new Promise((resolve) => setTimeout(resolve, 300))
       const comments = await fetchCommentsByPost(postId)
-      setPostComments(prev => ({ ...prev, [postId]: comments }))
-      
+
+      console.log('[PostsManagement] Reloaded comments:', {
+        postId,
+        count: comments.length,
+        comments
+      })
+
+      setPostComments((prev) => ({ ...prev, [postId]: comments }))
+
       // Clear comment text
-      setCommentTexts(prev => ({ ...prev, [postId]: '' }))
-      
+      setCommentTexts((prev) => ({ ...prev, [postId]: '' }))
+
       // Update post comment count
-      setPosts(prev => prev.map(p => 
-        p.postId === postId 
-          ? { ...p, commentsCount: p.commentsCount + 1 }
-          : p
-      ))
+      setPosts((prev) =>
+        prev.map((p) => (p.postId === postId ? { ...p, commentsCount: comments.length } : p))
+      )
+
+      // Show success message
+      setSnackbar({ open: true, message: 'Bình luận đã được thêm', severity: 'success' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tạo bình luận')
-      console.error('Error creating comment:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Không thể tạo bình luận'
+      console.error('[PostsManagement] Error creating comment:', {
+        postId,
+        error: err,
+        message: errorMessage
+      })
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
     } finally {
-      setCreatingComment(prev => ({ ...prev, [postId]: false }))
+      setCreatingComment((prev) => ({ ...prev, [postId]: false }))
     }
   }
 
   const handleStartEditComment = (commentId: string, currentContent: string) => {
-    setEditingComments(prev => ({ ...prev, [commentId]: currentContent }))
+    setEditingComments((prev) => ({ ...prev, [commentId]: currentContent }))
   }
 
   const handleCancelEditComment = (commentId: string) => {
-    setEditingComments(prev => {
+    setEditingComments((prev) => {
       const next = { ...prev }
       delete next[commentId]
       return next
@@ -693,20 +959,20 @@ export default function PostsManagement() {
     if (!content) return
 
     try {
-      setUpdatingComment(prev => new Set(prev).add(commentId))
+      setUpdatingComment((prev) => new Set(prev).add(commentId))
       await updateComment(parseInt(commentId, 10), { content })
-      
+
       // Reload comments
       const comments = await fetchCommentsByPost(postId)
-      setPostComments(prev => ({ ...prev, [postId]: comments }))
-      
+      setPostComments((prev) => ({ ...prev, [postId]: comments }))
+
       // Clear editing state
       handleCancelEditComment(commentId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể cập nhật bình luận')
       console.error('Error updating comment:', err)
     } finally {
-      setUpdatingComment(prev => {
+      setUpdatingComment((prev) => {
         const next = new Set(prev)
         next.delete(commentId)
         return next
@@ -718,24 +984,24 @@ export default function PostsManagement() {
     if (!window.confirm('Bạn có chắc muốn xóa bình luận này?')) return
 
     try {
-      setDeletingComment(prev => new Set(prev).add(commentId))
+      setDeletingComment((prev) => new Set(prev).add(commentId))
       await deleteComment(parseInt(commentId, 10))
-      
+
       // Reload comments
       const comments = await fetchCommentsByPost(postId)
-      setPostComments(prev => ({ ...prev, [postId]: comments }))
-      
+      setPostComments((prev) => ({ ...prev, [postId]: comments }))
+
       // Update post comment count
-      setPosts(prev => prev.map(p => 
-        p.postId === postId 
-          ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) }
-          : p
-      ))
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.postId === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p
+        )
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xóa bình luận')
       console.error('Error deleting comment:', err)
     } finally {
-      setDeletingComment(prev => {
+      setDeletingComment((prev) => {
         const next = new Set(prev)
         next.delete(commentId)
         return next
@@ -743,16 +1009,90 @@ export default function PostsManagement() {
     }
   }
 
-  const canEditOrDeleteComment = (comment: PostComment) => {
-    if (!isAuthenticated) return false
-    // User can edit/delete their own comments
+  // Chỉ có thể edit comment của chính mình (kể cả Admin)
+  const canEditComment = (comment: PostComment) => {
+    if (!isAuthenticated || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
     const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
-    const userId = currentUser?.id ?? currentUser?.userId ?? 0
-    return commentAuthorId === userId
+
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof commentAuthorId === 'string'
+        ? parseInt(String(commentAuthorId), 10)
+        : Number(commentAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Admin có thể delete bất kỳ comment nào, user thường chỉ delete của mình
+  const canDeleteComment = (comment: PostComment) => {
+    // Admin có thể delete bất kỳ comment nào
+    if (isAdmin) return true
+
+    if (!isAuthenticated || !currentUser) return false
+
+    // Check multiple possible user ID fields from currentUser
+    const userId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      0
+    const commentAuthorId = comment.authorId ?? comment.authorID ?? 0
+
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : Number(userId)
+    const authorIdNum =
+      typeof commentAuthorId === 'string'
+        ? parseInt(String(commentAuthorId), 10)
+        : Number(commentAuthorId)
+
+    return userIdNum === authorIdNum && userIdNum > 0
+  }
+
+  // Helper để kiểm tra có thể edit hoặc delete (dùng cho hiển thị buttons)
+  const canEditOrDeleteComment = (comment: PostComment) => {
+    return canEditComment(comment) || canDeleteComment(comment)
   }
 
   const getCommentId = (comment: PostComment): string => {
     return comment.postCommentId ?? String(comment.id ?? 0)
+  }
+
+  const getCommentAuthorAvatar = (comment: PostComment): string | undefined => {
+    // Ưu tiên avatar lấy trực tiếp từ dữ liệu comment (Author từ backend)
+    if (comment.authorAvatar && comment.authorAvatar.trim() !== '') {
+      return comment.authorAvatar
+    }
+
+    // Nếu là comment của current user thì dùng avatar trong thông tin user hiện tại
+    if (currentUser) {
+      const commentAuthorId = comment.authorId ?? comment.authorID
+      const currentUserId =
+        currentUser.id ??
+        currentUser.Id ??
+        currentUser.userId ??
+        currentUser.UserId ??
+        currentUser.ID ??
+        null
+
+      if (commentAuthorId && currentUserId && String(commentAuthorId) === String(currentUserId)) {
+        const userAvatar = (currentUser as any).avatar || (currentUser as any).Avatar
+        if (typeof userAvatar === 'string' && userAvatar.trim() !== '') {
+          return userAvatar
+        }
+      }
+    }
+
+    return undefined
   }
 
   const getCommentAuthorName = (comment: PostComment): string => {
@@ -761,6 +1101,119 @@ export default function PostsManagement() {
 
   const getCommentDate = (comment: PostComment): string => {
     return comment.createdDate ?? comment.createdAt ?? ''
+  }
+
+  const getCommentLikesCount = (comment: PostComment): number => {
+    return Array.isArray(comment.likes) ? comment.likes.length : 0
+  }
+
+  const isCommentLikedByCurrentUser = (comment: PostComment): boolean => {
+    if (!currentUser || !Array.isArray(comment.likes) || comment.likes.length === 0) return false
+    const currentUserId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      currentUser?.ID ??
+      null
+    if (!currentUserId) return false
+    const currentUserIdStr = String(currentUserId)
+    return comment.likes!.some((like) => String(like.accountId ?? '') === currentUserIdStr)
+  }
+
+  const handleToggleCommentLike = async (postId: number, comment: PostComment) => {
+    if (!isAuthenticated || !currentUser) {
+      const message = 'Vui lòng đăng nhập để thích bình luận'
+      setSnackbar({ open: true, message, severity: 'warning' })
+      return
+    }
+
+    const commentId = getCommentId(comment)
+    const userId = currentUser?.id ?? currentUser?.Id ?? currentUser?.userId ?? currentUser?.UserId ?? currentUser?.ID ?? null
+    
+    if (!userId) {
+      setSnackbar({ open: true, message: 'Không thể xác định người dùng', severity: 'error' })
+      return
+    }
+
+    const userIdStr = String(userId)
+    const currentLikes = Array.isArray(comment.likes) ? comment.likes : []
+    const existingLike = currentLikes.find((like: any) => String(like.accountId ?? '') === userIdStr)
+    const isUnliking = !!existingLike
+
+    try {
+      setLikingComments((prev) => new Set(prev).add(commentId))
+
+      // Optimistic update: cập nhật UI ngay lập tức
+      setPostComments((prev) => {
+        const currentComments = prev[postId] || []
+        return {
+          ...prev,
+          [postId]: currentComments.map((c) => {
+            const cId = getCommentId(c)
+            if (cId !== commentId) return c
+
+            const updatedLikes = Array.isArray(c.likes) ? [...c.likes] : []
+            
+            if (isUnliking) {
+              // Remove like
+              const filteredLikes = updatedLikes.filter((like: any) => String(like.accountId ?? '') !== userIdStr)
+              return {
+                ...c,
+                likes: filteredLikes
+              }
+            } else {
+              // Add like
+              updatedLikes.push({
+                postCommentLikeId: `temp-${Date.now()}`,
+                accountId: userIdStr,
+                fullName: currentUser?.name ?? currentUser?.Name ?? 'Người dùng',
+                createdDate: new Date().toISOString()
+              })
+              return {
+                ...c,
+                likes: updatedLikes
+              }
+            }
+          })
+        }
+      })
+
+      // Gọi API
+      await toggleCommentLike(comment)
+
+      // Sau khi API thành công, reload comments để lấy dữ liệu chính xác từ backend
+      try {
+        const comments = await fetchCommentsByPost(postId)
+        setPostComments((prev) => ({ ...prev, [postId]: comments }))
+      } catch (reloadError) {
+        console.warn('[PostsManagement] Could not reload comments after like, using optimistic update:', reloadError)
+        // Giữ optimistic update nếu không reload được
+      }
+    } catch (err) {
+      // Revert optimistic update on error
+      setPostComments((prev) => {
+        const currentComments = prev[postId] || []
+        return {
+          ...prev,
+          [postId]: currentComments.map((c) => {
+            const cId = getCommentId(c)
+            return cId === commentId ? comment : c
+          })
+        }
+      })
+
+      const errorMessage = err instanceof Error ? err.message : 'Không thể thích bình luận'
+      setError(errorMessage)
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+      console.error('Error toggling comment like:', err)
+    } finally {
+      setLikingComments((prev) => {
+        const next = new Set(prev)
+        next.delete(commentId)
+        return next
+      })
+    }
   }
 
   if (loading) {
@@ -776,12 +1229,12 @@ export default function PostsManagement() {
   return (
     <Box sx={{ p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>
       {/* Header */}
-      <Box 
-        display="flex" 
-        justifyContent="space-between" 
-        alignItems="center" 
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
         mb={3}
-        sx={{ 
+        sx={{
           bgcolor: 'white',
           p: 2,
           borderRadius: 2,
@@ -796,7 +1249,7 @@ export default function PostsManagement() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleOpenCreateDialog}
-            sx={{ 
+            sx={{
               borderRadius: 2,
               bgcolor: 'primary.main',
               '&:hover': {
@@ -823,7 +1276,7 @@ export default function PostsManagement() {
               </InputAdornment>
             )
           }}
-          sx={{ 
+          sx={{
             borderRadius: 2,
             bgcolor: 'white',
             '& .MuiOutlinedInput-root': {
@@ -862,16 +1315,18 @@ export default function PostsManagement() {
         <Card sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
           <CardContent>
             <Typography textAlign="center" color="text.secondary" py={4}>
-              {searchText || statusFilter !== 'All' ? 'Không tìm thấy bài viết nào' : 'Chưa có bài viết nào'}
+              {searchText || statusFilter !== 'All'
+                ? 'Không tìm thấy bài viết nào'
+                : 'Chưa có bài viết nào'}
             </Typography>
           </CardContent>
         </Card>
       ) : (
         <Box display="flex" flexDirection="column" gap={2}>
           {filteredPosts.map((post) => (
-            <Card 
-              key={post.postId} 
-              sx={{ 
+            <Card
+              key={post.postId}
+              sx={{
                 borderRadius: 2,
                 bgcolor: 'white',
                 boxShadow: 2,
@@ -886,10 +1341,41 @@ export default function PostsManagement() {
                 {/* Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Box display="flex" gap={2} alignItems="center">
-                    <Avatar 
-                      src={post.authorAvatar} 
-                      sx={{ 
-                        width: 56, 
+                    <Avatar
+                      src={(() => {
+                        // Nếu post là của current user, dùng avatar từ userInfo
+                        const currentUserId =
+                          currentUser?.id ||
+                          currentUser?.Id ||
+                          currentUser?.userId ||
+                          currentUser?.UserId
+                        const postAuthorId = post.authorId
+                        if (
+                          currentUserId &&
+                          postAuthorId &&
+                          String(currentUserId) === String(postAuthorId)
+                        ) {
+                          // Dùng avatar từ userInfo
+                          const userAvatar = currentUser?.avatar || currentUser?.Avatar
+                          if (userAvatar && userAvatar.trim() !== '') {
+                            // Nếu là URL đầy đủ, dùng trực tiếp
+                            if (
+                              userAvatar.startsWith('http://') ||
+                              userAvatar.startsWith('https://')
+                            ) {
+                              return userAvatar
+                            }
+                            // Nếu là base64, dùng trực tiếp
+                            if (userAvatar.startsWith('data:image/')) {
+                              return userAvatar
+                            }
+                          }
+                        }
+                        // Nếu không phải post của current user hoặc không có avatar trong userInfo, dùng post.authorAvatar
+                        return post.authorAvatar
+                      })()}
+                      sx={{
+                        width: 56,
                         height: 56,
                         bgcolor: 'primary.main',
                         fontSize: '1.5rem',
@@ -899,7 +1385,12 @@ export default function PostsManagement() {
                       {post.authorName.charAt(0).toUpperCase()}
                     </Avatar>
                     <Box>
-                      <Typography variant="subtitle1" fontWeight="bold" color="text.primary" mb={0.5}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        color="text.primary"
+                        mb={0.5}
+                      >
                         {post.authorName}
                       </Typography>
                       <Box display="flex" gap={1} alignItems="center">
@@ -915,7 +1406,11 @@ export default function PostsManagement() {
                           color={getStatusColor(post.status)}
                           sx={{ fontWeight: 'medium' }}
                         />
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.875rem' }}
+                        >
                           {formatTimeAgo(post.createdAt)}
                         </Typography>
                       </Box>
@@ -940,10 +1435,10 @@ export default function PostsManagement() {
                 )}
 
                 {/* Content */}
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    mb: 2, 
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mb: 2,
                     whiteSpace: 'pre-wrap',
                     color: 'text.primary',
                     lineHeight: 1.7,
@@ -965,27 +1460,30 @@ export default function PostsManagement() {
                         })
                         .map((image, index) => {
                           let imageSrc = image.trim()
-                          
+
                           // If it's already a data URL or HTTP(S) URL, use as is
                           if (imageSrc.startsWith('data:image/')) {
                             // Validate it has base64 data
                             if (!imageSrc.includes('base64,')) {
                               return null
                             }
-                          } else if (imageSrc.startsWith('http://') || imageSrc.startsWith('https://')) {
+                          } else if (
+                            imageSrc.startsWith('http://') ||
+                            imageSrc.startsWith('https://')
+                          ) {
                             // HTTP(S) URL, use as is
                           } else {
                             // Assume it's base64 without prefix
                             const base64Pattern = /^[A-Za-z0-9+/=\s]+$/
                             const cleaned = imageSrc.replace(/\s/g, '')
-                            
+
                             if (base64Pattern.test(cleaned) && cleaned.length > 50) {
                               imageSrc = `data:image/jpeg;base64,${cleaned}`
                             } else {
                               return null
                             }
                           }
-                          
+
                           return (
                             <ImageListItem key={`${post.postId}-img-${index}`}>
                               <img
@@ -1031,40 +1529,98 @@ export default function PostsManagement() {
 
                 <Divider sx={{ my: 2, bgcolor: 'grey.200' }} />
 
-                {/* Actions */}
+                {/* Actions - Reaction button + comments */}
                 <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <IconButton
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      if (!isAuthenticated || !currentUser) {
-                        const message = 'Vui lòng đăng nhập để thích bài viết'
-                        setError(message)
-                        setSnackbar({ open: true, message })
-                        return
-                      }
-                      handleToggleLike(post)
-                    }}
-                    disabled={likingPosts.has(post.postId)}
-                    title={!isAuthenticated ? 'Vui lòng đăng nhập để thích bài viết' : (post.isLiked ? 'Bỏ thích' : 'Thích')}
-                    sx={{ 
-                      color: post.isLiked ? 'error.main' : 'text.secondary',
-                      opacity: !isAuthenticated ? 0.5 : 1,
-                      cursor: !isAuthenticated ? 'not-allowed' : 'pointer',
-                      '&:hover': {
-                        bgcolor: post.isLiked ? 'error.light' : 'grey.100',
-                        color: post.isLiked ? 'error.dark' : 'error.main'
-                      },
-                      '&.Mui-disabled': {
-                        opacity: 0.3
-                      }
-                    }}
+                  {/* Nút reaction chính (giống Facebook like) + popup nhiều reaction khi hover */}
+                  <Box
+                    position="relative"
+                    onMouseEnter={() => showReactionMenu(post.postId)}
+                    onMouseLeave={() => scheduleHideReactionMenu(post.postId)}
                   >
-                    {post.isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                  </IconButton>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
+                    {/* Nút chính - hiển thị reaction hiện tại của user (nếu có) */}
+                    <IconButton
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleReactionClick(post, 'like')
+                      }}
+                      disabled={likingPosts.has(post.postId)}
+                      title={
+                        !isAuthenticated
+                          ? 'Vui lòng đăng nhập để bày tỏ cảm xúc'
+                          : post.isLiked
+                            ? 'Bỏ cảm xúc'
+                            : 'Thích'
+                      }
+                      sx={{
+                        color: post.isLiked ? 'error.main' : 'text.secondary',
+                        opacity: !isAuthenticated ? 0.5 : 1,
+                        cursor: !isAuthenticated ? 'not-allowed' : 'pointer',
+                        '&:hover': {
+                          bgcolor: post.isLiked ? 'error.light' : 'grey.100',
+                          color: post.isLiked ? 'error.dark' : 'error.main'
+                        },
+                        '&.Mui-disabled': {
+                          opacity: 0.3
+                        }
+                      }}
+                    >
+                      {(() => {
+                        const userReaction = getCurrentUserReaction(post)
+                        const display = getReactionDisplay(userReaction)
+                        return (
+                          <span style={{ fontSize: '1.6rem' }} aria-label={display.label}>
+                            {display.emoji}
+                          </span>
+                        )
+                      })()}
+                    </IconButton>
+
+                    {/* Popup reaction khi hover */}
+                    {reactionMenuPostId === post.postId && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: '100%',
+                          left: 0,
+                          mb: 0.5,
+                          px: 0.75,
+                          py: 0.5,
+                          bgcolor: 'background.paper',
+                          borderRadius: 999,
+                          boxShadow: 3,
+                          display: 'flex',
+                          gap: 0.5,
+                          zIndex: 10,
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        {REACTIONS.map((reaction) => (
+                          <IconButton
+                            key={reaction.key}
+                            size="small"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleReactionClick(post, reaction.key)
+                            }}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              fontSize: '1.2rem'
+                            }}
+                          >
+                            <span aria-label={reaction.label}>{reaction.emoji}</span>
+                          </IconButton>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
                     fontWeight="medium"
                     onClick={() => {
                       if (post.likesCount > 0) {
@@ -1075,18 +1631,21 @@ export default function PostsManagement() {
                     }}
                     sx={{
                       cursor: post.likesCount > 0 ? 'pointer' : 'default',
-                      '&:hover': post.likesCount > 0 ? {
-                        textDecoration: 'underline',
-                        color: 'primary.main'
-                      } : {}
+                      '&:hover':
+                        post.likesCount > 0
+                          ? {
+                              textDecoration: 'underline',
+                              color: 'primary.main'
+                            }
+                          : {}
                     }}
                   >
                     {post.likesCount} lượt thích
                   </Typography>
-                  
+
                   <IconButton
                     onClick={() => handleToggleComments(post.postId)}
-                    sx={{ 
+                    sx={{
                       color: 'text.secondary',
                       '&:hover': {
                         bgcolor: 'action.hover'
@@ -1111,7 +1670,9 @@ export default function PostsManagement() {
                           size="small"
                           placeholder="Viết bình luận..."
                           value={commentTexts[post.postId] || ''}
-                          onChange={(e) => setCommentTexts(prev => ({ ...prev, [post.postId]: e.target.value }))}
+                          onChange={(e) =>
+                            setCommentTexts((prev) => ({ ...prev, [post.postId]: e.target.value }))
+                          }
                           onKeyPress={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault()
@@ -1123,9 +1684,15 @@ export default function PostsManagement() {
                         <IconButton
                           color="primary"
                           onClick={() => handleCreateComment(post.postId)}
-                          disabled={!commentTexts[post.postId]?.trim() || creatingComment[post.postId]}
+                          disabled={
+                            !commentTexts[post.postId]?.trim() || creatingComment[post.postId]
+                          }
                         >
-                          {creatingComment[post.postId] ? <CircularProgress size={20} /> : <SendIcon />}
+                          {creatingComment[post.postId] ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <SendIcon />
+                          )}
                         </IconButton>
                       </Box>
                     )}
@@ -1136,43 +1703,73 @@ export default function PostsManagement() {
                         {postComments[post.postId].map((comment) => {
                           const commentId = getCommentId(comment)
                           const isEditing = editingComments[commentId] !== undefined
-                          const canEdit = canEditOrDeleteComment(comment)
-                          
+
                           return (
-                            <Box key={commentId} sx={{ bgcolor: 'background.default', p: 1.5, borderRadius: 1 }}>
-                              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                                <Box>
-                                  <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
-                                    {getCommentAuthorName(comment)}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {formatTimeAgo(getCommentDate(comment))}
-                                  </Typography>
+                            <Box
+                              key={commentId}
+                              sx={{ bgcolor: 'background.default', p: 1.5, borderRadius: 1 }}
+                            >
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="flex-start"
+                                mb={1}
+                              >
+                                <Box display="flex" alignItems="center" gap={1.5}>
+                                  <Avatar
+                                    src={getCommentAuthorAvatar(comment)}
+                                    sx={{
+                                      width: 32,
+                                      height: 32,
+                                      bgcolor: 'primary.main',
+                                      fontSize: '0.875rem'
+                                    }}
+                                  >
+                                    {getCommentAuthorName(comment).charAt(0).toUpperCase()}
+                                  </Avatar>
+                                  <Box>
+                                    <Typography
+                                      variant="subtitle2"
+                                      fontWeight="bold"
+                                      color="text.primary"
+                                    >
+                                      {getCommentAuthorName(comment)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {formatTimeAgo(getCommentDate(comment))}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                                {canEdit && !isEditing && (
+                                {!isEditing && (
                                   <Box display="flex" gap={0.5}>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleStartEditComment(commentId, comment.content)}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleDeleteComment(commentId, post.postId)}
-                                      disabled={deletingComment.has(commentId)}
-                                      sx={{ color: 'error.main' }}
-                                    >
-                                      {deletingComment.has(commentId) ? (
-                                        <CircularProgress size={16} />
-                                      ) : (
-                                        <DeleteIcon fontSize="small" />
-                                      )}
-                                    </IconButton>
+                                    {canEditComment(comment) && (
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          handleStartEditComment(commentId, comment.content)
+                                        }
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                    )}
+                                    {canDeleteComment(comment) && (
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleDeleteComment(commentId, post.postId)}
+                                        disabled={deletingComment.has(commentId)}
+                                        sx={{ color: 'error.main' }}
+                                      >
+                                        {deletingComment.has(commentId) ? (
+                                          <CircularProgress size={16} />
+                                        ) : (
+                                          <DeleteIcon fontSize="small" />
+                                        )}
+                                      </IconButton>
+                                    )}
                                   </Box>
                                 )}
                               </Box>
-                              
+
                               {isEditing ? (
                                 <Box display="flex" gap={1} alignItems="flex-start">
                                   <TextField
@@ -1180,7 +1777,12 @@ export default function PostsManagement() {
                                     size="small"
                                     multiline
                                     value={editingComments[commentId]}
-                                    onChange={(e) => setEditingComments(prev => ({ ...prev, [commentId]: e.target.value }))}
+                                    onChange={(e) =>
+                                      setEditingComments((prev) => ({
+                                        ...prev,
+                                        [commentId]: e.target.value
+                                      }))
+                                    }
                                     sx={{ bgcolor: 'white' }}
                                   />
                                   <IconButton
@@ -1203,9 +1805,53 @@ export default function PostsManagement() {
                                   </IconButton>
                                 </Box>
                               ) : (
-                                <Typography variant="body2" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
-                                  {comment.content}
-                                </Typography>
+                                <>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.primary"
+                                    sx={{ whiteSpace: 'pre-wrap' }}
+                                  >
+                                    {comment.content}
+                                  </Typography>
+                                  <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleToggleCommentLike(post.postId, comment)}
+                                      disabled={!isAuthenticated || likingComments.has(commentId)}
+                                      sx={{
+                                        color: isCommentLikedByCurrentUser(comment)
+                                          ? 'error.main'
+                                          : 'text.secondary'
+                                      }}
+                                    >
+                                      <FavoriteIcon fontSize="small" />
+                                    </IconButton>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      onClick={() => {
+                                        const likesCount = getCommentLikesCount(comment)
+                                        if (likesCount > 0) {
+                                          setSelectedCommentLikes(comment.likes || [])
+                                          setSelectedCommentContent(comment.content || 'Bình luận')
+                                          setCommentLikesDialogOpen(true)
+                                        }
+                                      }}
+                                      sx={{
+                                        cursor: getCommentLikesCount(comment) > 0 ? 'pointer' : 'default',
+                                        '&:hover':
+                                          getCommentLikesCount(comment) > 0
+                                            ? {
+                                                textDecoration: 'underline',
+                                                color: 'primary.main'
+                                              }
+                                            : {}
+                                      }}
+                                    >
+                                      {getCommentLikesCount(comment)} lượt thích
+                                    </Typography>
+                                  </Box>
+                                </>
                               )}
                             </Box>
                           )
@@ -1239,17 +1885,20 @@ export default function PostsManagement() {
                     <Divider />
                   </>
                 )}
-                {canEditOrDelete(post) && (
-                  <>
-                    <MenuItem onClick={() => handleOpenEditDialog(post)}>
-                      <EditIcon sx={{ mr: 1 }} fontSize="small" />
-                      Chỉnh sửa
-                    </MenuItem>
-                    <MenuItem onClick={() => handleOpenDeleteDialog(post)} sx={{ color: 'error.main' }}>
-                      <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-                      Xóa
-                    </MenuItem>
-                  </>
+                {canEdit(post) && (
+                  <MenuItem onClick={() => handleOpenEditDialog(post)}>
+                    <EditIcon sx={{ mr: 1 }} fontSize="small" />
+                    Chỉnh sửa
+                  </MenuItem>
+                )}
+                {canDelete(post) && (
+                  <MenuItem
+                    onClick={() => handleOpenDeleteDialog(post)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
+                    Xóa
+                  </MenuItem>
                 )}
               </Menu>
             </Card>
@@ -1258,10 +1907,10 @@ export default function PostsManagement() {
       )}
 
       {/* Create Dialog */}
-      <Dialog 
-        open={createDialogOpen} 
-        onClose={handleCloseCreateDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={createDialogOpen}
+        onClose={handleCloseCreateDialog}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -1279,7 +1928,7 @@ export default function PostsManagement() {
             placeholder="Nhập tiêu đề bài viết..."
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1297,7 +1946,7 @@ export default function PostsManagement() {
             placeholder="Nhập nội dung bài viết..."
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1317,9 +1966,9 @@ export default function PostsManagement() {
               onChange={handleImageSelect}
             />
             <label htmlFor="create-image-upload">
-              <Button 
-                variant="outlined" 
-                component="span" 
+              <Button
+                variant="outlined"
+                component="span"
                 startIcon={<ImageIcon />}
                 sx={{
                   borderColor: 'primary.main',
@@ -1338,11 +1987,11 @@ export default function PostsManagement() {
           {newImagePreviews.length > 0 && (
             <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               {newImagePreviews.map((preview, index) => (
-                <Box 
-                  key={index} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={index}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -1368,7 +2017,7 @@ export default function PostsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -1382,16 +2031,15 @@ export default function PostsManagement() {
           )}
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseCreateDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseCreateDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
           <Button
             onClick={handleCreatePost}
             variant="contained"
-            disabled={creating || (!newTitle.trim() && !newContent.trim() && newImages.length === 0)}
+            disabled={
+              creating || (!newTitle.trim() && !newContent.trim() && newImages.length === 0)
+            }
             sx={{
               bgcolor: 'primary.main',
               '&:hover': {
@@ -1408,10 +2056,10 @@ export default function PostsManagement() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog 
-        open={editDialogOpen} 
-        onClose={handleCloseEditDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={editDialogOpen}
+        onClose={handleCloseEditDialog}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -1429,7 +2077,7 @@ export default function PostsManagement() {
             placeholder="Nhập tiêu đề bài viết..."
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1447,7 +2095,7 @@ export default function PostsManagement() {
             placeholder="Nhập nội dung bài viết..."
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            sx={{ 
+            sx={{
               mb: 2,
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
@@ -1467,9 +2115,9 @@ export default function PostsManagement() {
               onChange={handleEditImageSelect}
             />
             <label htmlFor="edit-image-upload">
-              <Button 
-                variant="outlined" 
-                component="span" 
+              <Button
+                variant="outlined"
+                component="span"
                 startIcon={<ImageIcon />}
                 sx={{
                   borderColor: 'secondary.main',
@@ -1488,11 +2136,11 @@ export default function PostsManagement() {
           {(editImages.length > 0 || editNewImagePreviews.length > 0) && (
             <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               {editImages.map((image, index) => (
-                <Box 
-                  key={`existing-${index}`} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={`existing-${index}`}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -1501,7 +2149,11 @@ export default function PostsManagement() {
                   }}
                 >
                   <img
-                    src={image.startsWith('data:image/') || image.startsWith('http') ? image : `data:image/jpeg;base64,${image}`}
+                    src={
+                      image.startsWith('data:image/') || image.startsWith('http')
+                        ? image
+                        : `data:image/jpeg;base64,${image}`
+                    }
                     alt={`Existing ${index}`}
                     style={{
                       width: '100%',
@@ -1518,7 +2170,7 @@ export default function PostsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -1529,11 +2181,11 @@ export default function PostsManagement() {
                 </Box>
               ))}
               {editNewImagePreviews.map((preview, index) => (
-                <Box 
-                  key={`new-${index}`} 
-                  position="relative" 
-                  sx={{ 
-                    width: 120, 
+                <Box
+                  key={`new-${index}`}
+                  position="relative"
+                  sx={{
+                    width: 120,
                     height: 120,
                     borderRadius: 2,
                     overflow: 'hidden',
@@ -1559,7 +2211,7 @@ export default function PostsManagement() {
                       right: 4,
                       bgcolor: 'error.main',
                       color: 'white',
-                      '&:hover': { 
+                      '&:hover': {
                         bgcolor: 'error.dark',
                         transform: 'scale(1.1)'
                       }
@@ -1573,16 +2225,19 @@ export default function PostsManagement() {
           )}
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseEditDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseEditDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
           <Button
             onClick={handleUpdatePost}
             variant="contained"
-            disabled={updating || (!editTitle.trim() && !editContent.trim() && editImages.length === 0 && editNewImages.length === 0)}
+            disabled={
+              updating ||
+              (!editTitle.trim() &&
+                !editContent.trim() &&
+                editImages.length === 0 &&
+                editNewImages.length === 0)
+            }
             sx={{
               bgcolor: 'secondary.main',
               '&:hover': {
@@ -1599,8 +2254,8 @@ export default function PostsManagement() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog 
-        open={deleteDialogOpen} 
+      <Dialog
+        open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
         PaperProps={{
           sx: {
@@ -1617,15 +2272,12 @@ export default function PostsManagement() {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseDeleteDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseDeleteDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleDeletePost} 
-            variant="contained" 
+          <Button
+            onClick={handleDeletePost}
+            variant="contained"
             disabled={deleting}
             sx={{
               bgcolor: 'error.main',
@@ -1643,8 +2295,8 @@ export default function PostsManagement() {
       </Dialog>
 
       {/* Approve Dialog */}
-      <Dialog 
-        open={approveDialogOpen} 
+      <Dialog
+        open={approveDialogOpen}
         onClose={handleCloseApproveDialog}
         PaperProps={{
           sx: {
@@ -1661,15 +2313,12 @@ export default function PostsManagement() {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseApproveDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseApproveDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleApprovePost} 
-            variant="contained" 
+          <Button
+            onClick={handleApprovePost}
+            variant="contained"
             disabled={reviewing}
             sx={{
               bgcolor: 'success.main',
@@ -1687,8 +2336,8 @@ export default function PostsManagement() {
       </Dialog>
 
       {/* Reject Dialog */}
-      <Dialog 
-        open={rejectDialogOpen} 
+      <Dialog
+        open={rejectDialogOpen}
         onClose={handleCloseRejectDialog}
         maxWidth="sm"
         fullWidth
@@ -1712,7 +2361,7 @@ export default function PostsManagement() {
             placeholder="Nhập lý do từ chối..."
             value={rejectComment}
             onChange={(e) => setRejectComment(e.target.value)}
-            sx={{ 
+            sx={{
               bgcolor: 'white',
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
@@ -1723,15 +2372,12 @@ export default function PostsManagement() {
           />
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'background.default', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseRejectDialog}
-            sx={{ color: 'text.secondary' }}
-          >
+          <Button onClick={handleCloseRejectDialog} sx={{ color: 'text.secondary' }}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleRejectPost} 
-            variant="contained" 
+          <Button
+            onClick={handleRejectPost}
+            variant="contained"
             disabled={reviewing || !rejectComment.trim()}
             sx={{
               bgcolor: 'error.main',
@@ -1761,10 +2407,12 @@ export default function PostsManagement() {
           }
         }}
       >
-        <DialogTitle sx={{ bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider' }}>
+        <DialogTitle
+          sx={{ bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider' }}
+        >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6" fontWeight="bold">
-              Người đã thích bài viết
+              Người đã phản ứng với bài viết
             </Typography>
             <IconButton
               onClick={() => setLikesDialogOpen(false)}
@@ -1778,15 +2426,103 @@ export default function PostsManagement() {
         <DialogContent sx={{ bgcolor: 'background.default', pt: 2 }}>
           {selectedPostLikes && selectedPostLikes.length > 0 ? (
             <Box>
-              {selectedPostLikes.map((like, index) => (
+              {selectedPostLikes.map((like, index) => {
+                // Map reactionType sang emoji và label
+                const reactionType = (like.reactionType ?? 'like').toLowerCase()
+                const reactionDisplay = REACTIONS.find((r) => r.key === reactionType) ?? REACTIONS[0]
+                
+                return (
+                  <Box
+                    key={like.postLikeId || index}
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    py={1.5}
+                    sx={{
+                      borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        borderRadius: 1
+                      }
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'primary.main'
+                      }}
+                    >
+                      {like.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    </Avatar>
+                    <Box flex={1}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {like.fullName || 'Người dùng'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatTimeAgo(like.createdDate)}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontSize: '2rem' }}>
+                      {reactionDisplay.emoji}
+                    </Typography>
+                  </Box>
+                )
+              })}
+            </Box>
+          ) : (
+            <Box textAlign="center" py={4}>
+              <LikeBorderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="body1" color="text.secondary">
+                Chưa có ai phản ứng với bài viết này
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Comment Likes Dialog */}
+      <Dialog
+        open={commentLikesDialogOpen}
+        onClose={() => setCommentLikesDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.default',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{ bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider' }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight="bold">
+              Người đã thích bình luận
+            </Typography>
+            <IconButton
+              onClick={() => setCommentLikesDialogOpen(false)}
+              size="small"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: 'background.default', pt: 2 }}>
+          {selectedCommentLikes && selectedCommentLikes.length > 0 ? (
+            <Box>
+              {selectedCommentLikes.map((like, index) => (
                 <Box
-                  key={like.postLikeId || index}
+                  key={like.postCommentLikeId || index}
                   display="flex"
                   alignItems="center"
                   gap={2}
                   py={1.5}
                   sx={{
-                    borderBottom: index < selectedPostLikes.length - 1 ? '1px solid' : 'none',
+                    borderBottom: index < selectedCommentLikes.length - 1 ? '1px solid' : 'none',
                     borderColor: 'divider',
                     '&:hover': {
                       bgcolor: 'action.hover',
@@ -1817,9 +2553,9 @@ export default function PostsManagement() {
             </Box>
           ) : (
             <Box textAlign="center" py={4}>
-              <FavoriteBorderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <FavoriteIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                Chưa có ai thích bài viết này
+                Chưa có ai thích bình luận này
               </Typography>
             </Box>
           )}
@@ -1837,4 +2573,3 @@ export default function PostsManagement() {
     </Box>
   )
 }
-

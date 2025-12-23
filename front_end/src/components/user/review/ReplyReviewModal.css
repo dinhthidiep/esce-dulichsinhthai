@@ -1,0 +1,252 @@
+/* Reply Review Modal Styles */
+
+.reply-review-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.reply-review-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.reply-review-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reply-review-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.reply-review-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #64748b;
+}
+
+.reply-review-modal-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.reply-review-modal-close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.reply-review-modal-body {
+  padding: 1.5rem;
+}
+
+.reply-review-info-header {
+  margin-bottom: 1.5rem;
+}
+
+.reply-review-user-info-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reply-review-user-avatar,
+.reply-review-user-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.reply-review-user-avatar-placeholder {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.reply-review-user-name {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.reply-review-date-info {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.reply-review-date-icon-small {
+  width: 14px;
+  height: 14px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.reply-review-rating-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: white;
+  padding: 0.375rem 0.625rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.reply-review-star-badge {
+  width: 18px;
+  height: 18px;
+  color: #fbbf24;
+}
+
+.reply-review-rating-number {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.reply-review-comment-section {
+  margin-bottom: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.reply-review-comment-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.reply-review-comment-content {
+  font-size: 0.875rem;
+  color: #1e293b;
+  line-height: 1.6;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.reply-review-field {
+  margin-bottom: 1.5rem;
+}
+
+.reply-review-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.reply-review-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  box-sizing: border-box;
+}
+
+.reply-review-textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.reply-review-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.reply-review-form-action {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.reply-review-btn-primary,
+.reply-review-btn-secondary {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.reply-review-btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.reply-review-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.reply-review-btn-primary:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.reply-review-btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.reply-review-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.reply-review-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

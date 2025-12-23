@@ -7,5 +7,7 @@
         public string Role { get; set; } = null!;
         public int RoleId { get; set; }
         public string Email { get; set; } = null!;
+        public string? LastMessage { get; set; }
+        public DateTime? LastMessageTime { get; set; }
     }
 }

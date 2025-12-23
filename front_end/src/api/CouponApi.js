@@ -1,4 +1,7 @@
-const backend_url = "http://localhost:7267";
+import { API_BASE_URL } from '~/config/api';
+
+// Dùng cùng domain với API deploy; các endpoint bên dưới đã tự thêm /api/Coupon...
+const backend_url = API_BASE_URL.replace('/api', '');
 
 // Get coupons by service combo ID
 export const getCouponsByComboId = async (comboId) => {

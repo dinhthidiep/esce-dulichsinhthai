@@ -66,6 +66,10 @@ namespace ESCE_SYSTEM.Services
             var currentUserId = _userContextService.GetCurrentUserId();
             var currentUser = await _userService.GetAccountByIdAsync(currentUserId);
 
+            // Admin (RoleId = 1) đăng bài thì tự động Approved
+            // Các role khác (Host=2, Agency=3, Customer=4) cần duyệt
+            var isAdmin = currentUser?.RoleId == 1;
+
             var post = new Post
             {
                 Title = postDto.ArticleTitle ?? "Không có tiêu đề",
@@ -73,7 +77,7 @@ namespace ESCE_SYSTEM.Services
                 AuthorId = currentUserId,
                 Image = postDto.Images != null && postDto.Images.Any() ? string.Join(",", postDto.Images) : null,
                 CreatedAt = DateTime.Now,
-                Status = "Pending",
+                Status = isAdmin ? "Approved" : "Pending",
                 IsDeleted = false,
                 CommentsCount = 0,
                 ReactionsCount = 0,
@@ -82,8 +86,11 @@ namespace ESCE_SYSTEM.Services
 
             var createdPost = await _postRepository.AddAsync(post);
 
-            // Gửi thông báo cho tất cả Admin
-            await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            // Chỉ gửi thông báo cho Admin nếu bài viết cần duyệt (không phải Admin đăng)
+            if (!isAdmin)
+            {
+                await GuiThongBaoChoAdmin(createdPost, "được tạo");
+            }
 
             return await GetPostDetail(createdPost.Id);
         }
@@ -114,6 +121,13 @@ namespace ESCE_SYSTEM.Services
             var posts = await _postRepository.GetAllAsync();
             var postDtos = new List<PostResponseDto>();
 
+            // Lấy tất cả comment reactions một lần để tránh N+1 query
+            var allCommentIds = posts.SelectMany(p => p.Comments ?? new List<Comment>()).Select(c => c.Id).ToList();
+            var allCommentReactions = allCommentIds.Any() 
+                ? await _commentReactionRepository.GetByCommentIdsAsync(allCommentIds)
+                : new List<Commentreaction>();
+            var commentReactionsDict = allCommentReactions.GroupBy(cr => cr.CommentId).ToDictionary(g => g.Key, g => g.ToList());
+
             foreach (var post in posts)
             {
                 var postDto = new PostResponseDto
@@ -124,6 +138,7 @@ namespace ESCE_SYSTEM.Services
                     PosterId = post.AuthorId.ToString(),
                     PosterRole = post.Author?.Role?.Name ?? string.Empty,
                     PosterName = post.Author?.Name ?? string.Empty,
+                    PosterAvatar = post.Author?.Avatar ?? string.Empty,
                     Status = post.Status,
                     RejectComment = post.RejectComment ?? string.Empty,
                     PosterApproverId = post.AuthorId.ToString(),
@@ -135,48 +150,62 @@ namespace ESCE_SYSTEM.Services
                     Comments = new List<PostCommentResponseDto>()
                 };
 
-                // Lấy reactions (likes) cho post
-                var reactions = await _postReactionRepository.GetByPostIdAsync(post.Id);
-                foreach (var reaction in reactions)
+                // Sử dụng dữ liệu đã eager load từ repository (Postreactions)
+                if (post.Postreactions != null)
                 {
-                    postDto.Likes.Add(new PostLikeResponseDto
+                    foreach (var reaction in post.Postreactions)
                     {
-                        PostLikeId = reaction.Id.ToString(),
-                        AccountId = reaction.UserId.ToString(),
-                        FullName = reaction.User?.Name ?? string.Empty,
-                        CreatedDate = reaction.CreatedAt ?? DateTime.Now
-                    });
-                }
-
-                // Lấy comments cho post
-                var comments = await _commentRepository.GetByPostIdAsync(post.Id);
-                foreach (var comment in comments)
-                {
-                    var commentDto = new PostCommentResponseDto
-                    {
-                        PostCommentId = comment.Id.ToString(),
-                        FullName = comment.Author?.Name ?? string.Empty,
-                        Content = comment.Content,
-                        Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
-                        CreatedDate = comment.CreatedAt,
-                        Likes = new List<PostCommentLikeResponseDto>(),
-                        Replies = new List<ReplyPostCommentResponseDto>()
-                    };
-
-                    // Lấy reactions cho comment
-                    var commentReactions = await _commentReactionRepository.GetByCommentIdAsync(comment.Id);
-                    foreach (var commentReaction in commentReactions)
-                    {
-                        commentDto.Likes.Add(new PostCommentLikeResponseDto
+                        postDto.Likes.Add(new PostLikeResponseDto
                         {
-                            PostCommentLikeId = commentReaction.Id.ToString(),
-                            AccountId = commentReaction.UserId.ToString(),
-                            FullName = commentReaction.User?.Name ?? string.Empty,
-                            CreatedDate = commentReaction.CreatedAt ?? DateTime.Now
+                            PostLikeId = reaction.Id.ToString(),
+                            AccountId = reaction.UserId.ToString(),
+                            FullName = reaction.User?.Name ?? string.Empty,
+                            Avatar = reaction.User?.Avatar ?? string.Empty,
+                            CreatedDate = reaction.CreatedAt ?? DateTime.Now,
+                            ReactionTypeId = reaction.ReactionTypeId,
+                            ReactionTypeName = reaction.ReactionType?.Name ?? string.Empty
                         });
                     }
+                }
 
-                    postDto.Comments.Add(commentDto);
+                // Sử dụng dữ liệu đã eager load từ repository (Comments)
+                if (post.Comments != null)
+                {
+                    foreach (var comment in post.Comments)
+                    {
+                        var commentDto = new PostCommentResponseDto
+                        {
+                            PostCommentId = comment.Id.ToString(),
+                            FullName = comment.Author?.Name ?? string.Empty,
+                            Avatar = comment.Author?.Avatar ?? string.Empty,
+                            Content = comment.Content,
+                            Images = comment.Image != null ? new List<string> { comment.Image } : new List<string>(),
+                            CreatedDate = comment.CreatedAt,
+                            ParentCommentId = comment.ParentCommentId,
+                            AuthorId = comment.AuthorId,
+                            ReactionsCount = comment.ReactionsCount,
+                            Likes = new List<PostCommentLikeResponseDto>(),
+                            Replies = new List<ReplyPostCommentResponseDto>()
+                        };
+
+                        // Sử dụng comment reactions từ dictionary đã load trước
+                        if (commentReactionsDict.TryGetValue(comment.Id, out var commentReactions))
+                        {
+                            foreach (var commentReaction in commentReactions)
+                            {
+                                commentDto.Likes.Add(new PostCommentLikeResponseDto
+                                {
+                                    PostCommentLikeId = commentReaction.Id.ToString(),
+                                    AccountId = commentReaction.UserId.ToString(),
+                                    FullName = commentReaction.User?.Name ?? string.Empty,
+                                    Avatar = commentReaction.User?.Avatar ?? string.Empty,
+                                    CreatedDate = commentReaction.CreatedAt ?? DateTime.Now
+                                });
+                            }
+                        }
+
+                        postDto.Comments.Add(commentDto);
+                    }
                 }
 
                 postDtos.Add(postDto);
@@ -230,7 +259,9 @@ namespace ESCE_SYSTEM.Services
                 {
                     AccountId = r.UserId.ToString(),
                     FullName = r.User?.Name ?? string.Empty,
-                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm")
+                    CreatedDate = (r.CreatedAt ?? DateTime.Now).ToString("dd/MM/yyyy HH:mm"),
+                    ReactionTypeId = r.ReactionTypeId,
+                    ReactionTypeName = r.ReactionType?.Name ?? string.Empty
                 }).ToList(),
                 Comments = comments.Select(c => new PostCommentDetailDto
                 {
@@ -372,7 +403,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoPheDuyetBaiViet(Post post)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -397,7 +428,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoTuChoiBaiViet(Post post, string lyDoTuChoi)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto
@@ -422,7 +453,7 @@ namespace ESCE_SYSTEM.Services
 
         private async Task GuiThongBaoYeuCauChinhSua(Post post, string noiDungYeuCau)
         {
-            var author = await _userService.GetAccountById(post.AuthorId);
+            var author = await _userService.GetAccountByIdAsync(post.AuthorId);
             if (author != null)
             {
                 var notificationDto = new NotificationDto

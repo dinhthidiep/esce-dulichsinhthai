@@ -319,7 +319,10 @@ const Revenue = () => {
   
   // Helper function to get image URL
   const getComboImageUrl = (combo) => {
-    const backend_url = "http://localhost:5002";
+    // Dùng cùng domain với API deploy
+    const backend_url = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace('/api', '')
+      : window.location.origin;
     const DEFAULT_IMAGE_URL = 'https://firebasestorage.googleapis.com/v0/b/esce-a4b58.firebasestorage.app/o/default%2Fstock_nimg.jpg?alt=media&token=623cc75c-6625-4d18-ab1e-ff5ca18b49a1';
     
     const imageName = combo.ImageUrl || combo.Image || combo.image || '';

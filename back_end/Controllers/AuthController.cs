@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Services.RoleService;
+using ESCE_SYSTEM.Services.RoleService;
 using ESCE_SYSTEM.Services.UserService;
 using ESCE_SYSTEM.DTOs;
 using ESCE_SYSTEM.DTOs.Users;
@@ -26,6 +26,15 @@ namespace ESCE_SYSTEM.Controllers
             _userService = userService;
             _roleService = roleService;
             _jwtHelper = jwtHelper;
+        }
+
+        /// <summary>
+        /// Health check endpoint để kiểm tra backend có đang chạy không
+        /// </summary>
+        [HttpGet("health")]
+        public IActionResult HealthCheck()
+        {
+            return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
         }
 
         [HttpPost("login")]
@@ -70,7 +79,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 // Kiểm tra trạng thái tài khoản - QUAN TRỌNG
-                if (user.IsBanned)
+                if (user.IS_BANNED == true)
                 {
                     return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên." });
                 }
@@ -134,7 +143,7 @@ namespace ESCE_SYSTEM.Controllers
                 }
 
                 //  QUAN TRỌNG: THÊM KIỂM TRA TRẠNG THÁI TÀI KHOẢN CHO GOOGLE LOGIN
-                if (user.IsBanned)
+                if (user.IS_BANNED == true)
                 {
                     return Unauthorized("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
                 }

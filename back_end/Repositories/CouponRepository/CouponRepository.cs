@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ESCE_SYSTEM.Repositories
@@ -45,12 +45,12 @@ namespace ESCE_SYSTEM.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int serviceComboId)
+        public async Task<IEnumerable<Coupon>> GetByServiceComboIdAsync(int ServiceComboId)
         {
             return await _context.Coupons
                 .Include(c => c.Host)
                 .Include(c => c.ServiceCombo)
-                .Where(c => c.ServiceComboId == serviceComboId || c.ServiceComboId == null)
+                .Where(c => c.ServiceComboId == ServiceComboId || c.ServiceComboId == null)
                 .ToListAsync();
         }
 

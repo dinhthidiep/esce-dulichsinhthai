@@ -64,7 +64,9 @@ const Header = ({ showMenuButton = false, onMenuToggle, sidebarActive = false })
         <img 
           src={(() => {
             // Process avatar - backend returns filename, not base64
-            const backendUrl = "http://localhost:7267";
+            const backendUrl = import.meta.env.VITE_API_URL
+              ? import.meta.env.VITE_API_URL.replace('/api', '')
+              : window.location.origin;
             const avatarFileName = userInfo?.Avatar || userInfo?.avatar || null;
             if (avatarFileName && avatarFileName.trim() !== '') {
               // Skip base64 avatars (old data) - they are no longer supported
@@ -88,7 +90,7 @@ const Header = ({ showMenuButton = false, onMenuToggle, sidebarActive = false })
             // Only try fallback if we have a valid filename (not a full URL, not the default)
             if (filename && filename !== 'stock_nimg.jpg' && !filename.includes('http://') && !filename.includes('://') && filename.length < 100) {
               const candidates = [
-                `http://localhost:7267/img/uploads/${filename}`,
+                `${(import.meta.env.VITE_API_URL || '/api').replace('/api', '')}/img/uploads/${filename}`,
                 `/img/uploads/${filename}`,
                 DEFAULT_AVATAR_URL
               ];

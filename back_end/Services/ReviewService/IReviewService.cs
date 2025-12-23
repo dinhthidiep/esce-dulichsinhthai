@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 
 namespace ESCE_SYSTEM.Services
 {
@@ -9,12 +9,18 @@ namespace ESCE_SYSTEM.Services
         Task<IEnumerable<Review>> GetByBookingIdAsync(int bookingId);
         Task<IEnumerable<Review>> GetByUserIdAsync(int userId);
         Task<Review?> GetByBookingIdAndUserIdAsync(int bookingId, int userId);
-        Task<decimal> GetAverageRatingByServiceComboAsync(int serviceComboId);
+        Task<decimal> GetAverageRatingByServicecomboAsync(int ServicecomboId);
         Task<decimal> GetAverageRatingByServiceAsync(int serviceId);
         Task<Review> CreateAsync(Review review);
         Task<Review?> UpdateAsync(int id, Review review);
         Task<bool> DeleteAsync(int id);
         Task<bool> UpdateStatusAsync(int id, string status);
         Task<bool> CanUserReviewAsync(int bookingId, int userId);
+
+        // Reply Review Methods
+        Task<Review> CreateReplyAsync(int parentReviewId, int authorId, string content);
+        Task<Review?> UpdateReplyAsync(int replyId, string content);
+        Task<bool> DeleteReplyAsync(int replyId);
+        Task<IEnumerable<Review>> GetRepliesByParentIdAsync(int parentReviewId);
     }
 }

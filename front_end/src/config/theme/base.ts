@@ -1,30 +1,73 @@
 import type { ThemeOptions } from '@mui/material/styles'
-import colors from 'tailwindcss/colors'
-import { pxToRem } from '~/utils/convert-px-to-unit.utils'
-import { normalizeTailwindColor } from '~/utils/tailwind.utils'
 
-export const baseOptions: ThemeOptions = {
-  customLayout: {
-    openSideBarSide: pxToRem(255),
-    closeSideBarSide: pxToRem(64),
-    closePaddingSideBar: `${pxToRem(12)} ${pxToRem(12)}`,
-    openPaddingSideBar: `${pxToRem(12)} ${pxToRem(2)}`
-  },
-  customBackgroundColor: {
-    main: 'linear-gradient(to right, #16a34a, #eab308)',
-    hoverListItemColor: normalizeTailwindColor(colors.green[200], 0.5)
-  },
-  cssVariables: {
-    colorSchemeSelector: '.theme-%s'
-  },
-  palette: {
-    common: {
-      black: '#1f2937',
-      white: '#fffffff2'
+// Extend MUI theme to include custom properties
+declare module '@mui/material/styles' {
+  interface Theme {
+    customLayout: {
+      openSideBarSide: string
+      closeSideBarSide: string
+      openPaddingSideBar: string
+      closePaddingSideBar: string
     }
-  },
-  colorSchemes: {
-    light: true,
-    dark: true
+    customBackgroundColor: {
+      main: string
+      hoverListItemColor: string
+      activeListItemColor: string
+    }
+  }
+  interface ThemeOptions {
+    customLayout?: {
+      openSideBarSide?: string
+      closeSideBarSide?: string
+      openPaddingSideBar?: string
+      closePaddingSideBar?: string
+    }
+    customBackgroundColor?: {
+      main?: string
+      hoverListItemColor?: string
+      activeListItemColor?: string
+    }
   }
 }
+
+export const baseOptions: ThemeOptions = {
+  typography: {
+    fontFamily: ['Inter', 'Noto Sans', 'Roboto', 'Arial', 'sans-serif'].join(','),
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  customLayout: {
+    openSideBarSide: '240px',
+    closeSideBarSide: '64px',
+    openPaddingSideBar: '8px 12px',
+    closePaddingSideBar: '8px',
+  },
+  customBackgroundColor: {
+    main: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    hoverListItemColor: 'rgba(5, 150, 105, 0.08)',
+    activeListItemColor: 'rgba(5, 150, 105, 0.16)',
+  },
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

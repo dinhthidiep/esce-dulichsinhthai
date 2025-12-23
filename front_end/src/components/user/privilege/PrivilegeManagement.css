@@ -1,0 +1,254 @@
+/* Privilege Management Styles */
+
+.priv-mgr-privilege-management {
+  width: 100%;
+}
+
+/* Filter Container - reuse coupon filter styles */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Filter Row */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Filter Field */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Filter Input and Select */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input,
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1e293b;
+  height: 42px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input:focus,
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-input::placeholder {
+  color: #94a3b8;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2310b981' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* Search Button */
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search {
+  padding: 0.625rem 1.25rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-row {
+    flex-direction: column;
+  }
+
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .filter-field {
+    width: 100%;
+  }
+
+  .priv-mgr-privilege-management .priv-mgr-coupon-filter-container .btn-search {
+    width: 100%;
+  }
+}
+
+/* Table Container */
+.priv-mgr-privilege-management .priv-mgr-coupons-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table thead {
+  background: #f8fafc;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.priv-mgr-privilege-management .priv-mgr-coupons-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Promotion specific cells */
+.priv-mgr-privilege-management .priv-mgr-promotion-service-name-cell {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.priv-mgr-privilege-management .priv-mgr-promotion-rank-cell {
+  text-align: center;
+}
+
+.priv-mgr-privilege-management .priv-mgr-promotion-user-type-cell {
+  text-align: center;
+}
+
+.priv-mgr-privilege-management .priv-mgr-promotion-actions-cell {
+  text-align: right;
+}
+
+/* Rank Badge */
+.priv-mgr-privilege-management .priv-mgr-rank-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priv-mgr-privilege-management .priv-mgr-rank-badge.priv-mgr-rank-đồng {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.priv-mgr-privilege-management .priv-mgr-rank-badge.priv-mgr-rank-bạc {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.priv-mgr-privilege-management .priv-mgr-rank-badge.priv-mgr-rank-vàng {
+  background: #fde68a;
+  color: #78350f;
+}
+
+
+/* Actions */
+.priv-mgr-privilege-management .priv-mgr-coupon-table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Pagination - reuse standard priv-mgr-pagination styles */
+.priv-mgr-privilege-management .priv-mgr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Empty State */
+.priv-mgr-privilege-management .priv-mgr-empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.priv-mgr-privilege-management .priv-mgr-empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: #94a3b8;
+  margin: 0 auto 1rem;
+}
+
+.priv-mgr-privilege-management .priv-mgr-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.priv-mgr-privilege-management .priv-mgr-empty-state p {
+  font-size: 0.875rem;
+  color: #64748b;
+}

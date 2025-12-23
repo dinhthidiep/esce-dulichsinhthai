@@ -1,5 +1,6 @@
 ﻿using ESCE_SYSTEM.DTOs.News;
 using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Services.UserContextService;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +11,12 @@ namespace ESCE_SYSTEM.Services.NewsService
     {
         private const string NewsReactionType = "News";
         private readonly ESCEContext _dbContext;
+        private readonly IUserContextService _userContextService;
 
-        public NewsService(ESCEContext dbContext)
+        public NewsService(ESCEContext dbContext, IUserContextService userContextService)
         {
             _dbContext = dbContext;
+            _userContextService = userContextService;
         }
 
         public async Task<IEnumerable<NewsDto>> GetAllNewsAsync(int? currentUserId)
@@ -80,6 +83,13 @@ namespace ESCE_SYSTEM.Services.NewsService
             if (news == null)
             {
                 throw new InvalidOperationException("Tin tức không tồn tại.");
+            }
+
+            // Chỉ cho phép tác giả chỉnh sửa tin tức của chính mình (kể cả Admin)
+            var currentUserId = _userContextService.GetCurrentUserId();
+            if (news.AccountId != currentUserId)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật tin tức này");
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Content))
@@ -164,6 +174,8 @@ namespace ESCE_SYSTEM.Services.NewsService
             return (liked, likesCount);
         }
 
+        private const string ImageSeparator = "|||IMAGE_SEPARATOR|||";
+
         private static string SerializeImages(IEnumerable<string>? images)
         {
             if (images == null)
@@ -175,7 +187,7 @@ namespace ESCE_SYSTEM.Services.NewsService
                 .Where(img => !string.IsNullOrWhiteSpace(img))
                 .Select(img => img.Trim());
 
-            return string.Join(";", sanitized);
+            return string.Join(ImageSeparator, sanitized);
         }
 
         private static string[] DeserializeImages(string? serializedImages)
@@ -183,6 +195,24 @@ namespace ESCE_SYSTEM.Services.NewsService
             if (string.IsNullOrWhiteSpace(serializedImages))
             {
                 return Array.Empty<string>();
+            }
+
+            // Support both new separator and legacy semicolon separator
+            if (serializedImages.Contains(ImageSeparator))
+            {
+                return serializedImages
+                    .Split(new[] { ImageSeparator }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .ToArray();
+            }
+
+            // Legacy: semicolon separator (only for non-URL images)
+            // Check if it looks like URLs (contains http)
+            if (serializedImages.Contains("http"))
+            {
+                // For URLs, don't split by semicolon as it breaks Firebase URLs
+                return new[] { serializedImages.Trim() };
             }
 
             return serializedImages

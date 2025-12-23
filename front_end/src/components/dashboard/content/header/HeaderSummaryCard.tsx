@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import SummaryCard from '~/components/common/SummaryCard'
-import { fetchDashboardData, DashboardDto } from '~/api/instances/DashboardApi'
+import { fetchDashboardData } from '~/api/instances/DashboardApi'
+import type { DashboardDto } from '~/api/instances/DashboardApi'
 import LegendToggleIcon from '@mui/icons-material/LegendToggle'
 import EmailIcon from '@mui/icons-material/Email'
 import HeadphonesIcon from '@mui/icons-material/Headphones'
@@ -30,6 +31,12 @@ export default function HeaderDashBoardContent() {
           userGrowth: 'Đang tải...',
           totalPosts: 0,
           postGrowth: 'Đang tải...',
+          totalServiceCombos: 0,
+          serviceComboGrowth: '',
+          totalRevenue: 0,
+          revenueGrowth: '',
+          totalBookings: 0,
+          bookingGrowth: '',
           pendingSupports: 0,
           totalViews: 0,
           todayComments: 0,
@@ -79,14 +86,14 @@ export default function HeaderDashBoardContent() {
     {
       title: 'Tổng Users',
       value: dashboardData.totalUsers.toLocaleString('vi-VN'),
-      subtitle: dashboardData.userGrowth,
+      subtitle: 'Người dùng hệ thống',
       bgColor: 'bg-linear-to-br from-blue-50 to-blue-100',
       textColor: 'text-blue-800',
       icon: <PeopleOutlineIcon sx={{ fontSize: '2rem' }} />
     },
     {
       title: 'Lượt tương tác',
-      value: dashboardData.totalViews.toLocaleString('vi-VN'), // Total interactions from database
+      value: dashboardData.totalViews.toLocaleString('vi-VN'),
       subtitle: 'Tổng tương tác hệ thống',
       icon: <LegendToggleIcon sx={{ fontSize: '2rem' }} />,
       bgColor: 'bg-linear-to-br from-green-50 to-green-100',
@@ -95,7 +102,7 @@ export default function HeaderDashBoardContent() {
     {
       title: 'Bài viết',
       value: dashboardData.totalPosts.toLocaleString('vi-VN'),
-      subtitle: dashboardData.postGrowth,
+      subtitle: 'Tổng bài viết',
       icon: <EmailIcon sx={{ fontSize: '2rem' }} />,
       bgColor: 'bg-linear-to-br from-purple-50 to-purple-100',
       textColor: 'text-purple-600'
@@ -118,4 +125,3 @@ export default function HeaderDashBoardContent() {
     </Box>
   )
 }
-

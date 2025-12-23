@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+using ESCE_SYSTEM.Models;
 using ESCE_SYSTEM.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,11 +45,11 @@ namespace ESCE_SYSTEM.Services
             return await _repository.GetByBookingIdAndUserIdAsync(bookingId, userId);
         }
 
-        public async Task<decimal> GetAverageRatingByServiceComboAsync(int serviceComboId)
+        public async Task<decimal> GetAverageRatingByServicecomboAsync(int ServicecomboId)
         {
             var reviews = await _context.Reviews
                 .Include(r => r.Booking)
-                .Where(r => r.Booking.ServiceComboId == serviceComboId && r.Status == "approved")
+                .Where(r => r.Booking.ServiceComboId == ServicecomboId && r.Status == "approved")
                 .Select(r => r.Rating)
                 .ToListAsync();
 
@@ -73,26 +73,26 @@ namespace ESCE_SYSTEM.Services
 
         public async Task<Review> CreateAsync(Review review)
         {
-            // Kiểm tra xem booking có tồn tại không
+            // Ki?m tra xem booking c� t?n t?i kh�ng
             var booking = await _bookingRepository.GetByIdAsync(review.BookingId);
             if (booking == null)
             {
                 throw new Exception("Booking not found");
             }
 
-            // Kiểm tra xem user có quyền review booking này không
+            // Ki?m tra xem user c� quy?n review booking n�y kh�ng
             if (booking.UserId != review.UserId)
             {
                 throw new Exception("User can only review their own bookings");
             }
 
-            // Kiểm tra xem booking đã thanh toán và được confirmed chưa
-            if (booking.Status != "confirmed" && booking.Status != "completed")
+            // Chỉ cho phép review khi đã hoàn thành chuyến du lịch
+            if (booking.Status != "completed")
             {
-                throw new Exception("Can only review bookings that have been paid (confirmed or completed)");
+                throw new Exception("Chỉ có thể đánh giá sau khi hoàn thành chuyến du lịch");
             }
 
-            // Kiểm tra xem user đã review booking này chưa
+            // Ki?m tra xem user d� review booking n�y chua
             var existingReview = await GetByBookingIdAndUserIdAsync(review.BookingId, review.UserId);
             if (existingReview != null)
             {
@@ -109,7 +109,7 @@ namespace ESCE_SYSTEM.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return null;
 
-            // Cho phép sửa bất cứ lúc nào
+            // Cho ph�p s?a b?t c? l�c n�o
             existing.Rating = review.Rating;
             existing.Comment = review.Comment;
 
@@ -144,14 +144,86 @@ namespace ESCE_SYSTEM.Services
             // Kiểm tra booking thuộc về user
             if (booking.UserId != userId) return false;
 
-            // Kiểm tra booking đã thanh toán chưa (confirmed hoặc completed)
-            if (booking.Status != "confirmed" && booking.Status != "completed") return false;
+            // Chỉ cho phép review khi đã hoàn thành chuyến du lịch
+            if (booking.Status != "completed") return false;
 
             // Kiểm tra user đã review chưa
             var existingReview = await GetByBookingIdAndUserIdAsync(bookingId, userId);
             if (existingReview != null) return false;
 
             return true;
+        }
+
+        // --------------------------------------
+        // REPLY REVIEW METHODS
+        // --------------------------------------
+        public async Task<Review> CreateReplyAsync(int parentReviewId, int authorId, string content)
+        {
+            // Kiểm tra parent review có tồn tại không
+            var parentReview = await GetByIdAsync(parentReviewId);
+            if (parentReview == null)
+            {
+                throw new Exception("Parent review not found");
+            }
+
+            // Kiểm tra đã có reply chưa (mỗi review chỉ có 1 reply)
+            var existingReply = await _context.Reviews
+                .Where(r => r.ParentReviewId == parentReviewId)
+                .FirstOrDefaultAsync();
+
+            if (existingReply != null)
+            {
+                throw new Exception("This review already has a reply");
+            }
+
+            // Tạo reply (không cần Rating, BookingId lấy từ parent)
+            var reply = new Review
+            {
+                ParentReviewId = parentReviewId,
+                BookingId = parentReview.BookingId,
+                UserId = authorId,
+                Rating = 0, // Reply không có rating
+                Comment = content,
+                Status = "approved", // Reply tự động approved
+                CreatedDate = DateTime.Now
+            };
+
+            await _repository.CreateAsync(reply);
+            return reply;
+        }
+
+        public async Task<Review?> UpdateReplyAsync(int replyId, string content)
+        {
+            var reply = await GetByIdAsync(replyId);
+            if (reply == null || reply.ParentReviewId == null)
+            {
+                return null; // Không phải reply hoặc không tồn tại
+            }
+
+            reply.Comment = content;
+            await _repository.UpdateAsync(reply);
+            return reply;
+        }
+
+        public async Task<bool> DeleteReplyAsync(int replyId)
+        {
+            var reply = await GetByIdAsync(replyId);
+            if (reply == null || reply.ParentReviewId == null)
+            {
+                return false; // Không phải reply hoặc không tồn tại
+            }
+
+            await _repository.DeleteAsync(replyId);
+            return true;
+        }
+
+        public async Task<IEnumerable<Review>> GetRepliesByParentIdAsync(int parentReviewId)
+        {
+            return await _context.Reviews
+                .Where(r => r.ParentReviewId == parentReviewId)
+                .Include(r => r.User)
+                .OrderBy(r => r.CreatedDate)
+                .ToListAsync();
         }
     }
 }

@@ -22,7 +22,7 @@ namespace ESCE_SYSTEM.DTOs.Users
         /// <summary>
         /// Hỗ trợ cả các giá trị được frontend gửi như: Tourist, Host, TravelAgency.
         /// </summary>
-        public string Role { get; set; } = "Customer";
+        public string Role { get; set; } = "Tourist";
 
         public bool IsActive { get; set; } = true;
 

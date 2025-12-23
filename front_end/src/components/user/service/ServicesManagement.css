@@ -1,0 +1,657 @@
+/* Services Management Styles */
+
+/* Filter Container */
+.svc-admin-service-filter-container {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.svc-admin-filter-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.svc-admin-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.svc-admin-filter-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.svc-admin-filter-input,
+.svc-admin-filter-select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1e293b;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.svc-admin-filter-input:focus,
+.svc-admin-filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.svc-admin-filter-select {
+  cursor: pointer;
+}
+
+.svc-admin-btn-search {
+  padding: 0.625rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 42px;
+  white-space: nowrap;
+}
+
+.svc-admin-btn-search:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.svc-admin-btn-search:svc-admin-active {
+  transform: translateY(0);
+}
+
+/* Services Grid - Mỗi dịch vụ 1 hàng */
+.svc-admin-services-grid {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  width: 100%;
+  margin: 0 auto;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 100px;
+}
+
+.svc-admin-no-services {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2.5rem;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Service Card - Layout ngang cho mỗi dịch vụ */
+.svc-admin-service-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.svc-admin-service-card-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-admin-service-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #10b981;
+}
+
+.svc-admin-service-card:hover .svc-admin-service-name {
+  color: #10b981;
+  transition: color 0.2s ease;
+}
+
+.svc-admin-service-card .svc-admin-service-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.svc-admin-service-card .svc-admin-service-image-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.svc-admin-service-card:hover .svc-admin-service-image {
+  transform: scale(1.05);
+}
+
+.svc-admin-service-card:hover .svc-admin-service-image-img {
+  transform: scale(1.05);
+}
+
+.svc-admin-service-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.svc-admin-service-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.svc-admin-service-description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
+}
+
+.svc-admin-service-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.svc-admin-service-price {
+  margin: 0;
+  font-size: 1rem;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.svc-admin-service-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.svc-admin-service-actions button {
+  min-width: 100px;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3125rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Pagination */
+.svc-admin-pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.svc-admin-pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 auto;
+}
+
+.svc-admin-pagination-btn {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.svc-admin-pagination-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.svc-admin-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.svc-admin-pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.svc-admin-pagination-number {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svc-admin-pagination-number:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.svc-admin-pagination-number.svc-admin-active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+  font-weight: 600;
+}
+
+.svc-admin-pagination-number.svc-admin-active:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+/* Modal Styles */
+.svc-admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.svc-admin-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.svc-admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.svc-admin-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.svc-admin-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.svc-admin-modal-close:hover {
+  background: #f1f5f9;
+}
+
+.svc-admin-modal-close-icon {
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
+.svc-admin-modal-body {
+  padding: 1.5rem;
+}
+
+.svc-admin-disclaimer-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.svc-admin-required-indicator {
+  color: #dc2626;
+}
+
+.svc-admin-field {
+  margin-bottom: 1.25rem;
+}
+
+.svc-admin-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.svc-admin-field input,
+.svc-admin-field textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.svc-admin-field input:focus,
+.svc-admin-field textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.svc-admin-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.svc-admin-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.svc-admin-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.svc-admin-img-preview {
+  display: block;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.svc-admin-form-action {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.svc-admin-form-action button {
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.svc-admin-form-action button.svc-admin-primary {
+  background: #10b981;
+  color: white;
+}
+
+.svc-admin-form-action button.svc-admin-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.svc-admin-form-action button.svc-admin-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svc-admin-form-action button.svc-admin-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.svc-admin-form-action button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.svc-admin-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #64748b;
+}
+
+.svc-admin-empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: #cbd5e1;
+  margin: 0 auto 1rem;
+}
+
+.svc-admin-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.svc-admin-empty-state p {
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .svc-admin-service-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .svc-admin-service-card-left {
+    width: 100%;
+  }
+  
+  .svc-admin-service-description {
+    max-width: 100%;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+  }
+  
+  .svc-admin-service-actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .svc-admin-service-actions button {
+    flex: 1;
+    max-width: 120px;
+  }
+  
+  .svc-admin-filter-row {
+    flex-direction: column;
+  }
+  
+  .svc-admin-filter-field {
+    width: 100%;
+  }
+  
+  .svc-admin-btn-search {
+    width: 100%;
+  }
+}
+
+
+/* Delete Confirm Modal */
+.svc-admin-delete-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: svc-admin-modal-appear 0.2s ease-out;
+}
+
+@keyframes svc-admin-modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.svc-admin-delete-modal-icon {
+  margin-bottom: 1rem;
+}
+
+.svc-admin-delete-modal-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.svc-admin-delete-modal-message {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.svc-admin-delete-modal-message strong {
+  color: #1e293b;
+}
+
+.svc-admin-delete-modal-warning {
+  margin: 0 0 1.5rem;
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.svc-admin-delete-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.svc-admin-delete-modal-btn {
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.svc-admin-delete-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.svc-admin-delete-modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svc-admin-delete-modal-btn-cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.svc-admin-delete-modal-btn-confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.svc-admin-delete-modal-btn-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+}

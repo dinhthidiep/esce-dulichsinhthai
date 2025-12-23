@@ -11,6 +11,7 @@ namespace ESCE_SYSTEM.DTOs
         public string PosterId { get; set; } = null!;
         public string PosterRole { get; set; } = null!;
         public string PosterName { get; set; } = null!;
+        public string? PosterAvatar { get; set; }
         public string Status { get; set; } = null!;
         public string RejectComment { get; set; } = null!;
         public string PosterApproverId { get; set; } = null!;
@@ -28,16 +29,23 @@ namespace ESCE_SYSTEM.DTOs
         public string PostLikeId { get; set; } = null!;
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
+        public string? Avatar { get; set; }
         public DateTime CreatedDate { get; set; }
+        public byte ReactionTypeId { get; set; }
+        public string? ReactionTypeName { get; set; }
     }
 
     public class PostCommentResponseDto
     {
         public string PostCommentId { get; set; } = null!;
         public string FullName { get; set; } = null!;
+        public string? Avatar { get; set; }
         public string Content { get; set; } = null!;
         public List<string>? Images { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public int? ParentCommentId { get; set; }
+        public int? AuthorId { get; set; }
+        public int ReactionsCount { get; set; }
 
         public List<PostCommentLikeResponseDto> Likes { get; set; } = new List<PostCommentLikeResponseDto>();
         public List<ReplyPostCommentResponseDto> Replies { get; set; } = new List<ReplyPostCommentResponseDto>();
@@ -47,6 +55,7 @@ namespace ESCE_SYSTEM.DTOs
     {
         public string ReplyPostCommentId { get; set; } = null!;
         public string FullName { get; set; } = null!;
+        public string? Avatar { get; set; }
         public string Content { get; set; } = null!;
         public List<string>? Images { get; set; }
         public DateTime? CreatedDate { get; set; }
@@ -58,6 +67,7 @@ namespace ESCE_SYSTEM.DTOs
         public string PostCommentLikeId { get; set; } = null!;
         public string AccountId { get; set; } = null!;
         public string FullName { get; set; } = null!;
+        public string? Avatar { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 }

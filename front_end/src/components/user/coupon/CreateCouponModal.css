@@ -1,0 +1,373 @@
+/* Create Coupon Modal Styles */
+
+.create-coupon-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.create-coupon-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 900px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.create-coupon-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+}
+
+.create-coupon-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.create-coupon-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.create-coupon-modal-close:hover {
+  background: #f1f5f9;
+}
+
+.create-coupon-modal-close-icon {
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
+.create-coupon-modal-body {
+  padding: 1.5rem 2rem;
+}
+
+.create-coupon-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.create-coupon-form-grid .create-coupon-field {
+  margin-bottom: 0;
+}
+
+.create-coupon-field-full {
+  grid-column: 1 / -1;
+}
+
+.create-coupon-target-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.create-coupon-disclaimer-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  font-style: normal;
+}
+
+.create-coupon-required-indicator {
+  color: #ef4444;
+}
+
+.create-coupon-field {
+  margin-bottom: 1.5rem;
+}
+
+.create-coupon-field label {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.create-coupon-field input,
+.create-coupon-field textarea,
+.create-coupon-field select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.create-coupon-field input:focus,
+.create-coupon-field textarea:focus,
+.create-coupon-field select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.create-coupon-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.create-coupon-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+.create-coupon-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.create-coupon-radio-group {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.create-coupon-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 0.875rem;
+}
+
+.create-coupon-radio-label input[type="radio"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #10b981;
+}
+
+.create-coupon-radio-label span {
+  user-select: none;
+}
+
+.create-coupon-radio-label:hover {
+  color: #10b981;
+}
+
+.create-coupon-form-action {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.create-coupon-btn-primary,
+.create-coupon-btn-secondary {
+  flex: 0 0 auto;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.create-coupon-btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.create-coupon-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.create-coupon-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-coupon-btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.create-coupon-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.create-coupon-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* Checkbox group styles */
+.create-coupon-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.create-coupon-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.create-coupon-checkbox-label:hover {
+  background-color: #ecfdf5;
+  transform: translateX(4px);
+}
+
+.create-coupon-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #10b981;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.create-coupon-checkbox-label input[type="checkbox"]:checked {
+  transform: scale(1.1);
+}
+
+.create-coupon-checkbox-label span {
+  user-select: none;
+}
+
+.create-coupon-role-icon {
+  font-size: 1.25rem;
+}
+
+.create-coupon-level-icon {
+  font-size: 1rem;
+  min-width: 1.25rem;
+}
+
+/* Role section styles */
+.create-coupon-role-section {
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transition: all 0.3s ease;
+}
+
+.create-coupon-role-section:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.create-coupon-role-section.active {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.create-coupon-role-header {
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  padding: 0.25rem 0 !important;
+}
+
+.create-coupon-role-header:hover {
+  background-color: transparent !important;
+  transform: none !important;
+}
+
+.create-coupon-level-group {
+  margin-left: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0 0.5rem 1rem;
+  border-left: 3px solid #10b981;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: slideDown 0.3s ease-out;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 300px;
+  }
+}
+
+.create-coupon-level-group .create-coupon-checkbox-label {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.create-coupon-level-group .create-coupon-checkbox-label:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Disabled state for level checkboxes when "Tất cả" is selected */
+.create-coupon-checkbox-label.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.create-coupon-checkbox-label.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.create-coupon-checkbox-label.disabled:hover {
+  background-color: transparent;
+  transform: none;
+}

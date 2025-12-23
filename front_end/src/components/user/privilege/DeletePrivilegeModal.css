@@ -1,0 +1,136 @@
+.delete-privilege-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.delete-privilege-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.delete-privilege-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.delete-privilege-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.delete-privilege-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #64748b;
+}
+
+.delete-privilege-modal-close:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.delete-privilege-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-privilege-modal-close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-privilege-modal-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.delete-privilege-warning-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.delete-privilege-message {
+  font-size: 1rem;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.delete-privilege-message strong {
+  color: #ef4444;
+}
+
+.delete-privilege-submessage {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.delete-privilege-modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.delete-privilege-btn-cancel,
+.delete-privilege-btn-delete {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.delete-privilege-btn-cancel {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.delete-privilege-btn-cancel:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.delete-privilege-btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-privilege-btn-delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.delete-privilege-btn-cancel:disabled,
+.delete-privilege-btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

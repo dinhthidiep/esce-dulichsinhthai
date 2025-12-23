@@ -18,7 +18,7 @@ namespace ESCE_SYSTEM.Controllers
         }
 
         [HttpPost("like/{postId}")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> LikePost(int postId)
         {
             try
@@ -32,8 +32,38 @@ namespace ESCE_SYSTEM.Controllers
             }
         }
 
+        [HttpPost("{postId}/{reactionTypeId}")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
+        public async Task<IActionResult> ReactToPost(int postId, byte reactionTypeId)
+        {
+            try
+            {
+                await _postReactionService.ReactToPost(postId, reactionTypeId);
+                
+                var reactionMessages = new Dictionary<byte, string>
+                {
+                    { 1, "Đã thích bài viết" },
+                    { 2, "Đã yêu thích bài viết" },
+                    { 3, "Đã haha bài viết" },
+                    { 4, "Đã wow bài viết" },
+                    { 5, "Đã buồn với bài viết" },
+                    { 6, "Đã phẫn nộ với bài viết" }
+                };
+                
+                var message = reactionMessages.ContainsKey(reactionTypeId) 
+                    ? reactionMessages[reactionTypeId] 
+                    : "Đã phản ứng với bài viết";
+                
+                return Ok(new { message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("unlike/{postReactionId}")]
-        [Authorize(Roles = "Admin,Host,Agency,Customer")]
+        [Authorize(Roles = "Admin,Host,Agency,Tourist,Customer")]
         public async Task<IActionResult> UnlikePost(int postReactionId)
         {
             try

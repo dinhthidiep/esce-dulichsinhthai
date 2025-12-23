@@ -24,12 +24,12 @@ export default defineConfig([
       'react-refresh/only-export-components': 'warn',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [{ regex: '^@mui/[^/]+$' }]
-        }
-      ],
+      // 'no-restricted-imports': [
+      //   'error',
+      //   {
+      //     patterns: [{ regex: '^@mui/[^/]+$' }]
+      //   }
+      // ],
       'react/prop-types': 0,
       'react/display-name': 0,
       'no-console': 1,

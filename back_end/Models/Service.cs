@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ESCE_SYSTEM.Models
@@ -17,6 +17,10 @@ namespace ESCE_SYSTEM.Models
         public int HostId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? Images { get; set; }
+        public string? Status { get; set; }
+        public string? RejectComment { get; set; }
+        public string? ReviewComments { get; set; }
 
         public virtual Account Host { get; set; } = null!;
         public virtual ICollection<ServiceComboDetail> ServiceComboDetails { get; set; }

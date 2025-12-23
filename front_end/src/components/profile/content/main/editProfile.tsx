@@ -24,6 +24,7 @@ import PhoneIcon from '@mui/icons-material/Phone'
 import WcIcon from '@mui/icons-material/Wc'
 import HomeIcon from '@mui/icons-material/Home'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import { uploadImageToFirebase } from '~/services/firebaseStorage'
 import { styled } from '@mui/material/styles'
 import { updateProfile as updateProfileApi } from '~/api/instances/UserApi'
 
@@ -60,7 +61,7 @@ interface FormState {
   avatar: string
 }
 
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
+const StyledAvatar = styled(Avatar)(() => ({
   width: 120,
   height: 120,
   border: '3px solid white',
@@ -75,7 +76,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
   }
 }))
 
-const AvatarContainer = styled(Box)(({ theme }) => ({
+const AvatarContainer = styled(Box)(() => ({
   position: 'relative',
   display: 'inline-block',
   '&:hover .camera-overlay': {
@@ -83,7 +84,7 @@ const AvatarContainer = styled(Box)(({ theme }) => ({
   }
 }))
 
-const CameraOverlay = styled(Box)(({ theme }) => ({
+const CameraOverlay = styled(Box)(() => ({
   position: 'absolute',
   bottom: 0,
   right: 0,
@@ -107,7 +108,7 @@ const CameraOverlay = styled(Box)(({ theme }) => ({
 
 export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   const getUserInfo = (): UserInfo => {
     try {
       const userInfoStr = localStorage.getItem('userInfo')
@@ -125,20 +126,20 @@ export default function EditProfile({ onCancel, onSave }: EditProfileProps) {
     }
   }
 
-const extractDateOnly = (value?: string | null) => {
-  if (!value) return ''
-  const date = value.includes('T') ? value.split('T')[0] : value
-  return date
-}
+  const extractDateOnly = (value?: string | null) => {
+    if (!value) return ''
+    const date = value.includes('T') ? value.split('T')[0] : value
+    return date
+  }
 
-const userInfo = getUserInfo()
+  const userInfo = getUserInfo()
   const [formData, setFormData] = useState<FormState>({
     name: userInfo.name || userInfo.fullName || '',
     email: userInfo.email || '',
     phone: userInfo.phone || '',
     gender: userInfo.gender || '',
     address: userInfo.address || '',
-  dateOfBirth: extractDateOnly(userInfo.dateOfBirth || (userInfo as any).dob),
+    dateOfBirth: extractDateOnly(userInfo.dateOfBirth || (userInfo as any).dob),
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -150,12 +151,12 @@ const userInfo = getUserInfo()
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-const [snackbar, setSnackbar] = useState({
-  open: false,
-  message: '',
-  severity: 'success' as 'success' | 'error'
-})
-const [isSaving, setIsSaving] = useState(false)
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  })
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     const updatedUserInfo = getUserInfo()
@@ -165,7 +166,7 @@ const [isSaving, setIsSaving] = useState(false)
       phone: updatedUserInfo.phone || '',
       gender: updatedUserInfo.gender || '',
       address: updatedUserInfo.address || '',
-    dateOfBirth: extractDateOnly(updatedUserInfo.dateOfBirth || (updatedUserInfo as any).dob),
+      dateOfBirth: extractDateOnly(updatedUserInfo.dateOfBirth || (updatedUserInfo as any).dob),
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
@@ -183,15 +184,16 @@ const [isSaving, setIsSaving] = useState(false)
     return name[0].toUpperCase()
   }
 
-  const handleInputChange = (field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [field]: e.target.value })
-  }
+  const handleInputChange =
+    (field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({ ...formData, [field]: e.target.value })
+    }
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click()
   }
 
-  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Validate file type
@@ -202,18 +204,27 @@ const [isSaving, setIsSaving] = useState(false)
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setSnackbar({ open: true, message: 'Kích thước ảnh không được vượt quá 5MB', severity: 'error' })
+        setSnackbar({
+          open: true,
+          message: 'Kích thước ảnh không được vượt quá 5MB',
+          severity: 'error'
+        })
         return
       }
 
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result as string
-        setAvatarPreview(result)
-        setFormData({ ...formData, avatar: result })
+      try {
+        // Upload avatar lên Firebase và dùng URL trả về
+        const url = await uploadImageToFirebase(file, 'avatars')
+        setAvatarPreview(url)
+        setFormData({ ...formData, avatar: url })
+      } catch (error) {
+        console.error('Error uploading avatar to Firebase:', error)
+        setSnackbar({
+          open: true,
+          message: 'Không thể upload ảnh đại diện. Vui lòng thử lại.',
+          severity: 'error'
+        })
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -244,7 +255,11 @@ const [isSaving, setIsSaving] = useState(false)
       }
 
       if (formData.newPassword.length < 6) {
-        setSnackbar({ open: true, message: 'Mật khẩu mới phải có ít nhất 6 ký tự', severity: 'error' })
+        setSnackbar({
+          open: true,
+          message: 'Mật khẩu mới phải có ít nhất 6 ký tự',
+          severity: 'error'
+        })
         return
       }
 
@@ -268,6 +283,9 @@ const [isSaving, setIsSaving] = useState(false)
       const response = await updateProfileApi(payload)
       const updatedUser = response.user
 
+      console.log('[EditProfile] Updated user from API:', updatedUser)
+      console.log('[EditProfile] Payload sent:', payload)
+
       const updatedUserInfo = {
         ...userInfo,
         id: updatedUser.id,
@@ -282,6 +300,8 @@ const [isSaving, setIsSaving] = useState(false)
         dob: updatedUser.dob ?? null
       }
 
+      console.log('[EditProfile] Updated userInfo to save:', updatedUserInfo)
+
       localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
       setFormData((prev) => ({
         ...prev,
@@ -293,6 +313,9 @@ const [isSaving, setIsSaving] = useState(false)
         avatar: updatedUserInfo.avatar
       }))
       setAvatarPreview(updatedUserInfo.avatar || null)
+
+      // Dispatch custom event to notify other components (e.g., SocialMedia) that profile was updated
+      window.dispatchEvent(new CustomEvent('userProfileUpdated'))
 
       setSnackbar({
         open: true,
@@ -317,10 +340,10 @@ const [isSaving, setIsSaving] = useState(false)
       }, 1000)
     } catch (error) {
       console.error('Update profile error:', error)
-      setSnackbar({ 
-        open: true, 
-        message: 'Cập nhật thông tin thất bại. Vui lòng thử lại!', 
-        severity: 'error' 
+      setSnackbar({
+        open: true,
+        message: 'Cập nhật thông tin thất bại. Vui lòng thử lại!',
+        severity: 'error'
       })
     } finally {
       setIsSaving(false)
@@ -661,6 +684,9 @@ const [isSaving, setIsSaving] = useState(false)
                   InputLabelProps={{
                     shrink: true
                   }}
+                  inputProps={{
+                    max: new Date().toISOString().split('T')[0] // Giới hạn ngày tối đa là hôm nay
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -725,11 +751,7 @@ const [isSaving, setIsSaving] = useState(false)
                     }}
                   />
                 }
-                label={
-                  <Typography sx={{ fontSize: '1.4rem' }}>
-                    Tôi muốn đổi mật khẩu
-                  </Typography>
-                }
+                label={<Typography sx={{ fontSize: '1.4rem' }}>Tôi muốn đổi mật khẩu</Typography>}
                 sx={{ mb: showPasswordFields ? 2 : 0 }}
               />
 
@@ -963,9 +985,3 @@ const [isSaving, setIsSaving] = useState(false)
     </Box>
   )
 }
-
-
-
-
-
-

@@ -73,5 +73,17 @@ namespace ESCE_SYSTEM.Repositories
                 .Where(cr => cr.CommentId == commentId)
                 .CountAsync();
         }
+
+        public async Task<List<Commentreaction>> GetByCommentIdsAsync(List<int> commentIds)
+        {
+            if (commentIds == null || !commentIds.Any())
+                return new List<Commentreaction>();
+
+            return await _context.Commentreactions
+                .Where(cr => commentIds.Contains(cr.CommentId))
+                .Include(cr => cr.User)
+                .Include(cr => cr.ReactionType)
+                .ToListAsync();
+        }
     }
 }

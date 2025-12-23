@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import SideBar from '~/components/layout/sidebar'
 import { Outlet } from 'react-router-dom'
+import './main-layout.css'
 const MainLayout = () => {
   const [open, setOpen] = useState(true)
 
@@ -15,7 +16,7 @@ const MainLayout = () => {
     <Container
       disableGutters
       maxWidth={false}
-      className="min-h-screen bg-[url(/images/background.jpg)] h-full bg-no-repeat! bg-cover! bg-position-[50%_50%]!"
+      className="admin-layout min-h-screen"
       sx={{
         display: 'grid',
         gridTemplateColumns: `${sidebarWidth} 1fr`,
@@ -33,10 +34,14 @@ const MainLayout = () => {
       <SideBar open={open} setOpen={setOpen} />
 
       {/* MAIN CONTENT */}
-      <Box component="main" sx={{ overflowY: 'auto', minHeight: '100vh' }}>
-        <div className={`p-[2.4rem]!`}>
-          <div className={`max-w-512! mx-auto!`}>
-            <div className="space-y-[2.4rem]!">{<Outlet />}</div>
+      <Box
+        component="main"
+        className="admin-main"
+        sx={{ overflowY: 'auto', minHeight: '100vh' }}
+      >
+        <div className="admin-main-inner">
+          <div className="admin-main-container">
+            <div className="admin-main-stack">{<Outlet />}</div>
           </div>
         </div>
       </Box>

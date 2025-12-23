@@ -1,0 +1,41 @@
+#loader-payos {
+    border: 10px solid #f3f3f3;
+    border-top: 10px solid #6655ff;
+    border-radius: 50% !important;
+    width: 50px;
+    height: 50px;
+    animation: spin-payos 2s linear infinite;
+}
+
+@keyframes spin-payos {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+iframe#payos-checkout {
+    height: 100%;
+    width: 100%;
+    border: none;
+}
+
+#payos-checkout-loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%
+}
+
+#payos-checkout-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    padding: 20px;
+    align-items: center
+}

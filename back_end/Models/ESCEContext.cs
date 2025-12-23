@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -20,6 +20,7 @@ namespace ESCE_SYSTEM.Models
         public virtual DbSet<AgencieCertificate> AgencieCertificates { get; set; } = null!;
         public virtual DbSet<Booking> Bookings { get; set; } = null!;
         public virtual DbSet<BookingCoupon> BookingCoupons { get; set; } = null!;
+        public virtual DbSet<BonusService> BonusServices { get; set; } = null!;
         public virtual DbSet<Comment> Comments { get; set; } = null!;
         public virtual DbSet<Commentreaction> Commentreactions { get; set; } = null!;
         public virtual DbSet<Coupon> Coupons { get; set; } = null!;
@@ -38,18 +39,18 @@ namespace ESCE_SYSTEM.Models
         public virtual DbSet<Review> Reviews { get; set; } = null!;
         public virtual DbSet<Role> Roles { get; set; } = null!;
         public virtual DbSet<Service> Services { get; set; } = null!;
-        public virtual DbSet<ServiceCombo> ServiceCombos { get; set; } = null!;
-        public virtual DbSet<ServiceComboDetail> ServiceComboDetails { get; set; } = null!;
+        public virtual DbSet<ServiceCombo> Servicecombos { get; set; } = null!;
+        public virtual DbSet<ServiceComboDetail> ServicecomboDetails { get; set; } = null!;
         public virtual DbSet<SupportResponse> SupportResponses { get; set; } = null!;
         public virtual DbSet<SystemLog> SystemLogs { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=King\\SQLEXPRESS;Database=ESCE;User Id=sa;Password=12345;");
-            }
+//            if (!optionsBuilder.IsConfigured)
+//            {
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+//                optionsBuilder.UseSqlServer("Server = DESKTOP-68M1JL8\\SQLEXPRESS; Database = ESCE1; Trusted_Connection = True; TrustServerCertificate = True;");
+//            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -69,15 +70,17 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("NAME");
                 entity.Property(e => e.Password).HasMaxLength(32).IsUnicode(false).HasColumnName("PASSWORD");
                 entity.Property(e => e.PasswordHash).HasMaxLength(500).IsUnicode(false).HasColumnName("PASSWORD_HASH");
-                entity.Property(e => e.IsBanned).HasColumnName("IS_BANNED").HasDefaultValueSql("((0))");
+                entity.Property(e => e.IS_BANNED).HasColumnName("IS_BANNED").HasDefaultValueSql("((0))");
                 entity.Property(e => e.Phone).HasMaxLength(10).IsUnicode(false).HasColumnName("PHONE");
                 entity.Property(e => e.RoleId).HasColumnName("ROLE_ID");
                 entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT").HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.Level).HasColumnName("LEVEL").HasDefaultValueSql("((0))");
+                entity.Property(e => e.TotalSpent).HasColumnType("decimal(18, 2)").HasColumnName("TOTAL_SPENT").HasPrecision(18, 2).HasDefaultValueSql("((0.00))");
 
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Accounts)
                     .HasForeignKey(d => d.RoleId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                   .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_ACCOUNTS_ROLES");
             });
 
@@ -113,6 +116,7 @@ namespace ESCE_SYSTEM.Models
 
                 entity.Property(e => e.ServiceComboId).HasColumnName("COMBO_ID");
                 entity.Property(e => e.ServiceId).HasColumnName("SERVICE_ID");
+                entity.Property(e => e.BonusServiceId).HasColumnName("BONUS_SERVICE_ID");
 
                 entity.Property(e => e.BookingNumber).HasMaxLength(50).IsUnicode(false).HasColumnName("BOOKING_NUMBER");
                 entity.Property(e => e.Quantity).HasColumnName("QUANTITY");
@@ -129,16 +133,22 @@ namespace ESCE_SYSTEM.Models
 
                 entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("STATUS").HasDefaultValueSql("('pending')");
 
-                // Đã khắc phục lỗi CS1061: ServiceCombo.Bookings
+                // �� kh?c ph?c l?i CS1061: Servicecombo.Bookings
                 entity.HasOne(d => d.ServiceCombo)
                     .WithMany(p => p.Bookings)
                     .HasForeignKey(d => d.ServiceComboId)
                     .HasConstraintName("FK__BOOKINGS__COMBO___59FA5E80");
 
                 entity.HasOne(d => d.Service)
-                    .WithMany() // Giả định Service không có navigation property Bookings
+                    .WithMany() // Gi? d?nh Service kh�ng c� navigation property Bookings
                     .HasForeignKey(d => d.ServiceId)
                     .HasConstraintName("FK__BOOKINGS__SERVIC__59FA5E81");
+
+                entity.HasOne(d => d.BonusService)
+                    .WithMany()
+                    .HasForeignKey(d => d.BonusServiceId)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("FK_BOOKINGS_BONUS_SERVICE");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Bookings)
@@ -240,6 +250,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.UsageCount).HasColumnName("USAGE_COUNT").HasDefaultValueSql("((0))");
                 entity.Property(e => e.UsageLimit).HasColumnName("USAGE_LIMIT");
                 entity.Property(e => e.ExpiryDate).HasColumnType("datetime").HasColumnName("EXPIRY_DATE");
+                entity.Property(e => e.RequiredLevel).HasColumnName("REQUIRED_LEVEL").HasDefaultValueSql("((0))");
 
                 entity.HasOne(d => d.Host)
                     .WithMany(p => p.Coupons)
@@ -247,11 +258,38 @@ namespace ESCE_SYSTEM.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__COUPONS__HOST_ID__52593CB8");
 
-                // Đã khắc phục lỗi CS1061: ServiceCombo.Coupons
+                // �� kh?c ph?c l?i CS1061: Servicecombo.Coupons
                 entity.HasOne(d => d.ServiceCombo)
                     .WithMany(p => p.Coupons)
                     .HasForeignKey(d => d.ServiceComboId)
                     .HasConstraintName("FK__COUPONS__SERVICE__534D60F1");
+            });
+
+            modelBuilder.Entity<BonusService>(entity =>
+            {
+                entity.ToTable("BONUS_SERVICES");
+                entity.Property(e => e.Id).HasColumnName("ID");
+                entity.Property(e => e.Name).HasMaxLength(255).HasColumnName("NAME");
+                entity.Property(e => e.Description).HasMaxLength(1000).HasColumnName("DESCRIPTION");
+                entity.Property(e => e.Price).HasColumnType("decimal(18, 2)").HasColumnName("PRICE");
+                entity.Property(e => e.HostId).HasColumnName("HOST_ID");
+                entity.Property(e => e.ServiceId).HasColumnName("SERVICE_ID");
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasColumnName("CREATED_AT").HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT").HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.Image).HasColumnName("IMAGE");
+                entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("STATUS").HasDefaultValueSql("('active')");
+
+                entity.HasOne(d => d.Host)
+                    .WithMany()
+                    .HasForeignKey(d => d.HostId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_BONUS_SERVICES_HOST");
+
+                entity.HasOne(d => d.Service)
+                    .WithMany()
+                    .HasForeignKey(d => d.ServiceId)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("FK_BONUS_SERVICES_SERVICE");
             });
 
             modelBuilder.Entity<HostCertificate>(entity =>
@@ -292,9 +330,9 @@ namespace ESCE_SYSTEM.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__MESSAGES__SENDER__02084FDA");
 
-                // Đã khắc phục lỗi CS1061: Account.Receiver (Thêm MessagesReceived vào Account Model)
+                // �� kh?c ph?c l?i CS1061: Account.Receiver (Th�m MessagesReceived v�o Account Model)
                 entity.HasOne(d => d.Receiver)
-                    .WithMany(p => p.MessagesReceived) // Giả định tên property là MessagesReceived trong Account Model
+                    .WithMany(p => p.MessagesReceived) // Gi? d?nh t�n property l� MessagesReceived trong Account Model
                     .HasForeignKey(d => d.ReceiverId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__MESSAGES__RECEIV__02084FDB");
@@ -358,15 +396,26 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.Id).HasColumnName("ID");
                 entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)").HasColumnName("AMOUNT");
                 entity.Property(e => e.BookingId).HasColumnName("BOOKING_ID");
+                entity.Property(e => e.UserId).HasColumnName("USER_ID");
                 entity.Property(e => e.Method).HasMaxLength(50).HasColumnName("METHOD");
                 entity.Property(e => e.PaymentDate).HasColumnType("datetime").HasColumnName("PAYMENT_DATE").HasDefaultValueSql("(getdate())");
                 entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("STATUS").HasDefaultValueSql("('pending')");
+                entity.Property(e => e.TransactionId).HasMaxLength(255).HasColumnName("TRANSACTION_ID");
+                entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT");
+                entity.Property(e => e.PaymentType).HasMaxLength(50).HasColumnName("PAYMENT_TYPE").HasDefaultValueSql("('Booking')");
+                entity.Property(e => e.UpgradeType).HasMaxLength(50).HasColumnName("UPGRADE_TYPE");
 
                 entity.HasOne(d => d.Booking)
                     .WithMany(p => p.Payments)
                     .HasForeignKey(d => d.BookingId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__PAYMENTS__BOOKIN__6477ECF3");
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("FK_PAYMENTS_BOOKING");
+
+                entity.HasOne(d => d.User)
+                    .WithMany()
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("FK_PAYMENTS_USER");
             });
 
             modelBuilder.Entity<Post>(entity =>
@@ -476,7 +525,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT").HasDefaultValueSql("(getdate())");
                 entity.Property(e => e.UserId).HasColumnName("USER_ID");
 
-                // Đã khắc phục lỗi CS1061: ServiceCombo.RequestSupports
+                // �� kh?c ph?c l?i CS1061: Servicecombo.RequestSupports
                 entity.HasOne(d => d.ServiceCombo)
                     .WithMany(p => p.RequestSupports)
                     .HasForeignKey(d => d.ComboId)
@@ -501,6 +550,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime").HasColumnName("CREATED_DATE").HasDefaultValueSql("(getdate())");
                 entity.Property(e => e.Rating).HasColumnName("RATING");
                 entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("STATUS").HasDefaultValueSql("('pending')");
+                entity.Property(e => e.ParentReviewId).HasColumnName("PARENT_REVIEW_ID");
 
                 entity.HasOne(d => d.Booking)
                     .WithMany(p => p.Reviews)
@@ -513,13 +563,19 @@ namespace ESCE_SYSTEM.Models
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__REVIEWS__USER_ID__693CA210");
+
+                entity.HasOne(d => d.ParentReview)
+                    .WithMany(p => p.Replies)
+                    .HasForeignKey(d => d.ParentReviewId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_REVIEWS_PARENT_REVIEW");
             });
 
             modelBuilder.Entity<Role>(entity =>
             {
                 entity.ToTable("ROLES");
                 entity.HasIndex(e => e.Name, "UQ__ROLES__D9C1FA000635C206").IsUnique();
-                entity.Property(e => e.Id).ValueGeneratedNever().HasColumnName("ID");
+                entity.Property(e => e.Id).HasColumnName("ID");
                 entity.Property(e => e.Description).HasMaxLength(255).HasColumnName("DESCRIPTION");
                 entity.Property(e => e.Name).HasMaxLength(50).HasColumnName("NAME");
             });
@@ -534,6 +590,10 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.Name).HasMaxLength(255).HasColumnName("NAME");
                 entity.Property(e => e.Price).HasColumnType("decimal(18, 2)").HasColumnName("PRICE");
                 entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasColumnName("UPDATED_AT").HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.Images).HasColumnName("Images");
+                entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("Status");
+                entity.Property(e => e.RejectComment).HasColumnName("RejectComment");
+                entity.Property(e => e.ReviewComments).HasColumnName("ReviewComments");
 
                 entity.HasOne(d => d.Host)
                     .WithMany(p => p.Services)
@@ -571,7 +631,7 @@ namespace ESCE_SYSTEM.Models
                 entity.Property(e => e.Id).HasColumnName("ID");
                 entity.Property(e => e.Quantity).HasColumnName("QUANTITY").HasDefaultValueSql("((1))");
                 entity.Property(e => e.ServiceId).HasColumnName("SERVICE_ID");
-                entity.Property(e => e.ServiceComboId).HasColumnName("SERVICECOMBO_ID");
+                entity.Property(e => e.ServicecomboId).HasColumnName("SERVICECOMBO_ID");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.ServiceComboDetails)
@@ -581,7 +641,7 @@ namespace ESCE_SYSTEM.Models
 
                 entity.HasOne(d => d.ServiceCombo)
                     .WithMany(p => p.ServiceComboDetails)
-                    .HasForeignKey(d => d.ServiceComboId)
+                    .HasForeignKey(d => d.ServicecomboId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__SERVICECO__SERVI__49C3F6B7");
             });
@@ -609,7 +669,7 @@ namespace ESCE_SYSTEM.Models
                     .HasConstraintName("FK__SUPPORT_R__SUPPO__0D7A0286");
             });
 
-            // Đã bao gồm Mapping cho SystemLog
+            // �� bao g?m Mapping cho SystemLog
             modelBuilder.Entity<SystemLog>(entity =>
             {
                 entity.HasKey(e => e.LogId);

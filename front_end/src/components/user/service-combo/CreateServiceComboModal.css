@@ -1,0 +1,761 @@
+/* Create Service Combo Modal Styles */
+
+.combo-create-create-service-combo-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+}
+
+.combo-create-create-service-combo-modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.combo-create-create-service-combo-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-radius: 12px 12px 0 0;
+}
+
+.combo-create-create-service-combo-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.combo-create-create-service-combo-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.combo-create-create-service-combo-modal-close:hover {
+    background: #f1f5f9;
+}
+
+.combo-create-create-service-combo-modal-close-icon {
+    width: 20px;
+    height: 20px;
+    color: #64748b;
+}
+
+.combo-create-create-service-combo-modal-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    overflow-y: auto;
+}
+
+.combo-create-create-service-combo-disclaimer-text {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    font-style: normal;
+}
+
+.combo-create-create-service-combo-required-indicator {
+    color: #ef4444;
+}
+
+.combo-create-create-service-combo-field {
+    margin-bottom: 1.5rem;
+}
+
+.combo-create-create-service-combo-field-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.combo-create-create-service-combo-field-row .combo-create-create-service-combo-field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.combo-create-create-service-combo-field label {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.combo-create-create-service-combo-field input,
+.combo-create-create-service-combo-field textarea,
+.combo-create-create-service-combo-field select {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.combo-create-create-service-combo-field input::placeholder,
+.combo-create-create-service-combo-field textarea::placeholder {
+    color: #94a3b8;
+}
+
+.combo-create-create-service-combo-field input:focus,
+.combo-create-create-service-combo-field textarea:focus,
+.combo-create-create-service-combo-field select:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.combo-create-create-service-combo-field textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.combo-create-create-service-combo-field input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+}
+
+.combo-create-create-service-combo-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+.combo-create-create-service-combo-error {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.combo-create-create-service-combo-img-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 0.5rem;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.combo-create-create-service-combo-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.combo-create-create-service-combo-section-header label {
+    margin: 0;
+}
+
+.combo-create-create-service-combo-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.combo-create-create-service-combo-chevron-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.combo-create-create-service-combo-table-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.combo-create-create-service-combo-table-filters {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.combo-create-create-service-combo-filter-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.combo-create-create-service-combo-filter-field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.combo-create-create-service-combo-filter-input,
+.combo-create-create-service-combo-filter-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+}
+
+.combo-create-create-service-combo-filter-select {
+    background: white;
+    cursor: pointer;
+}
+
+.combo-create-create-service-combo-table-wrapper {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.combo-create-create-service-combo-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.combo-create-create-service-combo-table thead {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 1;
+}
+
+.combo-create-create-service-combo-table th {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.combo-create-create-service-combo-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.combo-create-create-service-combo-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+.combo-create-create-service-combo-empty-cell {
+    text-align: center;
+    padding: 1rem;
+    color: #64748b;
+}
+
+.combo-create-create-service-combo-quantity-input {
+    width: 50px !important;
+    max-width: 50px !important;
+    min-width: 50px !important;
+    padding: 0.25rem 0.125rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.combo-create-create-service-combo-quantity-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Hide spinner for quantity inputs */
+.combo-create-create-service-combo-quantity-input::-webkit-outer-spin-button,
+.combo-create-create-service-combo-quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.combo-create-create-service-combo-quantity-input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* Table column widths - Services table (5 columns: Tên, Mô tả, Giá, Số lượng, Chọn) */
+.combo-create-create-service-combo-table thead tr th:nth-child(1),
+.combo-create-create-service-combo-table tbody tr td:nth-child(1) {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.combo-create-create-service-combo-table thead tr th:nth-child(2),
+.combo-create-create-service-combo-table tbody tr td:nth-child(2) {
+    min-width: 250px;
+    max-width: 400px;
+}
+
+/* Quantity column - narrow (4th column in services, 4th column in promotions) */
+.combo-create-create-service-combo-table thead tr th:nth-child(4),
+.combo-create-create-service-combo-table tbody tr td:nth-child(4) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    text-align: center;
+}
+
+/* Checkbox column - narrow (last column) */
+.combo-create-create-service-combo-table thead tr th:last-child,
+.combo-create-create-service-combo-table tbody tr td:last-child {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+    text-align: center;
+}
+
+.combo-create-create-service-combo-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: nowrap;
+    min-width: 80px;
+    width: auto;
+}
+
+.combo-create-create-service-combo-rank-badge.combo-create-rank-đồng,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-bronze {
+    background: #cd7f32;
+    color: white;
+}
+
+.combo-create-create-service-combo-rank-badge.combo-create-rank-bạc,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-silver {
+    background: #c0c0c0;
+    color: #1e293b;
+}
+
+.combo-create-create-service-combo-rank-badge.combo-create-rank-vàng,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-gold {
+    background: #ffd700;
+    color: #1e293b;
+}
+
+.combo-create-create-service-combo-rank-badge.combo-create-rank-kim-cương,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-diamond {
+    background: #0ea5e9;
+    color: #0c4a6e;
+}
+
+.combo-create-create-service-combo-rank-badge.combo-create-rank-tất-cả,
+.combo-create-create-service-combo-rank-badge.combo-create-rank-all {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.combo-create-create-service-combo-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    gap: 1rem;
+}
+
+.combo-create-create-service-combo-pagination-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.combo-create-create-service-combo-pagination-btn:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.combo-create-create-service-combo-pagination-btn:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.combo-create-create-service-combo-pagination-numbers {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.combo-create-create-service-combo-pagination-number {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 400;
+    min-width: 36px;
+    transition: all 0.2s ease;
+}
+
+.combo-create-create-service-combo-pagination-number:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.combo-create-create-service-combo-pagination-number.combo-create-active {
+    background: #8b5cf6;
+    color: white;
+    border-color: #8b5cf6;
+    font-weight: 600;
+}
+
+.combo-create-create-service-combo-pagination-jump {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.combo-create-create-service-combo-pagination-jump span {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.combo-create-create-service-combo-pagination-input {
+    width: 50px !important;
+    max-width: 50px !important;
+    min-width: 50px !important;
+    padding: 0.375rem 0.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.combo-create-create-service-combo-form-action {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    align-items: center;
+    justify-content: flex-end;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 5;
+}
+
+.combo-create-create-service-combo-btn-primary,
+.combo-create-create-service-combo-btn-secondary {
+    flex: 0 0 auto;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.combo-create-create-service-combo-btn-primary:focus-visible,
+.combo-create-create-service-combo-btn-secondary:focus-visible {
+    outline: 3px solid rgba(16, 185, 129, 0.25);
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .combo-create-create-service-combo-field-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .combo-create-create-service-combo-table-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .combo-create-create-service-combo-modal-header {
+        padding: 1rem;
+    }
+    .combo-create-create-service-combo-modal-body {
+        padding: 1rem;
+    }
+    .combo-create-create-service-combo-form-action {
+        justify-content: stretch;
+    }
+    .combo-create-create-service-combo-btn-primary,
+    .combo-create-create-service-combo-btn-secondary {
+        width: 100%;
+    }
+}
+
+.combo-create-create-service-combo-btn-primary {
+    background: #10b981;
+    color: white;
+}
+
+.combo-create-create-service-combo-btn-primary:hover:not(:disabled) {
+    background: #059669;
+}
+
+.combo-create-create-service-combo-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.combo-create-create-service-combo-btn-secondary {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.combo-create-create-service-combo-btn-secondary:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.combo-create-create-service-combo-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Duration Inputs Styles */
+.combo-create-create-service-combo-duration-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.combo-create-create-service-combo-duration-input {
+    width: 35px !important;
+    max-width: 35px !important;
+    min-width: 35px !important;
+    padding: 0.375rem 0.125rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Hide spinner for number inputs */
+.combo-create-create-service-combo-duration-input::-webkit-outer-spin-button,
+.combo-create-create-service-combo-duration-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.combo-create-create-service-combo-duration-input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.combo-create-create-service-combo-duration-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.combo-create-create-service-combo-duration-label {
+    font-size: 0.875rem;
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Upload Area - Forum Style */
+.combo-create-upload-area {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 0.5rem;
+}
+
+.combo-create-upload-area:hover {
+    border-color: #059669;
+    background: #f0fdf4;
+}
+
+.combo-create-upload-area.combo-create-dragging {
+    border-color: #059669;
+    background: #ecfdf5;
+    border-style: solid;
+    transform: scale(1.02);
+}
+
+.combo-create-upload-area.combo-create-error {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+
+.combo-create-file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.combo-create-upload-content {
+    position: relative;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.combo-create-upload-icon {
+    width: 3rem;
+    height: 3rem;
+    color: #059669;
+    margin: 0 auto 1rem;
+    display: block;
+}
+
+.combo-create-upload-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin: 0 0 0.5rem;
+}
+
+.combo-create-upload-link {
+    color: #059669;
+    text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.combo-create-upload-hint {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Image Preview Grid */
+.combo-create-image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.combo-create-image-preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    background: #f1f5f9;
+}
+
+.combo-create-image-preview-item:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+}
+
+.combo-create-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.combo-create-image-remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+}
+
+.combo-create-image-remove-btn:hover {
+    background: rgba(220, 38, 38, 0.9);
+    transform: scale(1.1);
+}
+
+.combo-create-image-remove-btn svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.combo-create-form-error-text {
+    display: block;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.combo-create-create-service-combo-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}

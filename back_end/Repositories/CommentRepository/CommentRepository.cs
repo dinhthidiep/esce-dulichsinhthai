@@ -1,4 +1,4 @@
-﻿using ESCE_SYSTEM.Models;
+﻿﻿using ESCE_SYSTEM.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -24,13 +24,13 @@ namespace ESCE_SYSTEM.Repositories
                 .Include(c => c.Commentreactions)
                 .ThenInclude(cr => cr.User)
                 .Include(c => c.Post)
-                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Id == id && c.IsDeleted != true) ?? null!;
         }
 
         public async Task<IEnumerable<Comment>> GetByPostIdAsync(int postId)
         {
             return await _context.Comments
-                .Where(c => c.PostId == postId && !c.IsDeleted)
+                .Where(c => c.PostId == postId && c.IsDeleted != true)
                 .Include(c => c.Author)
                 .ThenInclude(a => a.Role)
                 .Include(c => c.Commentreactions)
@@ -42,7 +42,7 @@ namespace ESCE_SYSTEM.Repositories
         public async Task<IEnumerable<Comment>> GetByAuthorIdAsync(int authorId)
         {
             return await _context.Comments
-                .Where(c => c.AuthorId == authorId && !c.IsDeleted)
+                .Where(c => c.AuthorId == authorId && c.IsDeleted != true)
                 .Include(c => c.Post)
                 .Include(c => c.Commentreactions)
                 .ThenInclude(cr => cr.User)
@@ -79,7 +79,7 @@ namespace ESCE_SYSTEM.Repositories
         public async Task<bool> SoftDeleteAsync(int id)
         {
             var comment = await _context.Comments.FindAsync(id);
-            if (comment == null) return false;
+            if (comment == null || comment.IsDeleted == true) return false;
 
             comment.IsDeleted = true;
             comment.UpdatedAt = DateTime.Now;

@@ -1,7 +1,6 @@
 import { ThemeProvider } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
-import { lightTheme } from '~/config'
-import { darkTheme } from '~/config'
+import { lightTheme, darkTheme } from '~/config'
 import type { CurrentThemeMode, ThemeContextProviderProps, ThemeMode } from '~/types/theme'
 import { ThemeContext } from './themeContext'
 
@@ -46,3 +45,25 @@ export function ThemeContextProvider({
     </ThemeProvider>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

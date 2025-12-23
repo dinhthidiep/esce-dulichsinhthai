@@ -1,0 +1,566 @@
+/* Service Combo Management Styles */
+
+/* Filter Container */
+.combo-service-filter-container {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.combo-filter-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.combo-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.combo-filter-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.combo-filter-input,
+.combo-filter-select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1e293b;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.combo-filter-input:focus,
+.combo-filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.combo-filter-select {
+  cursor: pointer;
+}
+
+.combo-btn-search {
+  padding: 0.625rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 42px;
+  white-space: nowrap;
+}
+
+.combo-btn-search:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.combo-btn-search:combo-active {
+  transform: translateY(0);
+}
+
+/* Services Grid - Stack Layout (1 card per row) */
+.combo-services-grid {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+  width: 100%;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Service Combo Card - Admin Style */
+.combo-servicecombo-card {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 1.4rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.96);
+  transition: all 0.15s ease-in-out;
+}
+
+.combo-servicecombo-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: #10b981;
+}
+
+.combo-servicecombo-card:hover .combo-service-name {
+  color: #059669;
+}
+
+.combo-card-content {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.combo-card-preview {
+  width: 180px;
+  height: 140px;
+  min-width: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f5f9;
+  flex-shrink: 0;
+  border: 1px solid #10b981;
+}
+
+.combo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.combo-servicecombo-card:hover .combo-preview-img {
+  transform: scale(1.05);
+}
+
+.combo-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.combo-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.combo-card-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.combo-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.combo-service-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  transition: color 0.2s ease;
+}
+
+.combo-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.combo-status-chip.status-open {
+  background: rgba(3, 169, 244, 0.12);
+  color: #0288d1;
+}
+
+.combo-status-chip.status-closed {
+  background: rgba(158, 158, 158, 0.12);
+  color: #616161;
+}
+
+.combo-status-chip.status-canceled {
+  background: rgba(244, 67, 54, 0.12);
+  color: #d32f2f;
+}
+
+.combo-status-chip.status-pending {
+  background: rgba(255, 193, 7, 0.12);
+  color: #f57c00;
+}
+
+.combo-status-chip.status-default {
+  background: rgba(158, 158, 158, 0.12);
+  color: #757575;
+}
+
+.combo-card-date {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.combo-card-info-box {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.combo-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.combo-info-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.combo-info-text {
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.combo-info-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.combo-info-description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.combo-info-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.combo-card-right {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.combo-service-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+}
+
+.combo-service-actions button {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.combo-service-actions .btn-edit-service {
+  background: #10b981;
+  color: white;
+  border: none;
+}
+
+.combo-service-actions .btn-edit-service:hover {
+  background: #059669;
+}
+
+.combo-service-actions .cancel-booking-btn {
+  background: white;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.combo-service-actions .cancel-booking-btn:hover {
+  background: #fef2f2;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .combo-card-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .combo-card-right {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .combo-servicecombo-card .combo-service-image {
+    width: 100px;
+    height: 80px;
+  }
+  
+  .combo-service-actions {
+    flex-direction: row;
+    width: auto;
+  }
+  
+  .combo-service-actions button {
+    width: auto;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Pagination */
+.combo-pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.combo-pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 auto;
+}
+
+.combo-pagination-btn {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.combo-pagination-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.combo-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.combo-pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.combo-pagination-number {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.combo-pagination-number:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.combo-pagination-number.combo-active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+  font-weight: 600;
+}
+
+.combo-pagination-number.combo-active:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+/* Empty State */
+.combo-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #64748b;
+}
+
+.combo-empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: #cbd5e1;
+  margin: 0 auto 1rem;
+}
+
+.combo-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.combo-empty-state p {
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .combo-card-content {
+    flex-direction: column;
+  }
+  
+  .combo-card-preview {
+    width: 100%;
+    height: 160px;
+  }
+  
+  .combo-card-right {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .combo-service-actions {
+    flex-direction: row;
+    width: auto;
+  }
+  
+  .combo-service-actions button {
+    flex: 1;
+  }
+  
+  .combo-filter-row {
+    flex-direction: column;
+  }
+  
+  .combo-filter-field {
+    width: 100%;
+  }
+  
+  .combo-btn-search {
+    width: 100%;
+  }
+}
+
+
+/* Confirmation Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmation-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 400px;
+  width: 90%;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirmation-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.confirmation-modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.confirmation-modal-body {
+  padding: 1.5rem;
+}
+
+.confirmation-modal-body p {
+  margin: 0 0 0.5rem 0;
+  color: #475569;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.confirmation-modal-body .warning-text {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.confirmation-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.confirmation-modal-delete .confirmation-modal-header h3 {
+  color: #dc2626;
+}

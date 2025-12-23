@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ESCE_SYSTEM.Services;
 using ESCE_SYSTEM.Models;
 using Microsoft.VisualBasic;
 using System.Data.Common;
+using Microsoft.AspNetCore.Hosting;
 
 namespace ESCE_SYSTEM.Controllers
 {
@@ -12,9 +13,12 @@ namespace ESCE_SYSTEM.Controllers
     public class ServiceController : ControllerBase
     {
         private readonly IServiceService _service;
-        public ServiceController(IServiceService service)
+        private readonly IWebHostEnvironment _env;
+        
+        public ServiceController(IServiceService service, IWebHostEnvironment env)
         {
             _service = service;
+            _env = env;
         }
 
         [HttpGet]
@@ -33,20 +37,107 @@ namespace ESCE_SYSTEM.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(Service service)
+        /// <summary>
+        /// Lấy tất cả dịch vụ của một Host
+        /// </summary>
+        [HttpGet("host/{hostId}")]
+        public async Task<ActionResult> GetByHostId(int hostId)
         {
-            var result = await _service.CreateAsync(service);
-            return Ok(result);
-
+            var allServices = await _service.GetAllAsync();
+            var hostServices = allServices.Where(s => s.HostId == hostId).ToList();
+            return Ok(hostServices);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Service service)
+        /// <summary>
+        /// Tạo dịch vụ mới - hỗ trợ cả JSON và multipart/form-data
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Create([FromForm] CreateServiceDto dto)
         {
-            var result = await _service.UpdateAsync(id, service);
-            if (result == null) return NotFound();
-            return Ok(result);
+            try
+            {
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    return BadRequest(new { message = "Tên dịch vụ không được để trống" });
+                }
+                
+                if (dto.Price < 0)
+                {
+                    return BadRequest(new { message = "Giá dịch vụ không được âm" });
+                }
+                
+                if (dto.HostId <= 0)
+                {
+                    return BadRequest(new { message = "HostId không hợp lệ" });
+                }
+
+                // Xử lý upload ảnh nếu có
+                string imagePath = null;
+                if (dto.Image != null && dto.Image.Length > 0)
+                {
+                    imagePath = await SaveImageAsync(dto.Image, "services");
+                }
+
+                var service = new Service
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    Price = dto.Price,
+                    HostId = dto.HostId,
+                    Images = imagePath
+                };
+
+                var result = await _service.CreateAsync(service);
+                
+                return Ok(new { 
+                    message = "Dịch vụ đã được tạo thành công và đang chờ duyệt",
+                    service = result 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ServiceController.Create] Error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật dịch vụ - hỗ trợ cả JSON và multipart/form-data
+        /// </summary>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromForm] UpdateServiceDto dto)
+        {
+            try
+            {
+                var existing = await _service.GetByIdAsync(id);
+                if (existing == null) return NotFound(new { message = "Không tìm thấy dịch vụ" });
+
+                // Xử lý upload ảnh mới nếu có
+                string imagePath = existing.Images; // Giữ ảnh cũ nếu không upload mới
+                if (dto.Image != null && dto.Image.Length > 0)
+                {
+                    imagePath = await SaveImageAsync(dto.Image, "services");
+                }
+
+                var service = new Service
+                {
+                    Name = dto.Name ?? existing.Name,
+                    Description = dto.Description ?? existing.Description,
+                    Price = dto.Price ?? existing.Price,
+                    Images = imagePath
+                };
+
+                var result = await _service.UpdateAsync(id, service);
+                if (result == null) return NotFound(new { message = "Không tìm thấy dịch vụ" });
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ServiceController.Update] Error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -57,10 +148,90 @@ namespace ESCE_SYSTEM.Controllers
             return Ok("Deleted");
         }
 
+        /// <summary>
+        /// Lưu file ảnh vào wwwroot/uploads
+        /// </summary>
+        private async Task<string> SaveImageAsync(IFormFile file, string subFolder)
+        {
+            try
+            {
+                // Validate file type
+                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    throw new ArgumentException("Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)");
+                }
 
+                // Validate file size (5MB max)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    throw new ArgumentException("Kích thước file không được vượt quá 5MB");
+                }
 
+                // Xác định extension
+                var extension = Path.GetExtension(file.FileName).ToLower();
+                if (string.IsNullOrEmpty(extension))
+                {
+                    extension = file.ContentType switch
+                    {
+                        "image/jpeg" or "image/jpg" => ".jpg",
+                        "image/png" => ".png",
+                        "image/gif" => ".gif",
+                        "image/webp" => ".webp",
+                        _ => ".jpg"
+                    };
+                }
+
+                // Tạo tên file unique
+                var fileName = $"{Guid.NewGuid()}{extension}";
+
+                // Tạo đường dẫn thư mục
+                var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", subFolder);
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Lưu file
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Trả về đường dẫn relative
+                return $"/uploads/{subFolder}/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SaveImageAsync] Error: {ex.Message}");
+                throw;
+            }
+        }
     }
 
+    /// <summary>
+    /// DTO cho việc tạo dịch vụ mới
+    /// </summary>
+    public class CreateServiceDto
+    {
+        public string Name { get; set; }
+        public string? Description { get; set; }
+        public decimal Price { get; set; }
+        public int HostId { get; set; }
+        public IFormFile? Image { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho việc cập nhật dịch vụ
+    /// </summary>
+    public class UpdateServiceDto
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public decimal? Price { get; set; }
+        public IFormFile? Image { get; set; }
+    }
 }
 
 
